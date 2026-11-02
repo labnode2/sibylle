@@ -1,0 +1,59 @@
+/* Gazette design tokens (canvas G-Style). Dark mode follows the system unless the account picks
+   a theme, which sets data-theme on <html>. */
+
+:root {
+  color-scheme: light;
+  --paper: #f3f4fa;
+  --surface: #ffffff;
+  --ink: #15162d;
+  --ink-2: #4a4d6a;
+  --rule: #c9cbe4;
+  --grey: #e3e4eb;
+  --indigo: #4a50d0;
+  --mist: #8f94ff;
+  --on-ink: #ffffff;
+  --shadow: #15162d;
+  /* Gold is reserved for the logo, the laurels and one thin underline per screen. */
+  --gold: #f2c230;
+  --gold-line: #c99a18;
+
+  --font-title: 'Jacquard 12', 'Times New Roman', serif;
+  --font-text:
+    'Bricolage Grotesque Variable', 'Bricolage Grotesque', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+
+  --gutter: 16px;
+  --tap: 44px;
+  --page-max: 1200px;
+  --tabbar-height: 64px;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #10111e;
+  --surface: #1a1c30;
+  --ink: #eceefa;
+  --ink-2: #a9acc8;
+  --rule: #3b3e5e;
+  --grey: #282a43;
+  --indigo: #9095ff;
+  --mist: #5b60d6;
+  --on-ink: #10111e;
+  --shadow: #05060d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --paper: #10111e;
+    --surface: #1a1c30;
+    --ink: #eceefa;
+    --ink-2: #a9acc8;
+    --rule: #3b3e5e;
+    --grey: #282a43;
+    --indigo: #9095ff;
+    --mist: #5b60d6;
+    --on-ink: #10111e;
+    --shadow: #05060d;
+  }
+}

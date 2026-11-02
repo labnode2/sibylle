@@ -1,0 +1,25 @@
+/* Newsroom card backgrounds: same keys as BACKGROUND_KEYS in backend/src/sybille/domain/content.py. */
+
+.bg-mer {
+  background: linear-gradient(#8fb0ff 0 62%, #f4f6fb 62% 66%, #4a50d0 66% 100%);
+}
+
+.bg-aube {
+  background: linear-gradient(#ffd0e4 0 45%, #ffe28a 45% 70%, #ffb066 70% 100%);
+}
+
+.bg-nuit {
+  background: linear-gradient(#15162d 0 60%, #2a2f7a 60% 82%, #4a50d0 82% 100%);
+}
+
+.bg-foret {
+  background: linear-gradient(#9be3b4 0 50%, #33a25f 50% 78%, #22804a 78% 100%);
+}
+
+.bg-papier {
+  background: repeating-linear-gradient(#f4f6fb 0 6px, #e3e4eb 6px 7px);
+}
+
+.bg-brique {
+  background: linear-gradient(#ffb066 0 40%, #c56938 40% 72%, #a8432a 72% 100%);
+}

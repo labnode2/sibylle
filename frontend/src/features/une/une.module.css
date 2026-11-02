@@ -1,0 +1,26 @@
+.une {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.hello {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.helloText {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title {
+  font: 800 28px/1.05 var(--font-text);
+  letter-spacing: -0.025em;
+}
+
+.soon {
+  color: var(--ink-2);
+}

@@ -1,0 +1,13 @@
+{
+  "name": "crystal-ball-kit",
+  "version": "1.0.0",
+  "description": "A pixel-art crystal ball on a 16×16 grid, animated, with a variant per season and per French holiday.",
+  "type": "module",
+  "main": "src/crystal-ball.js",
+  "types": "src/crystal-ball.d.ts",
+  "files": ["src", "dist", "assets"],
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "test": "node tools/test.mjs"
+  }
+}

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Crystal ball kit</title>
+  <link rel="icon" href="assets/favicon/favicon.svg" type="image/svg+xml">
+  <style>
+    :root { color-scheme: dark; --bg: #0b0c0e; --card: #15161a; --line: #26282e; --ink: #e8e9ee; --muted: #9a9ca6; --accent: #6e74ff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px 16px 48px; background: var(--bg); color: var(--ink); font: 14px/1.5 system-ui, sans-serif; }
+    main { max-width: 1120px; margin: 0 auto; }
+    h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+    p { color: var(--muted); margin: 0 0 16px; }
+    label { color: var(--muted); }
+    input { background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; font: inherit; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 12px; margin-top: 20px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .card.today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    .tile { border-radius: 6px; padding: 6px; display: flex; align-items: center; justify-content: center; background: #111214; }
+    .tile.light { background: #f4f4f5; }
+    .row { display: flex; gap: 6px; flex-wrap: wrap; }
+    canvas { image-rendering: pixelated; display: block; }
+    .name { font-weight: 600; }
+    .id { color: var(--muted); font: 12px ui-monospace, monospace; }
+  </style>
+</head>
+<body>
+<main>
+  <h1><canvas id="brand" width="16" height="16" style="width:32px;height:32px"></canvas> Crystal ball kit</h1>
+  <p>Every variant, playing in a loop. The outlined card is the variant of the chosen date.</p>
+  <label>Date <input type="date" id="date"></label> <span id="today" class="id"></span>
+  <div class="grid" id="grid"></div>
+</main>
+<script src="dist/crystal-ball.global.js"></script>
+<script>
+  const B = window.CrystalBall;
+  const grid = document.getElementById('grid');
+  const cards = [];
+  for (const id of B.variants()) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    const tile = (size, light) => {
+      const t = document.createElement('div');
+      t.className = light ? 'tile light' : 'tile';
+      const c = document.createElement('canvas');
+      c.style.width = c.style.height = size + 'px';
+      c.setAttribute('aria-hidden', 'true');
+      t.append(c);
+      B.animate(c, id, { loops: Infinity });
+      return t;
+    };
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.append(tile(32), tile(16), tile(32, true), tile(16, true));
+    const { name, frames } = B.info(id);
+    const label = document.createElement('div');
+    label.innerHTML = '<div class="name"></div><div class="id"></div>';
+    label.firstChild.textContent = name;
+    label.lastChild.textContent = `${id} · ${frames === 1 ? 'still' : frames + ' frames'}`;
+    card.append(tile(96), row, label);
+    grid.append(card);
+    cards.push({ card, id });
+  }
+  const input = document.getElementById('date');
+  const show = () => {
+    if (!input.value) return;
+    const [y, m, d] = input.value.split('-').map(Number);
+    const id = B.variantFor(new Date(y, m - 1, d));
+    document.getElementById('today').textContent = `→ ${id}`;
+    cards.forEach((c) => c.card.classList.toggle('today', c.id === id));
+  };
+  const now = new Date();
+  input.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  input.addEventListener('input', show);
+  show();
+  B.animate(document.getElementById('brand'), B.variantFor(now));
+</script>
+</body>
+</html>

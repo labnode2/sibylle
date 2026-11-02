@@ -1,0 +1,185 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 480px;
+  margin: 8px auto 0;
+}
+
+.title {
+  font: 800 26px/1.05 var(--font-text);
+  letter-spacing: -0.025em;
+}
+
+/* The newsroom's card, as on G-Rejoindre: background band, logo overlapping it, then the text. */
+.invitation {
+  overflow: visible;
+}
+
+.band {
+  position: relative;
+  height: 60px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.logo {
+  position: absolute;
+  left: 14px;
+  bottom: -26px;
+  outline: 2px solid var(--ink);
+  background: var(--surface);
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 34px 14px 14px;
+}
+
+.cardKicker {
+  font: 600 11px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--indigo);
+}
+
+.cardMeta {
+  font: 500 11px/1 var(--font-mono);
+  color: var(--ink-2);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.label {
+  font: 600 11px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.choice {
+  padding: 0;
+  border: 2px solid var(--ink);
+  background: transparent;
+  outline: 3px solid transparent;
+  outline-offset: 2px;
+  cursor: pointer;
+}
+
+.choice[aria-checked='true'] {
+  outline-color: var(--ink);
+}
+
+.swatch {
+  display: block;
+  width: 48px;
+  height: 32px;
+}
+
+.draw {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 12px;
+  border: 1px dashed var(--ink);
+  color: var(--ink-2);
+  font: 600 14px/1.1 var(--font-text);
+}
+
+.charter {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  font-size: 14px;
+  white-space: pre-line;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.check input {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--ink);
+}
+
+.code {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.valid {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 700 11px/1 var(--font-mono);
+  color: var(--indigo);
+}
+
+.hint {
+  margin: 0;
+  font: 500 11px/1.4 var(--font-mono);
+  color: var(--ink-2);
+  text-align: center;
+}
+
+.alert {
+  padding: 10px 12px;
+  border: 2px solid var(--ink);
+  background: var(--grey);
+  font-weight: 600;
+}
+
+.switcher {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.switcherItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 10px;
+  border: 1px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.switcherItem[aria-current='page'] {
+  background: var(--grey);
+}
+
+.edition {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  text-decoration: none;
+}

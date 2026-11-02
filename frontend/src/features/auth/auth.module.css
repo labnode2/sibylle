@@ -1,0 +1,49 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 440px;
+  margin: 8px auto 0;
+}
+
+.title {
+  font: 800 28px/1.05 var(--font-text);
+  letter-spacing: -0.025em;
+}
+
+.lead {
+  color: var(--ink-2);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.alert {
+  padding: 10px 12px;
+  border: 2px solid var(--ink);
+  background: var(--grey);
+  font-weight: 600;
+}
+
+.note {
+  font: 500 11px/1.4 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+}

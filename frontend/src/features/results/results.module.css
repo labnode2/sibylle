@@ -1,0 +1,246 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Grey band under the header: what the journalist has to do now. */
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  background: var(--grey);
+}
+
+.statusLabel {
+  font: 700 11px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.statusText {
+  font: 500 14px/1.35 var(--font-text);
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px;
+}
+
+.previewTitle {
+  font: 700 17px/1.2 var(--font-text);
+}
+
+.small {
+  font: 500 11px/1.4 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+}
+
+.centered {
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+}
+
+/* Special edition (canvas G-Résultat) */
+.edition {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.editionHead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-top: 6px;
+}
+
+.editionTitle {
+  font: 400 36px/1 var(--font-title);
+}
+
+.result {
+  font: 800 22px/1.15 var(--font-text);
+  letter-spacing: -0.015em;
+}
+
+.result mark {
+  background: transparent;
+  color: inherit;
+  text-decoration: underline 3px var(--gold-line);
+  text-underline-offset: 5px;
+  text-decoration-skip-ink: none;
+}
+
+.mine {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+}
+
+.mineText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mineAnswer {
+  font: 700 17px/1.2 var(--font-text);
+}
+
+.mineScore {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.stamp {
+  padding: 4px 6px;
+  background: var(--indigo);
+  color: #ffffff;
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  transform: rotate(-4deg);
+}
+
+.stampLost {
+  background: var(--ink-2);
+}
+
+.amount {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: 700 15px/1 var(--font-mono);
+}
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bar {
+  display: grid;
+  grid-template-columns: minmax(80px, 30%) 1fr 42px;
+  align-items: center;
+  gap: 10px;
+  min-height: 24px;
+}
+
+.barLabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: 500 15px/1.1 var(--font-text);
+}
+
+.barLabelWin {
+  font-weight: 800;
+}
+
+.barRail {
+  height: 14px;
+  background: var(--grey);
+}
+
+.barFill {
+  display: block;
+  height: 14px;
+  background: var(--mist);
+}
+
+.barFillWin {
+  background: var(--ink);
+}
+
+.barPct {
+  font: 600 13px/1 var(--font-mono);
+  text-align: right;
+}
+
+.winners {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.notice {
+  padding: 10px 12px;
+  border: 2px solid var(--ink);
+  background: var(--grey);
+  font-weight: 600;
+}
+
+.report {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+}
+
+.reportKinds {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.reportKinds legend {
+  margin-bottom: 6px;
+  font: 600 11px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+
+.radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 88px;
+  padding: 10px 12px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: var(--surface);
+  font: 500 16px/1.35 var(--font-text);
+  resize: vertical;
+}
+
+.linkButton {
+  align-self: center;
+}

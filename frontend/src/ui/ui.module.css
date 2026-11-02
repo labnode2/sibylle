@@ -1,0 +1,308 @@
+/* Gazette components (canvas G-Style, « Composants »). */
+
+/* Masthead: « LA GAZETTE DE » over « Sibylle », the ball on the left, a double rule below. */
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 18px 0 12px;
+}
+.mastheadTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mastheadKicker {
+  font: 600 11px/1 var(--font-mono);
+  letter-spacing: 0.24em;
+  color: var(--ink-2);
+}
+.mastheadName {
+  font: 400 60px/0.9 var(--font-title);
+}
+.mastheadLarge {
+  gap: 18px;
+  padding: 20px 0 16px;
+}
+.mastheadLarge .mastheadKicker {
+  font-size: 13px;
+  letter-spacing: 0.3em;
+}
+.mastheadLarge .mastheadName {
+  font-size: 96px;
+  line-height: 0.85;
+}
+
+/* Rules: 1 px to separate, 2 px to frame, a double rule (4 + 1 px) under the masthead. */
+.ruleDouble {
+  height: 2px;
+  border-top: 4px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  box-sizing: content-box;
+}
+.ruleThin {
+  border-top: 1px solid var(--ink);
+}
+.ruleLight {
+  border-top: 1px solid var(--rule);
+}
+
+/* Boxes: white, 2 px ink rule, hard offset shadow (4 px for a box, 6 px for a card). */
+.card {
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+.cardLarge {
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+.cardFlat {
+  box-shadow: none;
+}
+
+/* Buttons: ink for the main action, outline for the second, underlined link for the rest. */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--ink);
+  color: var(--on-ink);
+  font: 700 16px/1 var(--font-text);
+  text-decoration: none;
+  cursor: pointer;
+}
+.button:hover {
+  color: var(--on-ink);
+}
+.button:disabled,
+.button[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.buttonSecondary {
+  min-height: var(--tap);
+  padding: 0 16px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 15px;
+}
+.buttonSecondary:hover {
+  color: var(--ink);
+  background: var(--grey);
+}
+.buttonLink {
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--indigo);
+  font: 600 15px/1 var(--font-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.buttonLink:hover {
+  color: var(--ink);
+}
+.buttonBlock {
+  width: 100%;
+}
+
+/* Fields: square, ink rule, mono caps label. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fieldLabel,
+.kicker {
+  font: 600 11px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.fieldInput {
+  min-height: var(--tap);
+  width: 100%;
+  padding: 0 12px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font: 700 17px/1 var(--font-text);
+}
+.fieldInput[aria-invalid='true'] {
+  border-width: 2px;
+}
+.fieldHint,
+.fieldError {
+  font: 500 11px/1.4 var(--font-mono);
+  color: var(--ink-2);
+}
+.fieldError {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.kickerIndigo {
+  color: var(--indigo);
+}
+
+/* Labels, roles and stamps; the « gagné » stamp is the only tilted element. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 5px;
+  border: 1px solid var(--ink);
+  font: 700 11px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.chipInk {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+.chipGrey {
+  padding: 4px 6px;
+  border-color: transparent;
+  background: var(--grey);
+  font-size: 13px;
+}
+.chipStamp {
+  padding: 4px 6px;
+  border-color: var(--indigo);
+  background: var(--indigo);
+  color: #ffffff;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  transform: rotate(-4deg);
+}
+
+/* Stepper: − value + */
+.stepper {
+  display: inline-flex;
+  align-items: stretch;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+}
+.stepperButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  min-height: var(--tap);
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.stepperButton:disabled {
+  color: var(--rule);
+  cursor: not-allowed;
+}
+.stepperValue {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 0 8px;
+  border-left: 1px solid var(--ink);
+  border-right: 1px solid var(--ink);
+  font: 700 18px/1 var(--font-mono);
+}
+
+/* Tabs: ink underline on the active one. */
+.tabbar {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(var(--tabs, 3), minmax(0, 1fr));
+  height: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--surface);
+  border-top: 2px solid var(--ink);
+}
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: var(--ink-2);
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+.tab:hover {
+  color: var(--ink);
+}
+.tabActive {
+  color: var(--ink);
+  font-weight: 700;
+}
+.tabActive .tabLabel {
+  border-bottom: 2px solid var(--ink);
+}
+.tabLabel {
+  padding: 2px 4px;
+}
+
+/* Laurels: value in Geist Mono, then the gold laurel. */
+.laurel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 700 14px/1 var(--font-mono);
+}
+
+/* Avatars: 3–4 px of rounding, the only rounded corners. */
+.avatar {
+  border-radius: 4px;
+  background: var(--grey);
+}
+.avatarStack {
+  display: inline-flex;
+  align-items: center;
+}
+.avatarStack > * + * {
+  margin-left: -6px;
+}
+.avatarStack .avatar {
+  outline: 2px solid var(--surface);
+}
+.avatarMore {
+  margin-left: 6px;
+  font: 600 12px/1 var(--font-mono);
+  color: var(--ink-2);
+}
+
+/* Switch: on in ink, off in white. */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 44px;
+  height: 24px;
+  padding: 2px;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  cursor: pointer;
+}
+.switch[aria-checked='true'] {
+  justify-content: flex-end;
+  background: var(--ink);
+}
+.switchKnob {
+  width: 16px;
+  height: 16px;
+  background: var(--ink);
+}
+.switch[aria-checked='true'] .switchKnob {
+  background: var(--surface);
+}

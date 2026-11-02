@@ -1,0 +1,79 @@
+{
+  "_source": "Atlas du canvas Gazette (fichier 4f9de3add98bcfa2e85b3c0c687c3794), couleurs ramenées à la palette base-v1.",
+  "avatars": [
+    {
+      "key": "t0",
+      "name": "Cami",
+      "image": {
+        "size": 16,
+        "palette": "base-v1",
+        "pixels": "HR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHQgICAgICB0dHR0dHR0dHQgODggICAgIHR0dHR0dHQgOCAgICAgICAgdHR0dHR0ICAgICAgICAgIHR0dHR0dCBoaGhoaGhoVCB0dHR0dHQgaGgEaGgEaFQgdHR0dHR0IGhoaGhoaGhUIHR0dHR0dCBoVGhoaGhUVCB0dHR0dHQgIGhoODhoVCAgdHR0dHR0ICB0aGhoVHQgIHR0dHR0dHR0dFRUVFR0dHR0dHR0dHR0PDw8PDw8PDx0dHR0dHQ8PDw8PDw8PDw8PCh0dHQ8PDw8PDw8PDw8PDwoKHQ=="
+      }
+    },
+    {
+      "key": "t1",
+      "name": "Inès",
+      "image": {
+        "size": 16,
+        "palette": "base-v1",
+        "pixels": "GBgYGBgYGBgYGBgYGBgYGBgYGBgYAQEBAQEBGBgYGBgYGBgBAQEBAQEBAQEBGBgYGBgBAQMBAQEBAQEBAQEYGBgYAQMBAQEBAQEBAQEBGBgYGAEBAQEBAQEBAQEBARgYGBgBAQkJCQkJCQkGAQEYGBgYAQEJCQEJCQEJBgEBGBgYGAEBCQkJCQkJCQYBARgYGAEBAQkJCQkJCQkGAQEBGBgBAQEBCQkCAgkGAQEBARgYAQEBARgJCQkGGAEBAQEYGBgBARgYBgYGBhgYAQEYGBgYGBgTExMTExMTExgYGBgYGBMTExMTExMTExMTEBgYGBMTExMTExMTExMTExAQGA=="
+      }
+    },
+    {
+      "key": "t2",
+      "name": "Hugo",
+      "image": {
+        "size": 16,
+        "palette": "base-v1",
+        "pixels": "GxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsCAgICAgIbGxsbGxsbGxsCBAICAgICAgIbGxsbGxsbAgICAgICAgICGxsbGxsbGwIaGhoaGhoCGxsbGxsbGxsCGgEaGgEaAhsbGxsbGxsaAhoaGhoaGgIVGxsbGxsbGwIaGhoaGhoCGxsbGxsbGxsbAgIODgICGxsbGxsbGxsbGxsCAgICGxsbGxsbGxsbGxsbFRUVFRsbGxsbGxsbGxsLCwsLCwsLCxsbGxsbGwsLCwsLCwsLCwsLBxsbGwsLCwsLCwsLCwsLCwcHGw=="
+      }
+    },
+    {
+      "key": "t3",
+      "name": "Léo",
+      "image": {
+        "size": 16,
+        "palette": "base-v1",
+        "pixels": "Hx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8SHxIfEh8fHx8fHx8fHx8SEhISEhISHx8fHx8fHx8SGxsSEhISEhIfHx8fHx8fEhISEhISEhISHx8fHx8fHxINDQ0cDQ0NHx8fHx8fHx8NDQENDQENDR8fHx8fHx8cHBwcHBwcHBUVHx8fHx8fHxwcHBwcHBwVHx8fHx8fHx8fHBwODhwVHx8fHx8fHx8fHx8cHBwVHx8fHx8fHx8fHx8fFRUVFR8fHx8fHx8fHx8gICAgICAgIB8fHx8fHyAgICAgICAgICAgHR8fHyAgICAgICAgICAgIB0dHw=="
+      }
+    },
+    {
+      "key": "t4",
+      "name": "Le chat de Manon",
+      "image": {
+        "size": 16,
+        "palette": "base-v1",
+        "pixels": "Hx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8DAx8fHx8fHwMDHx8fHx8fAxQDHx8fHwMUAx8fHx8fHwMUFAMDAwMUFAMfHx8fHx8DAwMDAwMDAwMDHx8fHx8DAwMDAwMDAwMDAwMfHx8fAwMXFwMDAwMXFwMDHx8fHwMDFwEDAwMDFwEDAx8fHx8DAwMDAwMDAwMDAwMfHx8fAxgDAwMUFAMDAxgDHx8fHx8DAwMDAwMDAwMDHx8fHx8fHwMDAwMDAwMDHx8fHx8fHx8fAwMDAwMDHx8fHx8fHx8fAwMDAwMDAwMfHx8fHx8fAwMDAwMDAwMDAx8fHw=="
+      }
+    },
+    {
+      "key": "t5",
+      "name": "Yanis",
+      "image": {
+        "size": 16,
+        "palette": "base-v1",
+        "pixels": "FhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYSEhISEhIWFhYWFhYWFhYSEiAgEhISEhYWFhYWFhYWDg4ODg4ODg4ODg4WFhYWFgEREREREREBFhYWFhYWFhYBEQEREQERARYWFhYWFhYREREREREREQ4OFhYWFhYWFhEREREREREOFhYWFhYWFhYWEREGBhEOFhYWFhYWFhYWFhYREREOFhYWFhYWFhYWFhYWDg4ODhYWFhYWFhYWFhYKCgoKCgoKChYWFhYWFgoKCgoKCgoKCgoKBRYWFgoKCgoKCgoKCgoKCgUFFg=="
+      }
+    },
+    {
+      "key": "t6",
+      "name": "Chloé",
+      "image": {
+        "size": 16,
+        "palette": "base-v1",
+        "pixels": "Hh4eHh4eBAQEBB4eHh4eHh4eHh4eHgQJBAQeHh4eHh4eHh4eHgQEBAQEBB4eHh4eHh4eHgQJBAQEBAQEHh4eHh4eHh4EBAQEBAQEBB4eHh4eHh4eBAQEBAQEBAQeHh4eHh4eHgQaGhoaGhoEHh4eHh4eHh4EGgEaGgEaBB4eHh4eHh4aGhoaGhoaGhUVHh4eHh4eHhoVGhoaGhUVHh4eHh4eHh4eGhoODhoVHh4eHh4eHh4eHh4aGhoVHh4eHh4eHh4eHh4eFRUVFR4eHh4eHh4eHh4UFBQUFBQUFB4eHh4eHhQUFBQUFBQUFBQUDR4eHhQUFBQUFBQUFBQUFA0NHg=="
+      }
+    }
+  ],
+  "logos": [
+    {
+      "key": "t8",
+      "name": "Sophia Office",
+      "image": {
+        "size": 16,
+        "palette": "base-v1",
+        "pixels": "GRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZBwcHBwcHGRkZGRkZGRkHBwsLCwsHBwcHBxkZGRkHCwsLCwsLCwsHBwcHGRkZBwcHBwcHBwcHBwcHBwcZGRkZBwcHBwcHBwcHBwcZGRkZGRkZGQYGGRkZGRkZGRkZGRkZGRkGBhkZGRkZGRkZGRkZGRkGBhkZGRkZGRkZGRkZGRkZBgYZGRkZGRkZGRkZGRkZBgYZGRkZGRkZGRkZEBAQEBAQEBAgICAgICAgIBAQEBAQEBAQEA8PDw8PDw8MDBAQEBAQEBAQDw8PDw8PDAwMDBAQEBAQEBAPDw8PDw=="
+      }
+    }
+  ]
+}

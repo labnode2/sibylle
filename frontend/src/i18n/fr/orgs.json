@@ -1,0 +1,77 @@
+{
+  "start": {
+    "title": "Bienvenue sur Sybille",
+    "lead": "Rejoins une rédaction avec le code qu'on t'a donné, ou crée la tienne et invites-y tes collègues.",
+    "join": "Rejoindre avec ce code",
+    "create": "Créer une rédaction"
+  },
+  "create": {
+    "title": "Créer une rédaction",
+    "name": "NOM DE LA RÉDACTION",
+    "background": "FOND DE LA CARTE",
+    "submit": "Créer la rédaction",
+    "editor": "TU EN PRENDS LA RÉDACTION EN CHEF"
+  },
+  "join": {
+    "invitedBy": "INVITATION D'{{pseudo}}",
+    "members_one": "{{count}} membre",
+    "members_other": "{{count}} membres",
+    "places_one": "{{count}} place restante",
+    "places_other": "{{count}} places restantes",
+    "code": "CODE D'ACCÈS",
+    "valid": "VALIDE",
+    "pseudo": "TON PSEUDO DANS CETTE RÉDACTION",
+    "private": "TES NOM ET PRÉNOM RESTENT PRIVÉS",
+    "avatar": "TON AVATAR",
+    "draw": "Dessiner le mien",
+    "drawLater": "L'éditeur pixel art arrive bientôt",
+    "charterTitle": "Lire la charte de la rédaction",
+    "accept": "J'accepte la charte de la rédaction",
+    "submit": "Rejoindre la rédaction",
+    "later": "TOUT SE CHANGE ENSUITE DANS TON PROFIL",
+    "invalid": "Cette invitation n'est plus valable : elle a expiré, elle a été retirée ou il n'y a plus de place.",
+    "back": "Retour",
+    "already": "Tu fais déjà partie de cette rédaction.",
+    "open": "Ouvrir la rédaction"
+  },
+  "backgrounds": {
+    "mer": "Mer",
+    "aube": "Aube",
+    "nuit": "Nuit",
+    "foret": "Forêt",
+    "papier": "Papier",
+    "brique": "Brique"
+  },
+  "switcher": {
+    "title": "Mes rédactions",
+    "more": "Rejoindre ou créer une rédaction",
+    "edition": "ÉDITION {{title}}",
+    "logout": "Se déconnecter"
+  },
+  "une": {
+    "edition": "ÉDITION {{title}}",
+    "hello": "Bonjour {{pseudo}}",
+    "soon": "Les pronos arrivent bientôt dans cette édition.",
+    "switch": "Changer de rédaction"
+  },
+  "invite": {
+    "title": "Inviter dans la rédaction",
+    "link": "LIEN D'INVITATION",
+    "places": "Nombre de places",
+    "placesValue_one": "{{count}} place",
+    "placesValue_other": "{{count}} places",
+    "duration": "Durée de validité",
+    "days_one": "{{count}} jour",
+    "days_other": "{{count}} jours",
+    "create": "Créer le lien",
+    "url": "LIEN À PARTAGER",
+    "once": "COPIE-LE MAINTENANT : IL NE SERA PLUS AFFICHÉ",
+    "copy": "Copier",
+    "copied": "Copié",
+    "email": "INVITATION PAR E-MAIL",
+    "address": "ADRESSE",
+    "send": "Envoyer l'invitation",
+    "sent": "Invitation envoyée à {{email}}.",
+    "code": "CODE D'ACCÈS"
+  }
+}

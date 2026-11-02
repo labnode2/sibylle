@@ -1,0 +1,34 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+frontend/dist/
+playwright-report/
+test-results/
+*.log
+
+# Secrets and local settings
+.env
+deploy/.env
+!*.env.example
+
+# Local data
+data/
+.fake-clock
+
+# Editors and systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp

@@ -1,0 +1,36 @@
+{
+  "masthead": {
+    "kicker": "LA GAZETTE DE",
+    "name": "Sibylle",
+    "ball": "La boule de cristal de Sibylle"
+  },
+  "stepper": {
+    "less": "Moins",
+    "more": "Plus"
+  },
+  "laurels_one": "{{count}} laurier",
+  "laurels_other": "{{count}} lauriers",
+  "laurelsWord": "lauriers",
+  "tabs": {
+    "label": "Navigation principale",
+    "une": "LA UNE",
+    "pronos": "PRONOS",
+    "profile": "PROFIL"
+  },
+  "shell": {
+    "loading": "Chargement…",
+    "offline": "Tu es hors ligne : tu peux relire la dernière édition, mais parier demande une connexion.",
+    "notFound": "Cette page n'existe pas.",
+    "backHome": "Retour à la une",
+    "error": "Une erreur est survenue. Réessaie dans un instant."
+  },
+  "fields": {
+    "invalid": "Ce champ n'est pas valide.",
+    "string_too_short": "Trop court.",
+    "string_too_long": "Trop long.",
+    "string_pattern_mismatch": "Format invalide.",
+    "missing": "Champ obligatoire.",
+    "out_of_range": "Valeur hors limites.",
+    "unknown": "Valeur inconnue."
+  }
+}
