@@ -13,6 +13,10 @@ import {
 } from '../features/auth/AuthPages';
 import { RequireAuth } from '../features/auth/RequireAuth';
 import { CreateOrgPage, HomeRedirect, JoinPage, StartPage } from '../features/orgs/OrgPages';
+import { AdminLayout } from '../features/admin/AdminLayout';
+import { MembersPage } from '../features/admin/MembersPage';
+import { OrgSettingsPage } from '../features/admin/OrgSettingsPage';
+import { ReportsPage } from '../features/admin/ReportsPage';
 import { LeaderboardPage } from '../features/leaderboard/LeaderboardPage';
 import { OrgSwitcherPage } from '../features/orgs/OrgSwitcher';
 import { CreatePronoPage } from '../features/pronos/CreatePronoPage';
@@ -98,6 +102,15 @@ export const router = createBrowserRouter([
           { path: 'pronos/nouveau', element: <CreatePronoPage /> },
           { path: 'pronos/:pronoId', element: <PronoPage /> },
           { path: 'classement', element: <LeaderboardPage /> },
+          {
+            path: 'reglages',
+            element: <AdminLayout />,
+            children: [
+              { index: true, element: <OrgSettingsPage /> },
+              { path: 'membres', element: <MembersPage /> },
+              { path: 'signalements', element: <ReportsPage /> },
+            ],
+          },
         ],
       },
     ],

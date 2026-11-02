@@ -3,7 +3,8 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Response
+from sqlalchemy import select
 
 from sibylle.api.deps import CurrentAccount, Db, Limits, client_ip, limits, require
 from sibylle.api.errors import AppError
@@ -55,6 +56,25 @@ async def create_invitation(
     return InvitationCreated(invitation=invitation_out(invitation), url=None)
 
 
+@router.get("/orgs/{org_id}/invitations")
+async def list_invitations(org_id: uuid.UUID, member: Inviter, session: Db) -> list[InvitationOut]:
+    """Every invitation of the newsroom, newest first, revoked ones included."""
+    rows = await session.scalars(
+        select(Invitation)
+        .where(Invitation.org_id == org_id)
+        .order_by(Invitation.created_at.desc(), Invitation.id.desc())
+    )
+    return [invitation_out(i) for i in rows]
+
+
+@router.delete("/orgs/{org_id}/invitations/{invitation_id}", status_code=204)
+async def revoke_invitation(
+    org_id: uuid.UUID, invitation_id: uuid.UUID, member: Inviter, session: Db
+) -> Response:
+    await invitations.revoke(session, org_id, invitation_id)
+    return Response(status_code=204)
+
+
 @router.post("/join/preview")
 async def preview_join(body: JoinSource, account: CurrentAccount, session: Db) -> JoinPreview:
     data = await invitations.preview(session, account, token=body.token, code=body.code)
@@ -69,7 +89,10 @@ async def join(
     session: Db,
     rate: Annotated[Limits, Depends(limits)],
 ) -> Joined:
-    rate.join.hit(f"ip:{client_ip(request)}")
+    rate.join.check(f"account:{account.id}")
+    rate.join_ip.check(f"ip:{client_ip(request)}")
+    rate.join.add(f"account:{account.id}")
+    rate.join_ip.add(f"ip:{client_ip(request)}")
     org, member = await invitations.join(
         session,
         account,

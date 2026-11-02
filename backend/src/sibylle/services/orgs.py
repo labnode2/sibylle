@@ -10,9 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle import clock
 from sibylle.api.errors import AppError
-from sibylle.db.models import Account, Membership, Organisation, Section
+from sibylle.db.models import Account, LedgerEntry, Membership, Organisation, Prono, Section
 from sibylle.domain.content import BACKGROUND_KEYS, DEFAULT_CHARTER
-from sibylle.domain.ledger import starting_balance
+from sibylle.domain.ledger import adjustment, starting_balance
 from sibylle.domain.pixels import PixelImageError, validate_pixel_image
 from sibylle.realtime import bus
 from sibylle.services import ledger
@@ -173,3 +173,218 @@ async def update_profile(
 async def unlocked_colors(session: AsyncSession, member: Membership) -> set[int]:
     """Colours beyond the base palette that the member unlocked (collection, US7)."""
     return set()
+
+
+# The editor's settings (US6)
+
+_SETTINGS = (
+    "title",
+    "starting_balance",
+    "max_base_gain",
+    "early_bird_pct",
+    "early_bird_count",
+    "editor_note",
+    "charter",
+)
+
+
+async def update_settings(
+    session: AsyncSession, org: Organisation, changes: dict[str, Any]
+) -> Organisation:
+    """The card and the laurels. A new starting balance applies to newcomers and to the next
+    season; a new ceiling, to the next pronos."""
+    if "background_key" in changes:
+        if changes["background_key"] not in BACKGROUND_KEYS:
+            raise AppError("validation_error", {"background_key": "unknown"})
+        org.background_key = changes["background_key"]
+    if "logo" in changes:
+        org.logo = checked_drawing("logo", changes["logo"]) if changes["logo"] else None
+    for name in _SETTINGS:
+        if name in changes:
+            setattr(org, name, changes[name])
+    if "editor_note" in changes:
+        org.editor_note = (org.editor_note or "").strip() or None
+    await session.flush()
+    return org
+
+
+async def renew_access_code(session: AsyncSession, org: Organisation) -> str:
+    """A new code; the old one stops working at once."""
+    org.access_code = await new_access_code(session, org.title)
+    await session.flush()
+    return org.access_code
+
+
+async def disable_access_code(session: AsyncSession, org: Organisation) -> None:
+    org.access_code = None
+    await session.flush()
+
+
+async def _active_member(
+    session: AsyncSession, org_id: uuid.UUID, member_id: uuid.UUID, *, lock: bool = False
+) -> Membership:
+    query = select(Membership).where(
+        Membership.id == member_id,
+        Membership.org_id == org_id,
+        Membership.status == "active",
+    )
+    member = await session.scalar(query.with_for_update() if lock else query)
+    if member is None:
+        raise AppError("not_found")
+    return member
+
+
+async def _keeps_an_editor(session: AsyncSession, member: Membership) -> None:
+    """Refuses to take away the newsroom's last active editor."""
+    if member.role != "editor":
+        return
+    editors = await session.scalar(
+        select(func.count())
+        .select_from(Membership)
+        .where(
+            Membership.org_id == member.org_id,
+            Membership.role == "editor",
+            Membership.status == "active",
+        )
+    )
+    if int(editors or 0) <= 1:
+        raise AppError("last_editor")
+
+
+async def change_role(
+    session: AsyncSession, org_id: uuid.UUID, member_id: uuid.UUID, role: str
+) -> Membership:
+    member = await _active_member(session, org_id, member_id, lock=True)
+    if role != member.role:
+        if role != "editor":
+            await _keeps_an_editor(session, member)
+        member.role = role
+        await session.flush()
+        await bus.publish(
+            session,
+            "member.updated",
+            {"member": public_member(member)},
+            topics=[f"org:{org_id}"],
+        )
+    return member
+
+
+async def remove_member(session: AsyncSession, org_id: uuid.UUID, member_id: uuid.UUID) -> None:
+    """The member leaves the newsroom: their bets and stakes stay, their screens stop at once.
+    Coming back, they find their profile again, as a reader."""
+    member = await _active_member(session, org_id, member_id, lock=True)
+    await _keeps_an_editor(session, member)
+    member.status = "left"
+    member.left_at = clock.now()
+    member.role = "reader"
+    await session.flush()
+    await bus.publish(
+        session,
+        "member.left",
+        {"member": public_member(member)},
+        topics=[f"org:{org_id}"],
+        revoke={"account_id": str(member.account_id), "org_id": str(org_id)},
+    )
+
+
+async def adjust_laurels(
+    session: AsyncSession, editor: Membership, member_id: uuid.UUID, amount: int, reason: str
+) -> LedgerEntry:
+    """Adds or takes laurels from a member's balance, with a reason; the score stays."""
+    member = await _active_member(session, editor.org_id, member_id)
+    return await ledger.append(
+        session,
+        member.id,
+        adjustment(amount),
+        reason=reason,
+        actor_membership_id=editor.id,
+    )
+
+
+# Sections
+
+
+async def active_sections(session: AsyncSession, org_id: uuid.UUID) -> list[Section]:
+    return list(
+        (
+            await session.scalars(
+                select(Section)
+                .where(Section.org_id == org_id, Section.archived_at.is_(None))
+                .order_by(Section.position, Section.name)
+            )
+        ).all()
+    )
+
+
+async def _check_section_name(
+    session: AsyncSession, org_id: uuid.UUID, name: str, *, except_id: uuid.UUID | None = None
+) -> Section | None:
+    """The archived section of that name, if any; a refusal when an active one has it."""
+    query = select(Section).where(
+        Section.org_id == org_id, func.lower(Section.name) == name.lower()
+    )
+    if except_id is not None:
+        query = query.where(Section.id != except_id)
+    same = await session.scalar(query)
+    if same is not None and same.archived_at is None:
+        raise AppError("validation_error", {"name": "taken"})
+    return same
+
+
+def _renumber(sections: list[Section]) -> None:
+    for position, section in enumerate(sections):
+        section.position = position
+
+
+async def create_section(session: AsyncSession, org_id: uuid.UUID, name: str) -> Section:
+    """A new section at the end; an archived one of the same name comes back instead."""
+    sections = await active_sections(session, org_id)
+    section = await _check_section_name(session, org_id, name)
+    if section is None:
+        section = Section(org_id=org_id, name=name)
+        session.add(section)
+    section.archived_at = None
+    _renumber([*sections, section])
+    await session.flush()
+    return section
+
+
+async def update_section(
+    session: AsyncSession,
+    org_id: uuid.UUID,
+    section_id: uuid.UUID,
+    *,
+    name: str | None,
+    position: int | None,
+) -> Section:
+    sections = await active_sections(session, org_id)
+    section = next((s for s in sections if s.id == section_id), None)
+    if section is None:
+        raise AppError("not_found")
+    if name is not None and name != section.name:
+        await _check_section_name(session, org_id, name, except_id=section.id)
+        section.name = name
+    if position is not None:
+        sections.remove(section)
+        sections.insert(min(position, len(sections)), section)
+        _renumber(sections)
+    await session.flush()
+    return section
+
+
+async def delete_section(session: AsyncSession, org_id: uuid.UUID, section_id: uuid.UUID) -> None:
+    """Deleted when unused, archived otherwise; the last section always stays."""
+    sections = await active_sections(session, org_id)
+    section = next((s for s in sections if s.id == section_id), None)
+    if section is None:
+        raise AppError("not_found")
+    if len(sections) == 1:
+        raise AppError("invalid_state")
+    used = await session.scalar(select(Prono.id).where(Prono.section_id == section.id).limit(1))
+    if used is None:
+        await session.delete(section)
+    else:
+        section.archived_at = clock.now()
+    sections.remove(section)
+    _renumber(sections)
+    await session.flush()

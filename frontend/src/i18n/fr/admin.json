@@ -1,0 +1,100 @@
+{
+  "title": "Réglages de la rédaction",
+  "nav": "Réglages",
+  "editorOnly": "Ces réglages sont réservés à la rédaction en chef.",
+  "tabs": {
+    "card": "CARTE ET LAURIERS",
+    "members": "MEMBRES",
+    "reports": "SIGNALEMENTS"
+  },
+  "card": {
+    "title": "La carte",
+    "name": "NOM DE LA RÉDACTION",
+    "logo": "LOGO",
+    "background": "FOND DE LA CARTE"
+  },
+  "laurels": {
+    "title": "Les lauriers",
+    "maxGain": "Gain fixe maximum",
+    "maxGainHint": "CHOISI À LA CRÉATION DE CHAQUE PRONO",
+    "starting": "Solde de départ",
+    "startingHint": "À L'ARRIVÉE ET À CHAQUE SAISON",
+    "earlyPct": "Bonus lève-tôt",
+    "earlyPctHint": "EN PART DU GAIN FIXE",
+    "earlyCount": "Premiers joueurs",
+    "earlyCountHint": "QUI REÇOIVENT LE BONUS LÈVE-TÔT"
+  },
+  "words": {
+    "title": "Les mots de la rédaction",
+    "note": "LE MOT DE LA RÉDACTION EN CHEF (SUR LA UNE)",
+    "charter": "LA CHARTE (ACCEPTÉE EN REJOIGNANT)"
+  },
+  "save": "Enregistrer les réglages",
+  "saved": "Réglages enregistrés.",
+  "sections": {
+    "title": "Les rubriques",
+    "hint": "Une rubrique déjà utilisée est archivée : ses pronos la gardent.",
+    "edit": "Renommer",
+    "ok": "OK",
+    "rename": "Nouveau nom de {{name}}",
+    "up": "Monter {{name}}",
+    "down": "Descendre {{name}}",
+    "remove": "Supprimer",
+    "new": "Nouvelle rubrique",
+    "newPlaceholder": "Foot, Bureau, Projet…",
+    "add": "Ajouter"
+  },
+  "roles": {
+    "reader": "Lecteur·rice",
+    "journalist": "Journaliste",
+    "editor": "Rédaction en chef"
+  },
+  "members": {
+    "title": "Les membres",
+    "count_one": "{{count}} MEMBRE",
+    "count_other": "{{count}} MEMBRES",
+    "you": "TOI",
+    "role": "Rôle de {{pseudo}}",
+    "adjust": "Ajuster les lauriers",
+    "amount": "LAURIERS À AJOUTER OU À RETIRER",
+    "amountHint": "−15 pour en retirer 15. Le score ne change pas.",
+    "reason": "MOTIF (VISIBLE DANS SON RELEVÉ)",
+    "adjustSubmit": "Ajuster les lauriers de {{pseudo}}",
+    "adjusted": "Lauriers ajustés : {{amount}}.",
+    "remove": "Retirer de la rédaction",
+    "removeConfirm": "Retirer {{pseudo}} ? Ses paris restent.",
+    "removeYes": "Retirer",
+    "keep": "Garder"
+  },
+  "invitations": {
+    "title": "Les invitations",
+    "link": "Lien d'invitation",
+    "uses": "{{used}} SUR {{max}} PLACES",
+    "until": "JUSQU'AU {{date}}",
+    "revoke": "Révoquer",
+    "revoked": "RÉVOQUÉE",
+    "expired": "EXPIRÉE",
+    "full": "COMPLÈTE",
+    "active": "EN COURS"
+  },
+  "code": {
+    "title": "Le code d'accès",
+    "hint": "Quiconque a le code peut rejoindre la rédaction. Un nouveau code remplace l'ancien aussitôt.",
+    "none": "Aucun code : on n'entre que par invitation.",
+    "create": "Créer un code",
+    "renew": "Nouveau code",
+    "disable": "Désactiver le code"
+  },
+  "reports": {
+    "none": "Aucun signalement ouvert.",
+    "kind": {
+      "result_error": "RÉSULTAT ERRONÉ",
+      "content": "CONTENU"
+    },
+    "by": "Signalé par {{pseudo}}",
+    "correctHint": "Pour corriger le résultat, ouvre le prono : « Corriger le résultat ».",
+    "note": "NOTE POUR SON AUTEUR·RICE (FACULTATIF)",
+    "dismiss": "Rejeter",
+    "resolve": "Clore : c'est réglé"
+  }
+}

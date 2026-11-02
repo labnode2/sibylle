@@ -1,10 +1,9 @@
-"""Pronos and sections of a newsroom."""
+"""A newsroom's pronos."""
 
 import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Query, Response
-from sqlalchemy import select
 
 from sibylle.api.deps import CurrentMember, Db
 from sibylle.api.schemas import (
@@ -15,23 +14,11 @@ from sibylle.api.schemas import (
     PronoSummary,
     ReactionKind,
     RejectIn,
-    SectionOut,
     ValidateIn,
 )
-from sibylle.db.models import Section
 from sibylle.services import pronos
 
 router = APIRouter(prefix="/orgs/{org_id}", tags=["pronos"])
-
-
-@router.get("/sections")
-async def list_sections(org_id: uuid.UUID, member: CurrentMember, session: Db) -> list[SectionOut]:
-    rows = await session.scalars(
-        select(Section)
-        .where(Section.org_id == org_id, Section.archived_at.is_(None))
-        .order_by(Section.position, Section.name)
-    )
-    return [SectionOut.model_validate(s) for s in rows]
 
 
 @router.get("/pronos")

@@ -244,3 +244,31 @@
 .linkButton {
   align-self: center;
 }
+
+/* The member's own reports and what became of them. */
+.myReports {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.myReports ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: 500 13px/1.4 var(--font-mono);
+}
+
+.myReports q {
+  display: block;
+  font: italic 500 14px/1.4 var(--font-text);
+}
+
+.label {
+  font: 600 11px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}

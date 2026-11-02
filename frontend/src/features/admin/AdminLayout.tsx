@@ -1,0 +1,45 @@
+// The editor's settings, under /o/:orgId/reglages: the card and the laurels, the members, the
+// reports. Other roles get a short notice (the server refuses them anyway).
+import { useTranslation } from 'react-i18next';
+import { NavLink, Outlet, useParams } from 'react-router';
+
+import { useOrg } from '../orgs/api';
+import { useReports } from './api';
+import styles from './admin.module.css';
+
+function OpenReports({ orgId }: { orgId: string }) {
+  const reports = useReports(orgId);
+  const count = reports.data?.length ?? 0;
+  return count > 0 ? <span className={styles.badge}>{count}</span> : null;
+}
+
+export function AdminLayout() {
+  const { t } = useTranslation('admin');
+  const { orgId = '' } = useParams();
+  const org = useOrg(orgId);
+  if (!org.data) return <p role="status">{t('common:shell.loading')}</p>;
+  if (org.data.my_membership.role !== 'editor') {
+    return <p className={styles.alert}>{t('editorOnly')}</p>;
+  }
+  const base = `/o/${orgId}/reglages`;
+  const link = ({ isActive }: { isActive: boolean }) =>
+    `${styles.tab} ${isActive ? styles.tabActive : ''}`;
+
+  return (
+    <div className={styles.page}>
+      <h1 className={styles.title}>{t('title')}</h1>
+      <nav className={styles.tabs} aria-label={t('nav')}>
+        <NavLink to={base} end className={link}>
+          {t('tabs.card')}
+        </NavLink>
+        <NavLink to={`${base}/membres`} className={link}>
+          {t('tabs.members')}
+        </NavLink>
+        <NavLink to={`${base}/signalements`} className={link}>
+          {t('tabs.reports')} <OpenReports orgId={orgId} />
+        </NavLink>
+      </nav>
+      <Outlet />
+    </div>
+  );
+}

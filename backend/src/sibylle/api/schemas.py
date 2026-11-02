@@ -358,6 +358,7 @@ class PronoDetail(PronoSummary):
     my_reactions: list[str]
     # Why a journalist turned the proposal down; its author sees it.
     rejected_reason: str | None = None
+    my_reports: list[ReportOut] = []
     events: list[PronoEventOut]
     special_edition: SpecialEditionOut | None = None
 
@@ -465,6 +466,26 @@ class ReportOut(BaseModel):
     message: str | None
     state: Literal["open", "resolved", "dismissed"]
     created_at: datetime
+    handled_at: datetime | None = None
+    # The editor's note to the author when handling it.
+    resolution_note: str | None = None
+
+
+class PronoRef(BaseModel):
+    id: uuid.UUID
+    question: str
+
+
+class ReportDetail(ReportOut):
+    """A report as the editor sees it, with its prono and its author."""
+
+    prono: PronoRef
+    reporter: MemberPublic
+
+
+class HandleIn(BaseModel):
+    state: Literal["resolved", "dismissed"]
+    note: Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)] | None = None
 
 
 class LeaderboardRow(BaseModel):
@@ -507,3 +528,74 @@ class FrontPage(BaseModel):
     leaderboard_top: list[LeaderboardRow]
     games: list[dict[str, Any]]
     editor_note: str | None
+
+
+# The editor's settings (US6)
+
+Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=5000)]
+
+
+class OrgPatch(BaseModel):
+    title: Title | None = None
+    logo: PixelImage | None = None
+    background_key: str | None = None
+    starting_balance: int | None = Field(default=None, ge=0)
+    max_base_gain: int | None = Field(default=None, ge=0)
+    early_bird_pct: int | None = Field(default=None, ge=0, le=100)
+    early_bird_count: int | None = Field(default=None, ge=0)
+    editor_note: Annotated[str, StringConstraints(max_length=500)] | None = None
+    charter: Text | None = None
+
+    @model_validator(mode="after")
+    def _no_null_settings(self) -> Self:
+        """Only the logo and the note can be removed; the other settings always have a value."""
+        for name in self.model_fields_set - {"logo", "editor_note"}:
+            if getattr(self, name) is None:
+                raise ValueError(f"{name} cannot be null")
+        return self
+
+
+class AccessCodeOut(BaseModel):
+    access_code: str
+
+
+class RoleIn(BaseModel):
+    role: Role
+
+
+class AdjustmentIn(BaseModel):
+    amount: int
+    reason: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+
+    @model_validator(mode="after")
+    def _not_zero(self) -> Self:
+        if self.amount == 0:
+            raise ValueError("an adjustment cannot be zero")
+        return self
+
+
+class LedgerEntryOut(BaseModel):
+    id: int
+    kind: str
+    amount: int
+    score_delta: int
+    reason: str | None
+    prono: PronoRef | None
+    created_at: datetime
+
+
+class LedgerPage(BaseModel):
+    items: list[LedgerEntryOut]
+    next_cursor: str | None
+
+
+SectionName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)]
+
+
+class SectionIn(BaseModel):
+    name: SectionName
+
+
+class SectionPatch(BaseModel):
+    name: SectionName | None = None
+    position: int | None = Field(default=None, ge=0)

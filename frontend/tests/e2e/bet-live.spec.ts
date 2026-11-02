@@ -4,7 +4,15 @@
 // invitation link to the first bet in less than 2 minutes.
 import { expect, test, type Page } from '@playwright/test';
 
-import { advanceClock, call, createNewsroom, joinWith, newPerson, resetClock } from './helpers';
+import {
+  advanceClock,
+  call,
+  createNewsroom,
+  invitationPath,
+  joinWith,
+  newPerson,
+  resetClock,
+} from './helpers';
 
 /** The prono's answers, read from the page's session. */
 async function optionIds(page: Page, orgId: string, pronoId: string): Promise<string[]> {
@@ -26,8 +34,7 @@ test('a bet shows up live, then the prono closes', async ({ browser }, testInfo)
   const ines = await newPerson(browser, testInfo, 'Inès');
   await createNewsroom(ines, 'Sophia Office', 'Inès');
   const orgId = new URL(ines.url()).pathname.split('/')[2]!;
-  await ines.getByRole('button', { name: 'Créer le lien' }).click();
-  const invitation = new URL(await ines.getByLabel('LIEN À PARTAGER').inputValue()).pathname;
+  const invitation = await invitationPath(ines);
 
   await ines.goto(`/o/${orgId}/pronos/nouveau`);
   await ines.getByLabel('LA QUESTION').fill('Qui gagnera le derby de dimanche ?');

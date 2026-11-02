@@ -1,5 +1,6 @@
 """Ways into a newsroom: invitation links, nominative e-mail invitations and the access code."""
 
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
@@ -171,3 +172,15 @@ async def join(
         topics=[f"org:{entry.org.id}"],
     )
     return entry.org, member
+
+
+async def revoke(session: AsyncSession, org_id: uuid.UUID, invitation_id: uuid.UUID) -> None:
+    """The link stops letting people in at once; revoking twice changes nothing."""
+    invitation = await session.scalar(
+        select(Invitation).where(Invitation.id == invitation_id, Invitation.org_id == org_id)
+    )
+    if invitation is None:
+        raise AppError("not_found")
+    if invitation.revoked_at is None:
+        invitation.revoked_at = clock.now()
+        await session.flush()

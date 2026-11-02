@@ -73,5 +73,11 @@
     "send": "Envoyer à la rédaction en chef",
     "sent": "Merci, la rédaction en chef est prévenue.",
     "close": "Fermer"
+  },
+  "myReports": {
+    "title": "TES SIGNALEMENTS",
+    "open": "en attente de la rédaction en chef",
+    "resolved": "réglé",
+    "dismissed": "rejeté"
   }
 }

@@ -10,6 +10,7 @@ import { AvatarStack, PixelImage } from '../../ui/PixelImage';
 import { useFormErrors } from '../forms';
 import { useOrg } from '../orgs/api';
 import { DesignatePanel } from '../results/DesignatePanel';
+import { MyReports } from '../results/MyReports';
 import { ReportForm } from '../results/ReportForm';
 import { SpecialEdition } from '../results/SpecialEdition';
 import { usePlaceBet, useProno, type Bet, type PronoDetail } from './api';
@@ -433,6 +434,7 @@ export function PronoPage() {
         <div className={styles.page}>
           <People bets={prono.bets} />
           <Rules prono={prono} />
+          <MyReports reports={prono.my_reports ?? []} />
           {!prono.special_edition && (
             <ReportForm orgId={orgId} pronoId={prono.id} initialKind="content" />
           )}

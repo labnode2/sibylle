@@ -8,7 +8,6 @@ import { Link, useParams } from 'react-router';
 import { formatDate, formatNumber } from '../../i18n';
 import { ButtonLink, Card, Kicker, Laurel } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
-import { InvitePanel } from '../admin/InvitePanel';
 import { useOrg } from '../orgs/api';
 import type { PronoSummary } from '../pronos/api';
 import { ProposalsPanel } from '../pronos/ProposalsPanel';
@@ -193,7 +192,6 @@ export function UnePage() {
       <Link to="/redactions" className={styles.more}>
         {t('orgs:une.switch')}
       </Link>
-      {me.role === 'editor' && <InvitePanel orgId={orgId} accessCode={org.data.access_code} />}
     </div>
   );
 }

@@ -148,7 +148,10 @@ class Limits:
     resend_verification: RateLimiter = field(
         default_factory=lambda: RateLimiter(3, timedelta(hours=1))
     )
-    join: RateLimiter = field(default_factory=lambda: RateLimiter(30, timedelta(hours=1)))
+    # Joining is limited per account, against guessing access codes, and much more loosely per
+    # address: a whole office may join from behind one.
+    join: RateLimiter = field(default_factory=lambda: RateLimiter(10, timedelta(hours=1)))
+    join_ip: RateLimiter = field(default_factory=lambda: RateLimiter(300, timedelta(hours=1)))
 
 
 def limits(request: Request) -> Limits:

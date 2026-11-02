@@ -6,7 +6,9 @@ import { Navigate, useParams } from 'react-router';
 
 import { ApiError } from '../api/client';
 import { useTopic } from '../api/realtime';
+import { reportsKey } from '../features/admin/api';
 import { orgKey, useOrg } from '../features/orgs/api';
+import { pronoKey } from '../features/pronos/api';
 import { EditionLink } from '../features/orgs/OrgSwitcher';
 import { ButtonLink, Icon, Laurel } from '../ui/components';
 import { PixelImage } from '../ui/PixelImage';
@@ -21,6 +23,13 @@ export function OrgLayout() {
   useTopic('me', (event) => {
     if (event.event === 'balance.changed' && event.data.org_id === orgId) {
       void client.invalidateQueries({ queryKey: orgKey(orgId) });
+    }
+    // A new report for the editor; a handled one for its author, on the prono's page.
+    if (event.event === 'report.created') {
+      void client.invalidateQueries({ queryKey: reportsKey(orgId) });
+    }
+    if (event.event === 'report.handled') {
+      void client.invalidateQueries({ queryKey: pronoKey(orgId, String(event.data.prono_id)) });
     }
   });
 
@@ -39,6 +48,7 @@ export function OrgLayout() {
         </>
       }
       edition={<EditionLink org={org.data} />}
+      admin={me.role === 'editor'}
       action={
         <ButtonLink to={`/o/${orgId}/pronos/nouveau`}>
           <Icon name="plus" size={12} /> {t(me.role === 'reader' ? 'list.propose' : 'list.new')}

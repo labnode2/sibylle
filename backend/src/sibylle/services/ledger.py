@@ -7,7 +7,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle import clock
-from sibylle.db.models import LedgerEntry, Membership, Season
+from sibylle.api.errors import AppError
+from sibylle.db.models import LedgerEntry, Membership, Prono, Season
 from sibylle.domain.ledger import Effect, LedgerKind, reversal
 from sibylle.domain.seasons import season_bounds, season_of
 from sibylle.realtime import bus
@@ -139,3 +140,23 @@ async def check_caches(session: AsyncSession, org_id: uuid.UUID) -> list[CacheMi
         for member_id, balance, score, ledger_balance, ledger_score in rows
         if balance != ledger_balance or score != ledger_score
     ]
+
+
+async def statement(
+    session: AsyncSession, membership_id: uuid.UUID, *, cursor: str | None, limit: int
+) -> tuple[list[tuple[LedgerEntry, str | None]], str | None]:
+    """A member's entries, newest first, each with its prono's question; then the next cursor."""
+    query = (
+        select(LedgerEntry, Prono.question)
+        .outerjoin(Prono, Prono.id == LedgerEntry.prono_id)
+        .where(LedgerEntry.membership_id == membership_id)
+    )
+    if cursor:
+        if not cursor.isdigit():
+            raise AppError("validation_error", {"cursor": "invalid"})
+        query = query.where(LedgerEntry.id < int(cursor))
+    rows = (await session.execute(query.order_by(LedgerEntry.id.desc()).limit(limit + 1))).all()
+    page: list[tuple[LedgerEntry, str | None]] = [
+        (entry, question) for entry, question in rows[:limit]
+    ]
+    return page, str(page[-1][0].id) if len(rows) > limit else None

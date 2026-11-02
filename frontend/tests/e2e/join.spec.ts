@@ -29,11 +29,16 @@ test('invite with a link and join a newsroom', async ({ browser }, testInfo) => 
   const ines = await newPerson(browser, testInfo, 'Inès');
   watchPrivacy(ines, leaks);
   await createNewsroom(ines, 'Sophia Office', 'Inès');
+  // The invitations live with the members, in the newsroom's settings.
+  await ines.getByRole('link', { name: 'RÉGLAGES' }).click();
+  await ines.getByRole('link', { name: 'MEMBRES' }).click();
 
-  for (let places = 10; places > 2; places -= 1) {
-    await ines.getByRole('button', { name: 'Moins' }).click();
+  // The settings pages have several steppers: this one is the link's number of places.
+  const places = ines.getByRole('group', { name: 'Nombre de places' });
+  for (let count = 10; count > 2; count -= 1) {
+    await places.getByRole('button', { name: 'Moins' }).click();
   }
-  await expect(ines.getByRole('group', { name: 'Nombre de places' })).toContainText('2 places');
+  await expect(places).toContainText('2 places');
   await ines.getByRole('button', { name: 'Créer le lien' }).click();
   const link = await ines.getByLabel('LIEN À PARTAGER').inputValue();
   expect(link).toMatch(/\/rejoindre\/[A-Za-z0-9_-]{40,}$/);

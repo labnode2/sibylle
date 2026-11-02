@@ -26,7 +26,7 @@ Les e-mails partent en local vers Mailpit, un faux serveur SMTP (profil `dev` du
 - Tout d'un coup : `make check` à la racine (formatage, analyse, types, tests serveur et interface, types d'API à jour).
 - Règles du jeu seules : `uv run pytest tests/unit` dans `backend/`.
 - Parcours de bout en bout : `npx playwright test` dans `frontend/` (lance l'API avec une horloge simulée ; les tests avancent l'horloge avec `sibylle clock` et exécutent les tâches du `worker` avec `sibylle jobs run`).
-  Si le port 5173 est déjà pris : `SIBYLLE_WEB_PORT=5174 npx playwright test` ; une API déjà lancée doit alors l'être avec `PUBLIC_ORIGIN=http://localhost:5174`.
+  Les tests ont leurs propres ports (API 8001, interface 5180, modifiables par `SIBYLLE_API_PORT` et `SIBYLLE_WEB_PORT`) : ils ne croisent jamais un `make dev` ouvert à côté.
 
 Attendu : tout passe, dont les propriétés Hypothesis de la cagnotte (voir [research.md](research.md), J1).
 

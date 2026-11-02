@@ -279,3 +279,36 @@ async def test_content_is_public(client: httpx.AsyncClient) -> None:
     assert len(content["avatars"]) == 7 and content["avatars"][0]["name"] == "Cami"
     assert "mer" in content["backgrounds"]
     assert "politique" in content["charter"]
+
+
+async def test_joining_is_limited_per_account_not_per_office(
+    make_account: MakeAccount, client_for: ClientFor
+) -> None:
+    """Someone guessing access codes is stopped after ten tries; their colleagues, who join from
+    behind the same address (and through the same API process), are not."""
+    from sibylle.main import create_app
+
+    app = create_app()
+
+    async def through_app(person: httpx.AsyncClient) -> httpx.AsyncClient:
+        client = httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app),
+            base_url="https://testserver",
+            headers=dict(person.headers),
+        )
+        client.cookies.set("sibylle_session", person.cookies.get("sibylle_session") or "")
+        return client
+
+    ines = await signed_in(make_account, client_for)
+    code = (await create_org(ines))["org"]["access_code"]
+    body = {"pseudo": "Devin", "avatar": AVATAR, "charter_accepted": True}
+    async with await through_app(await signed_in(make_account, client_for)) as guesser:
+        for attempt in range(10):
+            wrong = await guesser.post("/api/join", json={**body, "code": f"FAUX-{attempt:03d}"})
+            assert wrong.status_code == 409, wrong.text
+        blocked = await guesser.post("/api/join", json={**body, "code": code})
+        assert blocked.status_code == 429 and blocked.json()["error"]["code"] == "rate_limited"
+    for name in ("Cami", "Léo", "Manon"):
+        async with await through_app(await signed_in(make_account, client_for)) as colleague:
+            joined = await colleague.post("/api/join", json={**body, "code": code, "pseudo": name})
+            assert joined.status_code == 201, joined.text

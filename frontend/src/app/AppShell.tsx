@@ -43,9 +43,11 @@ export type ShellSlots = {
   edition?: ReactNode;
   /** Right side of the desktop navigation (main action). */
   action?: ReactNode;
+  /** The editor also gets the newsroom's settings. */
+  admin?: boolean;
 };
 
-export function AppShell({ account, edition, action }: ShellSlots) {
+export function AppShell({ account, edition, action, admin = false }: ShellSlots) {
   const { t } = useTranslation();
   const { orgId = '' } = useParams();
   const base = `/o/${orgId}`;
@@ -54,6 +56,7 @@ export function AppShell({ account, edition, action }: ShellSlots) {
     { to: `${base}/pronos`, label: t('tabs.pronos'), icon: 'ball' },
     { to: `${base}/classement`, label: t('tabs.ranking'), icon: 'trophy' },
     { to: `${base}/profil`, label: t('tabs.profile'), icon: 'user' },
+    ...(admin ? [{ to: `${base}/reglages`, label: t('tabs.settings'), icon: 'gear' } as Tab] : []),
   ];
   const today = formatDate(new Date(), {
     weekday: 'long',

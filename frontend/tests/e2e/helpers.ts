@@ -99,10 +99,15 @@ export function orgIdOf(page: Page): string {
   return new URL(page.url()).pathname.split('/')[2]!;
 }
 
-/** Creates an invitation link from the editor's front page and returns its path. */
+/** Creates an invitation link from the editor's members page and returns its path; the page
+ * goes back to la une. */
 export async function invitationPath(page: Page): Promise<string> {
+  const orgId = orgIdOf(page);
+  await page.goto(`/o/${orgId}/reglages/membres`);
   await page.getByRole('button', { name: 'Créer le lien' }).click();
-  return new URL(await page.getByLabel('LIEN À PARTAGER').inputValue()).pathname;
+  const path = new URL(await page.getByLabel('LIEN À PARTAGER').inputValue()).pathname;
+  await page.goto(`/o/${orgId}`);
+  return path;
 }
 
 /** Publishes a prono through the API, closing in three days unless `fields` say otherwise. */

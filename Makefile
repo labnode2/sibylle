@@ -2,6 +2,9 @@ COMPOSE = docker compose -f deploy/docker-compose.yml --env-file deploy/.env
 
 # Port de l'interface ; `make dev WEB_PORT=5199` quand 5173 est déjà pris.
 WEB_PORT ?= 5173
+# Les tests de bout en bout ont leurs propres ports (API 8001, interface 5180) : ils ne
+# croisent jamais un `make dev` ouvert à côté.
+E2E_WEB_PORT ?= 5180
 
 .DEFAULT_GOAL := help
 
@@ -76,4 +79,4 @@ check-frontend:
 	cd frontend && npm run check:api
 
 e2e: ## Parcours de bout en bout (Playwright)
-	cd frontend && SIBYLLE_WEB_PORT=$(WEB_PORT) npm run e2e
+	cd frontend && SIBYLLE_WEB_PORT=$(E2E_WEB_PORT) npm run e2e

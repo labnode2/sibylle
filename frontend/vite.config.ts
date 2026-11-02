@@ -33,7 +33,8 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        // `make dev` runs the API on 8000; the end-to-end tests on their own port.
+        target: `http://localhost:${process.env.SIBYLLE_API_PORT ?? '8000'}`,
         changeOrigin: false,
         ws: true,
       },

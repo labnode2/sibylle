@@ -40,6 +40,7 @@ Enveloppe commune : `{"type": "event", "topic": "<sujet>", "event": "<nom>", "at
 | `bet.placed` | `org` | `{prono_id, pot, bet_count}` (version courte pour les listes) |
 | `prono.resolved` | `org`, `prono` | `{prono_id, settlement_seq, kind: "resolution" \| "correction" \| "cancellation"}` ; le client recharge l'édition spéciale |
 | `report.created` | `me` (rédaction en chef) | `{report_id, prono_id, kind}` |
+| `report.handled` | `me` (auteur·rice du signalement) | `{report_id, prono_id, state}` ; le client recharge le prono, où `my_reports` donne la note de la rédaction en chef |
 | `reaction.changed` | `prono` | `{prono_id, reactions: {kind: count}}` |
 | `leaderboard.changed` | `org` | `{}` ; le client recharge le classement affiché |
 | `member.updated` | `org` | `{member: MemberPublic}` (pseudo, avatar, rôle) |

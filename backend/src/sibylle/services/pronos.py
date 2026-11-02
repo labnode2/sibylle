@@ -23,6 +23,7 @@ from sibylle.db.models import (
     PronoEvent,
     PronoOption,
     Reaction,
+    Report,
     Section,
     Settlement,
     Upload,
@@ -635,6 +636,14 @@ async def detail(session: AsyncSession, member: Membership, prono: Prono) -> dic
         "reactions": await reaction_counts(session, prono.id),
         "my_reactions": [kind for kind in REACTION_KINDS if kind in mine_reacted],
         "rejected_reason": prono.rejected_reason,
+        # The member's own reports on this prono, and what became of them.
+        "my_reports": (
+            await session.scalars(
+                select(Report)
+                .where(Report.prono_id == prono.id, Report.reporter_membership_id == member.id)
+                .order_by(Report.created_at)
+            )
+        ).all(),
         "events": [{"kind": e.kind, "at": e.created_at, "data": e.data} for e in events],
         "special_edition": await special_edition(session, prono, list(options), members),
     }

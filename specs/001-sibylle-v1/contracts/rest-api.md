@@ -70,7 +70,7 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | PATCH | `/orgs/{org}/members/{member}/role` | Réd. chef | `{role}` → `MemberPublic` ; `409 last_editor` si on retire la dernière |
 | DELETE | `/orgs/{org}/members/{member}` | Réd. chef | → `204` (retire un membre) |
 | POST | `/orgs/{org}/members/{member}/adjustments` | Réd. chef | `{amount (≠ 0), reason}` → `201 LedgerEntry` |
-| GET | `/orgs/{org}/members/me/ledger` | Membre | paginé → `[LedgerEntry]` (relevé) |
+| GET | `/orgs/{org}/members/me/ledger` | Membre | `?cursor=&limit=` → `{items: [LedgerEntry], next_cursor}` (relevé, du plus récent au plus ancien) |
 | GET | `/orgs/{org}/sections` | Membre | → `[Section]` |
 | POST | `/orgs/{org}/sections` | Réd. chef | `{name}` → `201 Section` |
 | PATCH | `/orgs/{org}/sections/{id}` | Réd. chef | `{name?, position?}` → `Section` |
@@ -102,7 +102,7 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 
 `PronoInput` = `{kind, question, section_id, options?: [label], base_gain, link_url?, image_id?, opens_at?, closes_at?, open_ended?, result_expected_at?, number_unit?}`.
 
-`PronoDetail` = `PronoSummary` + `{options: [{id, label, is_correct, count, stake_total, share_pct}], bets: [{member: MemberPublic, answer, stake, rank, placed_at, outcome, payout}], my_bet, can_rebet, pot, reactions: {kind: count}, my_reactions, events: [PronoEvent], special_edition?: {winners: [{member, payout}], pot_lost: bool, settlement_seq}}`. Pour un prono de nombre ou de date, `options` est remplacé par `distribution` (valeurs regroupées en tranches pour l'affichage).
+`PronoDetail` = `PronoSummary` + `{options: [{id, label, is_correct, count, stake_total, share_pct}], bets: [{member: MemberPublic, answer, stake, rank, placed_at, outcome, payout}], my_bet, can_rebet, pot, reactions: {kind: count}, my_reactions, events: [PronoEvent], special_edition?: {winners: [{member, payout}], pot_lost: bool, settlement_seq}, rejected_reason?, my_reports: [Report]}` (`my_reports` : les signalements du membre sur ce prono, avec la note de traitement). Pour un prono de nombre ou de date, `options` est remplacé par `distribution` (valeurs regroupées en tranches pour l'affichage).
 
 `PronoSummary` = `{id, kind, question, section, state, base_gain, opens_at, closes_at, open_ended, result_expected_at, bet_count, pot, relaunch_count, created_by: MemberPublic, image_url?}`.
 
