@@ -33,7 +33,7 @@ async function board(page: Page): Promise<string[]> {
         const [rank, member, value] = Array.from(row.children) as HTMLElement[];
         const shown = value!.querySelector('span > span') ?? value!;
         const me = row.getAttribute('aria-current') === 'true' ? ' (toi)' : '';
-        return `${rank!.textContent} ${member!.querySelector('span')!.textContent}${me} ${shown.textContent}`;
+        return `${rank!.textContent} ${member!.querySelector('a')!.textContent}${me} ${shown.textContent}`;
       }),
     );
 }

@@ -4,10 +4,8 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Response
-from sqlalchemy import select
 
 from sibylle.api.deps import CurrentMember, Db, require
-from sibylle.api.errors import AppError
 from sibylle.api.schemas import (
     AdjustmentIn,
     LedgerEntryOut,
@@ -52,24 +50,13 @@ async def list_members(org_id: uuid.UUID, member: CurrentMember, session: Db) ->
 async def update_my_profile(
     org_id: uuid.UUID, body: MemberPatch, member: CurrentMember, session: Db
 ) -> MemberSelf:
-    await orgs.update_profile(session, member, pseudo=body.pseudo, avatar=drawing(body.avatar))
-    return MemberSelf.of(member)
-
-
-@router.get("/{member_id}")
-async def get_member(
-    org_id: uuid.UUID, member_id: uuid.UUID, member: CurrentMember, session: Db
-) -> MemberPublic:
-    other = await session.scalar(
-        select(Membership).where(
-            Membership.id == member_id,
-            Membership.org_id == org_id,
-            Membership.status == "active",
-        )
+    frame = (
+        body.avatar_frame_item_id if "avatar_frame_item_id" in body.model_fields_set else orgs.KEEP
     )
-    if other is None:
-        raise AppError("not_found")
-    return MemberPublic.of(other)
+    await orgs.update_profile(
+        session, member, pseudo=body.pseudo, avatar=drawing(body.avatar), frame_item_id=frame
+    )
+    return MemberSelf.with_colors(member, await orgs.unlocked_colors(session, member))
 
 
 @router.get("/me/ledger")

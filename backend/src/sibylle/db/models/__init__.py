@@ -2,6 +2,12 @@
 
 from sibylle.db.base import Base
 from sibylle.db.models.accounts import Account, AuthSession, EmailToken
+from sibylle.db.models.collection import (
+    CatalogItem,
+    OwnedItem,
+    SecretCode,
+    SecretCodeRedemption,
+)
 from sibylle.db.models.ledger import LedgerEntry
 from sibylle.db.models.notifications import Notification
 from sibylle.db.models.orgs import Invitation, Membership, Organisation
@@ -19,6 +25,10 @@ from sibylle.db.models.seasons import Season, SeasonClosure, Trophy
 from sibylle.db.models.uploads import Upload
 
 __all__ = [
+    "SecretCodeRedemption",
+    "SecretCode",
+    "OwnedItem",
+    "CatalogItem",
     "Account",
     "AuthSession",
     "Base",

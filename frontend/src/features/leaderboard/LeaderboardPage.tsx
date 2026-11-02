@@ -2,7 +2,7 @@
 // (canvas G-Classement). Settlements and the end of a season refresh it live.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 
 import { formatDate, formatNumber } from '../../i18n';
 import { Card, Laurel } from '../../ui/components';
@@ -117,7 +117,9 @@ export function LeaderboardPage() {
                   <td className={styles.rank}>{row.rank}</td>
                   <th scope="row" className={styles.member}>
                     <PixelImage image={row.member.avatar} size={32} />
-                    <span>{row.member.pseudo}</span>
+                    <Link to={`/o/${orgId}/membres/${row.member.id}`} className={styles.memberLink}>
+                      {row.member.pseudo}
+                    </Link>
                     {row.is_me && <span className={styles.you}>{t('you')}</span>}
                   </th>
                   <td className={styles.value}>

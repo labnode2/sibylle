@@ -6,9 +6,11 @@ import { useParams } from 'react-router';
 
 import type { Org } from '../../api/types';
 import { Button, Card, Field, Icon, Kicker, Stepper } from '../../ui/components';
+import { PixelImage } from '../../ui/PixelImage';
 import { useFormErrors } from '../forms';
 import { useContent, useOrg } from '../orgs/api';
 import { AvatarPicker, BackgroundPicker } from '../orgs/pickers';
+import { PixelEditor } from '../pixel-editor/PixelEditor';
 import { useSections } from '../pronos/api';
 import { useSectionActions, useUpdateOrg } from './api';
 import styles from './admin.module.css';
@@ -40,6 +42,7 @@ function SettingsForm({ orgId, org }: { orgId: string; org: Org }) {
   const [note, setNote] = useState(org.editor_note ?? '');
   const [charter, setCharter] = useState(org.charter);
   const [saved, setSaved] = useState(false);
+  const [drawingLogo, setDrawingLogo] = useState(false);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -74,12 +77,31 @@ function SettingsForm({ orgId, org }: { orgId: string; org: Org }) {
         <span id="admin-logo" className={styles.label}>
           {t('card.logo')}
         </span>
-        <AvatarPicker
-          templates={content.data?.logos ?? []}
-          value={logo ?? null}
-          onChange={setLogo}
-          labelId="admin-logo"
-        />
+        {drawingLogo ? (
+          <PixelEditor
+            initial={logo}
+            title={t('card.drawLogo')}
+            saveLabel={t('card.takeLogo')}
+            onCancel={() => setDrawingLogo(false)}
+            onSave={(image) => {
+              setLogo(image);
+              setDrawingLogo(false);
+            }}
+          />
+        ) : (
+          <div className={styles.inline}>
+            {logo && <PixelImage image={logo} size={64} label={t('card.currentLogo')} />}
+            <AvatarPicker
+              templates={content.data?.logos ?? []}
+              value={logo ?? null}
+              onChange={setLogo}
+              labelId="admin-logo"
+            />
+            <Button variant="secondary" onClick={() => setDrawingLogo(true)}>
+              {t('card.drawLogo')}
+            </Button>
+          </div>
+        )}
         <span id="admin-background" className={styles.label}>
           {t('card.background')}
         </span>

@@ -99,6 +99,23 @@ def _seasons_close(args: argparse.Namespace) -> None:
     asyncio.run(run())
 
 
+def _secret_code_add(args: argparse.Namespace) -> None:
+    from sibylle.db.session import dispose_engine, transaction
+    from sibylle.services.collection import add_secret_code
+
+    async def run() -> None:
+        try:
+            async with transaction() as session:
+                await add_secret_code(session, args.code, args.item_key)
+            print(f"code ajouté pour {args.item_key}")
+        except LookupError as error:
+            raise SystemExit(f"objet inconnu : {args.item_key}") from error
+        finally:
+            await dispose_engine()
+
+    asyncio.run(run())
+
+
 def _jobs_list(_: argparse.Namespace) -> None:
     from sibylle.worker.jobs import REGISTRY
 
@@ -136,6 +153,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     close_parser.add_argument("--org", type=uuid.UUID, help="identifiant d'une rédaction")
 
+    code_parser = commands.add_parser("secret-code", help="codes secrets de la collection")
+    code_commands = code_parser.add_subparsers(dest="secret-code_command", required=True)
+    add_parser = code_commands.add_parser(
+        "add", help="ajoute un code (seule son empreinte est gardée ; jamais dans le dépôt)"
+    )
+    add_parser.add_argument("code")
+    add_parser.add_argument(
+        "item_key", help="clé d'un objet du catalogue, par exemple ball-halloween"
+    )
+
     commands.add_parser("seed-demo", help="crée la rédaction de démonstration (hors production)")
     return parser
 
@@ -149,6 +176,7 @@ _HANDLERS: dict[tuple[str, str | None], Callable[[argparse.Namespace], None]] = 
     ("jobs", "run"): _jobs_run,
     ("jobs", "list"): _jobs_list,
     ("seasons", "close"): _seasons_close,
+    ("secret-code", "add"): _secret_code_add,
     ("seed-demo", None): _seed_demo,
 }
 

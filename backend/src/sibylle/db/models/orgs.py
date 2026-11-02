@@ -3,10 +3,11 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import CheckConstraint, ForeignKey, Index, Text, UniqueConstraint, text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from sibylle import clock
 from sibylle.db.base import Base, new_id
+from sibylle.db.models.collection import CatalogItem
 
 
 class Organisation(Base):
@@ -63,13 +64,20 @@ class Membership(Base):
     status: Mapped[str] = mapped_column(Text, default="active", server_default="active")
     pseudo: Mapped[str] = mapped_column(Text)
     avatar: Mapped[dict[str, Any]]
-    avatar_frame_item_id: Mapped[uuid.UUID | None]
+    avatar_frame_item_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("catalog_items.id"))
+    # Loaded with the member, so that every screen can show the frame.
+    avatar_frame: Mapped[CatalogItem | None] = relationship(lazy="selectin")
     # Caches of the ledger, updated in the same transaction as each entry.
     balance: Mapped[int] = mapped_column(default=0, server_default="0")
     season_score: Mapped[int] = mapped_column(default=0, server_default="0")
     joined_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
     charter_accepted_at: Mapped[datetime | None]
     left_at: Mapped[datetime | None]
+
+    @property
+    def frame(self) -> str | None:
+        """The key of the avatar's frame, if the member chose one."""
+        return self.avatar_frame.key if self.avatar_frame else None
 
 
 class Invitation(Base):

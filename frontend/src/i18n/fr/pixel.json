@@ -1,0 +1,19 @@
+{
+  "size": "Taille",
+  "sizeValue": "{{size}} × {{size}}",
+  "grid": "Grille de dessin, {{size}} sur {{size}}",
+  "tools": "Outils",
+  "tool": {
+    "pencil": "CRAYON",
+    "eraser": "GOMME",
+    "fill": "REMPLISSAGE"
+  },
+  "palette": "Couleurs",
+  "color": "Couleur {{index}}",
+  "undo": "Annuler",
+  "preview": "Aperçu",
+  "previewAt": "Aperçu à l'échelle {{scale}}",
+  "help": "Au clavier : les flèches déplacent le curseur, Espace dessine, Ctrl+Z annule.",
+  "cursor": "Case {{x}}, {{y}}",
+  "cancel": "Annuler les changements"
+}

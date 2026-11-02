@@ -118,3 +118,12 @@
   font: 500 12px/1.4 var(--font-mono);
   color: var(--ink-2);
 }
+
+.memberLink {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.memberLink:hover {
+  text-decoration: underline;
+}

@@ -15,7 +15,7 @@ from sibylle.domain.content import BACKGROUND_KEYS, DEFAULT_CHARTER
 from sibylle.domain.ledger import adjustment, starting_balance
 from sibylle.domain.pixels import PixelImageError, validate_pixel_image
 from sibylle.realtime import bus
-from sibylle.services import ledger
+from sibylle.services import collection, ledger
 
 ACCESS_CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"
 DEFAULT_SECTION = "Général"
@@ -68,7 +68,7 @@ def public_member(member: Membership) -> dict[str, Any]:
         "id": str(member.id),
         "pseudo": member.pseudo,
         "avatar": member.avatar,
-        "frame": None,
+        "frame": member.frame,
         "role": member.role,
         "joined_at": member.joined_at.isoformat(),
     }
@@ -147,12 +147,17 @@ async def member_count(session: AsyncSession, org_id: uuid.UUID) -> int:
     return int(count or 0)
 
 
+# Tells "leave the frame as it is" from "remove the frame" (None).
+KEEP: Any = object()
+
+
 async def update_profile(
     session: AsyncSession,
     member: Membership,
     *,
     pseudo: str | None = None,
     avatar: dict[str, Any] | None = None,
+    frame_item_id: uuid.UUID | None = KEEP,
 ) -> Membership:
     if pseudo is not None and pseudo != member.pseudo:
         if await pseudo_taken(session, member.org_id, pseudo, except_member=member.id):
@@ -160,6 +165,10 @@ async def update_profile(
         member.pseudo = pseudo
     if avatar is not None:
         member.avatar = checked_drawing("avatar", avatar, await unlocked_colors(session, member))
+    if frame_item_id is not KEEP:
+        member.avatar_frame = (
+            await collection.owned_frame(session, member, frame_item_id) if frame_item_id else None
+        )
     await session.flush()
     await bus.publish(
         session,
@@ -171,8 +180,8 @@ async def update_profile(
 
 
 async def unlocked_colors(session: AsyncSession, member: Membership) -> set[int]:
-    """Colours beyond the base palette that the member unlocked (collection, US7)."""
-    return set()
+    """Colours beyond the base palette that the member unlocked in the collection."""
+    return await collection.unlocked_colors(session, member)
 
 
 # The editor's settings (US6)

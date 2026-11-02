@@ -11,7 +11,10 @@
     "title": "La carte",
     "name": "NOM DE LA RÉDACTION",
     "logo": "LOGO",
-    "background": "FOND DE LA CARTE"
+    "background": "FOND DE LA CARTE",
+    "drawLogo": "Dessiner le logo",
+    "takeLogo": "Prendre ce logo",
+    "currentLogo": "Le logo actuel"
   },
   "laurels": {
     "title": "Les lauriers",

@@ -63,6 +63,10 @@ class MemberSelf(MemberPublic):
     season_score: int
     unlocked_colors: list[int] = []
 
+    @classmethod
+    def with_colors(cls, member: Membership, unlocked: set[int]) -> Self:
+        return cls.of(member).model_copy(update={"unlocked_colors": sorted(unlocked)})
+
 
 class MembershipEntry(BaseModel):
     org: OrgCard
@@ -111,7 +115,13 @@ class Org(OrgCard):
     my_membership: MemberSelf
 
     @classmethod
-    def build(cls, org: Organisation, me: Membership, member_count: int) -> Self:
+    def build(
+        cls,
+        org: Organisation,
+        me: Membership,
+        member_count: int,
+        unlocked: frozenset[int] | set[int] = frozenset(),
+    ) -> Self:
         return cls(
             **OrgCard.of(org).model_dump(),
             starting_balance=org.starting_balance,
@@ -122,7 +132,7 @@ class Org(OrgCard):
             charter=org.charter,
             access_code=org.access_code if me.role == "editor" else None,
             member_count=member_count,
-            my_membership=MemberSelf.of(me),
+            my_membership=MemberSelf.with_colors(me, set(unlocked)),
         )
 
 
@@ -217,6 +227,8 @@ class OrgIn(BaseModel):
 class MemberPatch(BaseModel):
     pseudo: Pseudo | None = None
     avatar: PixelImage | None = None
+    # A frame of the member's collection; null takes the frame off.
+    avatar_frame_item_id: uuid.UUID | None = None
 
 
 class LinkInvitationIn(BaseModel):
@@ -599,3 +611,75 @@ class SectionIn(BaseModel):
 class SectionPatch(BaseModel):
     name: SectionName | None = None
     position: int | None = Field(default=None, ge=0)
+
+
+# The collection and the press card (US7)
+
+
+class CatalogItemOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    kind: Literal["ball", "color", "frame"]
+    key: str
+    name_key: str
+    price: int | None
+    season: str | None
+    # A ball's kit variant, a colour's palette index and hex, a frame's style.
+    data: dict[str, Any]
+
+
+class CatalogEntry(BaseModel):
+    item: CatalogItemOut
+    price: int | None
+    owned: bool
+
+
+class OwnedItemOut(BaseModel):
+    item: CatalogItemOut
+    source: Literal["purchase", "secret_code"]
+    acquired_at: datetime
+
+
+class PurchaseOut(BaseModel):
+    owned_item: OwnedItemOut
+    balance: int
+
+
+class RedeemIn(BaseModel):
+    code: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=64)]
+
+
+class RedeemOut(BaseModel):
+    item: CatalogItemOut
+
+
+class SeasonRef(BaseModel):
+    year: int
+    name: Literal["spring", "summer", "autumn", "winter"]
+
+
+class TrophyOut(BaseModel):
+    season: SeasonRef
+    score: int
+    rank: int
+    podium: bool
+
+
+class PressStats(BaseModel):
+    # All time: the engraved scores and the season under way.
+    laurels: int
+    pronos_played: int
+    settled: int
+    wins: int
+    # Won out of settled, in percent; None before a first result.
+    success_rate: int | None
+
+
+class PressCard(MemberPublic):
+    """A member's press card, as every member of the newsroom sees it."""
+
+    card_number: str
+    stats: PressStats
+    trophies: list[TrophyOut]
+    collection: list[OwnedItemOut]

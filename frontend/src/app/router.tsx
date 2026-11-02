@@ -17,11 +17,13 @@ import { AdminLayout } from '../features/admin/AdminLayout';
 import { MembersPage } from '../features/admin/MembersPage';
 import { OrgSettingsPage } from '../features/admin/OrgSettingsPage';
 import { ReportsPage } from '../features/admin/ReportsPage';
+import { CollectionPage } from '../features/collection/CollectionPage';
 import { LeaderboardPage } from '../features/leaderboard/LeaderboardPage';
 import { OrgSwitcherPage } from '../features/orgs/OrgSwitcher';
 import { CreatePronoPage } from '../features/pronos/CreatePronoPage';
 import { PronoListPage } from '../features/pronos/PronoListPage';
 import { PronoPage } from '../features/pronos/PronoPage';
+import { PressCardPage } from '../features/profile/PressCardPage';
 import { UnePage } from '../features/une/UnePage';
 import { ButtonLink, Masthead } from '../ui/components';
 import { OfflineBanner } from './AppShell';
@@ -102,6 +104,9 @@ export const router = createBrowserRouter([
           { path: 'pronos/nouveau', element: <CreatePronoPage /> },
           { path: 'pronos/:pronoId', element: <PronoPage /> },
           { path: 'classement', element: <LeaderboardPage /> },
+          { path: 'profil', element: <PressCardPage /> },
+          { path: 'membres/:memberId', element: <PressCardPage /> },
+          { path: 'collection', element: <CollectionPage /> },
           {
             path: 'reglages',
             element: <AdminLayout />,

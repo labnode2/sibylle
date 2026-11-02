@@ -9,6 +9,7 @@ import { PixelImage as Pixels } from '../../ui/PixelImage';
 import { useMe } from '../auth/api';
 import { useFormErrors } from '../forms';
 import { useContent, useCreateOrg, useJoin, useJoinPreview, type JoinSource } from './api';
+import { PixelEditor } from '../pixel-editor/PixelEditor';
 import styles from './orgs.module.css';
 import { AvatarPicker, BackgroundPicker } from './pickers';
 
@@ -96,6 +97,32 @@ function ProfileFields({
   const { t } = useTranslation('orgs');
   const content = useContent();
   const avatarLabel = useId();
+  const [drawing, setDrawing] = useState(false);
+  if (drawing) {
+    return (
+      <>
+        <Field
+          label={t('join.pseudo')}
+          hint={t('join.private')}
+          value={pseudo}
+          onChange={(e) => setPseudo(e.target.value)}
+          maxLength={24}
+          error={pseudoError}
+          required
+        />
+        <PixelEditor
+          initial={avatar}
+          title={t('join.drawTitle')}
+          saveLabel={t('join.drawDone')}
+          onCancel={() => setDrawing(false)}
+          onSave={(image) => {
+            setAvatar(image);
+            setDrawing(false);
+          }}
+        />
+      </>
+    );
+  }
   return (
     <>
       <Field
@@ -117,9 +144,9 @@ function ProfileFields({
           onChange={setAvatar}
           labelId={avatarLabel}
         />
-        <span className={styles.draw} aria-disabled="true" title={t('join.drawLater')}>
+        <button type="button" className={styles.draw} onClick={() => setDrawing(true)}>
           {t('join.draw')}
-        </span>
+        </button>
       </div>
     </>
   );

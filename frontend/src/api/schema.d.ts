@@ -312,24 +312,6 @@ export interface paths {
         patch: operations["update_my_profile_api_orgs__org_id__members_me_patch"];
         trace?: never;
     };
-    "/api/orgs/{org_id}/members/{member_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Member */
-        get: operations["get_member_api_orgs__org_id__members__member_id__get"];
-        put?: never;
-        post?: never;
-        /** Remove Member */
-        delete: operations["remove_member_api_orgs__org_id__members__member_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/orgs/{org_id}/members/me/ledger": {
         parameters: {
             query?: never;
@@ -365,6 +347,24 @@ export interface paths {
         head?: never;
         /** Change Role */
         patch: operations["change_role_api_orgs__org_id__members__member_id__role_patch"];
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/members/{member_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Press Card */
+        get: operations["get_press_card_api_orgs__org_id__members__member_id__get"];
+        put?: never;
+        post?: never;
+        /** Remove Member */
+        delete: operations["remove_member_api_orgs__org_id__members__member_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/orgs/{org_id}/members/{member_id}/adjustments": {
@@ -731,6 +731,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/orgs/{org_id}/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Catalog */
+        get: operations["get_catalog_api_orgs__org_id__catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/catalog/{item_id}/purchase": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Purchase */
+        post: operations["purchase_api_orgs__org_id__catalog__item_id__purchase_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/secret-codes/redeem": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Redeem Secret Code */
+        post: operations["redeem_secret_code_api_orgs__org_id__secret_codes_redeem_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/orgs/{org_id}/uploads": {
         parameters: {
             query?: never;
@@ -847,6 +898,39 @@ export interface components {
         CancelIn: {
             /** Reason */
             reason?: string | null;
+        };
+        /** CatalogEntry */
+        CatalogEntry: {
+            item: components["schemas"]["CatalogItemOut"];
+            /** Price */
+            price: number | null;
+            /** Owned */
+            owned: boolean;
+        };
+        /** CatalogItemOut */
+        CatalogItemOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "ball" | "color" | "frame";
+            /** Key */
+            key: string;
+            /** Name Key */
+            name_key: string;
+            /** Price */
+            price: number | null;
+            /** Season */
+            season: string | null;
+            /** Data */
+            data: {
+                [key: string]: unknown;
+            };
         };
         /** Content */
         Content: {
@@ -1120,6 +1204,8 @@ export interface components {
             /** Pseudo */
             pseudo?: string | null;
             avatar?: components["schemas"]["PixelImage"] | null;
+            /** Avatar Frame Item Id */
+            avatar_frame_item_id?: string | null;
         };
         /** MemberPublic */
         MemberPublic: {
@@ -1283,6 +1369,20 @@ export interface components {
             /** Charter */
             charter?: string | null;
         };
+        /** OwnedItemOut */
+        OwnedItemOut: {
+            item: components["schemas"]["CatalogItemOut"];
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "purchase" | "secret_code";
+            /**
+             * Acquired At
+             * Format: date-time
+             */
+            acquired_at: string;
+        };
         /** PasswordChange */
         PasswordChange: {
             /** Current Password */
@@ -1309,6 +1409,52 @@ export interface components {
             palette: "base-v1";
             /** Pixels */
             pixels: string;
+        };
+        /**
+         * PressCard
+         * @description A member's press card, as every member of the newsroom sees it.
+         */
+        PressCard: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Pseudo */
+            pseudo: string;
+            avatar: components["schemas"]["PixelImage"];
+            /** Frame */
+            frame?: string | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "reader" | "journalist" | "editor";
+            /**
+             * Joined At
+             * Format: date-time
+             */
+            joined_at: string;
+            /** Card Number */
+            card_number: string;
+            stats: components["schemas"]["PressStats"];
+            /** Trophies */
+            trophies: components["schemas"]["TrophyOut"][];
+            /** Collection */
+            collection: components["schemas"]["OwnedItemOut"][];
+        };
+        /** PressStats */
+        PressStats: {
+            /** Laurels */
+            laurels: number;
+            /** Pronos Played */
+            pronos_played: number;
+            /** Settled */
+            settled: number;
+            /** Wins */
+            wins: number;
+            /** Success Rate */
+            success_rate: number | null;
         };
         /** PronoDetail */
         PronoDetail: {
@@ -1519,6 +1665,21 @@ export interface components {
             relaunch_count: number;
             created_by: components["schemas"]["MemberPublic"];
         };
+        /** PurchaseOut */
+        PurchaseOut: {
+            owned_item: components["schemas"]["OwnedItemOut"];
+            /** Balance */
+            balance: number;
+        };
+        /** RedeemIn */
+        RedeemIn: {
+            /** Code */
+            code: string;
+        };
+        /** RedeemOut */
+        RedeemOut: {
+            item: components["schemas"]["CatalogItemOut"];
+        };
         /** RejectIn */
         RejectIn: {
             /** Reason */
@@ -1671,6 +1832,16 @@ export interface components {
              */
             ends_at: string;
         };
+        /** SeasonRef */
+        SeasonRef: {
+            /** Year */
+            year: number;
+            /**
+             * Name
+             * @enum {string}
+             */
+            name: "spring" | "summer" | "autumn" | "winter";
+        };
         /** SectionIn */
         SectionIn: {
             /** Name */
@@ -1744,6 +1915,16 @@ export interface components {
         TokenIn: {
             /** Token */
             token: string;
+        };
+        /** TrophyOut */
+        TrophyOut: {
+            season: components["schemas"]["SeasonRef"];
+            /** Score */
+            score: number;
+            /** Rank */
+            rank: number;
+            /** Podium */
+            podium: boolean;
         };
         /** UploadOut */
         UploadOut: {
@@ -2481,68 +2662,6 @@ export interface operations {
             };
         };
     };
-    get_member_api_orgs__org_id__members__member_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                org_id: string;
-                member_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MemberPublic"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    remove_member_api_orgs__org_id__members__member_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                org_id: string;
-                member_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     my_ledger_api_orgs__org_id__members_me_ledger_get: {
         parameters: {
             query?: {
@@ -2601,6 +2720,68 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MemberPublic"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_press_card_api_orgs__org_id__members__member_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PressCard"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_member_api_orgs__org_id__members__member_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -3452,6 +3633,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SeasonOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_catalog_api_orgs__org_id__catalog_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogEntry"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    purchase_api_orgs__org_id__catalog__item_id__purchase_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    redeem_secret_code_api_orgs__org_id__secret_codes_redeem_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RedeemIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RedeemOut"];
                 };
             };
             /** @description Validation Error */

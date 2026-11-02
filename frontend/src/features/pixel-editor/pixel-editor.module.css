@@ -1,0 +1,103 @@
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+}
+
+.title {
+  font: 800 22px/1.2 var(--font-text);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.toggle {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.toggle[aria-pressed='true'],
+.toggle[aria-checked='true'] {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.workspace {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* The grid keeps its pixels square and crisp at any width. */
+.grid {
+  width: min(320px, 100%);
+  aspect-ratio: 1;
+  border: 2px solid var(--ink);
+  background: repeating-conic-gradient(var(--grey) 0% 25%, var(--surface) 0% 50%) 0 0 / 20px 20px;
+  image-rendering: pixelated;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.side {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 200px;
+}
+
+.palette {
+  display: grid;
+  grid-template-columns: repeat(8, 28px);
+  gap: 4px;
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--ink);
+  cursor: pointer;
+}
+
+.swatch[aria-checked='true'] {
+  outline: 3px solid var(--indigo);
+  outline-offset: 1px;
+}
+
+.preview {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.help {
+  font: 500 12px/1.4 var(--font-mono);
+  color: var(--ink-2);
+}
+
+.alert {
+  padding: 10px 12px;
+  border: 2px solid var(--ink);
+  background: var(--grey);
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}

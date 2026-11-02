@@ -152,6 +152,7 @@ class Limits:
     # address: a whole office may join from behind one.
     join: RateLimiter = field(default_factory=lambda: RateLimiter(10, timedelta(hours=1)))
     join_ip: RateLimiter = field(default_factory=lambda: RateLimiter(300, timedelta(hours=1)))
+    secret_code: RateLimiter = field(default_factory=lambda: RateLimiter(5, timedelta(hours=1)))
 
 
 def limits(request: Request) -> Limits:

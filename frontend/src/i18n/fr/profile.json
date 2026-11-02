@@ -1,0 +1,124 @@
+{
+  "title": "Carte de presse",
+  "number": "CARTE DE PRESSE N° {{number}}",
+  "since": "MEMBRE DEPUIS {{date}}",
+  "roles": {
+    "reader": "LECTEUR·RICE",
+    "journalist": "JOURNALISTE",
+    "editor": "RÉDACTION EN CHEF"
+  },
+  "stats": {
+    "laurels": "LAURIERS",
+    "played": "PRONOS JOUÉS",
+    "wins": "PRONOS GAGNÉS",
+    "rate": "TAUX DE RÉUSSITE"
+  },
+  "editor": {
+    "open": "Redessiner mon avatar",
+    "title": "Mon avatar",
+    "save": "Enregistrer mon avatar"
+  },
+  "collectionLink": "Ma collection",
+  "frame": {
+    "label": "CADRE DE L'AVATAR",
+    "none": "Sans cadre"
+  },
+  "seasons": {
+    "spring": "PRINTEMPS",
+    "summer": "ÉTÉ",
+    "autumn": "AUTOMNE",
+    "winter": "HIVER"
+  },
+  "trophies": {
+    "title": "LES TROPHÉES",
+    "none": "Pas encore de trophée : chaque saison jouée en grave un.",
+    "season": "{{season}} {{year}}",
+    "score": "{{score}} LAURIERS · {{rank}}E"
+  },
+  "collection": {
+    "title": "La collection",
+    "none": "Rien pour l'instant.",
+    "balance": "TON SOLDE",
+    "hint": "Un achat se paie avec le solde : ton score et ton classement ne bougent pas.",
+    "kinds": {
+      "color": "Les couleurs",
+      "frame": "Les cadres",
+      "ball": "Les boules"
+    },
+    "owned": "À TOI",
+    "buyLabel": "Acheter {{name}} pour {{price}} lauriers",
+    "confirm": "Acheter pour {{price}} lauriers ?",
+    "yes": "Acheter",
+    "no": "Annuler",
+    "backToCard": "Retour à ma carte de presse"
+  },
+  "secret": {
+    "title": "Un code secret ?",
+    "label": "TON CODE",
+    "submit": "Débloquer",
+    "unknown": "Ce code ne mène nulle part.",
+    "unlocked": "Débloqué : {{name}} !"
+  },
+  "ledger": {
+    "title": "MON RELEVÉ",
+    "amount": "{{value}} AU SOLDE",
+    "score": "{{value}} AU SCORE",
+    "more": "Plus ancien",
+    "kind": {
+      "starting_balance": "SOLDE DE DÉPART",
+      "stake": "MISE",
+      "base_gain": "GAIN FIXE",
+      "early_bird": "BONUS LÈVE-TÔT",
+      "pot_share": "PART DE CAGNOTTE",
+      "stake_lost": "MISE PERDUE",
+      "refund": "MISE RENDUE",
+      "reversal": "CORRECTION",
+      "purchase": "ACHAT",
+      "minigame": "MINI-JEU",
+      "adjustment": "AJUSTEMENT",
+      "season_reset": "NOUVELLE SAISON"
+    }
+  },
+  "catalog": {
+    "color-33": "Couleur Noir de jais",
+    "color-34": "Couleur Bleu nuit",
+    "color-35": "Couleur Prune",
+    "color-36": "Couleur Vert sapin",
+    "color-37": "Couleur Brique",
+    "color-38": "Couleur Taupe",
+    "color-39": "Couleur Gris perle",
+    "color-40": "Couleur Coquille",
+    "color-41": "Couleur Rouge vif",
+    "color-42": "Couleur Orange",
+    "color-43": "Couleur Jaune citron",
+    "color-44": "Couleur Vert pomme",
+    "color-45": "Couleur Bleu ciel",
+    "color-46": "Couleur Lavande",
+    "color-47": "Couleur Rose bonbon",
+    "color-48": "Couleur Pêche",
+    "color-49": "Couleur Indigo de la boule",
+    "color-50": "Couleur Brume de la boule",
+    "color-51": "Couleur Cœur de la boule",
+    "color-52": "Couleur Or du pied",
+    "frame-ink": "Cadre encre",
+    "frame-indigo": "Cadre indigo",
+    "frame-double": "Cadre double filet",
+    "frame-dotted": "Cadre pointillé",
+    "ball-spring": "Boule de printemps",
+    "ball-summer": "Boule d'été",
+    "ball-autumn": "Boule d'automne",
+    "ball-winter": "Boule d'hiver",
+    "ball-epiphany": "Boule de l'Épiphanie",
+    "ball-candlemas": "Boule de la Chandeleur",
+    "ball-valentines": "Boule de la Saint-Valentin",
+    "ball-april-fools": "Boule du 1er avril",
+    "ball-easter": "Boule de Pâques",
+    "ball-may-day": "Boule du 1er mai",
+    "ball-music-day": "Boule de la Fête de la musique",
+    "ball-bastille-day": "Boule du 14 Juillet",
+    "ball-halloween": "Boule d'Halloween",
+    "ball-beaujolais": "Boule du beaujolais nouveau",
+    "ball-christmas": "Boule de Noël",
+    "ball-new-year": "Boule du Nouvel An"
+  }
+}

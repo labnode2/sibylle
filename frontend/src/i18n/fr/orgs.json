@@ -24,7 +24,6 @@
     "private": "TES NOM ET PRÉNOM RESTENT PRIVÉS",
     "avatar": "TON AVATAR",
     "draw": "Dessiner le mien",
-    "drawLater": "L'éditeur pixel art arrive bientôt",
     "charterTitle": "Lire la charte de la rédaction",
     "accept": "J'accepte la charte de la rédaction",
     "submit": "Rejoindre la rédaction",
@@ -32,7 +31,9 @@
     "invalid": "Cette invitation n'est plus valable : elle a expiré, elle a été retirée ou il n'y a plus de place.",
     "back": "Retour",
     "already": "Tu fais déjà partie de cette rédaction.",
-    "open": "Ouvrir la rédaction"
+    "open": "Ouvrir la rédaction",
+    "drawTitle": "Ton avatar",
+    "drawDone": "Prendre cet avatar"
   },
   "backgrounds": {
     "mer": "Mer",

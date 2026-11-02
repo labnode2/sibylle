@@ -55,7 +55,12 @@ async def create_org(body: OrgIn, account: CurrentAccount, session: Db) -> OrgCr
 @router.get("/{org_id}")
 async def get_org(org_id: uuid.UUID, member: CurrentMember, session: Db) -> Org:
     org = await _org(session, org_id)
-    return Org.build(org, member, await orgs.member_count(session, org_id))
+    return Org.build(
+        org,
+        member,
+        await orgs.member_count(session, org_id),
+        await orgs.unlocked_colors(session, member),
+    )
 
 
 @router.patch("/{org_id}")
@@ -64,7 +69,12 @@ async def update_org(org_id: uuid.UUID, body: OrgPatch, editor: Editor, session:
     if "logo" in body.model_fields_set:
         changes["logo"] = drawing(body.logo)
     org = await orgs.update_settings(session, await _org(session, org_id), changes)
-    return Org.build(org, editor, await orgs.member_count(session, org_id))
+    return Org.build(
+        org,
+        editor,
+        await orgs.member_count(session, org_id),
+        await orgs.unlocked_colors(session, editor),
+    )
 
 
 @router.post("/{org_id}/access-code")

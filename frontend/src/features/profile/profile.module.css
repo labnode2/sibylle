@@ -1,0 +1,215 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 760px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+}
+
+.cardHead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+}
+
+.identityText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font: 600 11px/1.3 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+
+.pseudo {
+  font: 800 34px/1.05 var(--font-text);
+  letter-spacing: -0.03em;
+}
+
+.meta {
+  font: 500 12px/1.4 var(--font-mono);
+  letter-spacing: 0.03em;
+  color: var(--ink-2);
+}
+
+/* Four statistics side by side, two by two on a phone. */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  border-top: 1px solid var(--ink);
+}
+
+.stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 10px 0;
+}
+
+.stats > div + div {
+  border-left: 1px solid var(--rule);
+}
+
+.stats dt {
+  font: 600 11px/1.2 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+
+.stats dd {
+  margin: 0;
+  font: 800 24px/1 var(--font-text);
+}
+
+@media (max-width: 520px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stats > div:nth-child(3) {
+    border-left: 0;
+  }
+}
+
+.tools {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.frameChoice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.frameChoice select {
+  max-width: 280px;
+  min-height: var(--tap);
+  padding: 0 10px;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--surface);
+  font: 600 14px/1 var(--font-mono);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionTitle {
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--ink);
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item,
+.trophy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border: 1px solid var(--rule);
+  text-align: center;
+}
+
+/* The podium's trophies get the gold frame. */
+.podium {
+  border: 3px solid var(--gold);
+  box-shadow: inset 0 0 0 1px var(--gold-line);
+}
+
+.engraved {
+  font: 700 12px/1.3 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.ledger {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ledgerRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.ledgerRow + .ledgerRow {
+  border-top: 1px solid var(--rule);
+}
+
+.ledgerText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.ledgerKind {
+  font: 700 11px/1.2 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.ledgerDetail {
+  color: var(--ink);
+  font: 500 15px/1.3 var(--font-text);
+}
+
+.ledgerAmounts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.amount {
+  font: 700 15px/1 var(--font-mono);
+}
+
+.score {
+  font: 500 12px/1 var(--font-mono);
+  color: var(--ink-2);
+}

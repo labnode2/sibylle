@@ -12,6 +12,7 @@ from sibylle.api.errors import error_response, install_error_handlers
 from sibylle.api.routes import (
     auth,
     bets,
+    collection,
     content,
     front_page,
     health,
@@ -20,6 +21,7 @@ from sibylle.api.routes import (
     me,
     members,
     orgs,
+    profile,
     pronos,
     reports,
     results,
@@ -91,6 +93,8 @@ def create_app() -> FastAPI:
         results,
         reports,
         leaderboard,
+        collection,
+        profile,
         uploads,
     ):
         app.include_router(module.router, prefix="/api")

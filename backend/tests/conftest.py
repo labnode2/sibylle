@@ -68,9 +68,11 @@ def database_url(tmp_path_factory: pytest.TempPathFactory) -> Iterator[str]:
 
 @pytest_asyncio.fixture
 async def db(database_url: str) -> AsyncIterator[None]:
-    """Empties every table but the seasons after the test."""
+    """Empties every table after the test, but the reference data the migrations insert: the
+    seasons and the catalog of the collection."""
     yield
-    tables = ", ".join(t.name for t in Base.metadata.sorted_tables if t.name != "seasons")
+    kept = {"seasons", "catalog_items"}
+    tables = ", ".join(t.name for t in Base.metadata.sorted_tables if t.name not in kept)
     async with transaction() as session:
         await session.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
 

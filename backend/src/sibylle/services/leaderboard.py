@@ -90,12 +90,18 @@ def _label(period: Period) -> str:
     return "all_time"
 
 
+async def values(
+    session: AsyncSession, org_id: uuid.UUID, metric: Metric, period: Period
+) -> dict[uuid.UUID, int]:
+    """Each member's value; a member with nothing yet is missing (counts 0)."""
+    if metric is Metric.LAURELS:
+        return await _laurels(session, org_id, period)
+    return await _wins(session, org_id, period)
+
+
 async def board(session: AsyncSession, org_id: uuid.UUID, metric: Metric, period: Period) -> Board:
     """Every active member, the best first; a member with nothing yet counts 0."""
-    if metric is Metric.LAURELS:
-        values = await _laurels(session, org_id, period)
-    else:
-        values = await _wins(session, org_id, period)
+    by_member = await values(session, org_id, metric, period)
     members = (
         await session.scalars(
             select(Membership)
@@ -103,5 +109,5 @@ async def board(session: AsyncSession, org_id: uuid.UUID, metric: Metric, period
             .order_by(func.lower(Membership.pseudo), Membership.id)
         )
     ).all()
-    standings = rank([(m, values.get(m.id, 0)) for m in members if is_ranked(m.status)])
+    standings = rank([(m, by_member.get(m.id, 0)) for m in members if is_ranked(m.status)])
     return Board(_label(period), [Line(s.rank, s.key, s.value) for s in standings])
