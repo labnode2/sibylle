@@ -1,0 +1,120 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 720px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kicker {
+  font: 600 12px/1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--indigo);
+}
+
+.title {
+  font: 800 30px/1.05 var(--font-text);
+  letter-spacing: -0.03em;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+
+/* Two joined segments: the chosen one in ink. */
+.toggle {
+  display: flex;
+}
+
+.toggleButton {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.toggleButton + .toggleButton {
+  border-left: 0;
+}
+
+.toggleButton[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.board {
+  padding: 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.caption {
+  padding: 12px 14px;
+  border-bottom: 2px solid var(--ink);
+  text-align: left;
+  font: 600 11px/1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+
+.table tr + tr {
+  border-top: 1px solid var(--rule);
+}
+
+.table td,
+.table th {
+  padding: 8px 14px;
+  vertical-align: middle;
+}
+
+/* The member's own line, on light grey. */
+.me {
+  background: var(--grey);
+}
+
+.rank {
+  width: 3ch;
+  font: 800 20px/1 var(--font-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  font: 700 15px/1.2 var(--font-text);
+  text-align: left;
+}
+
+.you {
+  font: 700 10px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--indigo);
+}
+
+.value {
+  text-align: right;
+  white-space: nowrap;
+  font: 700 15px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  font: 500 12px/1.4 var(--font-mono);
+  color: var(--ink-2);
+}

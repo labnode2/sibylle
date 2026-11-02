@@ -1,0 +1,40 @@
+{
+  "title": "Classement",
+  "kicker": "Saison {{season}} {{year}} · jusqu'au {{until}}",
+  "metricLabel": "Classer par",
+  "periodLabel": "Période",
+  "option": {
+    "laurels": "LAURIERS",
+    "wins": "PRONOS GAGNÉS",
+    "month": "MOIS",
+    "season": "SAISON",
+    "all_time": "DEPUIS TOUJOURS"
+  },
+  "period": {
+    "all_time": "DEPUIS TOUJOURS"
+  },
+  "season": {
+    "spring": "de printemps",
+    "summer": "d'été",
+    "autumn": "d'automne",
+    "winter": "d'hiver"
+  },
+  "seasonTitle": "Saison {{season}} {{year}}",
+  "caption": {
+    "laurels": "LAURIERS GAGNÉS · {{period}}",
+    "wins": "PRONOS GAGNÉS · {{period}}"
+  },
+  "column": {
+    "rank": "Rang",
+    "member": "Membre",
+    "laurels": "Lauriers",
+    "wins": "Pronos gagnés"
+  },
+  "you": "TOI",
+  "wins_one": "{{value}} prono",
+  "wins_other": "{{value}} pronos",
+  "note": {
+    "laurels": "Le score : gains des pronos moins mises perdues. Les achats et les mini-jeux n'y comptent pas.",
+    "wins": "Le nombre de pronos gagnés, comptés au jour du résultat."
+  }
+}

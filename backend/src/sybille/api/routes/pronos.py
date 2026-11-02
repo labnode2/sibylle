@@ -3,7 +3,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Response
 from sqlalchemy import select
 
 from sybille.api.deps import CurrentMember, Db
@@ -13,7 +13,10 @@ from sybille.api.schemas import (
     PronoList,
     PronoPatch,
     PronoSummary,
+    ReactionKind,
+    RejectIn,
     SectionOut,
+    ValidateIn,
 )
 from sybille.db.models import Section
 from sybille.services import pronos
@@ -71,3 +74,35 @@ async def edit_prono(
     prono = await pronos.get_prono(session, member, prono_id, lock=True)
     await pronos.edit_prono(session, member, prono, body.model_dump(exclude_unset=True))
     return PronoDetail.model_validate(await pronos.detail(session, member, prono))
+
+
+@router.post("/pronos/{prono_id}/validate")
+async def validate_proposal(
+    org_id: uuid.UUID, prono_id: uuid.UUID, body: ValidateIn, member: CurrentMember, session: Db
+) -> PronoDetail:
+    prono = await pronos.validate_proposal(session, member, prono_id, body.base_gain)
+    return PronoDetail.model_validate(await pronos.detail(session, member, prono))
+
+
+@router.post("/pronos/{prono_id}/reject")
+async def reject_proposal(
+    org_id: uuid.UUID, prono_id: uuid.UUID, body: RejectIn, member: CurrentMember, session: Db
+) -> PronoDetail:
+    prono = await pronos.reject_proposal(session, member, prono_id, body.reason or None)
+    return PronoDetail.model_validate(await pronos.detail(session, member, prono))
+
+
+@router.put("/pronos/{prono_id}/reactions/{kind}", status_code=204)
+async def add_reaction(
+    org_id: uuid.UUID, prono_id: uuid.UUID, kind: ReactionKind, member: CurrentMember, session: Db
+) -> Response:
+    await pronos.react(session, member, prono_id, kind, on=True)
+    return Response(status_code=204)
+
+
+@router.delete("/pronos/{prono_id}/reactions/{kind}", status_code=204)
+async def remove_reaction(
+    org_id: uuid.UUID, prono_id: uuid.UUID, kind: ReactionKind, member: CurrentMember, session: Db
+) -> Response:
+    await pronos.react(session, member, prono_id, kind, on=False)
+    return Response(status_code=204)

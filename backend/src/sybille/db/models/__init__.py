@@ -10,11 +10,12 @@ from sybille.db.models.pronos import (
     Prono,
     PronoEvent,
     PronoOption,
+    Reaction,
     Report,
     Section,
     Settlement,
 )
-from sybille.db.models.seasons import Season
+from sybille.db.models.seasons import Season, SeasonClosure, Trophy
 from sybille.db.models.uploads import Upload
 
 __all__ = [
@@ -31,9 +32,12 @@ __all__ = [
     "Prono",
     "PronoEvent",
     "PronoOption",
+    "Reaction",
     "Report",
     "Season",
+    "SeasonClosure",
     "Section",
     "Settlement",
+    "Trophy",
     "Upload",
 ]

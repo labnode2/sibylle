@@ -16,6 +16,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from sybille import clock
 from sybille.db.base import Base, new_id
+from sybille.domain.content import REACTION_KINDS
 
 KINDS = "'choice', 'yes_no', 'number', 'date'"
 STATES = "'proposed', 'rejected', 'scheduled', 'open', 'closed', 'resolved', 'cancelled'"
@@ -197,4 +198,20 @@ class Report(Base):
     handled_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("memberships.id"))
     handled_at: Mapped[datetime | None]
     resolution_note: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
+
+
+class Reaction(Base):
+    """A member's quick reaction to a prono: one of each kind at most."""
+
+    __tablename__ = "reactions"
+    __table_args__ = (
+        CheckConstraint(
+            "kind IN (" + ", ".join(f"'{kind}'" for kind in REACTION_KINDS) + ")", name="kind"
+        ),
+    )
+
+    prono_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("pronos.id"), primary_key=True)
+    membership_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("memberships.id"), primary_key=True)
+    kind: Mapped[str] = mapped_column(Text, primary_key=True)
     created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())

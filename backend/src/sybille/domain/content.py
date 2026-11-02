@@ -30,6 +30,10 @@ def _silhouette() -> dict[str, Any]:
 
 DEFAULT_AVATAR: dict[str, Any] = _silhouette()
 
+# The quick reactions to a prono, in display order; the interface draws and names them
+# (« Bien vu », « Ha ha », « Oh ! », « Bravo », « Hmm »).
+REACTION_KINDS: tuple[str, ...] = ("bien_vu", "rire", "choc", "bravo", "doute")
+
 # Keys of the newsroom card backgrounds; the gradients live in frontend/src/styles/backgrounds.css.
 BACKGROUND_KEYS = frozenset({"mer", "aube", "nuit", "foret", "papier", "brique"})
 

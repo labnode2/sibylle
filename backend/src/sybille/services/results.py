@@ -228,6 +228,7 @@ async def _announce(session: AsyncSession, prono: Prono, settlement: Settlement)
         {"prono_id": str(prono.id), "settlement_seq": settlement.seq, "kind": settlement.kind},
         topics=[f"org:{prono.org_id}", f"prono:{prono.id}"],
     )
+    await bus.publish(session, "leaderboard.changed", {}, topics=[f"org:{prono.org_id}"])
 
 
 async def resolve(

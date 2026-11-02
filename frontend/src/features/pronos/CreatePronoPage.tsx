@@ -1,5 +1,5 @@
 // Publishing a prono (canvas G-Créer): type, section, question, answers, dates and fixed gain.
-// Journalists and the editor publish directly; readers' proposals come with US5.
+// Journalists and the editor publish directly; a reader proposes, and a journalist publishes.
 import { useId, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
@@ -48,7 +48,7 @@ export function CreatePronoPage() {
 
   if (!org.data || !sections.data) return <p role="status">{t('common:shell.loading')}</p>;
   const me = org.data.my_membership;
-  if (me.role === 'reader') return <p className={styles.alert}>{t('create.readerSoon')}</p>;
+  const proposing = me.role === 'reader';
 
   const maxGain = org.data.max_base_gain;
   const baseGain = gain ?? Math.min(20, maxGain);
@@ -81,7 +81,8 @@ export function CreatePronoPage() {
 
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
-      <h1 className={styles.question}>{t('create.title')}</h1>
+      <h1 className={styles.question}>{t(proposing ? 'create.titlePropose' : 'create.title')}</h1>
+      {proposing && <p className={styles.meta}>{t('create.proposeNote')}</p>}
 
       <fieldset className={styles.fieldset}>
         <legend>{t('create.kind')}</legend>
@@ -275,7 +276,7 @@ export function CreatePronoPage() {
         </p>
       )}
       <Button type="submit" block disabled={create.isPending || upload.isPending}>
-        {t('create.submit')}
+        {t(proposing ? 'create.submitPropose' : 'create.submit')}
       </Button>
     </form>
   );

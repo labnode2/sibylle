@@ -64,15 +64,15 @@ export function PronoListPage() {
   const [section, setSection] = useState('');
   const list = usePronoList(orgId, [...FILTERS[filter]], section || undefined);
   const items = list.data?.pages.flatMap((page) => page.items) ?? [];
-  const canCreate = org.data && org.data.my_membership.role !== 'reader';
+  const proposing = org.data?.my_membership.role === 'reader';
 
   return (
     <div className={styles.page}>
       <div className={styles.top}>
         <h1 className={styles.question}>{t('list.title')}</h1>
-        {canCreate && (
+        {org.data && (
           <ButtonLink to={`/o/${orgId}/pronos/nouveau`} variant="secondary">
-            <Icon name="plus" size={12} /> {t('list.new')}
+            <Icon name="plus" size={12} /> {t(proposing ? 'list.propose' : 'list.new')}
           </ButtonLink>
         )}
       </div>

@@ -356,6 +356,8 @@ class PronoDetail(PronoSummary):
     can_edit: bool
     reactions: dict[str, int]
     my_reactions: list[str]
+    # Why a journalist turned the proposal down; its author sees it.
+    rejected_reason: str | None = None
     events: list[PronoEventOut]
     special_edition: SpecialEditionOut | None = None
 
@@ -433,6 +435,18 @@ class RelaunchIn(BaseModel):
     reason: Reason | None = None
 
 
+class ValidateIn(BaseModel):
+    # The proposal's own gain when left out.
+    base_gain: int | None = Field(default=None, ge=0)
+
+
+class RejectIn(BaseModel):
+    reason: Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)] | None = None
+
+
+ReactionKind = Literal["bien_vu", "rire", "choc", "bravo", "doute"]
+
+
 class CancelIn(BaseModel):
     reason: Reason | None = None
 
@@ -451,3 +465,45 @@ class ReportOut(BaseModel):
     message: str | None
     state: Literal["open", "resolved", "dismissed"]
     created_at: datetime
+
+
+class LeaderboardRow(BaseModel):
+    rank: int
+    member: MemberPublic
+    value: int
+    is_me: bool
+
+
+class Leaderboard(BaseModel):
+    # "2026-11" (month), "2026-autumn" (season) or "all_time"; the interface words it.
+    period_label: str
+    rows: list[LeaderboardRow]
+
+
+class SeasonOut(BaseModel):
+    year: int
+    name: Literal["spring", "summer", "autumn", "winter"]
+    starts_at: datetime
+    ends_at: datetime
+
+
+class LatestResult(BaseModel):
+    prono: PronoSummary
+    result: str | None
+    resolved_at: datetime | None
+    # The member's own bet, when they played.
+    my_outcome: Literal["pending", "won", "lost", "refunded"] | None
+    my_payout: int | None
+
+
+class FrontPage(BaseModel):
+    """La une, its blocks in the spec's order."""
+
+    headline: PronoSummary | None
+    open: list[PronoSummary]
+    # Journalists and the editor only; None for a reader.
+    to_designate: list[PronoSummary] | None
+    latest_results: list[LatestResult]
+    leaderboard_top: list[LeaderboardRow]
+    games: list[dict[str, Any]]
+    editor_note: str | None

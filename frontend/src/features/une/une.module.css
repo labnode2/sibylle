@@ -21,6 +21,159 @@
   letter-spacing: -0.025em;
 }
 
-.soon {
+/* One column on a phone; on a computer the main column and, beside it, the ranking, the games
+   and the editor's note. The order on the page stays the spec's. */
+.columns {
+  display: grid;
+  gap: 24px;
+}
+
+.main,
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .columns {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .side {
+    padding-left: 24px;
+    border-left: 1px solid var(--ink);
+  }
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.blockTitle {
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--ink);
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.meta {
+  font: 500 12px/1.4 var(--font-mono);
+  letter-spacing: 0.03em;
   color: var(--ink-2);
+}
+
+/* The prono at the top of the page. */
+.headline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+}
+
+.headlineTitle {
+  color: var(--ink);
+  text-decoration: none;
+  font: 800 30px/1.05 var(--font-text);
+  letter-spacing: -0.03em;
+}
+
+.headlineTitle:hover {
+  text-decoration: underline;
+}
+
+.headlineFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px 18px;
+}
+
+.rows,
+.top {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.rows li + li {
+  border-top: 1px solid var(--rule);
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 0;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.rowTitle {
+  font: 700 17px/1.25 var(--font-text);
+}
+
+.row:hover .rowTitle {
+  text-decoration: underline;
+}
+
+/* Top of the ranking, the member's own line on light grey. */
+.top {
+  display: flex;
+  flex-direction: column;
+}
+
+.top li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  padding: 0 6px;
+}
+
+.top li + li {
+  border-top: 1px solid var(--rule);
+}
+
+.me {
+  background: var(--grey);
+}
+
+.rank {
+  width: 2ch;
+  font: 800 18px/1 var(--font-text);
+}
+
+.topName {
+  flex: 1;
+  font: 700 15px/1.2 var(--font-text);
+}
+
+.more {
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--indigo);
+}
+
+.note {
+  margin: 0;
+  font: italic 500 16px/1.45 var(--font-text);
 }

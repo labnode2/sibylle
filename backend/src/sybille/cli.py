@@ -5,6 +5,7 @@ import asyncio
 import json
 import re
 import sys
+import uuid
 from collections.abc import Callable, Sequence
 from datetime import datetime, timedelta
 
@@ -85,6 +86,19 @@ def _seed_demo(_: argparse.Namespace) -> None:
     asyncio.run(run())
 
 
+def _seasons_close(args: argparse.Namespace) -> None:
+    from sybille.db.session import dispose_engine
+    from sybille.worker.jobs import close_finished_seasons
+
+    async def run() -> None:
+        try:
+            print(f"close_finished_seasons: {await close_finished_seasons(args.org)}")
+        finally:
+            await dispose_engine()
+
+    asyncio.run(run())
+
+
 def _jobs_list(_: argparse.Namespace) -> None:
     from sybille.worker.jobs import REGISTRY
 
@@ -115,6 +129,13 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("name")
     jobs_commands.add_parser("list", help="liste les tâches et leur planning")
 
+    seasons_parser = commands.add_parser("seasons", help="saisons")
+    seasons_commands = seasons_parser.add_subparsers(dest="seasons_command", required=True)
+    close_parser = seasons_commands.add_parser(
+        "close", help="clôture les saisons finies (toutes les rédactions, ou une seule)"
+    )
+    close_parser.add_argument("--org", type=uuid.UUID, help="identifiant d'une rédaction")
+
     commands.add_parser("seed-demo", help="crée la rédaction de démonstration (hors production)")
     return parser
 
@@ -127,6 +148,7 @@ _HANDLERS: dict[tuple[str, str | None], Callable[[argparse.Namespace], None]] = 
     ("worker", None): _worker,
     ("jobs", "run"): _jobs_run,
     ("jobs", "list"): _jobs_list,
+    ("seasons", "close"): _seasons_close,
     ("seed-demo", None): _seed_demo,
 }
 

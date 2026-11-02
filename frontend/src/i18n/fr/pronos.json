@@ -15,7 +15,8 @@
     "pot": "CAGNOTTE {{pot}}",
     "closesAt": "CLÔTURE LE {{date}}",
     "closedAt": "CLOS LE {{date}}",
-    "opensAt": "OUVRE LE {{date}}"
+    "opensAt": "OUVRE LE {{date}}",
+    "propose": "Proposer"
   },
   "state": {
     "proposed": "PROPOSÉ",
@@ -86,7 +87,11 @@
     "rulesPotValue": "perdue si personne n'a vu juste",
     "link": "Lire l'article",
     "image": "Illustration du prono",
-    "edit": "Modifier"
+    "edit": "Modifier",
+    "proposed": "En attente : un·e journaliste doit valider cette proposition avant sa publication.",
+    "proposedNewsroom": "Proposition de {{author}} : à toi de la publier ou de la refuser.",
+    "rejected": "Proposition refusée : {{reason}}",
+    "rejectedNoReason": "Proposition refusée."
   },
   "create": {
     "title": "Nouveau prono",
@@ -115,6 +120,28 @@
     "gain": "GAIN FIXE · MAX {{max}}",
     "gainLabel": "Gain fixe si juste",
     "submit": "Publier le prono",
-    "readerSoon": "Les lecteurs pourront proposer des pronos bientôt. Pour l'instant, seuls les journalistes et la rédaction en chef en publient."
+    "titlePropose": "Proposer un prono",
+    "submitPropose": "Proposer le prono",
+    "proposeNote": "Un·e journaliste relira ta proposition et choisira le gain avant de la publier."
+  },
+  "reactions": {
+    "label": "Réactions",
+    "button": "{{name}} ({{count}})",
+    "bien_vu": "Bien vu",
+    "rire": "Ha ha",
+    "choc": "Oh !",
+    "bravo": "Bravo",
+    "doute": "Hmm"
+  },
+  "proposals": {
+    "title": "PROPOSITIONS À VALIDER",
+    "by": "{{section}} · PROPOSÉ PAR {{author}}",
+    "gain": "GAIN FIXE · MAX {{max}}",
+    "gainLabel": "Gain fixe si juste",
+    "validate": "Publier",
+    "reject": "Refuser",
+    "reason": "MOTIF (FACULTATIF, LU PAR SON AUTEUR·RICE)",
+    "confirmReject": "Confirmer le refus",
+    "back": "Retour"
   }
 }

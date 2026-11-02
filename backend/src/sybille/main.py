@@ -13,8 +13,10 @@ from sybille.api.routes import (
     auth,
     bets,
     content,
+    front_page,
     health,
     invitations,
+    leaderboard,
     me,
     members,
     orgs,
@@ -83,10 +85,12 @@ def create_app() -> FastAPI:
         orgs,
         members,
         invitations,
+        front_page,
         pronos,
         bets,
         results,
         reports,
+        leaderboard,
         uploads,
     ):
         app.include_router(module.router, prefix="/api")

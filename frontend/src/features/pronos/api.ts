@@ -109,3 +109,52 @@ export function useUpload(orgId: string) {
     },
   });
 }
+
+export function useProposalDecision(orgId: string, pronoId: string) {
+  const client = useQueryClient();
+  const settled = () => {
+    void client.invalidateQueries({ queryKey: pronoKey(orgId, pronoId) });
+    void client.invalidateQueries({ queryKey: pronoListKey(orgId) });
+    void client.invalidateQueries({ queryKey: ['front-page', orgId] });
+  };
+  const path = { org_id: orgId, prono_id: pronoId };
+  return {
+    validate: useMutation({
+      mutationFn: (baseGain: number) =>
+        unwrap(
+          api.POST('/api/orgs/{org_id}/pronos/{prono_id}/validate', {
+            params: { path },
+            body: { base_gain: baseGain },
+          }),
+        ),
+      onSuccess: settled,
+    }),
+    reject: useMutation({
+      mutationFn: (reason: string) =>
+        unwrap(
+          api.POST('/api/orgs/{org_id}/pronos/{prono_id}/reject', {
+            params: { path },
+            body: { reason: reason.trim() || null },
+          }),
+        ),
+      onSuccess: settled,
+    }),
+  };
+}
+
+export type ReactionKind = 'bien_vu' | 'rire' | 'choc' | 'bravo' | 'doute';
+
+export function useReact(orgId: string, pronoId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ kind, on }: { kind: ReactionKind; on: boolean }) => {
+      const params = { path: { org_id: orgId, prono_id: pronoId, kind } };
+      await unwrap(
+        on
+          ? api.PUT('/api/orgs/{org_id}/pronos/{prono_id}/reactions/{kind}', { params })
+          : api.DELETE('/api/orgs/{org_id}/pronos/{prono_id}/reactions/{kind}', { params }),
+      );
+    },
+    onSettled: () => client.invalidateQueries({ queryKey: pronoKey(orgId, pronoId) }),
+  });
+}

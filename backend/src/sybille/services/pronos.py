@@ -8,7 +8,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import Select, and_, func, or_, select, tuple_
+from sqlalchemy import Select, and_, delete, func, or_, select, tuple_
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sybille import clock
@@ -21,13 +22,15 @@ from sybille.db.models import (
     Prono,
     PronoEvent,
     PronoOption,
+    Reaction,
     Section,
     Settlement,
     Upload,
 )
 from sybille.domain.betting import Kind, PronoDraft, ValidationFailed, distribution, validate_prono
+from sybille.domain.content import REACTION_KINDS
 from sybille.domain.ledger import LedgerKind
-from sybille.domain.lifecycle import State, can_edit
+from sybille.domain.lifecycle import Event, InvalidTransition, State, can_edit, transition
 from sybille.domain.permissions import Action, can
 from sybille.domain.seasons import PARIS
 from sybille.realtime import bus
@@ -93,6 +96,17 @@ async def record_event(
     )
 
 
+async def announce(
+    session: AsyncSession, prono: Prono, event: str, data: dict[str, Any], topics: list[str]
+) -> None:
+    """Tells the screens about a prono; a proposal reaches only the journalists and its author."""
+    if prono.state in HIDDEN_STATES:
+        await bus.publish(session, event, data, topics=topics, audience="journalists")
+        await bus.publish(session, event, data, topics=topics, audience=[prono.created_by])
+    else:
+        await bus.publish(session, event, data, topics=topics)
+
+
 async def set_state(
     session: AsyncSession,
     prono: Prono,
@@ -105,8 +119,9 @@ async def set_state(
     prono.state = state.value
     await record_event(session, prono, event, actor, data)
     await session.flush()
-    await bus.publish(
+    await announce(
         session,
+        prono,
         "prono.state_changed",
         {
             "prono_id": str(prono.id),
@@ -114,7 +129,7 @@ async def set_state(
             "closes_at": prono.closes_at.isoformat() if prono.closes_at else None,
             "relaunch_count": prono.relaunch_count,
         },
-        topics=[f"org:{prono.org_id}", f"prono:{prono.id}"],
+        [f"org:{prono.org_id}", f"prono:{prono.id}"],
     )
 
 
@@ -159,8 +174,9 @@ async def _replace_options(session: AsyncSession, prono: Prono, labels: list[str
 
 
 async def create_prono(session: AsyncSession, member: Membership, fields: dict[str, Any]) -> Prono:
-    if not can(member.role, Action.PUBLISH_PRONO):
-        # Readers' proposals arrive with US5.
+    """A journalist publishes; a reader proposes, and the prono waits for a journalist."""
+    publishing = can(member.role, Action.PUBLISH_PRONO)
+    if not publishing and not can(member.role, Action.PROPOSE_PRONO):
         raise AppError("forbidden")
     org = await session.get(Organisation, member.org_id)
     assert org is not None
@@ -171,7 +187,13 @@ async def create_prono(session: AsyncSession, member: Membership, fields: dict[s
     prono = Prono(
         org_id=org.id,
         **{name: fields.get(name) for name in EDITABLE_FIELDS},
-        state=(State.SCHEDULED if opens_at and opens_at > now else State.OPEN).value,
+        state=(
+            State.PROPOSED
+            if not publishing
+            else State.SCHEDULED
+            if opens_at and opens_at > now
+            else State.OPEN
+        ).value,
         created_by=member.id,
     )
     prono.question = prono.question.strip()
@@ -179,15 +201,112 @@ async def create_prono(session: AsyncSession, member: Membership, fields: dict[s
     session.add(prono)
     await session.flush()
     await _replace_options(session, prono, labels)
-    await record_event(session, prono, "created", member)
+    await record_event(session, prono, "created" if publishing else "proposed", member)
     await session.flush()
-    await bus.publish(
+    await announce(
         session,
+        prono,
         "prono.created",
         {"prono": {"id": str(prono.id), "question": prono.question, "state": prono.state}},
-        topics=[f"org:{org.id}"],
+        [f"org:{org.id}"],
     )
     return prono
+
+
+async def _option_labels(session: AsyncSession, prono: Prono) -> list[str]:
+    return list(
+        (
+            await session.scalars(
+                select(PronoOption.label)
+                .where(PronoOption.prono_id == prono.id)
+                .order_by(PronoOption.position)
+            )
+        ).all()
+    )
+
+
+def _after(prono: Prono, event: Event) -> State:
+    try:
+        return transition(
+            State(prono.state),
+            event,
+            opens_in_future=bool(prono.opens_at and prono.opens_at > clock.now()),
+        )
+    except InvalidTransition as error:
+        raise AppError("invalid_state") from error
+
+
+async def validate_proposal(
+    session: AsyncSession, member: Membership, prono_id: uuid.UUID, base_gain: int | None
+) -> Prono:
+    """Publishes a reader's proposal, with the gain the journalist chooses."""
+    if not can(member.role, Action.VALIDATE_PROPOSAL):
+        raise AppError("forbidden")
+    prono = await get_prono(session, member, prono_id, lock=True)
+    state = _after(prono, Event.VALIDATE)
+    org = await session.get(Organisation, prono.org_id)
+    assert org is not None
+    fields = {name: getattr(prono, name) for name in EDITABLE_FIELDS}
+    if base_gain is not None:
+        fields["base_gain"] = base_gain
+    # The ceiling and the dates are checked again: the proposal may have waited.
+    _validated(fields, await _option_labels(session, prono), org)
+    prono.base_gain = fields["base_gain"]
+    prono.validated_by = member.id
+    await set_state(session, prono, state, "validated", member, {"base_gain": prono.base_gain})
+    return prono
+
+
+async def reject_proposal(
+    session: AsyncSession, member: Membership, prono_id: uuid.UUID, reason: str | None
+) -> Prono:
+    """Turns a proposal down; its author sees the reason."""
+    if not can(member.role, Action.VALIDATE_PROPOSAL):
+        raise AppError("forbidden")
+    prono = await get_prono(session, member, prono_id, lock=True)
+    state = _after(prono, Event.REJECT)
+    prono.rejected_reason = reason
+    await set_state(session, prono, state, "rejected", member, {"reason": reason} if reason else {})
+    return prono
+
+
+async def reaction_counts(session: AsyncSession, prono_id: uuid.UUID) -> dict[str, int]:
+    rows = await session.execute(
+        select(Reaction.kind, func.count())
+        .where(Reaction.prono_id == prono_id)
+        .group_by(Reaction.kind)
+    )
+    counts = {kind: int(count) for kind, count in rows}
+    return {kind: counts[kind] for kind in REACTION_KINDS if kind in counts}
+
+
+async def react(
+    session: AsyncSession, member: Membership, prono_id: uuid.UUID, kind: str, *, on: bool
+) -> None:
+    """Adds (`on`) or takes back a quick reaction; doing it twice changes nothing."""
+    prono = await get_prono(session, member, prono_id)
+    if prono.state in HIDDEN_STATES:
+        raise AppError("invalid_state")
+    if on:
+        await session.execute(
+            insert(Reaction)
+            .values(prono_id=prono.id, membership_id=member.id, kind=kind, created_at=clock.now())
+            .on_conflict_do_nothing()
+        )
+    else:
+        await session.execute(
+            delete(Reaction).where(
+                Reaction.prono_id == prono.id,
+                Reaction.membership_id == member.id,
+                Reaction.kind == kind,
+            )
+        )
+    await bus.publish(
+        session,
+        "reaction.changed",
+        {"prono_id": str(prono.id), "reactions": await reaction_counts(session, prono.id)},
+        topics=[f"prono:{prono.id}"],
+    )
 
 
 def may_edit(member: Membership, prono: Prono) -> bool:
@@ -230,11 +349,12 @@ async def edit_prono(
     await _replace_options(session, prono, labels)
     await record_event(session, prono, "edited", member)
     await session.flush()
-    await bus.publish(
+    await announce(
         session,
+        prono,
         "prono.edited",
         {"prono": {"id": str(prono.id), "question": prono.question, "state": prono.state}},
-        topics=[f"org:{prono.org_id}", f"prono:{prono.id}"],
+        [f"org:{prono.org_id}", f"prono:{prono.id}"],
     )
     return prono
 
@@ -472,6 +592,15 @@ async def detail(session: AsyncSession, member: Membership, prono: Prono) -> dic
     mine = next((bet for bet, m in rows if m.id == member.id and bet.superseded_at is None), None)
     members = {m.id: public_member(m) for _, m in rows}
     today = clock.now().astimezone(PARIS).date()
+    mine_reacted = set(
+        (
+            await session.scalars(
+                select(Reaction.kind).where(
+                    Reaction.prono_id == prono.id, Reaction.membership_id == member.id
+                )
+            )
+        ).all()
+    )
     events = (
         await session.scalars(
             select(PronoEvent)
@@ -503,8 +632,9 @@ async def detail(session: AsyncSession, member: Membership, prono: Prono) -> dic
             and mine.date_value < today
         ),
         "can_edit": may_edit(member, prono),
-        "reactions": {},
-        "my_reactions": [],
+        "reactions": await reaction_counts(session, prono.id),
+        "my_reactions": [kind for kind in REACTION_KINDS if kind in mine_reacted],
+        "rejected_reason": prono.rejected_reason,
         "events": [{"kind": e.kind, "at": e.created_at, "data": e.data} for e in events],
         "special_edition": await special_edition(session, prono, list(options), members),
     }

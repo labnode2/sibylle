@@ -6,6 +6,7 @@ them all.
 """
 
 import logging
+import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import timedelta
@@ -33,10 +34,10 @@ class Job:
 REGISTRY: dict[str, Job] = {}
 
 
-def job(
-    name: str, **cron: Any
-) -> Callable[[Callable[[], Awaitable[Any]]], Callable[[], Awaitable[Any]]]:
-    def register(run: Callable[[], Awaitable[Any]]) -> Callable[[], Awaitable[Any]]:
+def job[F: Callable[..., Awaitable[Any]]](name: str, **cron: Any) -> Callable[[F], F]:
+    """Registers a job; it keeps its own signature for direct calls."""
+
+    def register(run: F) -> F:
         REGISTRY[name] = Job(name, cron, run)
         return run
 
@@ -103,6 +104,26 @@ async def dispatch(sender: Sender, renderer: Renderer, *, batch: int = 50) -> in
 @job("dispatch_notifications", minute="*")
 async def dispatch_notifications() -> int:
     return await dispatch(SmtpSender(get_settings()), Renderer())
+
+
+@job("close_finished_seasons", minute="*")
+async def close_finished_seasons(org_id: uuid.UUID | None = None) -> int:
+    """Closes each newsroom's season once it is over; returns how many closures were done.
+
+    Checked every minute rather than once at midnight, so that a worker restarted after
+    midnight still closes the season straight away. `org_id` keeps one newsroom only
+    (`sybille seasons close --org`, for tests on a shared database).
+    """
+    from sybille.services import seasons
+
+    async with transaction() as session:
+        await seasons.ensure_seasons(session)
+        due = await seasons.due(session, org_id)
+    closed = 0
+    for org_id, season_id in due:
+        async with transaction() as session:
+            closed += await seasons.close(session, org_id, season_id)
+    return closed
 
 
 @job("advance_pronos", minute="*")

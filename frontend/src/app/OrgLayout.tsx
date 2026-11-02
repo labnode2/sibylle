@@ -40,11 +40,9 @@ export function OrgLayout() {
       }
       edition={<EditionLink org={org.data} />}
       action={
-        me.role !== 'reader' && (
-          <ButtonLink to={`/o/${orgId}/pronos/nouveau`}>
-            <Icon name="plus" size={12} /> {t('list.new')}
-          </ButtonLink>
-        )
+        <ButtonLink to={`/o/${orgId}/pronos/nouveau`}>
+          <Icon name="plus" size={12} /> {t(me.role === 'reader' ? 'list.propose' : 'list.new')}
+        </ButtonLink>
       }
     />
   );

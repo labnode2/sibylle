@@ -85,8 +85,11 @@ async def test_publishing_is_checked(make_org: MakeOrg, person: MakePerson) -> N
     }
     too_much = await hugo.client.post(f"/api/orgs/{org.id}/pronos", json=body)
     assert too_much.status_code == 422 and "base_gain" in too_much.json()["error"]["fields"]
+    # A reader's prono waits for a journalist (US5), under the same checks.
     reader = await cami.client.post(f"/api/orgs/{org.id}/pronos", json={**body, "base_gain": 10})
-    assert reader.status_code == 403
+    assert reader.status_code == 201 and reader.json()["state"] == "proposed"
+    over = await cami.client.post(f"/api/orgs/{org.id}/pronos", json=body)
+    assert over.status_code == 422 and "base_gain" in over.json()["error"]["fields"]
 
 
 async def test_betting_with_a_stake(make_org: MakeOrg, person: MakePerson) -> None:

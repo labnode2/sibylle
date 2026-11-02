@@ -52,6 +52,7 @@ export function AppShell({ account, edition, action }: ShellSlots) {
   const tabs: Tab[] = [
     { to: base, label: t('tabs.une'), icon: 'home', end: true },
     { to: `${base}/pronos`, label: t('tabs.pronos'), icon: 'ball' },
+    { to: `${base}/classement`, label: t('tabs.ranking'), icon: 'trophy' },
     { to: `${base}/profil`, label: t('tabs.profile'), icon: 'user' },
   ];
   const today = formatDate(new Date(), {

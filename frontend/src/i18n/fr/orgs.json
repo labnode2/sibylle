@@ -51,7 +51,6 @@
   "une": {
     "edition": "ÉDITION {{title}}",
     "hello": "Bonjour {{pseudo}}",
-    "soon": "Les pronos arrivent bientôt dans cette édition.",
     "switch": "Changer de rédaction"
   },
   "invite": {

@@ -13,6 +13,8 @@ import { DesignatePanel } from '../results/DesignatePanel';
 import { ReportForm } from '../results/ReportForm';
 import { SpecialEdition } from '../results/SpecialEdition';
 import { usePlaceBet, useProno, type Bet, type PronoDetail } from './api';
+import { ProposalDecision } from './ProposalsPanel';
+import { ReactionBar } from './ReactionBar';
 import styles from './pronos.module.css';
 
 const STAKE_STEP = 10;
@@ -59,9 +61,25 @@ function Countdown({ closesAt }: { closesAt: string }) {
   );
 }
 
-function StateNotice({ prono }: { prono: PronoDetail }) {
+function StateNotice({ prono, newsroom }: { prono: PronoDetail; newsroom: boolean }) {
   const { t } = useTranslation('pronos');
   switch (prono.state) {
+    case 'proposed':
+      return (
+        <p className={styles.alert}>
+          {newsroom
+            ? t('detail.proposedNewsroom', { author: prono.created_by.pseudo })
+            : t('detail.proposed')}
+        </p>
+      );
+    case 'rejected':
+      return (
+        <p className={styles.alert}>
+          {prono.rejected_reason
+            ? t('detail.rejected', { reason: prono.rejected_reason })
+            : t('detail.rejectedNoReason')}
+        </p>
+      );
     case 'scheduled':
       return (
         <p className={styles.alert}>{t('detail.opensAt', { date: longDate(prono.opens_at!) })}</p>
@@ -298,7 +316,14 @@ export function PronoPage() {
           {prono.special_edition ? (
             <SpecialEdition orgId={orgId} prono={prono} />
           ) : (
-            <StateNotice prono={prono} />
+            <StateNotice prono={prono} newsroom={me.role !== 'reader'} />
+          )}
+
+          {prono.state === 'proposed' && me.role !== 'reader' && (
+            <ProposalDecision orgId={orgId} prono={prono} />
+          )}
+          {prono.state !== 'proposed' && prono.state !== 'rejected' && (
+            <ReactionBar orgId={orgId} pronoId={prono.id} />
           )}
 
           {prono.my_bet && !prono.special_edition && (

@@ -325,6 +325,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/orgs/{org_id}/front-page": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Front Page */
+        get: operations["get_front_page_api_orgs__org_id__front_page_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/orgs/{org_id}/sections": {
         parameters: {
             query?: never;
@@ -376,6 +393,58 @@ export interface paths {
         head?: never;
         /** Edit Prono */
         patch: operations["edit_prono_api_orgs__org_id__pronos__prono_id__patch"];
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/pronos/{prono_id}/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Validate Proposal */
+        post: operations["validate_proposal_api_orgs__org_id__pronos__prono_id__validate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/pronos/{prono_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject Proposal */
+        post: operations["reject_proposal_api_orgs__org_id__pronos__prono_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/pronos/{prono_id}/reactions/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Add Reaction */
+        put: operations["add_reaction_api_orgs__org_id__pronos__prono_id__reactions__kind__put"];
+        post?: never;
+        /** Remove Reaction */
+        delete: operations["remove_reaction_api_orgs__org_id__pronos__prono_id__reactions__kind__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/orgs/{org_id}/pronos/{prono_id}/bets": {
@@ -474,6 +543,40 @@ export interface paths {
         put?: never;
         /** Create Report */
         post: operations["create_report_api_orgs__org_id__pronos__prono_id__reports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/leaderboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Leaderboard */
+        get: operations["get_leaderboard_api_orgs__org_id__leaderboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/seasons/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current Season */
+        get: operations["current_season_api_orgs__org_id__seasons_current_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -606,6 +709,27 @@ export interface components {
             /** Email */
             email: string;
         };
+        /**
+         * FrontPage
+         * @description La une, its blocks in the spec's order.
+         */
+        FrontPage: {
+            headline: components["schemas"]["PronoSummary"] | null;
+            /** Open */
+            open: components["schemas"]["PronoSummary"][];
+            /** To Designate */
+            to_designate: components["schemas"]["PronoSummary"][] | null;
+            /** Latest Results */
+            latest_results: components["schemas"]["LatestResult"][];
+            /** Leaderboard Top */
+            leaderboard_top: components["schemas"]["LeaderboardRow"][];
+            /** Games */
+            games: {
+                [key: string]: unknown;
+            }[];
+            /** Editor Note */
+            editor_note: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -703,6 +827,35 @@ export interface components {
         Joined: {
             org: components["schemas"]["OrgCard"];
             membership: components["schemas"]["MemberSelf"];
+        };
+        /** LatestResult */
+        LatestResult: {
+            prono: components["schemas"]["PronoSummary"];
+            /** Result */
+            result: string | null;
+            /** Resolved At */
+            resolved_at: string | null;
+            /** My Outcome */
+            my_outcome: ("pending" | "won" | "lost" | "refunded") | null;
+            /** My Payout */
+            my_payout: number | null;
+        };
+        /** Leaderboard */
+        Leaderboard: {
+            /** Period Label */
+            period_label: string;
+            /** Rows */
+            rows: components["schemas"]["LeaderboardRow"][];
+        };
+        /** LeaderboardRow */
+        LeaderboardRow: {
+            /** Rank */
+            rank: number;
+            member: components["schemas"]["MemberPublic"];
+            /** Value */
+            value: number;
+            /** Is Me */
+            is_me: boolean;
         };
         /** LinkInvitationIn */
         LinkInvitationIn: {
@@ -832,6 +985,11 @@ export interface components {
             org: components["schemas"]["OrgCard"];
             membership: components["schemas"]["MemberSelf"];
         };
+        /**
+         * Metric
+         * @enum {string}
+         */
+        Metric: "laurels" | "wins";
         /** OptionOut */
         OptionOut: {
             /**
@@ -916,6 +1074,11 @@ export interface components {
             /** New Password */
             new_password: string;
         };
+        /**
+         * Period
+         * @enum {string}
+         */
+        Period: "month" | "season" | "all_time";
         /** PixelImage */
         PixelImage: {
             /**
@@ -991,6 +1154,8 @@ export interface components {
             };
             /** My Reactions */
             my_reactions: string[];
+            /** Rejected Reason */
+            rejected_reason?: string | null;
             /** Events */
             events: components["schemas"]["PronoEventOut"][];
             special_edition?: components["schemas"]["SpecialEditionOut"] | null;
@@ -1123,6 +1288,11 @@ export interface components {
             relaunch_count: number;
             created_by: components["schemas"]["MemberPublic"];
         };
+        /** RejectIn */
+        RejectIn: {
+            /** Reason */
+            reason?: string | null;
+        };
         /** RelaunchIn */
         RelaunchIn: {
             /**
@@ -1199,6 +1369,26 @@ export interface components {
             /** Result Date */
             result_date?: string | null;
         };
+        /** SeasonOut */
+        SeasonOut: {
+            /** Year */
+            year: number;
+            /**
+             * Name
+             * @enum {string}
+             */
+            name: "spring" | "summer" | "autumn" | "winter";
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+        };
         /** SectionOut */
         SectionOut: {
             /**
@@ -1272,6 +1462,11 @@ export interface components {
             width: number;
             /** Height */
             height: number;
+        };
+        /** ValidateIn */
+        ValidateIn: {
+            /** Base Gain */
+            base_gain?: number | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -1898,6 +2093,37 @@ export interface operations {
             };
         };
     };
+    get_front_page_api_orgs__org_id__front_page_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FrontPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_sections_api_orgs__org_id__sections_get: {
         parameters: {
             query?: never;
@@ -2056,6 +2282,140 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PronoDetail"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    validate_proposal_api_orgs__org_id__pronos__prono_id__validate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                prono_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ValidateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PronoDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_proposal_api_orgs__org_id__pronos__prono_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                prono_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PronoDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_reaction_api_orgs__org_id__pronos__prono_id__reactions__kind__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                prono_id: string;
+                kind: "bien_vu" | "rire" | "choc" | "bravo" | "doute";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_reaction_api_orgs__org_id__pronos__prono_id__reactions__kind__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                prono_id: string;
+                kind: "bien_vu" | "rire" | "choc" | "bravo" | "doute";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -2271,6 +2631,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_leaderboard_api_orgs__org_id__leaderboard_get: {
+        parameters: {
+            query?: {
+                metric?: components["schemas"]["Metric"];
+                period?: components["schemas"]["Period"];
+            };
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Leaderboard"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    current_season_api_orgs__org_id__seasons_current_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeasonOut"];
                 };
             };
             /** @description Validation Error */
