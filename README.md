@@ -1,9 +1,9 @@
-# Sybille
+# Sibylle
 
 Jeu de pronostics pour les rédactions : on pronostique, on mise des lauriers et on se classe par saison.
 
-- Spécification, plan et tâches : `specs/001-sybille-v1/`
-- Lancer et valider l'appli : `specs/001-sybille-v1/quickstart.md`
+- Spécification, plan et tâches : `specs/001-sibylle-v1/`
+- Lancer et valider l'appli : `specs/001-sibylle-v1/quickstart.md`
 - Serveur (Python, FastAPI) : `backend/` ; interface (React) : `frontend/` ; hébergement : `deploy/`
 
 ## Démarrer en local
@@ -16,7 +16,7 @@ make dev     # serveur, worker et interface ensemble ; Ctrl+C pour tout arrêter
 ```
 
 Puis ouvrir http://localhost:5173 et se connecter avec un compte de démonstration, par exemple
-`ines@demo.sybille.test` (rédaction en chef), mot de passe `lauriers-de-demo` (liste complète dans
+`ines@demo.sibylle.test` (rédaction en chef), mot de passe `lauriers-de-demo` (liste complète dans
 `backend/seed/README.md`). Les e-mails envoyés en local arrivent dans Mailpit : http://localhost:8025.
 
 Si le port 5173 est déjà pris : `make dev WEB_PORT=5199` (et `make e2e WEB_PORT=5199`).
@@ -35,5 +35,5 @@ make e2e     # parcours de bout en bout dans le navigateur (Playwright)
 ## Mise en production
 
 Pas encore prête : les images Docker, Caddy, le tunnel frpc et les sauvegardes sont prévus dans
-`specs/001-sybille-v1/tasks.md` (T140 à T145). `make setup` et `make dev` servent au développement
+`specs/001-sibylle-v1/tasks.md` (T140 à T145). `make setup` et `make dev` servent au développement
 seulement.

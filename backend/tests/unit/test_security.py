@@ -1,6 +1,6 @@
 import pytest
 
-from sybille.services.security import hash_password, new_token, token_hash, verify_password
+from sibylle.services.security import hash_password, new_token, token_hash, verify_password
 
 pytestmark = pytest.mark.unit
 

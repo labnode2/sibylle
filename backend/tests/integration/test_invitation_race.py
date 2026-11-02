@@ -5,7 +5,7 @@ import pytest
 from tests.conftest import ClientFor, MakeAccount
 from tests.contract.helpers import AVATAR, create_org, token_from
 
-from sybille import clock
+from sibylle import clock
 
 pytestmark = pytest.mark.integration
 

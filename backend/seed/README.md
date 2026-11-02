@@ -1,17 +1,17 @@
 # Données de démonstration
 
-`uv run sybille seed-demo` (refusé en production) crée la rédaction « Sophia Office » et ses
+`uv run sibylle seed-demo` (refusé en production) crée la rédaction « Sophia Office » et ses
 cinq membres. La commande peut être relancée sans rien dupliquer.
 
 Mot de passe commun : `lauriers-de-demo`
 
 | Pseudo | E-mail | Rôle |
 |---|---|---|
-| Inès | ines@demo.sybille.test | rédaction en chef |
-| Hugo | hugo@demo.sybille.test | journaliste |
-| Cami | cami@demo.sybille.test | lecteur·rice |
-| Léo | leo@demo.sybille.test | lecteur·rice |
-| Manon | manon@demo.sybille.test | lecteur·rice |
+| Inès | ines@demo.sibylle.test | rédaction en chef |
+| Hugo | hugo@demo.sibylle.test | journaliste |
+| Cami | cami@demo.sibylle.test | lecteur·rice |
+| Léo | leo@demo.sibylle.test | lecteur·rice |
+| Manon | manon@demo.sibylle.test | lecteur·rice |
 
 Le code d'accès de la rédaction est affiché à la fin de la commande, et dans la une d'Inès.
 

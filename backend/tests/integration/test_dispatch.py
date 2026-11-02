@@ -5,12 +5,12 @@ import pytest
 from sqlalchemy import func, select
 from tests.conftest import MakeAccount
 
-from sybille import clock
-from sybille.db.models import Account, Notification
-from sybille.db.session import transaction
-from sybille.notify.email import MemorySender, Renderer
-from sybille.services.notifications import enqueue
-from sybille.worker.jobs import RETRY_DELAYS, dispatch
+from sibylle import clock
+from sibylle.db.models import Account, Notification
+from sibylle.db.session import transaction
+from sibylle.notify.email import MemorySender, Renderer
+from sibylle.services.notifications import enqueue
+from sibylle.worker.jobs import RETRY_DELAYS, dispatch
 
 pytestmark = pytest.mark.integration
 

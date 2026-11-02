@@ -3,8 +3,8 @@ from collections import defaultdict
 
 import pytest
 
-from sybille.domain.ledger import Effect, LedgerKind
-from sybille.domain.settlement import (
+from sibylle.domain.ledger import Effect, LedgerKind
+from sibylle.domain.settlement import (
     BetLine,
     Outcome,
     refunds,

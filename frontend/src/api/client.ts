@@ -27,7 +27,7 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 // Every request that changes something carries the header the server's CSRF check expects.
 const csrf: Middleware = {
   onRequest({ request }) {
-    if (!SAFE_METHODS.has(request.method)) request.headers.set('X-Sybille', '1');
+    if (!SAFE_METHODS.has(request.method)) request.headers.set('X-Sibylle', '1');
     return request;
   },
 };

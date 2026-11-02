@@ -1,13 +1,13 @@
-name: sybille
+name: sibylle
 
 services:
   db:
     image: postgres:18
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-sybille}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sybille}
-      POSTGRES_DB: ${POSTGRES_DB:-sybille}
+      POSTGRES_USER: ${POSTGRES_USER:-sibylle}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sibylle}
+      POSTGRES_DB: ${POSTGRES_DB:-sibylle}
     volumes:
       - pgdata:/var/lib/postgresql
     ports:

@@ -1,9 +1,0 @@
-Bonjour {{ first_name }},
-
-Bienvenue sur Sybille. Confirme ton adresse pour recevoir les nouvelles de tes rédactions : nouveaux pronos, résultats et rappels.
-
-{{ link }}
-
-Ce lien est valable 24 heures. Si tu n'as pas créé de compte, ignore ce message.
-
-— La Gazette de Sibylle

@@ -8,8 +8,8 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from sybille.domain.ledger import LedgerKind, reversal
-from sybille.domain.settlement import BetLine, Entry, Outcome, settle
+from sibylle.domain.ledger import LedgerKind, reversal
+from sibylle.domain.settlement import BetLine, Entry, Outcome, settle
 
 pytestmark = pytest.mark.unit
 

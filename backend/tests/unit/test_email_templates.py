@@ -2,13 +2,13 @@ import re
 
 import pytest
 
-from sybille.notify.email import Renderer
+from sibylle.notify.email import Renderer
 
 pytestmark = pytest.mark.unit
 
-LINK = "https://sybille.exemple.fr/rejoindre/jeton-de-test"
+LINK = "https://sibylle.exemple.fr/rejoindre/jeton-de-test"
 CASES = {
-    "verify_email": ({"first_name": "Camille", "link": LINK}, "Confirme ton adresse pour Sybille"),
+    "verify_email": ({"first_name": "Camille", "link": LINK}, "Confirme ton adresse pour Sibylle"),
     "reset_password": (
         {"first_name": "Camille", "link": LINK},
         "Ton lien pour changer de mot de passe",

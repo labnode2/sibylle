@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from sybille.domain.seasons import (
+from sibylle.domain.seasons import (
     SeasonKey,
     month_bounds,
     next_season,

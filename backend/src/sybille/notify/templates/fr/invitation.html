@@ -1,9 +1,0 @@
-{% extends "fr/base.html" %}
-{% block title %}Invitation dans {{ org_title }}{% endblock %}
-{% block content %}
-<p style="margin:0 0 12px;font:600 11px/1 'Courier New',monospace;letter-spacing:0.06em;color:#4a50d0;">INVITATION DE {{ inviter_pseudo | upper }}</p>
-<p style="margin:0 0 12px;font-size:24px;font-weight:800;line-height:1.1;">Rejoins {{ org_title }}</p>
-<p style="margin:0 0 12px;">{{ inviter_pseudo }} t'invite dans sa rédaction sur Sybille, le jeu de pronostics entre collègues et proches : on pronostique, on mise des lauriers et on se classe par saison. C'est gratuit et sans enjeu réel.</p>
-{% with url=link, label="Rejoindre la rédaction" %}{% include "fr/_button.html" %}{% endwith %}
-<p style="margin:0;color:#4a4d6a;font-size:14px;">Cette invitation est valable 7 jours et ne sert qu'une fois.</p>
-{% endblock %}

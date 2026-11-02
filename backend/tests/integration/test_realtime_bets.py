@@ -9,17 +9,17 @@ import pytest
 import websockets
 from tests.conftest import ORIGIN, MakeOrg, MakePerson, Person
 
-from sybille import clock
+from sibylle import clock
 
 pytestmark = pytest.mark.integration
 
 
 async def connect(server: str, who: Person) -> Any:
-    token = who.client.cookies.get("sybille_session")
+    token = who.client.cookies.get("sibylle_session")
     return await websockets.connect(
         f"ws://{server}/api/ws",
         origin=ORIGIN,  # type: ignore[arg-type]
-        additional_headers={"Cookie": f"sybille_session={token}"},
+        additional_headers={"Cookie": f"sibylle_session={token}"},
     )
 
 
@@ -60,8 +60,8 @@ async def test_a_bet_reaches_the_other_screen_quickly(
     started = time.monotonic()
     async with httpx.AsyncClient(
         base_url=f"http://{live_server}",
-        headers={"X-Sybille": "1", "Origin": ORIGIN},
-        cookies={"sybille_session": cami.client.cookies.get("sybille_session") or ""},
+        headers={"X-Sibylle": "1", "Origin": ORIGIN},
+        cookies={"sibylle_session": cami.client.cookies.get("sibylle_session") or ""},
     ) as live_cami:
         placed = await live_cami.post(
             f"/api/orgs/{org.id}/pronos/{prono['id']}/bets",

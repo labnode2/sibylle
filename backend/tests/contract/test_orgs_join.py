@@ -15,9 +15,9 @@ from tests.contract.helpers import (
     token_from,
 )
 
-from sybille import clock
-from sybille.db.models import Invitation, LedgerEntry, Membership, Organisation
-from sybille.db.session import transaction
+from sibylle import clock
+from sibylle.db.models import Invitation, LedgerEntry, Membership, Organisation
+from sibylle.db.session import transaction
 
 pytestmark = pytest.mark.contract
 

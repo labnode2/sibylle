@@ -15,7 +15,7 @@
         "--directory",
         "backend",
         "uvicorn",
-        "sybille.main:create_app",
+        "sibylle.main:create_app",
         "--factory",
         "--reload",
         "--port",

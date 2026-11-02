@@ -7,11 +7,11 @@ import pytest
 from tests.conftest import MakeOrg, MakePerson, Person
 from tests.contract.test_pronos import balance, place, publish
 
-from sybille import clock
-from sybille.db.models import Membership
-from sybille.db.session import transaction
-from sybille.services.ledger import check_caches
-from sybille.worker.jobs import advance_pronos
+from sibylle import clock
+from sibylle.db.models import Membership
+from sibylle.db.session import transaction
+from sibylle.services.ledger import check_caches
+from sibylle.worker.jobs import advance_pronos
 
 pytestmark = pytest.mark.contract
 

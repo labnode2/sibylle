@@ -21,8 +21,8 @@ setup: env install db migrate seed ## Tout installer et préparer la base (premi
 env: deploy/.env ## Crée deploy/.env pour le développement s'il n'existe pas
 
 deploy/.env:
-	sed -e 's/^POSTGRES_PASSWORD=$$/POSTGRES_PASSWORD=sybille/' \
-		-e 's/<mot de passe>/sybille/' \
+	sed -e 's/^POSTGRES_PASSWORD=$$/POSTGRES_PASSWORD=sibylle/' \
+		-e 's/<mot de passe>/sibylle/' \
 		deploy/.env.example > $@
 	@echo "deploy/.env créé (valeurs de développement)."
 
@@ -41,7 +41,7 @@ migrate: ## Applique les migrations de la base
 	cd backend && uv run alembic upgrade head
 
 seed: ## Crée la rédaction de démonstration (relançable sans doublon)
-	cd backend && uv run sybille seed-demo
+	cd backend && uv run sibylle seed-demo
 
 # Lancement
 
@@ -51,10 +51,10 @@ dev: db ## Lance serveur, worker et interface ensemble (Ctrl+C pour tout arrête
 
 api: ## Lance seulement le serveur (port 8000)
 	cd backend && PUBLIC_ORIGIN=http://localhost:$(WEB_PORT) \
-		uv run uvicorn sybille.main:create_app --factory --reload --port 8000
+		uv run uvicorn sibylle.main:create_app --factory --reload --port 8000
 
 worker: ## Lance seulement le worker (tâches planifiées)
-	cd backend && uv run sybille worker
+	cd backend && uv run sibylle worker
 
 web: ## Lance seulement l'interface
 	cd frontend && npm run dev -- --port $(WEB_PORT) --strictPort
@@ -76,4 +76,4 @@ check-frontend:
 	cd frontend && npm run check:api
 
 e2e: ## Parcours de bout en bout (Playwright)
-	cd frontend && SYBILLE_WEB_PORT=$(WEB_PORT) npm run e2e
+	cd frontend && SIBYLLE_WEB_PORT=$(WEB_PORT) npm run e2e

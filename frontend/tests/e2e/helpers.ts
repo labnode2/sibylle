@@ -10,7 +10,7 @@ let counter = 0;
 /** An e-mail no other run has used. */
 export function uniqueEmail(name: string, testInfo: TestInfo): string {
   counter += 1;
-  return `${name}-${testInfo.project.name}-${Date.now()}-${counter}@e2e.sybille.test`;
+  return `${name}-${testInfo.project.name}-${Date.now()}-${counter}@e2e.sibylle.test`;
 }
 
 /** A fresh browser context (its own cookies), signed up as a new account. */
@@ -33,7 +33,7 @@ export async function newPerson(
 }
 
 export async function createNewsroom(page: Page, title: string, pseudo: string): Promise<void> {
-  await expect(page.getByRole('heading', { name: 'Bienvenue sur Sybille' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Bienvenue sur Sibylle' })).toBeVisible();
   await page.getByRole('link', { name: 'Créer une rédaction' }).click();
   await page.getByLabel('NOM DE LA RÉDACTION').fill(title);
   await page.getByLabel('TON PSEUDO DANS CETTE RÉDACTION').fill(pseudo);
@@ -49,23 +49,23 @@ export async function joinWith(page: Page, pseudo: string): Promise<void> {
   await page.getByRole('button', { name: 'Rejoindre la rédaction' }).click();
 }
 
-/** Runs `sybille …` on the API's side, with the simulated clock. */
-export function sybille(...args: string[]): string {
-  return execFileSync('uv', ['run', '--directory', '../backend', 'sybille', ...args], {
-    env: { ...process.env, SYBILLE_CLOCK: 'fake' },
+/** Runs `sibylle …` on the API's side, with the simulated clock. */
+export function sibylle(...args: string[]): string {
+  return execFileSync('uv', ['run', '--directory', '../backend', 'sibylle', ...args], {
+    env: { ...process.env, SIBYLLE_CLOCK: 'fake' },
     encoding: 'utf-8',
   });
 }
 
 /** Puts the simulated clock back on the real time. */
 export function resetClock(): void {
-  sybille('clock', 'set', new Date().toISOString().replace('Z', '+00:00'));
+  sibylle('clock', 'set', new Date().toISOString().replace('Z', '+00:00'));
 }
 
 /** Moves the simulated clock and lets the worker open and close the pronos. */
 export function advanceClock(duration: string): void {
-  sybille('clock', 'advance', duration);
-  sybille('jobs', 'run', 'advance_pronos');
+  sibylle('clock', 'advance', duration);
+  sibylle('jobs', 'run', 'advance_pronos');
 }
 
 // Answers are read loosely in tests: the contract tests check their shape.
@@ -85,7 +85,7 @@ export async function call(
     async ({ method, url, body }) => {
       const response = await fetch(url, {
         method,
-        headers: body ? { 'Content-Type': 'application/json', 'X-Sybille': '1' } : {},
+        headers: body ? { 'Content-Type': 'application/json', 'X-Sibylle': '1' } : {},
         body: body ? JSON.stringify(body) : undefined,
       });
       return { status: response.status, body: (await response.json()) as unknown };

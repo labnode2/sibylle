@@ -1,4 +1,4 @@
-/* Newsroom card backgrounds: same keys as BACKGROUND_KEYS in backend/src/sybille/domain/content.py. */
+/* Newsroom card backgrounds: same keys as BACKGROUND_KEYS in backend/src/sibylle/domain/content.py. */
 
 .bg-mer {
   background: linear-gradient(#8fb0ff 0 62%, #f4f6fb 62% 66%, #4a50d0 66% 100%);

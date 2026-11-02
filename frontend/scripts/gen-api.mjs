@@ -1,4 +1,4 @@
-// Generates src/api/schema.d.ts from the server's OpenAPI (`sybille openapi`).
+// Generates src/api/schema.d.ts from the server's OpenAPI (`sibylle openapi`).
 // `--check` fails instead of writing when the committed file is out of date.
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -8,7 +8,7 @@ import openapiTS, { astToString } from 'openapi-typescript';
 const check = process.argv.includes('--check');
 const target = new URL('../src/api/schema.d.ts', import.meta.url);
 
-const spec = execFileSync('uv', ['run', '--directory', '../backend', 'sybille', 'openapi'], {
+const spec = execFileSync('uv', ['run', '--directory', '../backend', 'sibylle', 'openapi'], {
   encoding: 'utf8',
   maxBuffer: 64 * 1024 * 1024,
 });

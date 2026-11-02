@@ -8,8 +8,8 @@ from PIL import Image
 from tests.conftest import MakeOrg, MakePerson
 from tests.contract.helpers import assert_no_private_data
 
-from sybille import clock
-from sybille.worker.jobs import advance_pronos
+from sibylle import clock
+from sibylle.worker.jobs import advance_pronos
 
 pytestmark = pytest.mark.contract
 

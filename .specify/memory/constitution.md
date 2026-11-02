@@ -9,7 +9,7 @@ Sync Impact Report
 - TODO : aucun
 -->
 
-# Constitution de Sybille
+# Constitution de Sibylle
 
 ## Core Principles
 
@@ -17,7 +17,7 @@ Sync Impact Report
 
 - Toutes les données restent sur la machine du projet, en Europe. Aucun outil de mesure d'audience,
   de suivi ou de publicité, et aucune ressource chargée depuis un tiers par le navigateur
-  (polices, scripts et images sont servis par Sybille elle-même).
+  (polices, scripts et images sont servis par Sibylle elle-même).
 - Les seuls services tiers admis sont l'envoi d'e-mails (Brevo, en Europe) et les services de
   notification push des navigateurs, dont le contenu est chiffré de bout en bout.
 - Le nom et le prénom d'un compte ne sont jamais visibles d'un autre membre ; dans une rédaction,
@@ -26,7 +26,7 @@ Sync Impact Report
   les données personnelles et rend anonymes les traces de jeu qui doivent rester (cagnottes,
   classements passés).
 
-*Pourquoi :* Sybille se joue entre collègues ; la confiance passe avant toute fonctionnalité.
+*Pourquoi :* Sibylle se joue entre collègues ; la confiance passe avant toute fonctionnalité.
 
 ### II. Rédactions étanches
 
@@ -57,7 +57,7 @@ Sync Impact Report
 
 ### V. Simple à héberger
 
-- Sybille tourne sur une seule machine, avec Docker Compose : un serveur web, l'API, un
+- Sibylle tourne sur une seule machine, avec Docker Compose : un serveur web, l'API, un
   processus de tâches et PostgreSQL. Ajouter un service (file de messages, cache, etc.) doit
   être justifié dans la section « Complexity Tracking » du plan.
 - Un seul dépôt, un seul déploiement ; pas de microservices.

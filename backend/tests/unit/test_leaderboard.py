@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from sybille.domain.leaderboard import (
+from sibylle.domain.leaderboard import (
     Period,
     Window,
     all_time,
@@ -12,7 +12,7 @@ from sybille.domain.leaderboard import (
     rank,
     window,
 )
-from sybille.domain.ledger import purchase
+from sibylle.domain.ledger import purchase
 
 pytestmark = pytest.mark.unit
 

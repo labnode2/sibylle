@@ -1,6 +1,6 @@
 import pytest
 
-from sybille.domain.permissions import Action, Role, can
+from sibylle.domain.permissions import Action, Role, can
 
 pytestmark = pytest.mark.unit
 

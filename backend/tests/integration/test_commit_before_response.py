@@ -9,7 +9,7 @@ pytestmark = pytest.mark.integration
 
 
 async def test_a_new_session_works_as_soon_as_signup_answers(live_server: str) -> None:
-    headers = {"X-Sybille": "1", "Origin": ORIGIN}
+    headers = {"X-Sibylle": "1", "Origin": ORIGIN}
     # Two clients, so the second request does not wait behind the first on one connection.
     async with (
         httpx.AsyncClient(base_url=f"http://{live_server}") as client,
@@ -27,6 +27,6 @@ async def test_a_new_session_works_as_soon_as_signup_answers(live_server: str) -
                 headers=headers,
             )
             assert signup.status_code == 201
-            token = signup.cookies.get("sybille_session")
-            me = await other.get("/api/me", headers={"Cookie": f"sybille_session={token}"})
+            token = signup.cookies.get("sibylle_session")
+            me = await other.get("/api/me", headers={"Cookie": f"sibylle_session={token}"})
             assert me.status_code == 200, f"signup {i}: the session was not committed yet"

@@ -1,8 +1,0 @@
-{% extends "fr/base.html" %}
-{% block title %}Confirme ton adresse{% endblock %}
-{% block content %}
-<p style="margin:0 0 12px;">Bonjour {{ first_name }},</p>
-<p style="margin:0 0 12px;">Bienvenue sur Sybille. Confirme ton adresse pour recevoir les nouvelles de tes rédactions : nouveaux pronos, résultats et rappels.</p>
-{% with url=link, label="Confirmer mon adresse" %}{% include "fr/_button.html" %}{% endwith %}
-<p style="margin:0;color:#4a4d6a;font-size:14px;">Ce lien est valable 24 heures. Si tu n'as pas créé de compte, ignore ce message.</p>
-{% endblock %}

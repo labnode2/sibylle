@@ -9,7 +9,7 @@ from tests.contract.test_pronos import place, publish
 from tests.contract.test_results import option, url
 from tests.integration.test_realtime_bets import connect, next_of
 
-from sybille import clock
+from sibylle import clock
 
 pytestmark = pytest.mark.contract
 
@@ -119,8 +119,8 @@ async def test_a_proposal_reaches_the_journalists_and_its_author_only(
 
     async with httpx.AsyncClient(
         base_url=f"http://{live_server}",
-        headers={"X-Sybille": "1", "Origin": ORIGIN},
-        cookies={"sybille_session": cami.client.cookies.get("sybille_session") or ""},
+        headers={"X-Sibylle": "1", "Origin": ORIGIN},
+        cookies={"sibylle_session": cami.client.cookies.get("sibylle_session") or ""},
     ) as live_cami:
         proposal = await publish(live_cami, str(org.id))
 

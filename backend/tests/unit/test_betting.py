@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 
-from sybille.domain.betting import (
+from sibylle.domain.betting import (
     Answer,
     BetRefused,
     Kind,
@@ -13,7 +13,7 @@ from sybille.domain.betting import (
     distribution,
     validate_prono,
 )
-from sybille.domain.lifecycle import State
+from sibylle.domain.lifecycle import State
 
 pytestmark = pytest.mark.unit
 

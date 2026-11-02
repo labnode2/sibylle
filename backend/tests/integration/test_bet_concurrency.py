@@ -5,9 +5,9 @@ import pytest
 from sqlalchemy import select
 from tests.conftest import MakeOrg, MakePerson
 
-from sybille import clock
-from sybille.db.models import Bet, Membership, Prono, Section
-from sybille.db.session import transaction
+from sibylle import clock
+from sibylle.db.models import Bet, Membership, Prono, Section
+from sibylle.db.session import transaction
 
 pytestmark = pytest.mark.integration
 

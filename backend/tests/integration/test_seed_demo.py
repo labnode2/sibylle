@@ -1,10 +1,10 @@
 import pytest
 from sqlalchemy import select
 
-from sybille.db.models import Organisation, Prono
-from sybille.db.session import transaction
-from sybille.seed import ORG_TITLE, seed_demo
-from sybille.services.ledger import check_caches
+from sibylle.db.models import Organisation, Prono
+from sibylle.db.session import transaction
+from sibylle.seed import ORG_TITLE, seed_demo
+from sibylle.services.ledger import check_caches
 
 pytestmark = pytest.mark.integration
 

@@ -1,6 +1,6 @@
 import pytest
 
-from sybille.domain.lifecycle import (
+from sibylle.domain.lifecycle import (
     Event,
     InvalidTransition,
     State,

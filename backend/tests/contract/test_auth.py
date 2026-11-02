@@ -6,9 +6,9 @@ from sqlalchemy import select
 from tests.conftest import ORIGIN, PASSWORD, ClientFor, MakeAccount
 from tests.contract.helpers import notifications, token_from
 
-from sybille import clock
-from sybille.db.models import Account
-from sybille.db.session import transaction
+from sibylle import clock
+from sibylle.db.models import Account
+from sibylle.db.session import transaction
 
 pytestmark = pytest.mark.contract
 
@@ -33,7 +33,7 @@ async def test_signup_signs_in_and_queues_the_address_check(client: httpx.AsyncC
     assert me["email_verified"] is False
     assert me["memberships"] == []
     cookie = response.headers["set-cookie"].lower()
-    assert "sybille_session=" in cookie
+    assert "sibylle_session=" in cookie
     assert "httponly" in cookie and "secure" in cookie and "samesite=lax" in cookie
 
     assert (await client.get("/api/me")).json()["id"] == me["id"]
@@ -211,7 +211,7 @@ async def test_a_reset_link_expires_after_one_hour(
 
 @pytest.mark.parametrize(
     "headers",
-    [{"X-Sybille": "", "Origin": ORIGIN}, {"X-Sybille": "1", "Origin": "https://ailleurs.example"}],
+    [{"X-Sibylle": "", "Origin": ORIGIN}, {"X-Sibylle": "1", "Origin": "https://ailleurs.example"}],
 )
 async def test_changes_need_the_header_and_the_origin(
     client: httpx.AsyncClient, headers: dict[str, str]

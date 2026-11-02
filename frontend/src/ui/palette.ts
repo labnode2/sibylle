@@ -1,5 +1,5 @@
 // Palette "base-v1" of the pixel images (avatars, newsroom logos, Pixel mystère drawings).
-// Index 0 is transparent. Must match backend/src/sybille/domain/pixels.py.
+// Index 0 is transparent. Must match backend/src/sibylle/domain/pixels.py.
 
 // 1–32: drawn from the Gazette avatars of the canvas, open to everyone.
 const BASE = [

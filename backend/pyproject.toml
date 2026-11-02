@@ -1,7 +1,7 @@
 [project]
-name = "sybille"
+name = "sibylle"
 version = "0.1.0"
-description = "Sybille : le serveur du jeu de pronostics des rédactions"
+description = "Sibylle : le serveur du jeu de pronostics des rédactions"
 requires-python = ">=3.14"
 dependencies = [
     "fastapi>=0.115",
@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.scripts]
-sybille = "sybille.cli:main"
+sibylle = "sibylle.cli:main"
 
 [dependency-groups]
 dev = [
@@ -48,11 +48,11 @@ select = ["E", "F", "I", "B", "UP", "ASYNC"]
 
 [tool.ruff.lint.per-file-ignores]
 # Generated migrations keep Alembic's long one-line constraints.
-"src/sybille/db/migrations/versions/*" = ["E501"]
+"src/sibylle/db/migrations/versions/*" = ["E501"]
 
 [tool.mypy]
 strict = true
-packages = ["sybille"]
+packages = ["sibylle"]
 mypy_path = "src"
 plugins = ["pydantic.mypy"]
 

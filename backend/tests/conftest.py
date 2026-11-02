@@ -20,15 +20,15 @@ from alembic.config import Config
 from sqlalchemy import text
 from testcontainers.community.postgres import PostgresContainer
 
-from sybille import clock
-from sybille.config import get_settings
-from sybille.db.base import new_id
-from sybille.db.models import Account, AuthSession, Base, Membership, Organisation, Section
-from sybille.db.session import dispose_engine, transaction
-from sybille.domain.content import AVATAR_TEMPLATES
-from sybille.domain.ledger import starting_balance
-from sybille.services import ledger
-from sybille.services.security import hash_password, new_token, token_hash
+from sibylle import clock
+from sibylle.config import get_settings
+from sibylle.db.base import new_id
+from sibylle.db.models import Account, AuthSession, Base, Membership, Organisation, Section
+from sibylle.db.session import dispose_engine, transaction
+from sibylle.domain.content import AVATAR_TEMPLATES
+from sibylle.domain.ledger import starting_balance
+from sibylle.services import ledger
+from sibylle.services.security import hash_password, new_token, token_hash
 
 PARIS = ZoneInfo("Europe/Paris")
 DEFAULT_NOW = datetime(2026, 11, 2, 10, 0, tzinfo=PARIS)
@@ -55,7 +55,7 @@ def database_url(tmp_path_factory: pytest.TempPathFactory) -> Iterator[str]:
             DATABASE_URL=url,
             ENVIRONMENT="test",
             PUBLIC_ORIGIN=ORIGIN,
-            SYBILLE_CLOCK="system",
+            SIBYLLE_CLOCK="system",
             UPLOAD_DIR=str(tmp_path_factory.mktemp("uploads")),
         )
         get_settings.cache_clear()
@@ -82,16 +82,16 @@ async def _dispose_engine() -> AsyncIterator[None]:
 
 
 def _client(cookie: str | None = None) -> httpx.AsyncClient:
-    from sybille.main import create_app
+    from sibylle.main import create_app
 
-    headers = {"X-Sybille": "1", "Origin": ORIGIN}
+    headers = {"X-Sibylle": "1", "Origin": ORIGIN}
     client = httpx.AsyncClient(
         transport=httpx.ASGITransport(app=create_app()),
         base_url="https://testserver",
         headers=headers,
     )
     if cookie:
-        client.cookies.set("sybille_session", cookie)
+        client.cookies.set("sibylle_session", cookie)
     return client
 
 
@@ -226,7 +226,7 @@ async def live_server(db: None) -> AsyncIterator[str]:
     """The app served by a real uvicorn on a free port (lifespan, WebSocket, real-time bus)."""
     import uvicorn
 
-    from sybille.main import create_app
+    from sibylle.main import create_app
 
     config = uvicorn.Config(create_app(), host="127.0.0.1", port=0, log_level="warning")
     server = uvicorn.Server(config)

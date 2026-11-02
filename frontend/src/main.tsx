@@ -1,4 +1,4 @@
-// Fonts are served by Sybille itself (no third party), Latin character sets only.
+// Fonts are served by Sibylle itself (no third party), Latin character sets only.
 import '@fontsource/jacquard-12/latin.css';
 import '@fontsource/jacquard-12/latin-ext.css';
 import '@fontsource-variable/bricolage-grotesque';

@@ -3,10 +3,10 @@ from sqlalchemy import select, text
 from sqlalchemy.exc import DBAPIError
 from tests.conftest import MakeMember, MakeOrg
 
-from sybille.db.models import LedgerEntry, Membership
-from sybille.db.session import transaction
-from sybille.domain import ledger as effects
-from sybille.services import ledger
+from sibylle.db.models import LedgerEntry, Membership
+from sibylle.db.session import transaction
+from sibylle.domain import ledger as effects
+from sibylle.services import ledger
 
 pytestmark = pytest.mark.integration
 

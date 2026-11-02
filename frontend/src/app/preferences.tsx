@@ -12,7 +12,7 @@ type Preferences = {
   setReduceMotion: (reduce: boolean) => void;
 };
 
-const STORAGE_KEY = 'sybille.preferences';
+const STORAGE_KEY = 'sibylle.preferences';
 
 function readStored(): { theme: Theme; reduceMotion: boolean } {
   try {

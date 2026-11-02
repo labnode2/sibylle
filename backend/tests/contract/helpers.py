@@ -6,9 +6,9 @@ from typing import Any
 import httpx
 from sqlalchemy import select
 
-from sybille.db.models import Notification
-from sybille.db.session import transaction
-from sybille.domain.content import AVATAR_TEMPLATES
+from sibylle.db.models import Notification
+from sibylle.db.session import transaction
+from sibylle.domain.content import AVATAR_TEMPLATES
 
 AVATAR: dict[str, Any] = AVATAR_TEMPLATES[0]["image"]
 PRIVATE_KEYS = {"email", "first_name", "last_name", "password_hash"}

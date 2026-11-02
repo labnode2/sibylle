@@ -9,11 +9,11 @@ from tests.conftest import MakeOrg, MakePerson, Person
 from tests.contract.test_pronos import place, publish
 from tests.contract.test_results import option, url
 
-from sybille import clock
-from sybille.db.models import LedgerEntry, Membership, Season, SeasonClosure, Trophy
-from sybille.db.session import transaction
-from sybille.services.ledger import check_caches
-from sybille.worker.jobs import advance_pronos, close_finished_seasons
+from sibylle import clock
+from sibylle.db.models import LedgerEntry, Membership, Season, SeasonClosure, Trophy
+from sibylle.db.session import transaction
+from sibylle.services.ledger import check_caches
+from sibylle.worker.jobs import advance_pronos, close_finished_seasons
 
 pytestmark = pytest.mark.integration
 

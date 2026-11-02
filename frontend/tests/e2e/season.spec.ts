@@ -13,7 +13,7 @@ import {
   orgIdOf,
   publishProno,
   resetClock,
-  sybille,
+  sibylle,
 } from './helpers';
 
 test.beforeEach(resetClock);
@@ -117,15 +117,15 @@ test('rankings, a live refresh and the end of the season', async ({ browser }, t
 
   // Sessions last 30 days from their last use: stop on the way, where each one slides forward,
   // so that the jump to the end of the season does not sign anybody out.
-  sybille('clock', 'set', '2026-12-01T12:00:00+01:00');
+  sibylle('clock', 'set', '2026-12-01T12:00:00+01:00');
   for (const page of [ines, cami, leo])
     expect((await call(page, 'GET', `/orgs/${orgId}`)).status).toBe(200);
 
   // The end of autumn: engraved scores, everyone back to the starting balance.
-  sybille('clock', 'set', '2026-12-21T00:00:30+01:00');
-  expect(sybille('seasons', 'close', '--org', orgId)).toContain('close_finished_seasons: 1');
+  sibylle('clock', 'set', '2026-12-21T00:00:30+01:00');
+  expect(sibylle('seasons', 'close', '--org', orgId)).toContain('close_finished_seasons: 1');
   // Run again (a restarted worker): nothing is paid twice.
-  expect(sybille('seasons', 'close', '--org', orgId)).toContain('close_finished_seasons: 0');
+  expect(sibylle('seasons', 'close', '--org', orgId)).toContain('close_finished_seasons: 0');
 
   await expect(cami.getByText(/^SAISON D'HIVER 2026 · JUSQU'AU 20 MARS$/)).toBeVisible();
   await expect.poll(() => board(cami)).toEqual(['1 Cami (toi) 0', '1 Inès 0', '1 Léo 0']);

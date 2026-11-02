@@ -3,9 +3,9 @@ import json
 
 import pytest
 
-from sybille.db.session import transaction
-from sybille.realtime import bus
-from sybille.realtime.bus import Listener, Message, asyncpg_dsn
+from sibylle.db.session import transaction
+from sibylle.realtime import bus
+from sibylle.realtime.bus import Listener, Message, asyncpg_dsn
 
 pytestmark = pytest.mark.integration
 

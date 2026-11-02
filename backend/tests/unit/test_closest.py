@@ -4,8 +4,8 @@ from decimal import Decimal
 
 import pytest
 
-from sybille.domain.closest import closest
-from sybille.domain.settlement import BetLine
+from sibylle.domain.closest import closest
+from sibylle.domain.settlement import BetLine
 
 pytestmark = pytest.mark.unit
 

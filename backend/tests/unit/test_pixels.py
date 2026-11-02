@@ -2,7 +2,7 @@ import base64
 
 import pytest
 
-from sybille.domain.pixels import (
+from sibylle.domain.pixels import (
     BASE_INDICES,
     COLORS,
     RARE_INDICES,

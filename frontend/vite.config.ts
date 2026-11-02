@@ -11,8 +11,8 @@ export default defineConfig({
       filename: 'sw.ts',
       injectRegister: false,
       manifest: {
-        name: 'Sybille',
-        short_name: 'Sybille',
+        name: 'Sibylle',
+        short_name: 'Sibylle',
         description: 'Le jeu de pronostics des rédactions',
         lang: 'fr',
         start_url: '/',

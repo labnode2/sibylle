@@ -9,10 +9,10 @@ from tests.contract.helpers import assert_no_private_data
 from tests.contract.test_pronos import place, publish
 from tests.contract.test_results import option, url
 
-from sybille import clock
-from sybille.db.models import Organisation
-from sybille.db.session import transaction
-from sybille.worker.jobs import advance_pronos
+from sibylle import clock
+from sibylle.db.models import Organisation
+from sibylle.db.session import transaction
+from sibylle.worker.jobs import advance_pronos
 
 pytestmark = pytest.mark.contract
 

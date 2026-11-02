@@ -1,7 +1,7 @@
 import pytest
 
-from sybille.domain import ledger
-from sybille.domain.ledger import Effect, LedgerKind
+from sibylle.domain import ledger
+from sibylle.domain.ledger import Effect, LedgerKind
 
 pytestmark = pytest.mark.unit
 

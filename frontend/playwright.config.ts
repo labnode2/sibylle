@@ -1,10 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// The API runs with the simulated clock; tests move time with `sybille clock …` and run the
-// worker's jobs on demand with `sybille jobs run …`, so no worker process is started here.
+// The API runs with the simulated clock; tests move time with `sibylle clock …` and run the
+// worker's jobs on demand with `sibylle jobs run …`, so no worker process is started here.
 const backend = '../backend';
-// SYBILLE_WEB_PORT moves the interface when 5173 is taken by another project.
-const webPort = process.env.SYBILLE_WEB_PORT ?? '5173';
+// SIBYLLE_WEB_PORT moves the interface when 5173 is taken by another project.
+const webPort = process.env.SIBYLLE_WEB_PORT ?? '5173';
 const web = `http://localhost:${webPort}`;
 
 export default defineConfig({
@@ -27,9 +27,9 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: `uv run --directory ${backend} uvicorn sybille.main:create_app --factory --port 8000`,
+      command: `uv run --directory ${backend} uvicorn sibylle.main:create_app --factory --port 8000`,
       url: 'http://localhost:8000/api/health',
-      env: { SYBILLE_CLOCK: 'fake', ENVIRONMENT: 'test', PUBLIC_ORIGIN: web },
+      env: { SIBYLLE_CLOCK: 'fake', ENVIRONMENT: 'test', PUBLIC_ORIGIN: web },
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
     },
