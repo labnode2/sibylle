@@ -281,6 +281,23 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 
 ---
 
+## Phase 9b: Évolution de US7 - Pièces et conversion du lundi
+
+**Goal**: séparer les lauriers (miser, se classer) des pièces (acheter) : chaque lundi, les lauriers en or deviennent autant de pièces, une fenêtre l'annonce, et la collection se paie en pièces (spec FR-094 à FR-096, research.md J6).
+
+**Independent Test**: avec l'horloge simulée, passer un lundi, vérifier les pièces reçues (solde plus mises en jeu), les lauriers inchangés, la fenêtre « Bonne nouvelle » une seule fois, puis un achat en pièces.
+
+- [x] T152 [US7] Écrire `backend/tests/unit/test_coins.py` (lundi de la semaine en heure de Paris, montant = lauriers en or ou 0) et `backend/tests/contract/test_coins.py` : conversion d'un membre avec un pari en jeu (solde + mise), lauriers inchangés, une seule fois par semaine même lancée deux fois, rien pour un membre arrivé après le lundi 00:00 ni pour un membre parti ; `GET /orgs/{org}/coins/weekly` puis `POST …/coins/weekly/seen` ; `gold` et `coins` dans `MemberSelf` ; achat payé en pièces (`insufficient_coins`, lauriers et score inchangés) ; ajuster `backend/tests/contract/test_profile_collection.py`.
+- [x] T153 [US7] Créer `coin_entries` (`kind` ∈ `weekly`, `purchase` ; unique (`membership_id`, `week_start`) ; en ajout seulement, comme `ledger_entries`), `memberships.coins` (≥ 0) et `memberships.coins_seen_week` dans `backend/src/sibylle/db/models/coins.py` et `orgs.py`, avec la révision Alembic `backend/src/sibylle/db/migrations/versions/0011_coins.py`, qui multiplie aussi les prix du catalogue par 10 (couleur 400, cadre 600, boule 800).
+- [x] T154 [US7] Implémenter `backend/src/sibylle/services/coins.py` (lauriers en or, écriture de pièces avec mise à jour du cache, conversion de la semaine avec `SKIP LOCKED` et événement `coins.granted`, conversion à annoncer, annonce vue), la tâche minute `grant_weekly_coins` dans `backend/src/sibylle/worker/jobs.py` (avec `sibylle coins grant --org` pour les tests sur une base partagée, et la conversion de la semaine dans `seed-demo`), l'achat en pièces dans `backend/src/sibylle/services/collection.py`, `gold` et `coins` dans `MemberSelf`, et les routes de `backend/src/sibylle/api/routes/coins.py` ; régénérer `frontend/src/api/schema.d.ts`.
+- [x] T155 [P] [US7] Dessiner le laurier vert et la pièce (`frontend/src/ui/assets/laurel-green.png`, `coin.png`, 16×16), ajouter `Laurel tone="green"`, `Coins` et `Wallet` (les trois compteurs) à `frontend/src/ui/components.tsx`, et afficher lauriers verts, lauriers en or et pièces dans l'en-tête (`frontend/src/app/OrgLayout.tsx`), sur la une et sur l'écran du prono (mise : lauriers verts).
+- [x] T156 [P] [US7] Écrire `frontend/src/features/coins/WeeklyCoinsDialog.tsx` (fenêtre « Bonne nouvelle » : lauriers en or convertis, pièces reçues, lien vers la collection ; fermée, elle appelle `…/coins/weekly/seen`), l'ouvrir depuis `OrgLayout` et sur `coins.granted`, passer `frontend/src/features/collection/CollectionPage.tsx` aux pièces, et ajouter `frontend/src/i18n/fr/coins.json`.
+- [x] T157 [US7] Écrire `frontend/tests/e2e/coins.spec.ts` : avancer l'horloge jusqu'au lundi, voir la fenêtre une seule fois (en direct puis plus au rechargement), aller à la collection en pièces ; passer l'achat de `frontend/tests/e2e/profile.spec.ts` aux pièces.
+
+**Checkpoint**: les lauriers ne servent plus qu'à miser et à se classer ; la collection se paie en pièces.
+
+---
+
 ## Phase 10: User Story 8 - Être prévenu (Priority: P3)
 
 **Goal**: notifications push (appli installée) et e-mails pour quatre événements, réglables type par type et canal par canal.
@@ -334,7 +351,7 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 
 ### Tests for User Story 11 ⚠️
 
-- [ ] T131 [P] [US11] Écrire `backend/tests/contract/test_data_rights.py` : `GET /me/export` (compte, rédactions, paris, relevés, collections) ; `DELETE /me` avec `confirm: true` (e-mail, nom, prénom, mot de passe, sessions, abonnements push et préférences effacés ; chaque membre passe en `anonymized` avec le pseudo « Ancien membre » et l'avatar par défaut ; paris et registre conservés ; connexion impossible ensuite) ; `last_editor` pour la seule rédaction en chef d'une rédaction qui a d'autres membres ; rédaction supprimée quand son seul membre supprime son compte ; `DELETE /orgs/{org}/members/me` (quitter ; `last_editor`).
+- [ ] T131 [P] [US11] Écrire `backend/tests/contract/test_data_rights.py` : `GET /me/export` (compte, rédactions, paris, relevés de lauriers et de pièces, collections) ; `DELETE /me` avec `confirm: true` (e-mail, nom, prénom, mot de passe, sessions, abonnements push et préférences effacés ; chaque membre passe en `anonymized` avec le pseudo « Ancien membre » et l'avatar par défaut ; paris et registre conservés ; connexion impossible ensuite) ; `last_editor` pour la seule rédaction en chef d'une rédaction qui a d'autres membres ; rédaction supprimée quand son seul membre supprime son compte ; `DELETE /orgs/{org}/members/me` (quitter ; `last_editor`).
 
 ### Implementation for User Story 11
 
@@ -377,7 +394,7 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 - [ ] T143 [P] Écrire `deploy/frpc.toml.example` : deux proxys TCP (80 et 443) vers Caddy avec `transport.proxyProtocolVersion = "v2"`, sans aucun secret réel.
 - [ ] T144 [P] Écrire `deploy/backup/backup.sh` (pg_dump au format personnalisé et archive des images, 14 jours gardés, copie chiffrée avec age vers le VPS) et `deploy/backup/restore.sh`.
 - [ ] T145 Écrire `deploy/README.md` : enregistrements DNS A et AAAA vers le VPS, SPF, DKIM et DMARC de Brevo, frps existant, premier démarrage, `sibylle gen-secrets`, sauvegarde et restauration testée.
-- [ ] T146 [P] Ajouter à `backend/src/sibylle/worker/jobs.py` la tâche nocturne `check_ledger_caches`, qui compare `balance` et `season_score` aux sommes du registre pour chaque rédaction et journalise tout écart.
+- [ ] T146 [P] Ajouter à `backend/src/sibylle/worker/jobs.py` la tâche nocturne `check_ledger_caches`, qui compare `balance` et `season_score` aux sommes du registre, et `coins` à celle de `coin_entries`, pour chaque rédaction et journalise tout écart.
 - [ ] T147 [P] Écrire `frontend/tests/e2e/a11y.spec.ts` (axe-core sur la une, un prono, le classement, la carte de presse, les réglages et les préférences, en thème clair et sombre, à 390 px et à 1 280 px) et corriger dans `frontend/src/` les écarts au niveau AA des WCAG 2.2.
 - [ ] T148 [P] Écrire `frontend/tests/e2e/no-third-party.spec.ts` : sur un parcours complet, aucune requête vers un autre domaine que celui de l'appli (SC-005).
 - [ ] T149 [P] Écrire `backend/tests/load/run_load.py` : 100 membres, 20 pronos ouverts, paris simultanés et WebSockets ouvertes ; vérifier un p95 des routes sous 200 ms et une diffusion d'un pari en moins de 2 s (SC-002, SC-004).

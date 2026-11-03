@@ -126,6 +126,20 @@ async def close_finished_seasons(org_id: uuid.UUID | None = None) -> int:
     return closed
 
 
+@job("grant_weekly_coins", minute="*")
+async def grant_weekly_coins(org_id: uuid.UUID | None = None) -> int:
+    """Turns each member's gold laurels into coins, once a week from Monday 00:00 (Paris).
+
+    Checked every minute, like the season closure, so that a worker restarted later on Monday
+    still does the week's conversion. `org_id` keeps one newsroom only (`sibylle coins grant
+    --org`, for tests on a shared database).
+    """
+    from sibylle.services import coins
+
+    async with transaction() as session:
+        return await coins.grant_week(session, org_id=org_id)
+
+
 @job("advance_pronos", minute="*")
 async def advance_pronos() -> int:
     """Opens the scheduled pronos and closes the open ones whose time has come."""

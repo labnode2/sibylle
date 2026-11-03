@@ -1,12 +1,13 @@
 """Small helpers shared by the contract tests."""
 
 import re
+from datetime import date
 from typing import Any
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import select, update
 
-from sibylle.db.models import Notification
+from sibylle.db.models import CoinEntry, Membership, Notification
 from sibylle.db.session import transaction
 from sibylle.domain.content import AVATAR_TEMPLATES
 
@@ -24,6 +25,26 @@ async def notifications(type: str) -> list[Notification]:
                     .order_by(Notification.created_at)
                 )
             ).all()
+        )
+
+
+async def give_coins(member: Membership, amount: int, week: date = date(2026, 10, 26)) -> None:
+    """Coins as if a past Monday had converted them, for tests that only need to buy."""
+    async with transaction() as session:
+        session.add(
+            CoinEntry(
+                org_id=member.org_id,
+                membership_id=member.id,
+                kind="weekly",
+                amount=amount,
+                week_start=week,
+                gold=amount,
+            )
+        )
+        await session.execute(
+            update(Membership)
+            .where(Membership.id == member.id)
+            .values(coins=Membership.coins + amount)
         )
 
 

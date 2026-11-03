@@ -22,7 +22,7 @@ from sibylle.api.schemas import (
 )
 from sibylle.db.models import Invitation, Membership, Organisation
 from sibylle.domain.permissions import Action
-from sibylle.services import invitations
+from sibylle.services import coins, invitations
 
 router = APIRouter(tags=["invitations"])
 
@@ -101,4 +101,6 @@ async def join(
         pseudo=body.pseudo,
         avatar=body.avatar.model_dump(),
     )
-    return Joined(org=OrgCard.of(org), membership=MemberSelf.of(member))
+    # Someone coming back may still have stakes in play.
+    in_play = await coins.in_play_of(session, member)
+    return Joined(org=OrgCard.of(org), membership=MemberSelf.build(member, in_play=in_play))

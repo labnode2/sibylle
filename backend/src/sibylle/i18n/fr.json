@@ -7,6 +7,7 @@
     "invalid_state": "Ce n'est pas possible pour le moment.",
     "already_bet": "Tu as déjà joué ce prono : ton choix est définitif.",
     "insufficient_balance": "Tu n'as pas assez de lauriers pour cette mise.",
+    "insufficient_coins": "Tu n'as pas assez de pièces pour cet objet.",
     "pseudo_taken": "Ce pseudo est déjà pris dans cette rédaction.",
     "email_taken": "Un compte existe déjà avec cette adresse.",
     "invitation_invalid": "Cette invitation n'est plus valable.",

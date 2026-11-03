@@ -38,16 +38,16 @@
   "collection": {
     "title": "La collection",
     "none": "Rien pour l'instant.",
-    "balance": "TON SOLDE",
-    "hint": "Un achat se paie avec le solde : ton score et ton classement ne bougent pas.",
+    "coins": "TES PIÈCES",
+    "hint": "Chaque lundi, tes lauriers en or te rapportent autant de pièces. Un achat se paie en pièces : tes lauriers et ton classement ne bougent pas.",
     "kinds": {
       "color": "Les couleurs",
       "frame": "Les cadres",
       "ball": "Les boules"
     },
     "owned": "À TOI",
-    "buyLabel": "Acheter {{name}} pour {{price}} lauriers",
-    "confirm": "Acheter pour {{price}} lauriers ?",
+    "buyLabel": "Acheter {{name}} pour {{price}} pièces",
+    "confirm": "Acheter pour {{price}} pièces ?",
     "yes": "Acheter",
     "no": "Annuler",
     "backToCard": "Retour à ma carte de presse"

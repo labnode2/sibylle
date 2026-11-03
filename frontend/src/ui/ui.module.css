@@ -253,12 +253,33 @@
   padding: 2px 4px;
 }
 
-/* Laurels: value in Geist Mono, then the gold laurel. */
+/* Laurels and coins: value in Geist Mono, then the sprite. */
 .laurel {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font: 700 14px/1 var(--font-mono);
+}
+
+/* The three counters: green laurels, gold laurels, coins. */
+.wallet {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+.counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.caption {
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+.walletCaptions {
+  gap: 8px 16px;
 }
 
 /* Avatars: 3–4 px of rounding, the only rounded corners. */

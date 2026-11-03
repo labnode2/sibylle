@@ -87,7 +87,7 @@ Cami consulte le classement de sa rédaction : par lauriers (son score) ou par p
 **Acceptance Scenarios**:
 
 1. **Given** des pronos réglés, **When** Cami ouvre le classement, **Then** elle voit les deux classements (lauriers, pronos gagnés) sur les trois périodes, avec tous les membres, elle comprise.
-2. **Given** un achat de 30 lauriers dans la collection, **When** le classement est recalculé, **Then** son solde a baissé de 30 mais son score n'a pas changé.
+2. **Given** un achat de 400 pièces dans la collection, **When** le classement est recalculé, **Then** ses pièces ont baissé de 400, mais ses lauriers et son score n'ont pas changé.
 3. **Given** la fin d'une saison, **When** elle est clôturée, **Then** chaque membre ayant parié au moins une fois dans la saison reçoit un trophée gravé de l'année, de la saison et de son score, les trois premiers ont un cadre doré, puis chaque solde repart au solde de départ.
 4. **Given** plusieurs saisons passées, **When** Cami regarde le classement « depuis toujours », **Then** il additionne les lauriers gravés sur ses trophées et son score de la saison en cours.
 
@@ -130,18 +130,19 @@ Inès, rédaction en chef, personnalise la carte de l'organisation (logo en pixe
 
 ### User Story 7 - Carte de presse, avatar et collection (Priority: P3)
 
-Cami ouvre sa carte de presse : pseudo, avatar, statistiques (lauriers, pronos joués, taux de réussite) et collection. Elle redessine son avatar dans l'éditeur en 16×16 ou 32×32, débloque une couleur avec ses lauriers et achète la boule d'hiver. Son relevé détaille chaque gain, mise, achat, gain de mini-jeu et ajustement.
+Cami ouvre sa carte de presse : pseudo, avatar, statistiques (lauriers, pronos joués, taux de réussite) et collection. Elle redessine son avatar dans l'éditeur en 16×16 ou 32×32, débloque une couleur avec ses pièces et achète la boule d'hiver. Chaque lundi, ses lauriers en or lui rapportent autant de pièces, et une fenêtre lui annonce la bonne nouvelle. Son relevé détaille chaque gain, mise, gain de mini-jeu et ajustement.
 
-**Why this priority**: c'est ce qui rend chacun reconnaissable et donne un usage aux lauriers, mais le jeu fonctionne sans.
+**Why this priority**: c'est ce qui rend chacun reconnaissable et donne un usage aux lauriers gagnés, mais le jeu fonctionne sans.
 
-**Independent Test**: dessiner et enregistrer un avatar, acheter une couleur puis une boule, et vérifier le solde, le score inchangé, le relevé et l'affichage de l'avatar partout où apparaît le pseudo.
+**Independent Test**: dessiner et enregistrer un avatar, convertir les lauriers en or d'une semaine, acheter une couleur puis une boule, et vérifier les pièces, les lauriers et le score inchangés, le relevé et l'affichage de l'avatar partout où apparaît le pseudo.
 
 **Acceptance Scenarios**:
 
 1. **Given** l'éditeur ouvert, **When** Cami dessine en 32×32 avec la palette de base et enregistre, **Then** son nouvel avatar apparaît dans toute la rédaction.
-2. **Given** une couleur verrouillée à 40 lauriers et un solde suffisant, **When** Cami la débloque, **Then** la couleur s'ajoute à sa palette et son solde baisse de 40.
+2. **Given** une couleur verrouillée à 400 pièces et assez de pièces, **When** Cami la débloque, **Then** la couleur s'ajoute à sa palette et ses pièces baissent de 400 ; ses lauriers ne bougent pas.
 3. **Given** une fin de saison, **When** Cami a joué dans la saison, **Then** son trophée apparaît dans sa collection.
 4. **Given** un code secret valide, **When** Cami le saisit, **Then** la surprise associée (variante de boule, couleur rare) est débloquée une seule fois.
+5. **Given** 90 lauriers verts et 30 lauriers misés sur des pronos pas encore réglés, soit 120 lauriers en or, **When** le lundi commence (00:00, heure de Paris), **Then** Cami reçoit 120 pièces, garde ses 90 lauriers, et à sa prochaine ouverture de l'appli une fenêtre lui annonce les 120 pièces, une seule fois.
 
 ---
 
@@ -303,9 +304,12 @@ Cami choisit le thème clair, sombre ou automatique, coupe les animations, règl
 **Profil et collection**
 
 - **FR-090**: Le profil DOIT prendre la forme d'une carte de presse : pseudo, avatar, date d'arrivée, statistiques (lauriers, pronos joués, taux de réussite) et collection.
-- **FR-091**: L'éditeur d'avatar DOIT permettre de dessiner en 16×16 ou 32×32 avec une palette fixe ; des couleurs et des cadres supplémentaires se débloquent contre des lauriers.
+- **FR-091**: L'éditeur d'avatar DOIT permettre de dessiner en 16×16 ou 32×32 avec une palette fixe ; des couleurs et des cadres supplémentaires se débloquent contre des pièces.
 - **FR-092**: La collection DOIT contenir les boules saisonnières achetées et les trophées de saison.
 - **FR-093**: Des codes secrets DOIVENT pouvoir débloquer une seule fois une surprise (variante de boule, couleur rare).
+- **FR-094**: Chaque lundi à 00:00 (heure de Paris), chaque membre actif arrivé avant ce moment DOIT recevoir autant de pièces que ses lauriers en or (solde plus mises des paris pas encore réglés ; rien s'ils sont à zéro ou négatifs). Ses lauriers ne changent pas. La conversion a lieu une seule fois par semaine et par membre, même si le `worker` redémarre.
+- **FR-095**: Les pièces DOIVENT être le seul moyen de payer dans la collection ; elles ne comptent dans aucun classement et ne repartent pas à zéro en fin de saison.
+- **FR-096**: L'appli DOIT montrer séparément les lauriers verts (le solde, ce qu'on peut miser), les lauriers en or (solde plus mises en jeu) et les pièces. À la première ouverture après une conversion, une fenêtre DOIT annoncer les pièces reçues, une seule fois.
 
 **Notifications**
 
@@ -336,12 +340,13 @@ Cami choisit le thème clair, sombre ou automatique, coupe les animations, règl
 
 - **Compte** : une personne ; e-mail, mot de passe, nom et prénom (privés), préférences.
 - **Organisation (rédaction)** : carte (logo, fond, titre), réglages de lauriers, charte, code d'accès, mot de la rédaction en chef.
-- **Membre** : le lien entre un compte et une organisation ; rôle, pseudo, avatar, solde, score de saison, collection.
+- **Membre** : le lien entre un compte et une organisation ; rôle, pseudo, avatar, solde, score de saison, pièces, collection.
 - **Invitation** : lien à places limitées et date d'expiration, ou invitation nominative par e-mail.
 - **Rubrique** : catégorie de pronos propre à une organisation.
 - **Prono** : question, type, choix, dates, gain de base, état, résultat, historique des relances.
 - **Pari** : la réponse d'un membre à un prono, avec sa mise et son rang d'arrivée.
-- **Écriture de lauriers** : un mouvement du registre (mise, gain, part de cagnotte, achat, mini-jeu, ajustement, remise au solde), avec son motif.
+- **Écriture de lauriers** : un mouvement du registre (mise, gain, part de cagnotte, mini-jeu, ajustement, remise au solde), avec son motif.
+- **Écriture de pièces** : la conversion du lundi ou un achat dans la collection.
 - **Saison et trophée** : une période fixe du calendrier ; le trophée grave le score d'un membre à la fin de la saison.
 - **Objet de collection** : boule saisonnière, couleur ou cadre, acheté, gagné ou débloqué par code secret.
 - **Réaction, signalement, notification** : interactions autour d'un prono.
@@ -367,7 +372,7 @@ Cami choisit le thème clair, sombre ou automatique, coupe les animations, règl
 - Les rappels de désignation partent à la date de résultat attendu, puis à J+1, J+3, J+7, puis chaque semaine ; sans date de résultat attendu, ils partent le lendemain de la clôture.
 - Une correction de résultat peut rendre un solde négatif ; le membre ne peut plus miser tant qu'il l'est.
 - Pixel mystère : une fois un jeu terminé, le dessin suivant préparé par la rédaction démarre le lendemain matin.
-- Le catalogue de la collection (boules saisonnières, couleurs, cadres) et ses prix sont définis par la plateforme et identiques pour toutes les rédactions ; les codes secrets aussi.
+- Le catalogue de la collection (boules saisonnières, couleurs, cadres) et ses prix en pièces sont définis par la plateforme et identiques pour toutes les rédactions ; les codes secrets aussi.
 - Le jeu fixe de réactions rapides est défini par la plateforme (une poignée d'icônes en pixel art).
 - Sans limite stricte de membres par organisation ; l'appli est conçue pour 10 à 50 membres et doit rester fluide jusqu'à 100.
 - L'appli est hébergée sur une machine à domicile, exposée par frp depuis un VPS qui porte le nom de domaine ; les coupures de courant ou de connexion à domicile sont acceptées pour un jeu sans enjeu.

@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import CheckConstraint, ForeignKey, Index, Text, UniqueConstraint, text
@@ -46,6 +46,7 @@ class Membership(Base):
         UniqueConstraint("org_id", "account_id"),
         CheckConstraint("role IN ('reader', 'journalist', 'editor')", name="role"),
         CheckConstraint("status IN ('active', 'left', 'anonymized')", name="status"),
+        CheckConstraint("coins >= 0", name="coins"),
         CheckConstraint("char_length(pseudo) BETWEEN 2 AND 24", name="pseudo_length"),
         # A pseudo is unique in its newsroom, whatever its case, among active and departed members.
         Index(
@@ -70,6 +71,9 @@ class Membership(Base):
     # Caches of the ledger, updated in the same transaction as each entry.
     balance: Mapped[int] = mapped_column(default=0, server_default="0")
     season_score: Mapped[int] = mapped_column(default=0, server_default="0")
+    # Cache of coin_entries, and the last Monday whose conversion the member was told about.
+    coins: Mapped[int] = mapped_column(default=0, server_default="0")
+    coins_seen_week: Mapped[date | None]
     joined_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
     charter_accepted_at: Mapped[datetime | None]
     left_at: Mapped[datetime | None]

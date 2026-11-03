@@ -20,7 +20,7 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | 403 | `forbidden` | rôle insuffisant dans l'organisation |
 | 404 | `not_found` | absent ou hors de l'organisation |
 | 409 | `invalid_state` | transition interdite (prono non ouvert, déjà résolu…) |
-| 409 | `already_bet`, `insufficient_balance`, `pseudo_taken`, `email_taken`, `invitation_invalid`, `token_invalid`, `last_editor`, `attempts_exhausted` | règles métier (`token_invalid` : lien de vérification ou de réinitialisation expiré ou déjà utilisé) |
+| 409 | `already_bet`, `insufficient_balance`, `insufficient_coins`, `pseudo_taken`, `email_taken`, `invitation_invalid`, `token_invalid`, `last_editor`, `attempts_exhausted` | règles métier (`token_invalid` : lien de vérification ou de réinitialisation expiré ou déjà utilisé) |
 | 413 | `too_large` | image > 5 Mo |
 | 422 | `validation_error` | champs invalides (`fields`) |
 | 429 | `rate_limited` | trop de tentatives |
@@ -76,7 +76,7 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | PATCH | `/orgs/{org}/sections/{id}` | Réd. chef | `{name?, position?}` → `Section` |
 | DELETE | `/orgs/{org}/sections/{id}` | Réd. chef | → `204` (archive si utilisée) |
 
-`MemberPublic` = `{id, pseudo, avatar, frame, role, joined_at}`, jamais de nom, prénom ni e-mail. `MemberSelf` ajoute `balance`, `season_score`, `unlocked_colors`.
+`MemberPublic` = `{id, pseudo, avatar, frame, role, joined_at}`, jamais de nom, prénom ni e-mail. `MemberSelf` ajoute `balance` (lauriers verts), `gold` (lauriers en or : solde plus mises en jeu), `season_score`, `coins`, `unlocked_colors`.
 
 ## Pronos et paris
 
@@ -115,8 +115,12 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | GET | `/orgs/{org}/reports` | Réd. chef | `?state=open` → `[Report]` |
 | POST | `/orgs/{org}/reports/{id}/handle` | Réd. chef | `{state: "resolved" \| "dismissed", note?}` → `Report` |
 | GET | `/orgs/{org}/catalog` | Membre | → `[{item, price, owned}]` |
-| POST | `/orgs/{org}/catalog/{item}/purchase` | Membre | → `201 {owned_item, balance}` ; `insufficient_balance` |
+| POST | `/orgs/{org}/catalog/{item}/purchase` | Membre | → `201 {owned_item, coins}` ; payé en pièces ; `insufficient_coins` |
+| GET | `/orgs/{org}/coins/weekly` | Membre | → `WeeklyCoins` ou `null` : la dernière conversion pas encore annoncée (montant > 0) |
+| POST | `/orgs/{org}/coins/weekly/seen` | Membre | `{week_start}` → `204` ; la fenêtre ne revient plus pour cette semaine ni les précédentes |
 | POST | `/orgs/{org}/secret-codes/redeem` | Membre | `{code}` → `201 {item}` ; limité en débit |
+
+`WeeklyCoins` = `{week_start, gold, amount}` : le lundi de la conversion, les lauriers en or de ce moment-là et les pièces reçues.
 
 ## Jeux de la semaine
 

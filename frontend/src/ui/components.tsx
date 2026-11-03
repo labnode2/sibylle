@@ -9,6 +9,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, type LinkProps } from 'react-router';
 
+import coinUrl from './assets/coin.png';
+import laurelGreenUrl from './assets/laurel-green.png';
 import laurelUrl from './assets/laurel.png';
 import { CrystalBall } from './CrystalBall';
 import { ICONS, type IconName } from './icons';
@@ -248,15 +250,90 @@ export function TabBar({ tabs, label }: { tabs: Tab[]; label: string }) {
   );
 }
 
-export function Laurel({ value, size = 16 }: { value?: number; size?: 16 | 32 }) {
+/** Laurels: gold for amounts and for the gold total (balance plus stakes in play), green for
+ *  the balance, what can be staked. `label` names the amount for screen readers. */
+export function Laurel({
+  value,
+  size = 16,
+  tone = 'gold',
+  label,
+}: {
+  value?: number;
+  size?: 16 | 32;
+  tone?: 'gold' | 'green';
+  label?: string;
+}) {
   const { t } = useTranslation();
   return (
     <span className={styles.laurel}>
       {value !== undefined && <span>{value}</span>}
-      <img src={laurelUrl} width={size} height={size} alt="" className="pixelated" />
+      <img
+        src={tone === 'green' ? laurelGreenUrl : laurelUrl}
+        width={size}
+        height={size}
+        alt=""
+        className="pixelated"
+      />
       <span className="visually-hidden">
-        {value === undefined ? t('laurelsWord') : t('laurels', { count: value })}
+        {label ?? (value === undefined ? t('laurelsWord') : t('laurels', { count: value }))}
       </span>
+    </span>
+  );
+}
+
+/** Coins: what Monday's conversion of gold laurels brings, spent in the collection. */
+export function Coins({ value, size = 16 }: { value?: number; size?: 16 | 32 }) {
+  const { t } = useTranslation();
+  return (
+    <span className={styles.laurel}>
+      {value !== undefined && <span>{value}</span>}
+      <img src={coinUrl} width={size} height={size} alt="" className="pixelated" />
+      <span className="visually-hidden">
+        {value === undefined ? t('coinsWord') : t('coins', { count: value })}
+      </span>
+    </span>
+  );
+}
+
+/** A member's three counters: green laurels to stake, gold laurels in all, coins to spend.
+ *  `captions` writes what each one is, for the places with room to explain. */
+export function Wallet({
+  balance,
+  gold,
+  coins,
+  captions = false,
+}: {
+  balance: number;
+  gold: number;
+  coins: number;
+  captions?: boolean;
+}) {
+  const { t } = useTranslation();
+  const counters = [
+    {
+      key: 'green',
+      node: (
+        <Laurel value={balance} tone="green" label={t('wallet.greenLabel', { count: balance })} />
+      ),
+    },
+    {
+      key: 'gold',
+      node: <Laurel value={gold} label={t('wallet.goldLabel', { count: gold })} />,
+    },
+    { key: 'coins', node: <Coins value={coins} /> },
+  ];
+  return (
+    <span className={cx(styles.wallet, captions && styles.walletCaptions)}>
+      {counters.map(({ key, node }) => (
+        <span key={key} className={styles.counter} title={t(`wallet.${key}Hint`)}>
+          {node}
+          {captions && (
+            <span className={styles.caption} aria-hidden="true">
+              {t(`wallet.${key}`)}
+            </span>
+          )}
+        </span>
+      ))}
     </span>
   );
 }

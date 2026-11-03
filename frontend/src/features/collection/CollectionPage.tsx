@@ -1,11 +1,11 @@
 // The collection: colours for the pixel editor, avatar frames and crystal balls, bought with
-// laurels (the balance only, never the score), and secret codes for surprises.
+// coins (laurels and score never move), and secret codes for surprises.
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
 import { formatNumber } from '../../i18n';
-import { Button, Card, Chip, Field, Laurel } from '../../ui/components';
+import { Button, Card, Chip, Coins, Field } from '../../ui/components';
 import { useFormErrors } from '../forms';
 import { useOrg } from '../orgs/api';
 import { useCatalog, useCollectionActions, type CatalogEntry } from '../profile/api';
@@ -17,12 +17,12 @@ const KINDS = ['color', 'frame', 'ball'] as const;
 function Item({
   orgId,
   entry,
-  balance,
+  coins,
   avatar,
 }: {
   orgId: string;
   entry: CatalogEntry;
-  balance: number;
+  coins: number;
   avatar: Parameters<typeof ItemPreview>[0]['avatar'];
 }) {
   const { t } = useTranslation('profile');
@@ -55,10 +55,10 @@ function Item({
         <Button
           variant="secondary"
           onClick={() => setConfirming(true)}
-          disabled={price > balance}
+          disabled={price > coins}
           aria-label={t('collection.buyLabel', { name, price })}
         >
-          <Laurel value={price} />
+          <Coins value={price} />
         </Button>
       )}
       {errors.message && (
@@ -127,7 +127,7 @@ export function CollectionPage() {
       <div className={styles.top}>
         <h1 className={styles.title}>{t('collection.title')}</h1>
         <span className={styles.balance}>
-          {t('collection.balance')} <Laurel value={me.balance} />
+          {t('collection.coins')} <Coins value={me.coins} />
         </span>
       </div>
       <p className={styles.hint}>{t('collection.hint')}</p>
@@ -142,7 +142,7 @@ export function CollectionPage() {
                   key={entry.item.id}
                   orgId={orgId}
                   entry={entry}
-                  balance={me.balance}
+                  coins={me.coins}
                   avatar={me.avatar}
                 />
               ))}

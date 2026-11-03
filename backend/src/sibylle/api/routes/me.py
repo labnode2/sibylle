@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sibylle.api.deps import SESSION_COOKIE, CurrentAccount, Db
 from sibylle.api.schemas import Me, MePatch, PasswordChange
 from sibylle.db.models import Account, Membership, Organisation
-from sibylle.services import accounts
+from sibylle.services import accounts, coins
 
 router = APIRouter(tags=["me"])
 
@@ -23,7 +23,9 @@ async def me_of(session: AsyncSession, account: Account) -> Me:
         )
         .order_by(Membership.joined_at)
     )
-    return Me.of(account, [(org, member) for org, member in rows.all()])
+    memberships = [(org, member) for org, member in rows.all()]
+    in_play = await coins.in_play(session, [member.id for _, member in memberships])
+    return Me.of(account, memberships, in_play)
 
 
 @router.get("/me")

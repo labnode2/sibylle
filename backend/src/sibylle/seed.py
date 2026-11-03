@@ -17,7 +17,7 @@ from sibylle.db.models import Account, Membership, Organisation, Prono, PronoOpt
 from sibylle.db.session import transaction
 from sibylle.domain.content import AVATAR_TEMPLATES
 from sibylle.domain.lifecycle import State
-from sibylle.services import bets, orgs, pronos, results
+from sibylle.services import bets, coins, orgs, pronos, results
 from sibylle.services.security import hash_password
 
 DEMO_PASSWORD = "lauriers-de-demo"
@@ -237,4 +237,7 @@ async def seed_demo() -> str:
         )
         if seeded is None:
             await demo.seed()
+        # This week's conversion of gold laurels, so that the demo shows its coins and the good
+        # news without waiting for Monday. Once per week, like the worker's.
+        await coins.grant_week(session, org_id=org.id, arrived_before=clock.now())
         return f"{ORG_TITLE} : {len(PEOPLE)} membres, 7 pronos, code {org.access_code}"

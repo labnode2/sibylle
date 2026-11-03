@@ -74,6 +74,8 @@ PK (`account_id`, `type`, `channel`) ; `type` ∈ `new_prono`, `closing_soon`, `
 | avatar_frame_item_id | uuid | → catalog_items (cadre), facultatif |
 | balance | integer | cache du solde (somme du registre depuis la dernière remise au solde) |
 | season_score | integer | cache du score de la saison en cours |
+| coins | integer | cache des pièces (somme de `coin_entries`), ≥ 0, défaut 0 |
+| coins_seen_week | date | dernier lundi dont la conversion a été annoncée, facultatif |
 | joined_at, charter_accepted_at, left_at | timestamptz | |
 
 Règles : au moins un `editor` actif par organisation qui a des membres actifs ; un retour après départ réactive la même ligne (`status = active`) ; l'anonymisation remplace le pseudo par « Ancien membre » et l'avatar par le modèle par défaut.
@@ -203,7 +205,7 @@ Types et effets :
 | `stake_lost` | 0 | − mise |
 | `refund` | + mise | 0 |
 | `reversal` | − montant de l'écriture inversée | − score de l'écriture inversée |
-| `purchase` | − prix | 0 |
+| `purchase` | − prix (achats faits avant les pièces seulement) | 0 |
 | `minigame` | + gain | 0 |
 | `adjustment` | ± montant | 0 |
 | `season_reset` | solde de départ − solde courant | 0 |
@@ -222,11 +224,26 @@ PK (`org_id`, `season_id`), `closed_at`. Écrite dans la même transaction que l
 
 ### catalog_items (objet du catalogue)
 
-`id`, `kind` (`ball`, `color`, `frame`), `key` (unique), `name_key` (clé de traduction), `price` (`NULL` si non achetable : objet de code secret), `season` (pour les boules saisonnières), `data` (jsonb : couleur, sprite), `active`.
+`id`, `kind` (`ball`, `color`, `frame`), `key` (unique), `name_key` (clé de traduction), `price` (en pièces ; `NULL` si non achetable : objet de code secret), `season` (pour les boules saisonnières), `data` (jsonb : couleur, sprite), `active`.
 
 ### owned_items
 
-`id`, `membership_id`, `item_id`, `source` (`purchase`, `secret_code`), `acquired_at` ; unique (`membership_id`, `item_id`). Un achat écrit aussi une ligne `purchase` au registre. Les trophées restent dans `trophies` et s'affichent dans la collection.
+`id`, `membership_id`, `item_id`, `source` (`purchase`, `secret_code`), `acquired_at` ; unique (`membership_id`, `item_id`). Un achat écrit aussi une ligne `purchase` au registre des pièces. Les trophées restent dans `trophies` et s'affichent dans la collection.
+
+### coin_entries (registre des pièces)
+
+| Colonne | Type | Règles |
+|---|---|---|
+| id | bigint | PK, identité |
+| org_id, membership_id | uuid | |
+| kind | text | `weekly` (conversion du lundi), `purchase` (achat) |
+| amount | integer | effet sur les pièces (signé) : + lauriers en or pour `weekly` (≥ 0), − prix pour `purchase` |
+| week_start | date | lundi de la conversion ; obligatoire pour `weekly`, vide sinon |
+| gold | integer | lauriers en or au moment de la conversion (`weekly`) |
+| item_key | text | objet acheté (`purchase`) |
+| created_at | timestamptz | |
+
+Comme le registre des lauriers : aucune mise à jour ni suppression, et `memberships.coins` est mis à jour dans la même transaction. Unique (`membership_id`, `week_start`) : une seule conversion par semaine. Une conversion à 0 pièce est écrite aussi, pour ne pas revenir sur ce membre. Index : (`membership_id`, `id`).
 
 ### secret_codes, secret_code_redemptions
 

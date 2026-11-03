@@ -1,5 +1,5 @@
-// A newsroom's frame: loads it, then fills the shell's desktop slots (laurels, pseudo, edition,
-// main action).
+// A newsroom's frame: loads it, then fills the shell's desktop slots (laurels and coins, pseudo,
+// edition, main action), and shows the good news of Monday's coins.
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { Navigate, useParams } from 'react-router';
@@ -7,10 +7,12 @@ import { Navigate, useParams } from 'react-router';
 import { ApiError } from '../api/client';
 import { useTopic } from '../api/realtime';
 import { reportsKey } from '../features/admin/api';
+import { weeklyCoinsKey } from '../features/coins/api';
+import { WeeklyCoinsDialog } from '../features/coins/WeeklyCoinsDialog';
 import { orgKey, useOrg } from '../features/orgs/api';
 import { pronoKey } from '../features/pronos/api';
 import { EditionLink } from '../features/orgs/OrgSwitcher';
-import { ButtonLink, Icon, Laurel } from '../ui/components';
+import { ButtonLink, Icon, Wallet } from '../ui/components';
 import { PixelImage } from '../ui/PixelImage';
 import { AppShell } from './AppShell';
 
@@ -23,6 +25,11 @@ export function OrgLayout() {
   useTopic('me', (event) => {
     if (event.event === 'balance.changed' && event.data.org_id === orgId) {
       void client.invalidateQueries({ queryKey: orgKey(orgId) });
+    }
+    // Monday's conversion while the app is open: the counters move and the good news shows.
+    if (event.event === 'coins.granted' && event.data.org_id === orgId) {
+      void client.invalidateQueries({ queryKey: orgKey(orgId) });
+      void client.invalidateQueries({ queryKey: weeklyCoinsKey(orgId) });
     }
     // A new report for the editor; a handled one for its author, on the prono's page.
     if (event.event === 'report.created') {
@@ -38,22 +45,25 @@ export function OrgLayout() {
   const me = org.data.my_membership;
 
   return (
-    <AppShell
-      account={
-        <>
-          <Laurel value={me.balance} />
-          <span aria-hidden="true">·</span>
-          <PixelImage image={me.avatar} size={24} />
-          <span>{me.pseudo.toUpperCase()}</span>
-        </>
-      }
-      edition={<EditionLink org={org.data} />}
-      admin={me.role === 'editor'}
-      action={
-        <ButtonLink to={`/o/${orgId}/pronos/nouveau`}>
-          <Icon name="plus" size={12} /> {t(me.role === 'reader' ? 'list.propose' : 'list.new')}
-        </ButtonLink>
-      }
-    />
+    <>
+      <AppShell
+        account={
+          <>
+            <Wallet balance={me.balance} gold={me.gold} coins={me.coins} />
+            <span aria-hidden="true">·</span>
+            <PixelImage image={me.avatar} size={24} />
+            <span>{me.pseudo.toUpperCase()}</span>
+          </>
+        }
+        edition={<EditionLink org={org.data} />}
+        admin={me.role === 'editor'}
+        action={
+          <ButtonLink to={`/o/${orgId}/pronos/nouveau`}>
+            <Icon name="plus" size={12} /> {t(me.role === 'reader' ? 'list.propose' : 'list.new')}
+          </ButtonLink>
+        }
+      />
+      <WeeklyCoinsDialog orgId={orgId} coins={me.coins} />
+    </>
   );
 }

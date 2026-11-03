@@ -19,7 +19,7 @@ from sibylle.api.schemas import (
 )
 from sibylle.db.models import LedgerEntry, Membership
 from sibylle.domain.permissions import Action
-from sibylle.services import ledger, orgs
+from sibylle.services import coins, ledger, orgs
 
 router = APIRouter(prefix="/orgs/{org_id}/members", tags=["members"])
 
@@ -56,7 +56,11 @@ async def update_my_profile(
     await orgs.update_profile(
         session, member, pseudo=body.pseudo, avatar=drawing(body.avatar), frame_item_id=frame
     )
-    return MemberSelf.with_colors(member, await orgs.unlocked_colors(session, member))
+    return MemberSelf.build(
+        member,
+        in_play=await coins.in_play_of(session, member),
+        unlocked=await orgs.unlocked_colors(session, member),
+    )
 
 
 @router.get("/me/ledger")

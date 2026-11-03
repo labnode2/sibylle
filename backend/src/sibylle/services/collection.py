@@ -1,4 +1,4 @@
-"""The collection: buying colours, frames and balls with laurels, secret codes, and the press card
+"""The collection: buying colours, frames and balls with coins, secret codes, and the press card
 that shows a member's statistics, trophies and collection."""
 
 import uuid
@@ -19,9 +19,9 @@ from sibylle.db.models import (
     SecretCodeRedemption,
     Trophy,
 )
+from sibylle.domain.coins import CoinKind
 from sibylle.domain.leaderboard import Metric, Period
-from sibylle.domain.ledger import purchase
-from sibylle.services import leaderboard, ledger
+from sibylle.services import coins, leaderboard, ledger
 from sibylle.services.security import token_hash
 
 _KIND_ORDER = {"color": 0, "frame": 1, "ball": 2}
@@ -84,7 +84,7 @@ async def owned_frame(session: AsyncSession, member: Membership, item_id: uuid.U
 async def buy(
     session: AsyncSession, member: Membership, item_id: uuid.UUID
 ) -> tuple[OwnedItem, CatalogItem, int]:
-    """Pays the price from the balance (the score stays) and adds the item to the collection."""
+    """Pays the price in coins (laurels and score stay) and adds the item to the collection."""
     item = await session.scalar(
         select(CatalogItem).where(
             CatalogItem.id == item_id, CatalogItem.active, CatalogItem.price.is_not(None)
@@ -100,15 +100,13 @@ async def buy(
     )
     if already is not None:
         raise AppError("invalid_state")
-    if member.balance < item.price:
-        raise AppError("insufficient_balance")
-    await ledger.append(
-        session, member.id, purchase(item.price), reason=item.key, actor_membership_id=member.id
-    )
+    if member.coins < item.price:
+        raise AppError("insufficient_coins")
+    await coins.append(session, member.id, CoinKind.PURCHASE, -item.price, item_key=item.key)
     owned = OwnedItem(membership_id=member.id, item_id=item.id, source="purchase")
     session.add(owned)
     await session.flush()
-    return owned, item, member.balance
+    return owned, item, member.coins
 
 
 def _fingerprint(code: str) -> str:

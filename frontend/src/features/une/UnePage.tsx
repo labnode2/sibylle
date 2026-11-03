@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
 import { formatDate, formatNumber } from '../../i18n';
-import { ButtonLink, Card, Kicker, Laurel } from '../../ui/components';
+import { ButtonLink, Card, Kicker, Laurel, Wallet } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
 import { useOrg } from '../orgs/api';
 import type { PronoSummary } from '../pronos/api';
@@ -120,7 +120,7 @@ export function UnePage() {
             {t('orgs:une.edition', { title: org.data.title.toUpperCase() })}
           </Kicker>
           <h1 className={styles.title}>{t('orgs:une.hello', { pseudo: me.pseudo })}</h1>
-          <Laurel value={me.balance} />
+          <Wallet balance={me.balance} gold={me.gold} coins={me.coins} captions />
         </div>
       </div>
 

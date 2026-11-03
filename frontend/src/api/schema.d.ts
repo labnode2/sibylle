@@ -782,6 +782,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/orgs/{org_id}/coins/weekly": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Weekly */
+        get: operations["get_weekly_api_orgs__org_id__coins_weekly_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/coins/weekly/seen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Weekly Seen */
+        post: operations["weekly_seen_api_orgs__org_id__coins_weekly_seen_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/orgs/{org_id}/uploads": {
         parameters: {
             query?: never;
@@ -1254,8 +1288,12 @@ export interface components {
             joined_at: string;
             /** Balance */
             balance: number;
+            /** Gold */
+            gold: number;
             /** Season Score */
             season_score: number;
+            /** Coins */
+            coins: number;
             /**
              * Unlocked Colors
              * @default []
@@ -1668,8 +1706,8 @@ export interface components {
         /** PurchaseOut */
         PurchaseOut: {
             owned_item: components["schemas"]["OwnedItemOut"];
-            /** Balance */
-            balance: number;
+            /** Coins */
+            coins: number;
         };
         /** RedeemIn */
         RedeemIn: {
@@ -1955,6 +1993,29 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * WeeklyCoins
+         * @description Monday's conversion: the gold laurels of that moment and the coins they became.
+         */
+        WeeklyCoins: {
+            /**
+             * Week Start
+             * Format: date
+             */
+            week_start: string;
+            /** Gold */
+            gold: number;
+            /** Amount */
+            amount: number;
+        };
+        /** WeeklySeenIn */
+        WeeklySeenIn: {
+            /**
+             * Week Start
+             * Format: date
+             */
+            week_start: string;
         };
         /** WinnerOut */
         WinnerOut: {
@@ -3732,6 +3793,70 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["RedeemOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_weekly_api_orgs__org_id__coins_weekly_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeeklyCoins"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    weekly_seen_api_orgs__org_id__coins_weekly_seen_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WeeklySeenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

@@ -53,7 +53,8 @@ test('invite with a link and join a newsroom', async ({ browser }, testInfo) => 
   await expect(cami.getByRole('alert')).toContainText('déjà pris');
   await joinWith(cami, 'Cami');
   await expect(cami.getByRole('heading', { name: 'Bonjour Cami' })).toBeVisible();
-  await expect(cami.getByRole('main').getByText('100', { exact: true })).toBeVisible();
+  // The starting balance, all of it to stake.
+  await expect(cami.getByRole('main').getByText('100 lauriers verts à miser')).toBeAttached();
 
   // Third person takes the last place; the fourth is turned away.
   const leo = await newPerson(browser, testInfo, 'Léo', path);

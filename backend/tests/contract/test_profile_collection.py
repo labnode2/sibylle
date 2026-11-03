@@ -6,7 +6,7 @@ import httpx
 import pytest
 from sqlalchemy import select, update
 from tests.conftest import MakeOrg, MakePerson
-from tests.contract.helpers import AVATAR, assert_no_private_data
+from tests.contract.helpers import AVATAR, assert_no_private_data, give_coins
 from tests.contract.test_pronos import place, publish
 from tests.contract.test_results import option, url
 
@@ -80,6 +80,7 @@ async def test_the_press_card(
             json={"correct_option_ids": [option(prono, answer)]},
         )
         assert resolved.status_code == 200, resolved.text
+    await give_coins(cami.member, 400)
     assert (await buy(cami.client, org.id, "color-33")).status_code == 201
 
     fake_clock.set(datetime(2026, 12, 21, 0, 0, 30, tzinfo=PARIS))
@@ -125,8 +126,8 @@ async def test_the_catalog_and_purchases(make_org: MakeOrg, person: MakePerson) 
     org = await make_org()
     cami = await person(org, "reader", "Cami")
     items = await catalog(cami.client, org.id)
-    assert (items["color-33"]["price"], items["color-33"]["owned"]) == (40, False)
-    assert (items["frame-ink"]["price"], items["ball-winter"]["price"]) == (60, 80)
+    assert (items["color-33"]["price"], items["color-33"]["owned"]) == (400, False)
+    assert (items["frame-ink"]["price"], items["ball-winter"]["price"]) == (600, 800)
     assert {k for k in items if k.startswith("ball-")} == {
         "ball-spring",
         "ball-summer",
@@ -136,28 +137,35 @@ async def test_the_catalog_and_purchases(make_org: MakeOrg, person: MakePerson) 
     # Surprises of the secret codes are not on sale.
     assert "color-49" not in items and "ball-halloween" not in items
 
+    poor = await buy(cami.client, org.id, "color-33")
+    assert poor.status_code == 409 and poor.json()["error"]["code"] == "insufficient_coins"
+
+    await give_coins(cami.member, 1000)
     bought = await buy(cami.client, org.id, "color-33")
     assert bought.status_code == 201, bought.text
-    assert (bought.json()["owned_item"]["item"]["key"], bought.json()["balance"]) == (
+    assert (bought.json()["owned_item"]["item"]["key"], bought.json()["coins"]) == (
         "color-33",
-        60,
+        600,
     )
+    # Paid in coins: the laurels and the score do not move.
     mine = await me(cami.client, org.id)
-    assert (mine["balance"], mine["season_score"], mine["unlocked_colors"]) == (60, 0, [33])
+    assert (mine["coins"], mine["balance"], mine["gold"], mine["season_score"]) == (
+        600,
+        100,
+        100,
+        0,
+    )
+    assert mine["unlocked_colors"] == [33]
     assert (await catalog(cami.client, org.id))["color-33"]["owned"] is True
     statement = (await cami.client.get(org_url(org.id, "/members/me/ledger"))).json()["items"]
-    assert (statement[0]["kind"], statement[0]["amount"], statement[0]["reason"]) == (
-        "purchase",
-        -40,
-        "color-33",
-    )
+    assert [entry["kind"] for entry in statement] == ["starting_balance"]
 
     again = await buy(cami.client, org.id, "color-33")
     assert again.status_code == 409 and again.json()["error"]["code"] == "invalid_state"
     too_dear = await buy(cami.client, org.id, "ball-winter")
     assert too_dear.status_code == 409
-    assert too_dear.json()["error"]["code"] == "insufficient_balance"
-    assert (await me(cami.client, org.id))["balance"] == 60
+    assert too_dear.json()["error"]["code"] == "insufficient_coins"
+    assert (await me(cami.client, org.id))["coins"] == 600
 
 
 async def test_avatars_use_unlocked_colours_and_owned_frames(
@@ -170,6 +178,8 @@ async def test_avatars_use_unlocked_colours_and_owned_frames(
 
     locked = await cami.client.patch(profile, json={"avatar": painted(33)})
     assert locked.status_code == 422 and "avatar" in locked.json()["error"]["fields"]
+    await give_coins(cami.member, 400)
+    await give_coins(leo.member, 600)
     assert (await buy(cami.client, org.id, "color-33")).status_code == 201
     drawn = await cami.client.patch(profile, json={"avatar": painted(33)})
     assert drawn.status_code == 200, drawn.text

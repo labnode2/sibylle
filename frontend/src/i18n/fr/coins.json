@@ -1,0 +1,10 @@
+{
+  "kicker": "BONNE NOUVELLE · {{day}}",
+  "title": "Tes lauriers en or deviennent des pièces",
+  "body_one": "Ce lundi, tes {{gold}} lauriers en or t'ont rapporté {{amount}} pièce. Tes lauriers restent à toi pour parier.",
+  "body_other": "Ce lundi, tes {{gold}} lauriers en or t'ont rapporté {{amount}} pièces. Tes lauriers restent à toi pour parier.",
+  "total_one": "Tu as maintenant {{coins}} pièce à dépenser dans la collection.",
+  "total_other": "Tu as maintenant {{coins}} pièces à dépenser dans la collection.",
+  "spend": "Voir la collection",
+  "close": "Fermer"
+}

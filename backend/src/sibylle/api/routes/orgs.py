@@ -22,7 +22,7 @@ from sibylle.api.schemas import (
 )
 from sibylle.db.models import Membership, Organisation
 from sibylle.domain.permissions import Action
-from sibylle.services import orgs
+from sibylle.services import coins, orgs
 
 router = APIRouter(prefix="/orgs", tags=["orgs"])
 
@@ -49,7 +49,10 @@ async def create_org(body: OrgIn, account: CurrentAccount, session: Db) -> OrgCr
         pseudo=body.pseudo,
         avatar=body.avatar.model_dump(),
     )
-    return OrgCreated(org=Org.build(org, member, 1), membership=MemberSelf.of(member))
+    return OrgCreated(
+        org=Org.build(org, member, 1, in_play=0),
+        membership=MemberSelf.build(member, in_play=0),
+    )
 
 
 @router.get("/{org_id}")
@@ -59,7 +62,8 @@ async def get_org(org_id: uuid.UUID, member: CurrentMember, session: Db) -> Org:
         org,
         member,
         await orgs.member_count(session, org_id),
-        await orgs.unlocked_colors(session, member),
+        in_play=await coins.in_play_of(session, member),
+        unlocked=await orgs.unlocked_colors(session, member),
     )
 
 
@@ -73,7 +77,8 @@ async def update_org(org_id: uuid.UUID, body: OrgPatch, editor: Editor, session:
         org,
         editor,
         await orgs.member_count(session, org_id),
-        await orgs.unlocked_colors(session, editor),
+        in_play=await coins.in_play_of(session, editor),
+        unlocked=await orgs.unlocked_colors(session, editor),
     )
 
 

@@ -11,6 +11,21 @@
   "laurels_one": "{{count}} laurier",
   "laurels_other": "{{count}} lauriers",
   "laurelsWord": "lauriers",
+  "coins_one": "{{count}} pièce",
+  "coins_other": "{{count}} pièces",
+  "coinsWord": "pièces",
+  "wallet": {
+    "green": "À MISER",
+    "gold": "EN OR",
+    "coins": "PIÈCES",
+    "greenLabel_one": "{{count}} laurier vert à miser",
+    "greenLabel_other": "{{count}} lauriers verts à miser",
+    "goldLabel_one": "{{count}} laurier en or",
+    "goldLabel_other": "{{count}} lauriers en or",
+    "greenHint": "Lauriers verts : ce que tu peux miser.",
+    "goldHint": "Lauriers en or : tes lauriers verts plus tes mises en jeu. Chaque lundi, ils te rapportent autant de pièces.",
+    "coinsHint": "Pièces : pour acheter dans la collection."
+  },
   "tabs": {
     "label": "Navigation principale",
     "une": "LA UNE",

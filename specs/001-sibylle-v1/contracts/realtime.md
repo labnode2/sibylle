@@ -46,6 +46,7 @@ Enveloppe commune : `{"type": "event", "topic": "<sujet>", "event": "<nom>", "at
 | `member.updated` | `org` | `{member: MemberPublic}` (pseudo, avatar, rôle) |
 | `member.joined`, `member.left` | `org` | `{member: MemberPublic}` |
 | `balance.changed` | `me` | `{org_id, balance, season_score}` |
+| `coins.granted` | `me` | `{org_id, week_start, amount, coins}` ; le client recharge la rédaction et ouvre la fenêtre « Bonne nouvelle » |
 | `games.runner.updated` | `org` | `{week_start, top}` |
 | `games.pixel.revealed` | `org` | `{puzzle_id, revealed_count}` |
 | `games.pixel.found` | `org` | `{puzzle_id, member, rank}` |

@@ -2,6 +2,7 @@
 
 from sibylle.db.base import Base
 from sibylle.db.models.accounts import Account, AuthSession, EmailToken
+from sibylle.db.models.coins import CoinEntry
 from sibylle.db.models.collection import (
     CatalogItem,
     OwnedItem,
@@ -29,6 +30,7 @@ __all__ = [
     "SecretCode",
     "OwnedItem",
     "CatalogItem",
+    "CoinEntry",
     "Account",
     "AuthSession",
     "Base",

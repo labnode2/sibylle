@@ -1,4 +1,4 @@
-"""The collection: the catalog, purchases with laurels and secret codes."""
+"""The collection: the catalog, purchases with coins and secret codes."""
 
 import uuid
 from typing import Annotated
@@ -31,14 +31,14 @@ async def get_catalog(org_id: uuid.UUID, member: CurrentMember, session: Db) -> 
 async def purchase(
     org_id: uuid.UUID, item_id: uuid.UUID, member: CurrentMember, session: Db
 ) -> PurchaseOut:
-    owned, item, balance = await collection.buy(session, member, item_id)
+    owned, item, coins = await collection.buy(session, member, item_id)
     return PurchaseOut(
         owned_item=OwnedItemOut(
             item=CatalogItemOut.model_validate(item),
             source=owned.source,
             acquired_at=owned.acquired_at,
         ),
-        balance=balance,
+        coins=coins,
     )
 
 

@@ -12,6 +12,7 @@ from sibylle.api.errors import error_response, install_error_handlers
 from sibylle.api.routes import (
     auth,
     bets,
+    coins,
     collection,
     content,
     front_page,
@@ -94,6 +95,7 @@ def create_app() -> FastAPI:
         reports,
         leaderboard,
         collection,
+        coins,
         profile,
         uploads,
     ):

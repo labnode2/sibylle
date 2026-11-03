@@ -77,7 +77,7 @@ export type ApiAnswer = { status: number; body: Json };
 /** Calls the API from the page itself, with its session, the way the interface would. */
 export async function call(
   page: Page,
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'PATCH',
   url: string,
   body?: object,
 ): Promise<ApiAnswer> {

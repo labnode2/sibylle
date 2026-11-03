@@ -1,0 +1,55 @@
+/* The good news of Monday: a card in the middle of the screen, Gazette style. */
+
+.dialog {
+  width: min(420px, calc(100vw - 2 * var(--gutter)));
+  margin: auto;
+  padding: 24px;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+  text-align: center;
+}
+
+.dialog::backdrop {
+  background: rgb(21 22 45 / 55%);
+}
+
+.ball {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.title {
+  margin: 8px 0 12px;
+  font: 700 24px/1.15 var(--font-text);
+}
+
+.amount {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 12px;
+  font: 700 28px/1 var(--font-mono);
+}
+
+.amount > span {
+  font: inherit;
+  gap: 8px;
+}
+
+.text {
+  margin: 0 0 8px;
+  font: 400 15px/1.45 var(--font-text);
+  color: var(--ink-2);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}

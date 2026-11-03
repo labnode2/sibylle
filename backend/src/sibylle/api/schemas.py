@@ -2,6 +2,7 @@
 first name or e-mail, except `Me`, which is the account's own."""
 
 import uuid
+from collections.abc import Iterable
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Any, Literal, Self
@@ -9,6 +10,7 @@ from typing import Annotated, Any, Literal, Self
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 from sibylle.db.models import Account, Membership, Organisation
+from sibylle.domain.coins import gold
 
 EMAIL_PATTERN = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
 
@@ -59,13 +61,24 @@ class MemberPublic(BaseModel):
 
 
 class MemberSelf(MemberPublic):
+    # Green laurels: what the member can stake.
     balance: int
+    # Gold laurels: the balance plus the stakes in play; each Monday turns them into coins.
+    gold: int
     season_score: int
+    coins: int
     unlocked_colors: list[int] = []
 
     @classmethod
-    def with_colors(cls, member: Membership, unlocked: set[int]) -> Self:
-        return cls.of(member).model_copy(update={"unlocked_colors": sorted(unlocked)})
+    def build(cls, member: Membership, *, in_play: int, unlocked: Iterable[int] = ()) -> Self:
+        return cls(
+            **MemberPublic.of(member).model_dump(),
+            balance=member.balance,
+            gold=gold(member.balance, in_play),
+            season_score=member.season_score,
+            coins=member.coins,
+            unlocked_colors=sorted(unlocked),
+        )
 
 
 class MembershipEntry(BaseModel):
@@ -85,7 +98,12 @@ class Me(BaseModel):
     memberships: list[MembershipEntry]
 
     @classmethod
-    def of(cls, account: Account, memberships: list[tuple[Organisation, Membership]]) -> Self:
+    def of(
+        cls,
+        account: Account,
+        memberships: list[tuple[Organisation, Membership]],
+        in_play: dict[uuid.UUID, int],
+    ) -> Self:
         return cls(
             id=account.id,
             email=account.email or "",
@@ -96,7 +114,10 @@ class Me(BaseModel):
             reduce_motion=account.reduce_motion,
             locale=account.locale,
             memberships=[
-                MembershipEntry(org=OrgCard.of(org), membership=MemberSelf.of(member))
+                MembershipEntry(
+                    org=OrgCard.of(org),
+                    membership=MemberSelf.build(member, in_play=in_play.get(member.id, 0)),
+                )
                 for org, member in memberships
             ],
         )
@@ -120,7 +141,9 @@ class Org(OrgCard):
         org: Organisation,
         me: Membership,
         member_count: int,
-        unlocked: frozenset[int] | set[int] = frozenset(),
+        *,
+        in_play: int,
+        unlocked: Iterable[int] = (),
     ) -> Self:
         return cls(
             **OrgCard.of(org).model_dump(),
@@ -132,7 +155,7 @@ class Org(OrgCard):
             charter=org.charter,
             access_code=org.access_code if me.role == "editor" else None,
             member_count=member_count,
-            my_membership=MemberSelf.with_colors(me, set(unlocked)),
+            my_membership=MemberSelf.build(me, in_play=in_play, unlocked=unlocked),
         )
 
 
@@ -643,7 +666,21 @@ class OwnedItemOut(BaseModel):
 
 class PurchaseOut(BaseModel):
     owned_item: OwnedItemOut
-    balance: int
+    coins: int
+
+
+class WeeklyCoins(BaseModel):
+    """Monday's conversion: the gold laurels of that moment and the coins they became."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    week_start: date
+    gold: int
+    amount: int
+
+
+class WeeklySeenIn(BaseModel):
+    week_start: date
 
 
 class RedeemIn(BaseModel):

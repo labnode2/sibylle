@@ -51,7 +51,7 @@
     "pickNumber": "TON CHIFFRE",
     "pickDate": "TA DATE",
     "unit": "en {{unit}}",
-    "stake": "TA MISE · SOLDE {{balance}}",
+    "stake": "TA MISE · {{balance}} LAURIERS VERTS À MISER",
     "stakeLabel": "Ta mise",
     "pot_one": "Cagnotte : {{pot}} laurier, partagé entre les gagnants",
     "pot_other": "Cagnotte : {{pot}} lauriers, partagés entre les gagnants",

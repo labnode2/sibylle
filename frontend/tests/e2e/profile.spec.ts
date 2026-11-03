@@ -1,4 +1,4 @@
-// US7: the press card, the pixel editor, buying a colour with laurels and a secret code.
+// US7: the press card, the pixel editor, buying a colour with coins and a secret code.
 import { expect, test } from '@playwright/test';
 
 import {
@@ -21,6 +21,8 @@ test('a press card, an avatar drawn by hand and a collection', async ({ browser 
   const ines = await newPerson(browser, testInfo, 'Inès');
   await createNewsroom(ines, 'Sophia Office', 'Inès');
   const orgId = orgIdOf(ines);
+  // A generous newsroom: 500 laurels to start, so 500 coins on the first Monday.
+  expect((await call(ines, 'PATCH', `/orgs/${orgId}`, { starting_balance: 500 })).status).toBe(200);
   const cami = await newPerson(browser, testInfo, 'Camille', await invitationPath(ines));
   await joinWith(cami, 'Cami');
   await expect(cami.getByRole('heading', { name: 'Bonjour Cami' })).toBeVisible();
@@ -50,14 +52,18 @@ test('a press card, an avatar drawn by hand and a collection', async ({ browser 
   const pixels = Buffer.from(drawn.pixels, 'base64');
   expect([pixels[0], pixels[1]]).toEqual([13, 13]);
 
-  // A colour for 40 laurels: the balance pays, the score stays.
+  // Monday brings 500 coins; a colour for 400 coins, and the laurels stay.
+  sibylle('clock', 'advance', '7d');
+  sibylle('coins', 'grant', '--org', orgId);
+  const news = cami.getByRole('dialog', { name: 'Tes lauriers en or deviennent des pièces' });
+  await news.getByRole('button', { name: 'Fermer' }).click();
   await cami.getByRole('link', { name: 'Ma collection' }).click();
-  await cami.getByRole('button', { name: 'Acheter Couleur Rouge vif pour 40 lauriers' }).click();
+  await cami.getByRole('button', { name: 'Acheter Couleur Rouge vif pour 400 pièces' }).click();
   await cami.getByRole('button', { name: 'Acheter', exact: true }).click();
   await expect(cami.getByRole('listitem', { name: 'Couleur Rouge vif' })).toContainText('À TOI');
-  expect(await laurels(cami, orgId)).toEqual([60, 0]);
+  expect(await laurels(cami, orgId)).toEqual([500, 0]);
   await expect(
-    cami.getByRole('button', { name: "Acheter Boule d'hiver pour 80 lauriers" }),
+    cami.getByRole('button', { name: "Acheter Boule d'hiver pour 800 pièces" }),
   ).toBeDisabled();
 
   // A secret code: once only.
@@ -71,14 +77,14 @@ test('a press card, an avatar drawn by hand and a collection', async ({ browser 
   await secret.getByRole('button', { name: 'Débloquer' }).click();
   await expect(secret.getByRole('alert')).toBeVisible();
 
-  // Back on the card: the colour is in the palette, the purchase in the statement.
+  // Back on the card: the colour is in the palette; the laurels statement has no purchase.
   await cami.getByRole('link', { name: 'Retour à ma carte de presse' }).click();
   const collection = cami.getByRole('region', { name: 'La collection' });
   await expect(collection).toContainText('Couleur Rouge vif');
   await expect(collection).toContainText("Boule d'Halloween");
   const statement = cami.getByRole('region', { name: 'MON RELEVÉ' });
-  await expect(statement).toContainText('ACHAT');
-  await expect(statement).toContainText(/40 AU SOLDE/);
+  await expect(statement).toContainText('SOLDE DE DÉPART');
+  await expect(statement).not.toContainText('ACHAT');
   await cami.getByRole('button', { name: 'Redessiner mon avatar' }).click();
   await expect(cami.getByRole('radio', { name: 'Couleur 41' })).toBeVisible();
 });
