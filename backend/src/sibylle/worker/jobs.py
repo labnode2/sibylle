@@ -9,16 +9,16 @@ import logging
 import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from datetime import timedelta
 from typing import Any
 
 from sqlalchemy import select
 
 from sibylle import clock
 from sibylle.config import get_settings
-from sibylle.db.models import Account, Notification
 from sibylle.db.session import transaction
-from sibylle.notify.email import Renderer, Sender, SmtpSender
+from sibylle.notify.dispatch import dispatch
+from sibylle.notify.email import Renderer, SmtpSender
+from sibylle.notify.push import WebPushSender
 
 log = logging.getLogger(__name__)
 
@@ -44,66 +44,29 @@ def job[F: Callable[..., Awaitable[Any]]](name: str, **cron: Any) -> Callable[[F
     return register
 
 
-# Retries after a failed send, then the notification is given up as "failed".
-RETRY_DELAYS = (
-    timedelta(minutes=1),
-    timedelta(minutes=5),
-    timedelta(minutes=30),
-    timedelta(hours=2),
-)
-
-
-async def _recipient(notification: Notification, session: Any) -> str | None:
-    if notification.account_id is None:
-        to = notification.payload.get("to")
-        return str(to) if to else None
-    account = await session.get(Account, notification.account_id)
-    if account is None or account.deleted_at is not None or not account.email:
-        return None
-    return str(account.email)
-
-
-async def dispatch(sender: Sender, renderer: Renderer, *, batch: int = 50) -> int:
-    """Sends the notifications that are due; returns how many were handled."""
-    async with transaction() as session:
-        due = (
-            await session.scalars(
-                select(Notification)
-                .where(Notification.state == "pending", Notification.next_attempt_at <= clock.now())
-                .order_by(Notification.next_attempt_at)
-                .limit(batch)
-                .with_for_update(skip_locked=True)
-            )
-        ).all()
-        for notification in due:
-            to = await _recipient(notification, session)
-            if to is None:
-                notification.state = "skipped"
-                continue
-            try:
-                mail = renderer.render(notification.type, to, notification.payload)
-                await sender.send(mail)
-            except Exception:
-                log.warning(
-                    "notification not sent",
-                    extra={"notification_id": str(notification.id), "type": notification.type},
-                    exc_info=True,
-                )
-                notification.attempts += 1
-                if notification.attempts > len(RETRY_DELAYS):
-                    notification.state = "failed"
-                else:
-                    delay = RETRY_DELAYS[notification.attempts - 1]
-                    notification.next_attempt_at = clock.now() + delay
-                continue
-            notification.state = "sent"
-            notification.sent_at = clock.now()
-        return len(due)
-
-
 @job("dispatch_notifications", minute="*")
 async def dispatch_notifications() -> int:
-    return await dispatch(SmtpSender(get_settings()), Renderer())
+    settings = get_settings()
+    push = WebPushSender(settings) if settings.vapid_private_key else None
+    return await dispatch(SmtpSender(settings), Renderer(), push)
+
+
+@job("closing_soon_alerts", minute="*")
+async def closing_soon_alerts() -> int:
+    """Queues « ferme dans 2 h » for the members who have not bet yet."""
+    from sibylle.services import notifications
+
+    async with transaction() as session:
+        return await notifications.queue_closing_soon(session)
+
+
+@job("designation_reminders", minute="*")
+async def designation_reminders() -> int:
+    """Queues the reminders of the results still to designate."""
+    from sibylle.services import notifications
+
+    async with transaction() as session:
+        return await notifications.queue_designation_reminders(session)
 
 
 @job("close_finished_seasons", minute="*")

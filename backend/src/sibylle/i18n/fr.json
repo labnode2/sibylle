@@ -23,7 +23,36 @@
     "subject": {
       "verify_email": "Confirme ton adresse pour Sibylle",
       "reset_password": "Ton lien pour changer de mot de passe",
-      "invitation": "{inviter_pseudo} t'invite dans la rédaction {org_title}"
+      "invitation": "{inviter_pseudo} t'invite dans la rédaction {org_title}",
+      "new_prono": "{org_title} · Nouveau prono : {question}",
+      "closing_soon": "{org_title} · Plus que 2 h pour jouer",
+      "result": "{org_title} · Édition spéciale : {question}",
+      "designation_reminder": "{org_title} · Résultat à désigner : {question}"
+    }
+  },
+  "notify": {
+    "body": "{question} {lead}",
+    "new_prono": {
+      "title": "{org_title} · Nouveau prono",
+      "lead": "À toi de jouer !"
+    },
+    "closing_soon": {
+      "title": "{org_title} · ferme dans 2 h",
+      "lead": "Tu n'as pas encore joué."
+    },
+    "result": {
+      "title": "{org_title} · Édition spéciale",
+      "won_one": "Résultat : {result}. Tu gagnes {payout} laurier.",
+      "won_other": "Résultat : {result}. Tu gagnes {payout} lauriers.",
+      "lost": "Résultat : {result}. Pas cette fois.",
+      "corrected_won_one": "Résultat corrigé : {result}. Tu gagnes {payout} laurier.",
+      "corrected_won_other": "Résultat corrigé : {result}. Tu gagnes {payout} lauriers.",
+      "corrected_lost": "Résultat corrigé : {result}. Pas cette fois.",
+      "cancelled": "Prono annulé : ta mise t'est rendue."
+    },
+    "designation_reminder": {
+      "title": "{org_title} · Résultat à désigner",
+      "lead": "Désigne le résultat, ou relance ou annule le prono."
     }
   }
 }

@@ -6,10 +6,10 @@
 
 | type | Déclencheur | Destinataires | Déduplication (`dedupe_key`) |
 |---|---|---|---|
-| `new_prono` | un prono passe à l'état `open` | membres actifs de la rédaction, sauf son créateur | `new_prono:{prono}:{account}` |
+| `new_prono` | un prono passe à l'état `open` | membres actifs de la rédaction, sauf son créateur et la personne qui l'a validé | `new_prono:{prono}:{account}` |
 | `closing_soon` | clôture moins 2 h (vérifié chaque minute) | membres actifs sans pari actif ; jamais pour un prono de date « sans fin » | `closing_soon:{prono}:{account}` |
 | `result` | règlement (`resolution`, `correction`, `cancellation`) | membres qui ont parié | `result:{prono}:{settlement_seq}:{account}` |
-| `designation_reminder` | date de résultat attendu, puis J+1, J+3, J+7, puis chaque semaine | créateur journaliste, ou journaliste qui a validé la proposition | `designation:{prono}:{étape}` |
+| `designation_reminder` | date de résultat attendu (sinon lendemain de la clôture), puis J+1, J+3, J+7, puis chaque semaine ; une relance repart de zéro | créateur journaliste, ou journaliste qui a validé la proposition | `designation:{prono}:{relance}-{étape}` |
 
 En plus, hors préférences (toujours envoyés par e-mail) : vérification de l'adresse, réinitialisation du mot de passe, invitation nominative.
 
@@ -30,11 +30,11 @@ Envoyée en Web Push (VAPID), chiffrée, durée de vie 12 h (`TTL`), urgence `no
   "body": "Nice ou Monaco samedi ? Tu n'as pas encore joué.",
   "url": "/o/<org_id>/pronos/<prono_id>",
   "tag": "closing_soon:<prono_id>",
-  "icon": "/icons/ball-192.png"
+  "icon": "/icon-192.png"
 }
 ```
 
-`tag` remplace une notification plus ancienne du même prono sur l'appareil. Au clic, le service worker ouvre ou met au premier plan l'appli sur `url`. Textes produits par le serveur dans la langue du compte.
+Le corps est la question suivie d'une phrase propre au type (« Tu n'as pas encore joué. », « Résultat : Nice. Tu gagnes 40 lauriers. »…). `tag` remplace une notification plus ancienne du même prono sur l'appareil. Au clic, le service worker ouvre ou met au premier plan l'appli sur `url`. Textes produits par le serveur dans la langue du compte.
 
 ## E-mails
 
@@ -52,11 +52,12 @@ Envoyés par le relais SMTP de Brevo depuis `Sibylle <ne-pas-repondre@<domaine>>
 
 ## Envoi et reprises
 
-Le `worker` lit la table `notifications` (`state = pending`, `next_attempt_at` passé) avec `FOR UPDATE SKIP LOCKED`, envoie sur les canaux actifs, puis marque `sent`. En cas d'échec : nouvelle tentative après 1 min, 5 min, 30 min, 2 h, puis `failed`. Une notification devenue sans objet à l'envoi (prono annulé, pari fait entre-temps pour `closing_soon`) passe à `skipped`.
+Le `worker` lit la table `notifications` (`state = pending`, `next_attempt_at` passé) avec `FOR UPDATE SKIP LOCKED`, envoie sur les canaux actifs, puis marque `sent`. Canaux actifs : `push` si l'interrupteur est allumé, que le serveur a ses clés VAPID et que le compte a au moins un appareil abonné ; `email` si l'interrupteur est allumé et l'adresse vérifiée. En cas d'échec d'un canal : nouvelle tentative de ce seul canal (`done_channels` garde ceux déjà passés) après 1 min, 5 min, 30 min, 2 h, puis `failed`. Sans aucun canal actif, la notification passe à `skipped`. Une notification devenue sans objet à l'envoi (prono annulé, pari fait entre-temps pour `closing_soon`) passe à `skipped`.
 
 ## Tests attendus
 
 - Chaque type est créé une seule fois par destinataire, même si le `worker` tourne deux fois.
 - Couper un canal pour un type n'empêche pas l'autre canal.
-- Un abonnement push qui répond 410 est supprimé.
+- Un abonnement push qui répond 404 ou 410 est supprimé.
+- Un abonnement n'est accepté que vers le service push d'un navigateur (`fcm.googleapis.com`, `*.push.services.mozilla.com`, `*.push.apple.com`, `*.notify.windows.com`, en HTTPS) : le `worker` n'écrit nulle part ailleurs.
 - Aucun e-mail ne contient d'image ni de lien vers un domaine tiers.

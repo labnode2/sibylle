@@ -1,0 +1,1 @@
+{% with kicker="ÉDITION SPÉCIALE", action="Lire l'édition spéciale" %}{% include "fr/_notification.txt" %}{% endwith %}

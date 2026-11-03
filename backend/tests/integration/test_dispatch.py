@@ -8,9 +8,9 @@ from tests.conftest import MakeAccount
 from sibylle import clock
 from sibylle.db.models import Account, Notification
 from sibylle.db.session import transaction
+from sibylle.notify.dispatch import RETRY_DELAYS, dispatch
 from sibylle.notify.email import MemorySender, Renderer
 from sibylle.services.notifications import enqueue
-from sibylle.worker.jobs import RETRY_DELAYS, dispatch
 
 pytestmark = pytest.mark.integration
 

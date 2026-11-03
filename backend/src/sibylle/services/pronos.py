@@ -35,6 +35,7 @@ from sibylle.domain.lifecycle import Event, InvalidTransition, State, can_edit, 
 from sibylle.domain.permissions import Action, can
 from sibylle.domain.seasons import PARIS
 from sibylle.realtime import bus
+from sibylle.services import notifications
 from sibylle.services.orgs import public_member
 
 HIDDEN_STATES = (State.PROPOSED.value, State.REJECTED.value)
@@ -116,10 +117,14 @@ async def set_state(
     actor: Membership | None = None,
     data: dict[str, Any] | None = None,
 ) -> None:
-    """Moves a prono to a new state, keeps its history and tells the screens."""
+    """Moves a prono to a new state, keeps its history and tells the screens; a prono that
+    opens (scheduled or proposed until now) is news for the newsroom."""
+    opening = state is State.OPEN and prono.state in (State.SCHEDULED, State.PROPOSED)
     prono.state = state.value
     await record_event(session, prono, event, actor, data)
     await session.flush()
+    if opening:
+        await notifications.prono_opened(session, prono, actor)
     await announce(
         session,
         prono,
@@ -204,6 +209,8 @@ async def create_prono(session: AsyncSession, member: Membership, fields: dict[s
     await _replace_options(session, prono, labels)
     await record_event(session, prono, "created" if publishing else "proposed", member)
     await session.flush()
+    if prono.state == State.OPEN:
+        await notifications.prono_opened(session, prono, member)
     await announce(
         session,
         prono,

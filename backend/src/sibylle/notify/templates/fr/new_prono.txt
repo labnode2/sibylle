@@ -1,0 +1,1 @@
+{% with kicker="NOUVEAU PRONO", action="Jouer ce prono" %}{% include "fr/_notification.txt" %}{% endwith %}

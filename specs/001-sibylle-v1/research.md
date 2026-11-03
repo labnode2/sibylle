@@ -51,7 +51,7 @@ Le contexte technique du plan ne contient aucun « NEEDS CLARIFICATION » : les 
 
 ### R7. Notifications push et e-mails
 
-- **Decision**: Web Push avec clés VAPID via pywebpush ; abonnement enregistré par appareil ; un abonnement qui répond 404 ou 410 est supprimé. E-mails par le relais SMTP de Brevo avec aiosmtplib et des modèles Jinja2 en français ; le domaine publie SPF, DKIM et DMARC. Chaque notification est d'abord écrite dans une table `notifications` dans la même transaction que l'événement, puis envoyée par le `worker` avec reprises progressives.
+- **Decision**: Web Push avec clés VAPID via pywebpush ; abonnement enregistré par appareil, seulement vers le service push d'un navigateur (le `worker` envoie à l'adresse donnée par le membre : sans cette liste, on pourrait le faire écrire n'importe où) ; un abonnement qui répond 404 ou 410 est supprimé. E-mails par le relais SMTP de Brevo avec aiosmtplib et des modèles Jinja2 en français ; le domaine publie SPF, DKIM et DMARC. Chaque notification est d'abord écrite dans une table `notifications` dans la même transaction que l'événement, puis envoyée par le `worker` avec reprises progressives.
 - **Rationale**: une notification n'est jamais perdue si l'envoi échoue, et jamais envoyée pour un événement annulé ; SMTP garde Brevo remplaçable sans changer le code.
 - **Alternatives considered**: API HTTP de Brevo (plus riche, mais lie le code au fournisseur) ; notifications envoyées directement dans la requête (perdues en cas d'erreur, ralentissent la réponse).
 - **Note iOS**: Safari n'accepte les notifications push que pour une appli ajoutée à l'écran d'accueil (iOS 16.4 ou plus). L'interface l'explique au moment d'activer les notifications.

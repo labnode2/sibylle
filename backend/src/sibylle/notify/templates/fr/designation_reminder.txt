@@ -1,0 +1,1 @@
+{% with kicker="RÉSULTAT À DÉSIGNER", action="Désigner le résultat" %}{% include "fr/_notification.txt" %}{% endwith %}

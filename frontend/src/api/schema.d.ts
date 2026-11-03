@@ -189,6 +189,78 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/notification-prefs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Prefs */
+        get: operations["get_prefs_api_me_notification_prefs_get"];
+        /**
+         * Put Prefs
+         * @description Changes the switches given; the others stay as they are.
+         */
+        put: operations["put_prefs_api_me_notification_prefs_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/push/vapid-public-key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Vapid Public Key */
+        get: operations["vapid_public_key_api_push_vapid_public_key_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/push-subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Subscribe */
+        post: operations["subscribe_api_me_push_subscriptions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/push-subscriptions/{subscription_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Unsubscribe */
+        delete: operations["unsubscribe_api_me_push_subscriptions__subscription_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/orgs": {
         parameters: {
             query?: never;
@@ -1310,6 +1382,21 @@ export interface components {
          * @enum {string}
          */
         Metric: "laurels" | "wins";
+        /** NotificationPrefItem */
+        NotificationPrefItem: {
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "new_prono" | "closing_soon" | "result" | "designation_reminder";
+            /**
+             * Channel
+             * @enum {string}
+             */
+            channel: "push" | "email";
+            /** Enabled */
+            enabled: boolean;
+        };
         /** OptionOut */
         OptionOut: {
             /**
@@ -1709,6 +1796,30 @@ export interface components {
             /** Coins */
             coins: number;
         };
+        /** PushKeys */
+        PushKeys: {
+            /** P256Dh */
+            p256dh: string;
+            /** Auth */
+            auth: string;
+        };
+        /**
+         * PushSubscriptionIn
+         * @description What `PushSubscription.toJSON()` gives in the browser.
+         */
+        PushSubscriptionIn: {
+            /** Endpoint */
+            endpoint: string;
+            keys: components["schemas"]["PushKeys"];
+        };
+        /** PushSubscriptionOut */
+        PushSubscriptionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
         /** RedeemIn */
         RedeemIn: {
             /** Code */
@@ -1993,6 +2104,14 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * VapidKey
+         * @description The server's public key for `pushManager.subscribe`; null when push is not set up.
+         */
+        VapidKey: {
+            /** Key */
+            key: string | null;
         };
         /**
          * WeeklyCoins
@@ -2347,6 +2466,141 @@ export interface operations {
                 "application/json": components["schemas"]["PasswordChange"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_prefs_api_me_notification_prefs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationPrefItem"][];
+                };
+            };
+        };
+    };
+    put_prefs_api_me_notification_prefs_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationPrefItem"][];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationPrefItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    vapid_public_key_api_push_vapid_public_key_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VapidKey"];
+                };
+            };
+        };
+    };
+    subscribe_api_me_push_subscriptions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushSubscriptionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushSubscriptionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unsubscribe_api_me_push_subscriptions__subscription_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                subscription_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             204: {

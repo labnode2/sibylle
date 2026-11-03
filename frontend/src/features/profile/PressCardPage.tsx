@@ -11,8 +11,10 @@ import { ButtonLink, Button, Card, Kicker, Laurel } from '../../ui/components';
 import { CrystalBall } from '../../ui/CrystalBall';
 import { FramedAvatar } from '../../ui/FramedAvatar';
 import type { Variant } from '../../vendor/crystal-ball/crystal-ball.js';
+import { useMe } from '../auth/api';
 import { ItemPreview } from '../collection/ItemPreview';
 import { useFormErrors } from '../forms';
+import { NotificationPrefs } from '../notifications/NotificationPrefs';
 import { useOrg } from '../orgs/api';
 import { PixelEditor } from '../pixel-editor/PixelEditor';
 import { usePressCard, useUpdateProfile, type PressCard } from './api';
@@ -106,6 +108,7 @@ export function PressCardPage() {
   const me = org.data?.my_membership;
   const id = memberId ?? me?.id;
   const card = usePressCard(orgId, id);
+  const account = useMe();
   if (!card.data || !org.data) return <p role="status">{t('common:shell.loading')}</p>;
   const data = card.data;
   const mine = data.id === me?.id;
@@ -175,6 +178,8 @@ export function PressCardPage() {
           </ul>
         )}
       </section>
+
+      {mine && account.data && <NotificationPrefs emailVerified={account.data.email_verified} />}
 
       {mine && <LedgerList orgId={orgId} />}
     </div>

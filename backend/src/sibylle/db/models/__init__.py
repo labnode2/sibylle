@@ -10,7 +10,7 @@ from sibylle.db.models.collection import (
     SecretCodeRedemption,
 )
 from sibylle.db.models.ledger import LedgerEntry
-from sibylle.db.models.notifications import Notification
+from sibylle.db.models.notifications import Notification, NotificationPref, PushSubscription
 from sibylle.db.models.orgs import Invitation, Membership, Organisation
 from sibylle.db.models.pronos import (
     Bet,
@@ -40,10 +40,12 @@ __all__ = [
     "LedgerEntry",
     "Membership",
     "Notification",
+    "NotificationPref",
     "Organisation",
     "Prono",
     "PronoEvent",
     "PronoOption",
+    "PushSubscription",
     "Reaction",
     "Report",
     "Season",

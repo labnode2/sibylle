@@ -1,0 +1,5 @@
+{% extends "fr/base.html" %}
+{% block title %}Plus que 2 h pour jouer{% endblock %}
+{% block content %}
+{% with kicker="PLUS QUE 2 H", action="Jouer avant la clôture" %}{% include "fr/_notification.html" %}{% endwith %}
+{% endblock %}

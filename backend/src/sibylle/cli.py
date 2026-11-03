@@ -2,8 +2,10 @@
 
 import argparse
 import asyncio
+import base64
 import json
 import re
+import secrets
 import sys
 import uuid
 from collections.abc import Callable, Sequence
@@ -129,6 +131,30 @@ def _secret_code_add(args: argparse.Namespace) -> None:
     asyncio.run(run())
 
 
+def _b64url(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
+
+
+def gen_secrets() -> dict[str, str]:
+    """Fresh secrets for deploy/.env: the PostgreSQL password and the VAPID key pair (the public
+    key as browsers want it, the private one as pywebpush reads it)."""
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+
+    key = ec.generate_private_key(ec.SECP256R1())
+    public = key.public_key().public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
+    return {
+        "POSTGRES_PASSWORD": secrets.token_urlsafe(32),
+        "VAPID_PUBLIC_KEY": _b64url(public),
+        "VAPID_PRIVATE_KEY": _b64url(key.private_numbers().private_value.to_bytes(32, "big")),
+    }
+
+
+def _gen_secrets(_: argparse.Namespace) -> None:
+    for name, value in gen_secrets().items():
+        print(f"{name}={value}")
+
+
 def _jobs_list(_: argparse.Namespace) -> None:
     from sibylle.worker.jobs import REGISTRY
 
@@ -185,6 +211,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     commands.add_parser("seed-demo", help="crée la rédaction de démonstration (hors production)")
+    commands.add_parser(
+        "gen-secrets",
+        help="écrit de nouveaux secrets pour deploy/.env (mot de passe PostgreSQL, clés VAPID)",
+    )
     return parser
 
 
@@ -200,6 +230,7 @@ _HANDLERS: dict[tuple[str, str | None], Callable[[argparse.Namespace], None]] = 
     ("seasons", "close"): _seasons_close,
     ("secret-code", "add"): _secret_code_add,
     ("seed-demo", None): _seed_demo,
+    ("gen-secrets", None): _gen_secrets,
 }
 
 

@@ -1,0 +1,12 @@
+{{ kicker }} · {{ org_title | upper }}
+
+{{ question }}
+
+{{ lead }}
+
+{{ action }} : {{ link }}
+
+Tu reçois cet e-mail parce que tu es membre de {{ org_title }}.
+Régler mes notifications : {{ prefs_link }}
+
+— La Gazette de Sibylle

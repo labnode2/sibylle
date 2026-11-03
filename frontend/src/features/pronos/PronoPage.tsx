@@ -8,6 +8,7 @@ import { formatDate, formatNumber, parisDay, parseDecimal } from '../../i18n';
 import { Button, Card, ExternalLink, Icon, Laurel, Stepper } from '../../ui/components';
 import { AvatarStack, PixelImage } from '../../ui/PixelImage';
 import { useFormErrors } from '../forms';
+import { PushPrompt } from '../notifications/PushPrompt';
 import { useOrg } from '../orgs/api';
 import { DesignatePanel } from '../results/DesignatePanel';
 import { MyReports } from '../results/MyReports';
@@ -241,6 +242,8 @@ export function PronoPage() {
   const [day, setDay] = useState('');
   const [stake, setStake] = useState(0);
   const [missing, setMissing] = useState(false);
+  // Once a bet is in, the result is worth hearing about: the app offers push notifications.
+  const [justBet, setJustBet] = useState(false);
 
   if (!query.data || !org.data) {
     return <p role="status">{t('common:shell.loading')}</p>;
@@ -273,6 +276,7 @@ export function PronoPage() {
         onSuccess: () => {
           setStake(0);
           setDay('');
+          setJustBet(true);
         },
       },
     );
@@ -338,6 +342,7 @@ export function PronoPage() {
               </span>
             </p>
           )}
+          {justBet && <PushPrompt />}
 
           {choosing && !hideBallot && (
             <section className={styles.page} aria-label={t('detail.yourPick')}>

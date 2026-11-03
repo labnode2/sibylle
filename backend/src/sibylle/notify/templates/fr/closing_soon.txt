@@ -1,0 +1,1 @@
+{% with kicker="PLUS QUE 2 H", action="Jouer avant la clôture" %}{% include "fr/_notification.txt" %}{% endwith %}

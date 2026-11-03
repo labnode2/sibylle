@@ -1,0 +1,5 @@
+{% extends "fr/base.html" %}
+{% block title %}Nouveau prono dans {{ org_title }}{% endblock %}
+{% block content %}
+{% with kicker="NOUVEAU PRONO", action="Jouer ce prono" %}{% include "fr/_notification.html" %}{% endwith %}
+{% endblock %}

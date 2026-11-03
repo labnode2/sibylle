@@ -265,7 +265,7 @@ PK (`prono_id`, `membership_id`, `kind`) ; `kind` dans le jeu fixe de la platefo
 
 ### notifications (file d'envoi)
 
-`id`, `account_id` (NULL pour une invitation envoyée à une adresse sans compte : l'adresse est alors dans `payload.to`), `org_id`, `type`, `payload` (jsonb : identifiants et textes déjà traduits), `dedupe_key` (unique, par exemple `closing_soon:{prono}:{account}` ou `designation:{prono}:{étape}`), `state` (`pending`, `sent`, `skipped`, `failed`), `attempts`, `next_attempt_at`, `sent_at`, `created_at`. Lue par le `worker` avec `FOR UPDATE SKIP LOCKED` ; les canaux sont choisis à l'envoi selon `notification_prefs`.
+`id`, `account_id` (NULL pour une invitation envoyée à une adresse sans compte : l'adresse est alors dans `payload.to`), `org_id`, `type`, `payload` (jsonb : identifiants et textes déjà traduits), `dedupe_key` (unique, par exemple `closing_soon:{prono}:{account}` ou `designation:{prono}:{relance}-{étape}`), `state` (`pending`, `sent`, `skipped`, `failed`), `attempts`, `done_channels` (canaux déjà passés, que les reprises n'envoient pas une seconde fois), `next_attempt_at`, `sent_at`, `created_at`. Lue par le `worker` avec `FOR UPDATE SKIP LOCKED` ; les canaux sont choisis à l'envoi selon `notification_prefs`.
 
 ## Mini-jeux
 

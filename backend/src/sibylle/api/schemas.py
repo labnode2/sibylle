@@ -7,10 +7,20 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Any, Literal, Self
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import (
+    AfterValidator,
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    model_validator,
+)
+from pydantic_core import PydanticCustomError
 
 from sibylle.db.models import Account, Membership, Organisation
 from sibylle.domain.coins import gold
+from sibylle.domain.notifications import allowed_push_endpoint
 
 EMAIL_PATTERN = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
 
@@ -720,3 +730,43 @@ class PressCard(MemberPublic):
     stats: PressStats
     trophies: list[TrophyOut]
     collection: list[OwnedItemOut]
+
+
+# Notifications (US8)
+
+NotificationKind = Literal["new_prono", "closing_soon", "result", "designation_reminder"]
+NotificationChannel = Literal["push", "email"]
+
+
+class NotificationPrefItem(BaseModel):
+    type: NotificationKind
+    channel: NotificationChannel
+    enabled: bool
+
+
+class VapidKey(BaseModel):
+    """The server's public key for `pushManager.subscribe`; null when push is not set up."""
+
+    key: str | None
+
+
+def _push_service(endpoint: str) -> str:
+    if not allowed_push_endpoint(endpoint):
+        raise PydanticCustomError("unknown_push_service", "not a browser push service")
+    return endpoint
+
+
+class PushKeys(BaseModel):
+    p256dh: Annotated[str, StringConstraints(min_length=1, max_length=200)]
+    auth: Annotated[str, StringConstraints(min_length=1, max_length=100)]
+
+
+class PushSubscriptionIn(BaseModel):
+    """What `PushSubscription.toJSON()` gives in the browser."""
+
+    endpoint: Annotated[str, StringConstraints(max_length=2048), AfterValidator(_push_service)]
+    keys: PushKeys
+
+
+class PushSubscriptionOut(BaseModel):
+    id: uuid.UUID

@@ -32,8 +32,14 @@ from sibylle.domain.lifecycle import Event, InvalidTransition, State, transition
 from sibylle.domain.permissions import Action, can
 from sibylle.domain.settlement import BetLine, Entry, Outcome, refunds, settle, winners_by_options
 from sibylle.realtime import bus
-from sibylle.services import ledger
-from sibylle.services.pronos import get_prono, live_settlement, record_event, set_state
+from sibylle.services import ledger, notifications
+from sibylle.services.pronos import (
+    get_prono,
+    live_settlement,
+    record_event,
+    result_label,
+    set_state,
+)
 
 
 @dataclass(frozen=True)
@@ -220,8 +226,18 @@ async def _pay(
     return outcome
 
 
-async def _announce(session: AsyncSession, prono: Prono, settlement: Settlement) -> None:
+async def _announce(
+    session: AsyncSession,
+    prono: Prono,
+    settlement: Settlement,
+    bets: list[Bet],
+    options: list[PronoOption],
+) -> None:
+    """Tells the screens, and each member who bet (US8 « résultat »)."""
     await session.flush()
+    await notifications.prono_settled(
+        session, prono, settlement, bets, result_label(prono, options)
+    )
     await bus.publish(
         session,
         "prono.resolved",
@@ -247,7 +263,7 @@ async def resolve(
     prono.resolved_at = clock.now()
     prono.resolved_by = member.id
     await set_state(session, prono, state, "resolved", member, {"result": stored})
-    await _announce(session, prono, settlement)
+    await _announce(session, prono, settlement, bets, options)
     return prono
 
 
@@ -274,7 +290,7 @@ async def correct(
     await record_event(
         session, prono, "corrected", member, {"previous": previous.result, "result": stored}
     )
-    await _announce(session, prono, settlement)
+    await _announce(session, prono, settlement, bets, options)
     return prono
 
 
@@ -299,7 +315,7 @@ async def cancel(
     prono.cancelled_at = now
     prono.cancelled_by = member.id
     await set_state(session, prono, state, "cancelled", member, {"reason": reason})
-    await _announce(session, prono, settlement)
+    await _announce(session, prono, settlement, bets, [])
     return prono
 
 

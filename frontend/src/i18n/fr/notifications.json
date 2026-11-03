@@ -1,0 +1,49 @@
+{
+  "title": "NOTIFICATIONS",
+  "intro": "Choisis ce qui te prévient, et par quel canal. Les e-mails partent vers l'adresse de ton compte.",
+  "kind": "Notification",
+  "kinds": {
+    "new_prono": {
+      "label": "Nouveau prono",
+      "hint": "Un prono est publié dans ta rédaction."
+    },
+    "closing_soon": {
+      "label": "Plus que 2 h",
+      "hint": "Un prono ferme dans 2 h et tu n'as pas encore joué."
+    },
+    "result": {
+      "label": "Résultats",
+      "hint": "Le résultat d'un prono que tu as joué tombe."
+    },
+    "designation_reminder": {
+      "label": "Résultats à désigner",
+      "hint": "Pour les journalistes : un rappel tant qu'un résultat attend."
+    }
+  },
+  "channels": {
+    "push": "Push",
+    "email": "E-mail"
+  },
+  "switch": "{{kind}} par {{channel}}",
+  "unverified": "Ton adresse n'est pas encore confirmée : aucun e-mail de notification ne part avant.",
+  "failed": "Le réglage n'a pas été enregistré. Réessaie dans un instant.",
+  "device": {
+    "label": "SUR CET APPAREIL",
+    "loading": "Vérification de cet appareil…",
+    "on": "Les notifications push arrivent sur cet appareil.",
+    "off": "Les notifications push ne sont pas activées sur cet appareil.",
+    "enable": "Activer sur cet appareil",
+    "disable": "Couper sur cet appareil",
+    "denied": "Tu as refusé les notifications pour Sibylle : tu peux changer ça dans les réglages de ton navigateur.",
+    "unsupported": "Ce navigateur ne reçoit pas les notifications push. Les e-mails arrivent quand même.",
+    "unavailable": "Les notifications push ne sont pas encore en place sur ce serveur. Les e-mails arrivent quand même.",
+    "ios-install": "Sur iPhone et iPad (iOS 16.4 ou plus), ajoute d'abord Sibylle à l'écran d'accueil : bouton Partager, puis « Sur l'écran d'accueil ». Ouvre ensuite l'appli depuis son icône pour activer les notifications.",
+    "failed": "L'activation n'a pas marché. Réessaie dans un instant."
+  },
+  "prompt": {
+    "kicker": "SOIS PRÉVENU·E",
+    "text": "Reçois le résultat de ce prono dès qu'il tombe, et les nouveaux pronos de ta rédaction.",
+    "enable": "Activer les notifications",
+    "later": "Plus tard"
+  }
+}

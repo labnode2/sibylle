@@ -43,8 +43,8 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | DELETE | `/me` | Compte | `{confirm: true}` → `204` ; `409 last_editor` si seule rédaction en chef d'une rédaction qui a d'autres membres |
 | GET | `/me/notification-prefs` | Compte | → `[{type, channel, enabled}]` |
 | PUT | `/me/notification-prefs` | Compte | `[{type, channel, enabled}]` → idem |
-| GET | `/push/vapid-public-key` | Compte | → `{key}` |
-| POST | `/me/push-subscriptions` | Compte | `{endpoint, keys: {p256dh, auth}}` → `201 {id}` |
+| GET | `/push/vapid-public-key` | Compte | → `{key}` (`null` si le serveur n'a pas de clés VAPID) |
+| POST | `/me/push-subscriptions` | Compte | `{endpoint, keys: {p256dh, auth}}` → `201 {id}` ; un appareil déjà connu revient au compte connecté ; `422` si `endpoint` n'est pas un service push de navigateur |
 | DELETE | `/me/push-subscriptions/{id}` | Compte | → `204` |
 
 `Me` = `{id, email, first_name, last_name, email_verified, theme, reduce_motion, locale, memberships: [{org: OrgCard, membership: MemberSelf}]}`. C'est la seule réponse qui contient le nom, le prénom et l'e-mail.
