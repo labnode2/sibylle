@@ -21,6 +21,7 @@ from sibylle.api.routes import (
     leaderboard,
     me,
     members,
+    minigames,
     notifications,
     orgs,
     profile,
@@ -98,6 +99,7 @@ def create_app() -> FastAPI:
         leaderboard,
         collection,
         coins,
+        minigames,
         profile,
         uploads,
     ):

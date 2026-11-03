@@ -1,0 +1,150 @@
+/* The games of the week: the box on la une, and the ball's race. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 12px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.title {
+  font: 800 30px/1.05 var(--font-text);
+  letter-spacing: -0.025em;
+}
+
+.text {
+  margin: 0;
+  font: 400 15px/1.45 var(--font-text);
+}
+
+.label {
+  font: 600 11px/1.3 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+
+.note {
+  margin: 0;
+  font: 500 12px/1.5 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+}
+
+.alert {
+  margin: 0;
+  padding: 10px 12px;
+  border: 2px solid var(--ink);
+  background: var(--grey);
+  font-weight: 600;
+}
+
+/* The track: the canvas keeps its 3 : 1 shape at any width, and takes the touches. */
+.game {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.track {
+  align-self: stretch;
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+  touch-action: manipulation;
+  user-select: none;
+  cursor: pointer;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 1;
+  image-rendering: pixelated;
+}
+
+.result p {
+  margin: 0 0 4px;
+  font: 700 15px/1.4 var(--font-text);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.sectionTitle {
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--ink);
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.top {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.top li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  padding: 0 6px;
+}
+
+.top li + li {
+  border-top: 1px solid var(--rule);
+}
+
+.me {
+  background: var(--grey);
+}
+
+.rank {
+  width: 2ch;
+  font: 800 18px/1 var(--font-text);
+}
+
+.name {
+  flex: 1;
+  font: 700 15px/1.2 var(--font-text);
+}
+
+.score {
+  font: 700 14px/1 var(--font-mono);
+}
+
+/* On la une: one game per line, its text then its button. */
+.box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.boxText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.boxTitle {
+  font: 800 17px/1.2 var(--font-text);
+}

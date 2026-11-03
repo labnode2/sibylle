@@ -8,6 +8,7 @@ import { Link, useParams } from 'react-router';
 import { formatDate, formatNumber } from '../../i18n';
 import { ButtonLink, Card, Kicker, Laurel, Wallet } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
+import { WeeklyGames } from '../games/WeeklyGames';
 import { useOrg } from '../orgs/api';
 import type { PronoSummary } from '../pronos/api';
 import { ProposalsPanel } from '../pronos/ProposalsPanel';
@@ -178,7 +179,7 @@ export function UnePage() {
               </Link>
             </Block>
             <Block title={t('games')}>
-              <p className={styles.meta}>{t('gamesSoon')}</p>
+              <WeeklyGames orgId={orgId} />
             </Block>
             {front.editor_note && (
               <Block title={t('editorNote')}>

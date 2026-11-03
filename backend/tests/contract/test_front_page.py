@@ -103,7 +103,6 @@ async def test_the_front_page_in_order(
         (2, "Hugo", 0, False),
         (2, "Manon", 0, False),
     ]
-    assert page["games"] == []
     assert page["editor_note"] == "Pot de départ vendredi à 18 h."
     assert list(page) == [
         "headline",
@@ -111,7 +110,6 @@ async def test_the_front_page_in_order(
         "to_designate",
         "latest_results",
         "leaderboard_top",
-        "games",
         "editor_note",
     ]
 

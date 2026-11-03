@@ -910,6 +910,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/orgs/{org_id}/games": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Games */
+        get: operations["get_games_api_orgs__org_id__games_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/games/runner/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Run */
+        post: operations["start_run_api_orgs__org_id__games_runner_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/games/runner/runs/{run_id}/finish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Finish Run */
+        post: operations["finish_run_api_orgs__org_id__games_runner_runs__run_id__finish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/orgs/{org_id}/uploads": {
         parameters: {
             query?: never;
@@ -1103,12 +1154,14 @@ export interface components {
             latest_results: components["schemas"]["LatestResult"][];
             /** Leaderboard Top */
             leaderboard_top: components["schemas"]["LeaderboardRow"][];
-            /** Games */
-            games: {
-                [key: string]: unknown;
-            }[];
             /** Editor Note */
             editor_note: string | null;
+        };
+        /** Games */
+        Games: {
+            runner: components["schemas"]["RunnerStatus"];
+            /** Pixel */
+            pixel?: null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1990,6 +2043,54 @@ export interface components {
              * @enum {string}
              */
             role: "reader" | "journalist" | "editor";
+        };
+        /** RunFinishIn */
+        RunFinishIn: {
+            /** Score */
+            score: number;
+            /** Duration Ms */
+            duration_ms: number;
+        };
+        /** RunFinished */
+        RunFinished: {
+            /** Score */
+            score: number;
+            /** My Best */
+            my_best: number;
+            /** Rank */
+            rank: number | null;
+        };
+        /** RunStarted */
+        RunStarted: {
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            /** Seed */
+            seed: number;
+        };
+        /** RunnerStatus */
+        RunnerStatus: {
+            /**
+             * Week Start
+             * Format: date
+             */
+            week_start: string;
+            /** Attempts Left */
+            attempts_left: number;
+            /** My Best */
+            my_best: number | null;
+            /** Top */
+            top: components["schemas"]["RunnerTopRow"][];
+        };
+        /** RunnerTopRow */
+        RunnerTopRow: {
+            member: components["schemas"]["MemberPublic"];
+            /** Score */
+            score: number;
+            /** Rank */
+            rank: number;
         };
         /** SeasonOut */
         SeasonOut: {
@@ -4221,6 +4322,104 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_games_api_orgs__org_id__games_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Games"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_run_api_orgs__org_id__games_runner_runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunStarted"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    finish_run_api_orgs__org_id__games_runner_runs__run_id__finish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunFinishIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunFinished"];
+                };
             };
             /** @description Validation Error */
             422: {

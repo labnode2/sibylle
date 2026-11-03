@@ -85,7 +85,11 @@ export async function call(
     async ({ method, url, body }) => {
       const response = await fetch(url, {
         method,
-        headers: body ? { 'Content-Type': 'application/json', 'X-Sibylle': '1' } : {},
+        headers: {
+          ...(body ? { 'Content-Type': 'application/json' } : {}),
+          // The CSRF check wants it on every request that changes something.
+          ...(method === 'GET' ? {} : { 'X-Sibylle': '1' }),
+        },
         body: body ? JSON.stringify(body) : undefined,
       });
       return { status: response.status, body: (await response.json()) as unknown };

@@ -82,7 +82,7 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 
 | Méthode | Route | Qui | Corps → Réponse |
 |---|---|---|---|
-| GET | `/orgs/{org}/front-page` | Membre | → `FrontPage` : `{headline, open, to_designate (journalistes seulement), latest_results, leaderboard_top, games, editor_note}` |
+| GET | `/orgs/{org}/front-page` | Membre | → `FrontPage` : `{headline, open, to_designate (journalistes seulement), latest_results, leaderboard_top, editor_note}` ; l'encadré des jeux lit `GET /orgs/{org}/games` |
 | GET | `/orgs/{org}/pronos` | Membre | `?state=&section=&cursor=` → `[PronoSummary]` |
 | POST | `/orgs/{org}/pronos` | Membre | `PronoInput` → `201 PronoDetail` ; état `open`/`scheduled` pour un·e journaliste, `proposed` pour un·e lecteur·rice |
 | GET | `/orgs/{org}/pronos/{id}` | Membre | → `PronoDetail` |
@@ -126,9 +126,9 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 
 | Méthode | Route | Qui | Corps → Réponse |
 |---|---|---|---|
-| GET | `/orgs/{org}/games` | Membre | → `{runner: {week_start, attempts_left, my_best, top: [...]}, pixel: PixelStatus \| null}` |
-| POST | `/orgs/{org}/games/runner/runs` | Membre | → `201 {run_id, seed}` ; `409 attempts_exhausted` |
-| POST | `/orgs/{org}/games/runner/runs/{run}/finish` | Membre | `{score, duration_ms}` → `{score, my_best, rank}` ; `422` si invraisemblable |
+| GET | `/orgs/{org}/games` | Membre | → `{runner: {week_start, attempts_left, my_best, top: [{member, score, rank}] (10 premiers)}, pixel: PixelStatus \| null}` |
+| POST | `/orgs/{org}/games/runner/runs` | Membre | → `201 {run_id, seed}` (une partie ouverte compte comme un essai, même jamais finie) ; `409 attempts_exhausted` |
+| POST | `/orgs/{org}/games/runner/runs/{run}/finish` | Membre | `{score, duration_ms}` → `{score, my_best, rank}` ; `409 run_finished` ; `422` si invraisemblable (`score` au-delà de 90 points par seconde, `duration_ms` plus longue que la partie ou au-delà de 30 min) |
 | GET | `/orgs/{org}/games/pixel` | Membre | → `PixelStatus` : `{puzzle_id, size, revealed: "<base64 masqué>", letters, guesses_left_today, finds: [{member, rank}], found_by_me, state, word?}` (`word` seulement si trouvé ou terminé) |
 | POST | `/orgs/{org}/games/pixel/guesses` | Membre | `{word}` → `{correct, rank?, laurels?, guesses_left_today}` |
 | GET | `/orgs/{org}/games/pixel/puzzles` | Journaliste | → file des dessins à venir |

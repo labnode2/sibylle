@@ -152,7 +152,7 @@ Seuls les pronos font bouger le score (`base_gain`, `early_bird`, `pot_share`, `
 
 ### J3. Course de la boule
 
-5 essais par semaine et par membre ; le meilleur score compte. Le lundi à 00:00, pour la semaine écoulée et par rédaction : 10 lauriers au 1er, 7 au 2e, 5 au 3e, 2 à chaque autre joueur ; à égalité de score, la partie la plus ancienne passe devant. Versé au solde (écriture `minigame`).
+5 essais par semaine et par membre (une partie ouverte compte, même abandonnée) ; le meilleur score compte. Le lundi, pour la semaine écoulée et par rédaction : 10 lauriers au 1er, 7 au 2e, 5 au 3e, 2 à chaque autre joueur (membre actif avec au moins une partie finie et un score positif) ; à égalité de score, la partie la plus ancienne passe devant. Versé au solde (écriture `minigame`), à partir de 00:30 plutôt que 00:00 : une partie commencée le dimanche soir peut encore finir pendant 30 min. Une rédaction dont la clôture de saison est due attend celle-ci, pour que la remise à zéro du solde n'efface pas les gains. Score : un point par 10 pixels parcourus, à une vitesse de 300 à 900 pixels par seconde, donc au plus 90 points par seconde (R19).
 
 ### J4. Pixel mystère
 

@@ -101,6 +101,19 @@ def _coins_grant(args: argparse.Namespace) -> None:
     asyncio.run(run())
 
 
+def _games_pay_runner(args: argparse.Namespace) -> None:
+    from sibylle.db.session import dispose_engine
+    from sibylle.worker.jobs import pay_runner_week
+
+    async def run() -> None:
+        try:
+            print(f"pay_runner_week: {await pay_runner_week(args.org)}")
+        finally:
+            await dispose_engine()
+
+    asyncio.run(run())
+
+
 def _seasons_close(args: argparse.Namespace) -> None:
     from sibylle.db.session import dispose_engine
     from sibylle.worker.jobs import close_finished_seasons
@@ -193,6 +206,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     grant_parser.add_argument("--org", type=uuid.UUID, help="identifiant d'une rédaction")
 
+    games_parser = commands.add_parser("games", help="jeux de la semaine")
+    games_commands = games_parser.add_subparsers(dest="games_command", required=True)
+    pay_parser = games_commands.add_parser(
+        "pay-runner",
+        help="verse les gains de la course de la semaine écoulée (toutes les rédactions, ou une)",
+    )
+    pay_parser.add_argument("--org", type=uuid.UUID, help="identifiant d'une rédaction")
+
     seasons_parser = commands.add_parser("seasons", help="saisons")
     seasons_commands = seasons_parser.add_subparsers(dest="seasons_command", required=True)
     close_parser = seasons_commands.add_parser(
@@ -227,6 +248,7 @@ _HANDLERS: dict[tuple[str, str | None], Callable[[argparse.Namespace], None]] = 
     ("jobs", "run"): _jobs_run,
     ("jobs", "list"): _jobs_list,
     ("coins", "grant"): _coins_grant,
+    ("games", "pay-runner"): _games_pay_runner,
     ("seasons", "close"): _seasons_close,
     ("secret-code", "add"): _secret_code_add,
     ("seed-demo", None): _seed_demo,

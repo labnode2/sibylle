@@ -17,7 +17,8 @@
     "too_large": "Le fichier est trop lourd : 5 Mo au plus.",
     "validation_error": "Certains champs sont invalides.",
     "rate_limited": "Trop d'essais. Réessaie dans quelques minutes.",
-    "error": "Une erreur est survenue."
+    "error": "Une erreur est survenue.",
+    "run_finished": "Cette partie est déjà terminée."
   },
   "email": {
     "subject": {

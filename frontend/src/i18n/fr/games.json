@@ -1,0 +1,31 @@
+{
+  "box": {
+    "runner": "Course de la boule",
+    "runnerLine": "RECORD {{record}} · {{left}} ESSAIS SUR 5",
+    "runnerLine_none": "PAS ENCORE DE RECORD · {{left}} ESSAIS SUR 5",
+    "play": "Jouer",
+    "leader": "En tête : {{pseudo}} ({{score}})"
+  },
+  "runner": {
+    "back": "Retour à la une",
+    "title": "Course de la boule",
+    "intro": "Saute les obstacles le plus loin possible. 5 essais par semaine : seul ton meilleur score compte.",
+    "gains": "Lundi, le classement de la semaine rapporte 10, 7 et 5 lauriers aux trois premiers, et 2 lauriers à chaque autre joueur.",
+    "canvas": "Course de la boule : saute les obstacles avec la barre d'espace, la flèche du haut, ou en touchant le jeu.",
+    "controls": "Espace, flèche du haut ou toucher le jeu : sauter.",
+    "attempts_one": "{{count}} essai restant cette semaine",
+    "attempts_other": "{{count}} essais restants cette semaine",
+    "start": "Lancer une partie",
+    "again": "Rejouer",
+    "starting": "Préparation de la piste…",
+    "score": "SCORE {{score}}",
+    "result": "Score : {{score}}.",
+    "best": "Ton record de la semaine : {{best}}, {{rank}}ᵉ de la rédaction.",
+    "bestFirst": "Ton record de la semaine : {{best}}, en tête de la rédaction !",
+    "exhausted": "Tes 5 essais de la semaine sont joués. Nouveaux essais lundi {{date}}.",
+    "failed": "Ce score n'a pas pu être enregistré.",
+    "week": "CLASSEMENT DE LA SEMAINE",
+    "nobody": "Personne n'a encore joué cette semaine.",
+    "you": "toi"
+  }
+}

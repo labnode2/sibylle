@@ -103,6 +103,20 @@ async def grant_weekly_coins(org_id: uuid.UUID | None = None) -> int:
         return await coins.grant_week(session, org_id=org_id)
 
 
+@job("pay_runner_week", minute="*")
+async def pay_runner_week(org_id: uuid.UUID | None = None) -> int:
+    """Pays the ball's race of the past week, once per newsroom, from Monday 00:30 (Paris): a
+    run started on Sunday evening may still finish until then.
+
+    Checked every minute, like the coins, so that a worker restarted later still pays. `org_id`
+    keeps one newsroom only (`sibylle games pay-runner --org`, for tests on a shared database).
+    """
+    from sibylle.services import minigames
+
+    async with transaction() as session:
+        return await minigames.pay_runner_week(session, org_id=org_id)
+
+
 @job("advance_pronos", minute="*")
 async def advance_pronos() -> int:
     """Opens the scheduled pronos and closes the open ones whose time has come."""

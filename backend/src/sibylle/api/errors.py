@@ -24,6 +24,7 @@ STATUS: dict[str, int] = {
     "token_invalid": 409,
     "last_editor": 409,
     "attempts_exhausted": 409,
+    "run_finished": 409,
     "too_large": 413,
     "validation_error": 422,
     "rate_limited": 429,

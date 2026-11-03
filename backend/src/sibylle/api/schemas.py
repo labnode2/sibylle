@@ -575,7 +575,6 @@ class FrontPage(BaseModel):
     to_designate: list[PronoSummary] | None
     latest_results: list[LatestResult]
     leaderboard_top: list[LeaderboardRow]
-    games: list[dict[str, Any]]
     editor_note: str | None
 
 
@@ -774,3 +773,43 @@ class PushSubscriptionIn(BaseModel):
 
 class PushSubscriptionOut(BaseModel):
     id: uuid.UUID
+
+
+# Mini-games (US9, US10)
+
+
+class RunnerTopRow(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    member: MemberPublic
+    score: int
+    rank: int
+
+
+class RunnerStatus(BaseModel):
+    week_start: date
+    attempts_left: int
+    my_best: int | None
+    top: list[RunnerTopRow]
+
+
+class Games(BaseModel):
+    runner: RunnerStatus
+    # Pixel mystère arrives with US10.
+    pixel: None = None
+
+
+class RunStarted(BaseModel):
+    run_id: uuid.UUID
+    seed: int
+
+
+class RunFinishIn(BaseModel):
+    score: int = Field(ge=0, le=1_000_000)
+    duration_ms: int = Field(ge=0, le=86_400_000)
+
+
+class RunFinished(BaseModel):
+    score: int
+    my_best: int
+    rank: int | None

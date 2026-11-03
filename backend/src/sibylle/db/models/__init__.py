@@ -10,6 +10,7 @@ from sibylle.db.models.collection import (
     SecretCodeRedemption,
 )
 from sibylle.db.models.ledger import LedgerEntry
+from sibylle.db.models.minigames import MinigamePayout, RunnerRun
 from sibylle.db.models.notifications import Notification, NotificationPref, PushSubscription
 from sibylle.db.models.orgs import Invitation, Membership, Organisation
 from sibylle.db.models.pronos import (
@@ -39,6 +40,7 @@ __all__ = [
     "Invitation",
     "LedgerEntry",
     "Membership",
+    "MinigamePayout",
     "Notification",
     "NotificationPref",
     "Organisation",
@@ -48,6 +50,7 @@ __all__ = [
     "PushSubscription",
     "Reaction",
     "Report",
+    "RunnerRun",
     "Season",
     "SeasonClosure",
     "Section",

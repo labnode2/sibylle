@@ -109,7 +109,5 @@ async def front_page(session: AsyncSession, member: Membership) -> dict[str, Any
         "to_designate": to_designate,
         "latest_results": await _latest_results(session, member),
         "leaderboard_top": await _leaderboard_top(session, member),
-        # The games of the week arrive with US9 and US10.
-        "games": [],
         "editor_note": org.editor_note,
     }

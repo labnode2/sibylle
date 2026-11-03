@@ -21,6 +21,12 @@ function Detail({ orgId, entry }: { orgId: string; entry: LedgerEntry }) {
   if (entry.kind === 'purchase' && entry.reason) {
     return <span className={styles.ledgerDetail}>{t(`catalog.${entry.reason}`)}</span>;
   }
+  // « runner:2026-11-02 »: the ball's race of the week that began that Monday.
+  const week = entry.kind === 'minigame' && /^runner:(\d{4}-\d{2}-\d{2})$/.exec(entry.reason ?? '');
+  if (week) {
+    const day = formatDate(`${week[1]}T12:00:00Z`, { day: 'numeric', month: 'long' });
+    return <span className={styles.ledgerDetail}>{t('ledger.runner', { day })}</span>;
+  }
   return entry.reason ? <span className={styles.ledgerDetail}>« {entry.reason} »</span> : null;
 }
 
