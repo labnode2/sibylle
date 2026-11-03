@@ -26,7 +26,7 @@ Le contexte technique du plan ne contient aucun « NEEDS CLARIFICATION » : les 
 
 ### R4. Authentification et sessions
 
-- **Decision**: sessions côté serveur. Un jeton aléatoire de 256 bits dans un cookie `HttpOnly; Secure; SameSite=Lax`, stocké haché en base, valable 30 jours et prolongé à l'usage. Mots de passe hachés en Argon2id. Contre le CSRF : `SameSite=Lax`, contrôle de l'en-tête `Origin` et en-tête maison `X-Sibylle: 1` exigé sur toute requête qui modifie. Limitation de débit sur connexion, inscription et réinitialisation (par IP et par e-mail), dans le processus API.
+- **Decision**: sessions côté serveur. Un jeton aléatoire de 256 bits dans un cookie `HttpOnly; Secure; SameSite=Lax`, stocké haché en base, valable 30 jours et prolongé à l'usage. Mots de passe hachés en Argon2id. Contre le CSRF : `SameSite=Lax`, contrôle de l'en-tête `Origin` et en-tête maison `X-Sibylle: 1` exigé sur toute requête qui modifie. Limitation de débit sur connexion, inscription et réinitialisation, dans le processus API : stricte par e-mail (10 échecs de connexion en 15 min, 5 demandes de réinitialisation par heure), beaucoup plus lâche par IP (100 et 50), car tout un bureau se connecte derrière une seule adresse.
 - **Rationale**: la révocation est immédiate (déconnexion, suppression de compte), sans jeton lisible par le JavaScript ; la WebSocket s'authentifie avec le même cookie.
 - **Alternatives considered**: JWT (révocation compliquée, jeton exposé au JavaScript s'il n'est pas en cookie) ; connexion par lien magique (écartée : le cahier des charges veut e-mail et mot de passe uniquement).
 

@@ -89,12 +89,21 @@ async def close(session: AsyncSession, org_id: uuid.UUID, season_id: int) -> boo
     org = await session.get(Organisation, org_id)
     season = await session.get(Season, season_id)
     assert org is not None and season is not None
+    # Locked in id order, like a settlement does, so that a prono settled at the same moment
+    # cannot deadlock with the closure; then read in name order.
+    locked = (
+        await session.scalars(
+            select(Membership.id)
+            .where(Membership.org_id == org_id)
+            .order_by(Membership.id)
+            .with_for_update()
+        )
+    ).all()
     members = (
         await session.scalars(
             select(Membership)
-            .where(Membership.org_id == org_id)
+            .where(Membership.id.in_(locked))
             .order_by(func.lower(Membership.pseudo), Membership.id)
-            .with_for_update()
         )
     ).all()
 

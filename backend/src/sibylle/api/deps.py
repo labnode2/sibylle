@@ -143,8 +143,14 @@ def client_ip(request: Request) -> str:
 class Limits:
     """The rate limits of one API process."""
 
+    # Failed sign-ins and reset requests are limited tightly per address and loosely per IP: a
+    # whole office signs in from behind one IP, and one person's typos must not lock out the rest.
     login: RateLimiter = field(default_factory=lambda: RateLimiter(10, timedelta(minutes=15)))
+    login_ip: RateLimiter = field(default_factory=lambda: RateLimiter(100, timedelta(minutes=15)))
     password_reset: RateLimiter = field(default_factory=lambda: RateLimiter(5, timedelta(hours=1)))
+    password_reset_ip: RateLimiter = field(
+        default_factory=lambda: RateLimiter(50, timedelta(hours=1))
+    )
     resend_verification: RateLimiter = field(
         default_factory=lambda: RateLimiter(3, timedelta(hours=1))
     )

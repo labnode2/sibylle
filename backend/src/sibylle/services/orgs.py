@@ -243,8 +243,17 @@ async def _active_member(
     return member
 
 
+async def _lock_editors(session: AsyncSession, org_id: uuid.UUID) -> None:
+    """Locks the newsroom before a member's role or status changes, so that two editors
+    demoting each other at once cannot both pass `_keeps_an_editor`. `NO KEY UPDATE` leaves bets
+    and ledger entries, whose foreign keys point at the newsroom, free to go on meanwhile."""
+    await session.execute(
+        select(Organisation.id).where(Organisation.id == org_id).with_for_update(key_share=True)
+    )
+
+
 async def _keeps_an_editor(session: AsyncSession, member: Membership) -> None:
-    """Refuses to take away the newsroom's last active editor."""
+    """Refuses to take away the newsroom's last active editor. Call `_lock_editors` first."""
     if member.role != "editor":
         return
     editors = await session.scalar(
@@ -263,6 +272,7 @@ async def _keeps_an_editor(session: AsyncSession, member: Membership) -> None:
 async def change_role(
     session: AsyncSession, org_id: uuid.UUID, member_id: uuid.UUID, role: str
 ) -> Membership:
+    await _lock_editors(session, org_id)
     member = await _active_member(session, org_id, member_id, lock=True)
     if role != member.role:
         if role != "editor":
@@ -281,6 +291,7 @@ async def change_role(
 async def remove_member(session: AsyncSession, org_id: uuid.UUID, member_id: uuid.UUID) -> None:
     """The member leaves the newsroom: their bets and stakes stay, their screens stop at once.
     Coming back, they find their profile again, as a reader."""
+    await _lock_editors(session, org_id)
     member = await _active_member(session, org_id, member_id, lock=True)
     await _keeps_an_editor(session, member)
     member.status = "left"

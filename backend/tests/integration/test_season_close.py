@@ -5,7 +5,8 @@ from zoneinfo import ZoneInfo
 
 import pytest
 from sqlalchemy import func, select, update
-from tests.conftest import MakeOrg, MakePerson, Person
+from tests.conftest import MakeMember, MakeOrg, MakePerson, Person
+from tests.contract.helpers import waiting_on_a_lock
 from tests.contract.test_pronos import place, publish
 from tests.contract.test_results import option, url
 
@@ -218,3 +219,33 @@ async def test_scores_moved_after_midnight_stay_in_the_new_season(
     assert (await counters(org.id))["Cami"] == (100, 20)
     async with transaction() as session:
         assert await check_caches(session, org.id) == []
+
+
+async def test_a_settlement_at_the_moment_of_closing_does_not_deadlock(
+    make_org: MakeOrg, make_member: MakeMember, fake_clock: clock.FakeClock
+) -> None:
+    """A settlement locks its members in id order. The closure, which locks the whole newsroom,
+    takes the same order, so it waits for the settlement instead of deadlocking with it."""
+    org = await make_org()
+    first, second, third = sorted([(await make_member(org)).id for _ in range(3)])
+    # Names in the opposite order to the ids: the order the closure used to lock in.
+    async with transaction() as session:
+        for member_id, pseudo in ((first, "Zoé"), (second, "Manon"), (third, "Cami")):
+            await session.execute(
+                update(Membership).where(Membership.id == member_id).values(pseudo=pseudo)
+            )
+
+    fake_clock.set(WINTER_2026)
+    async with transaction() as settling:
+        await settling.execute(
+            select(Membership.id).where(Membership.id == first).with_for_update()
+        )
+        closing = asyncio.create_task(close_finished_seasons(org.id))
+        await waiting_on_a_lock(closing)
+        await settling.execute(
+            select(Membership.id)
+            .where(Membership.id.in_([second, third]))
+            .order_by(Membership.id)
+            .with_for_update()
+        )
+    assert await closing == 1

@@ -46,16 +46,19 @@ async def signup(body: SignupIn, request: Request, response: Response, session: 
 async def login(
     body: LoginIn, request: Request, response: Response, session: Db, rate: RateLimits
 ) -> Me:
-    keys = (f"ip:{client_ip(request)}", f"email:{accounts.normalize_email(body.email)}")
-    rate.login.check(*keys)
+    email_key = f"email:{accounts.normalize_email(body.email)}"
+    ip_key = f"ip:{client_ip(request)}"
+    rate.login.check(email_key)
+    rate.login_ip.check(ip_key)
     result = await accounts.login(
         session, body.email, body.password, request.headers.get("user-agent")
     )
     if result is None:
-        rate.login.add(*keys)
+        rate.login.add(email_key)
+        rate.login_ip.add(ip_key)
         raise AppError("invalid_credentials")
     account, token = result
-    rate.login.reset(keys[1])
+    rate.login.reset(email_key)
     set_session_cookie(response, token)
     return await me_of(session, account)
 
@@ -82,9 +85,12 @@ async def resend_verification(account: CurrentAccount, session: Db, rate: RateLi
 async def request_password_reset(
     body: ResetRequest, request: Request, session: Db, rate: RateLimits
 ) -> None:
-    rate.password_reset.hit(
-        f"ip:{client_ip(request)}", f"email:{accounts.normalize_email(body.email)}"
-    )
+    email_key = f"email:{accounts.normalize_email(body.email)}"
+    ip_key = f"ip:{client_ip(request)}"
+    rate.password_reset.check(email_key)
+    rate.password_reset_ip.check(ip_key)
+    rate.password_reset.add(email_key)
+    rate.password_reset_ip.add(ip_key)
     await accounts.request_password_reset(session, body.email)
 
 

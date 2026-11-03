@@ -1,11 +1,12 @@
 """Small helpers shared by the contract tests."""
 
+import asyncio
 import re
 from datetime import date
 from typing import Any
 
 import httpx
-from sqlalchemy import select, update
+from sqlalchemy import select, text, update
 
 from sibylle.db.models import CoinEntry, Membership, Notification
 from sibylle.db.session import transaction
@@ -26,6 +27,20 @@ async def notifications(type: str) -> list[Notification]:
                 )
             ).all()
         )
+
+
+async def waiting_on_a_lock(task: asyncio.Task[Any]) -> None:
+    """Returns once a transaction waits on a lock another one holds, or once `task` is over
+    because nothing made it wait; fails after 5 seconds of neither."""
+    async with asyncio.timeout(5):
+        while not task.done():
+            async with transaction() as session:
+                waiting = await session.scalar(
+                    text("SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock'")
+                )
+            if waiting:
+                return
+            await asyncio.sleep(0.02)
 
 
 async def give_coins(member: Membership, amount: int, week: date = date(2026, 10, 26)) -> None:

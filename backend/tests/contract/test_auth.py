@@ -7,6 +7,7 @@ from tests.conftest import ORIGIN, PASSWORD, ClientFor, MakeAccount
 from tests.contract.helpers import notifications, token_from
 
 from sibylle import clock
+from sibylle.api.deps import Limits, RateLimiter
 from sibylle.db.models import Account
 from sibylle.db.session import transaction
 
@@ -97,6 +98,49 @@ async def test_login_is_rate_limited(client: httpx.AsyncClient, make_account: Ma
     blocked = await client.post(
         "/api/auth/login", json={"email": "leo@exemple.fr", "password": PASSWORD}
     )
+    assert blocked.status_code == 429
+    assert blocked.json()["error"]["code"] == "rate_limited"
+
+
+async def test_one_persons_typos_do_not_lock_out_their_office(
+    client: httpx.AsyncClient, make_account: MakeAccount
+) -> None:
+    """All the test requests come from one IP, like a whole office behind its router."""
+    await make_account("leo@exemple.fr")
+    await make_account("cami@exemple.fr")
+    for _ in range(10):
+        await client.post(
+            "/api/auth/login", json={"email": "leo@exemple.fr", "password": "mauvais-mot"}
+        )
+    cami = await client.post(
+        "/api/auth/login", json={"email": "cami@exemple.fr", "password": PASSWORD}
+    )
+    assert cami.status_code == 200, cami.text
+
+    for name in ("cami", "leo", "manon", "paul", "zoe", "hugo"):
+        reset = await client.post("/api/auth/password-reset", json={"email": f"{name}@exemple.fr"})
+        assert reset.status_code == 202, reset.text
+
+
+async def test_failed_logins_are_also_limited_per_ip(make_account: MakeAccount) -> None:
+    from sibylle.main import create_app
+
+    app = create_app()
+    app.state.limits = Limits(login_ip=RateLimiter(3, timedelta(minutes=15)))
+    await make_account("cami@exemple.fr")
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app),
+        base_url="https://testserver",
+        headers={"X-Sibylle": "1", "Origin": ORIGIN},
+    ) as client:
+        for name in ("leo", "manon", "paul"):
+            wrong = await client.post(
+                "/api/auth/login", json={"email": f"{name}@exemple.fr", "password": "mauvais-mot"}
+            )
+            assert wrong.status_code == 401
+        blocked = await client.post(
+            "/api/auth/login", json={"email": "cami@exemple.fr", "password": PASSWORD}
+        )
     assert blocked.status_code == 429
     assert blocked.json()["error"]["code"] == "rate_limited"
 
