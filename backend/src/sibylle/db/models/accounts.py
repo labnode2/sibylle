@@ -23,7 +23,7 @@ class Account(Base):
     last_name: Mapped[str | None] = mapped_column(Text)
     email_verified_at: Mapped[datetime | None]
     locale: Mapped[str] = mapped_column(Text, default="fr", server_default="fr")
-    theme: Mapped[str] = mapped_column(Text, default="auto", server_default="auto")
+    theme: Mapped[str] = mapped_column(Text, default="light", server_default="light")
     reduce_motion: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
     created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
     deleted_at: Mapped[datetime | None]

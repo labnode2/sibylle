@@ -104,6 +104,7 @@ async def test_login_is_rate_limited(client: httpx.AsyncClient, make_account: Ma
 async def test_update_me(make_account: MakeAccount, client_for: ClientFor) -> None:
     account = await make_account()
     signed_in = await client_for(account)
+    assert (await signed_in.get("/api/me")).json()["theme"] == "light"
     response = await signed_in.patch(
         "/api/me", json={"theme": "dark", "reduce_motion": True, "first_name": "Cami"}
     )

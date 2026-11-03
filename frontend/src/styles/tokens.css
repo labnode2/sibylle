@@ -1,5 +1,5 @@
-/* Gazette design tokens (canvas G-Style). Dark mode follows the system unless the account picks
-   a theme, which sets data-theme on <html>. */
+/* Gazette design tokens (canvas G-Style). Light by default; dark when data-theme on <html> is
+   "dark", or "auto" on a system that prefers dark. */
 
 :root {
   color-scheme: light;
@@ -43,7 +43,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
+  :root[data-theme='auto'] {
     color-scheme: dark;
     --paper: #10111e;
     --surface: #1a1c30;

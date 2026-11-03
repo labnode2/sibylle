@@ -22,7 +22,7 @@ PostgreSQL 18. Identifiants `uuid` (v7, triables par date) sauf mention contrair
 | first_name, last_name | text | privés, jamais exposés à un autre compte |
 | email_verified_at | timestamptz | `NULL` tant que non vérifié |
 | locale | text | `fr` par défaut |
-| theme | text | `auto`, `light`, `dark` |
+| theme | text | `auto`, `light`, `dark` ; défaut `light` (`auto` suit le système) |
 | reduce_motion | boolean | `false` |
 | created_at, deleted_at | timestamptz | `deleted_at` posé à la suppression |
 
