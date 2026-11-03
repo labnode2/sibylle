@@ -98,7 +98,7 @@ Sur le domaine en HTTPS, avec l'appli installée sur Android, iOS 16.4+ et un or
 
 1. Jouer 5 parties de course ; la 6ᵉ est refusée. Avancer au lundi 00:30 (`sibylle clock advance 7d`, puis `sibylle games pay-runner`) : 10, 7, 5 lauriers aux trois premiers, 2 aux autres, au solde seulement.
 2. Hugo dépose un Pixel mystère ; un premier lot de pixels apparaît ; Cami trouve en premier (10), Léo ensuite (7) ; un essai sans accents ni majuscules est accepté ; un 4ᵉ essai dans la journée est refusé.
-3. Quand tous les membres sauf Hugo ont trouvé, le jeu se termine ; sur un autre dessin, avancer 7 jours : tous les pixels sont dévoilés et le jeu se termine.
+3. Quand tous les membres sauf Hugo ont trouvé, le jeu se termine ; un autre dessin attend le lendemain 08:00 ; avancer 7 jours (`sibylle clock advance 7d`, puis `sibylle games reveal-pixel`) : tous les pixels sont dévoilés et le jeu se termine.
 
 ### V10. Données et préférences (US11, SC-005, SC-007)
 

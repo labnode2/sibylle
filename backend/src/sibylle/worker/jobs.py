@@ -117,6 +117,17 @@ async def pay_runner_week(org_id: uuid.UUID | None = None) -> int:
         return await minigames.pay_runner_week(session, org_id=org_id)
 
 
+@job("reveal_pixel_puzzles", minute="*")
+async def reveal_pixel_puzzles(org_id: uuid.UUID | None = None) -> int:
+    """Shows each morning's Pixel mystère pixels at 08:00 (Paris), ends the drawings fully shown,
+    and starts the next ones. Checked every minute, so that a worker restarted later catches up.
+    `org_id` keeps one newsroom only (`sibylle games reveal-pixel --org`)."""
+    from sibylle.services import minigames
+
+    async with transaction() as session:
+        return await minigames.reveal_pixel_puzzles(session, org_id=org_id)
+
+
 @job("advance_pronos", minute="*")
 async def advance_pronos() -> int:
     """Opens the scheduled pronos and closes the open ones whose time has come."""

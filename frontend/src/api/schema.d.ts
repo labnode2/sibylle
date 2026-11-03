@@ -961,6 +961,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/orgs/{org_id}/games/pixel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Pixel */
+        get: operations["get_pixel_api_orgs__org_id__games_pixel_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/games/pixel/guesses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Guess */
+        post: operations["guess_api_orgs__org_id__games_pixel_guesses_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/games/pixel/puzzles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Queue */
+        get: operations["get_queue_api_orgs__org_id__games_pixel_puzzles_get"];
+        put?: never;
+        /** Post Puzzle */
+        post: operations["post_puzzle_api_orgs__org_id__games_pixel_puzzles_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/orgs/{org_id}/uploads": {
         parameters: {
             query?: never;
@@ -1160,8 +1212,7 @@ export interface components {
         /** Games */
         Games: {
             runner: components["schemas"]["RunnerStatus"];
-            /** Pixel */
-            pixel?: null;
+            pixel: components["schemas"]["PixelStatus"] | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1603,6 +1654,28 @@ export interface components {
          * @enum {string}
          */
         Period: "month" | "season" | "all_time";
+        /** PixelFindOut */
+        PixelFindOut: {
+            member: components["schemas"]["MemberPublic"];
+            /** Rank */
+            rank: number;
+        };
+        /** PixelGuessIn */
+        PixelGuessIn: {
+            /** Word */
+            word: string;
+        };
+        /** PixelGuessOut */
+        PixelGuessOut: {
+            /** Correct */
+            correct: boolean;
+            /** Rank */
+            rank: number | null;
+            /** Laurels */
+            laurels: number | null;
+            /** Guesses Left Today */
+            guesses_left_today: number;
+        };
         /** PixelImage */
         PixelImage: {
             /**
@@ -1617,6 +1690,83 @@ export interface components {
             palette: "base-v1";
             /** Pixels */
             pixels: string;
+        };
+        /** PixelPuzzleIn */
+        PixelPuzzleIn: {
+            drawing: components["schemas"]["PixelImage"];
+            /** Word */
+            word: string;
+        };
+        /**
+         * PixelQueueItem
+         * @description A drawing to come or in play; its word and drawing only for its author.
+         */
+        PixelQueueItem: {
+            /**
+             * Puzzle Id
+             * Format: uuid
+             */
+            puzzle_id: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "active" | "queued";
+            /**
+             * Size
+             * @enum {integer}
+             */
+            size: 16 | 32;
+            /** Letters */
+            letters: number;
+            /** Mine */
+            mine: boolean;
+            /** Word */
+            word: string | null;
+            drawing: components["schemas"]["PixelImage"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * PixelStatus
+         * @description `revealed`: the drawing in base64, one byte per pixel, 255 for a pixel not shown yet; the
+         *     whole drawing and `word` once the member found it, drew it, or the game ended.
+         */
+        PixelStatus: {
+            /**
+             * Puzzle Id
+             * Format: uuid
+             */
+            puzzle_id: string;
+            /**
+             * Size
+             * @enum {integer}
+             */
+            size: 16 | 32;
+            /** Revealed */
+            revealed: string;
+            /** Revealed Count */
+            revealed_count: number;
+            /** Letters */
+            letters: number;
+            /** Guesses Left Today */
+            guesses_left_today: number;
+            /** Finds */
+            finds: components["schemas"]["PixelFindOut"][];
+            /** Found By Me */
+            found_by_me: boolean;
+            /** Mine */
+            mine: boolean;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "active" | "finished";
+            /** Word */
+            word: string | null;
         };
         /**
          * PressCard
@@ -4419,6 +4569,138 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RunFinished"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_pixel_api_orgs__org_id__games_pixel_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PixelStatus"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    guess_api_orgs__org_id__games_pixel_guesses_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PixelGuessIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PixelGuessOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_queue_api_orgs__org_id__games_pixel_puzzles_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PixelQueueItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_puzzle_api_orgs__org_id__games_pixel_puzzles_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PixelPuzzleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PixelQueueItem"];
                 };
             };
             /** @description Validation Error */

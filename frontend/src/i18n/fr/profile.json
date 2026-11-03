@@ -78,7 +78,8 @@
       "adjustment": "AJUSTEMENT",
       "season_reset": "NOUVELLE SAISON"
     },
-    "runner": "Course de la boule, semaine du {{day}}"
+    "runner": "Course de la boule, semaine du {{day}}",
+    "pixel": "Pixel mystère, « {{word}} » trouvé"
   },
   "catalog": {
     "color-33": "Couleur Noir de jais",

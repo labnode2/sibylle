@@ -793,10 +793,62 @@ class RunnerStatus(BaseModel):
     top: list[RunnerTopRow]
 
 
+class PixelFindOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    member: MemberPublic
+    rank: int
+
+
+class PixelStatus(BaseModel):
+    """`revealed`: the drawing in base64, one byte per pixel, 255 for a pixel not shown yet; the
+    whole drawing and `word` once the member found it, drew it, or the game ended."""
+
+    puzzle_id: uuid.UUID
+    size: Literal[16, 32]
+    revealed: str
+    revealed_count: int
+    letters: int
+    guesses_left_today: int
+    finds: list[PixelFindOut]
+    found_by_me: bool
+    mine: bool
+    state: Literal["active", "finished"]
+    word: str | None
+
+
 class Games(BaseModel):
     runner: RunnerStatus
-    # Pixel mystère arrives with US10.
-    pixel: None = None
+    pixel: PixelStatus | None
+
+
+class PixelPuzzleIn(BaseModel):
+    drawing: PixelImage
+    word: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
+
+
+class PixelQueueItem(BaseModel):
+    """A drawing to come or in play; its word and drawing only for its author."""
+
+    puzzle_id: uuid.UUID
+    state: Literal["active", "queued"]
+    size: Literal[16, 32]
+    letters: int
+    mine: bool
+    word: str | None
+    drawing: PixelImage | None
+    created_at: datetime
+
+
+class PixelGuessIn(BaseModel):
+    word: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
+
+
+class PixelGuessOut(BaseModel):
+    correct: bool
+    rank: int | None
+    laurels: int | None
+    guesses_left_today: int
 
 
 class RunStarted(BaseModel):

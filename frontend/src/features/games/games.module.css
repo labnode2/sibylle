@@ -148,3 +148,90 @@
 .boxTitle {
   font: 800 17px/1.2 var(--font-text);
 }
+
+.boxes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.boxes > .box + .box {
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+}
+
+/* Pixel mystère: the drawing, then what to know and do; side by side on a computer. */
+.pixel {
+  display: grid;
+  gap: 18px;
+}
+
+@media (min-width: 720px) {
+  .pixel {
+    grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.mystery {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1;
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+  image-rendering: pixelated;
+}
+
+.pixelSide {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.word {
+  margin: 0;
+  font: 800 22px/1.2 var(--font-text);
+}
+
+.guess {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.guess > div {
+  align-self: stretch;
+}
+
+.queue {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.queue li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.queue li > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.secret {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--ink);
+  background: var(--grey);
+  font: 800 16px/1 var(--font-text);
+}

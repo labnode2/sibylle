@@ -4,7 +4,13 @@
     "runnerLine": "RECORD {{record}} · {{left}} ESSAIS SUR 5",
     "runnerLine_none": "PAS ENCORE DE RECORD · {{left}} ESSAIS SUR 5",
     "play": "Jouer",
-    "leader": "En tête : {{pseudo}} ({{score}})"
+    "leader": "En tête : {{pseudo}} ({{score}})",
+    "pixel": "Pixel mystère",
+    "pixelLine": "UN MOT DE {{count}} LETTRES · LANCÉ PAR LA RÉDACTION",
+    "pixelFound": "TROUVÉ · LE MOT : {{word}}",
+    "pixelFinished": "LE MOT ÉTAIT « {{word}} »",
+    "pixelNone": "PAS DE DESSIN EN COURS",
+    "see": "Voir"
   },
   "runner": {
     "back": "Retour à la une",
@@ -27,5 +33,47 @@
     "week": "CLASSEMENT DE LA SEMAINE",
     "nobody": "Personne n'a encore joué cette semaine.",
     "you": "toi"
+  },
+  "pixel": {
+    "back": "Retour à la une",
+    "title": "Pixel mystère",
+    "intro": "Un dessin se dévoile un peu plus chaque matin à 8 h. Trouve le mot avant les autres : 10, 7 et 5 lauriers aux trois premiers, puis 3 lauriers. 3 essais par jour.",
+    "none": "Pas de Pixel mystère en cours.",
+    "drawing": "Le dessin du Pixel mystère, {{shown}} pixels dévoilés sur {{total}}",
+    "letters": "UN MOT DE {{count}} LETTRES",
+    "shown": "{{shown}} PIXELS DÉVOILÉS SUR {{total}}",
+    "guess": "TA PROPOSITION",
+    "submit": "Proposer",
+    "left_one": "Il te reste {{count}} essai aujourd'hui.",
+    "left_other": "Il te reste {{count}} essais aujourd'hui.",
+    "noneLeft": "Plus d'essai aujourd'hui : reviens demain.",
+    "wrong": "« {{word}} » : ce n'est pas ça.",
+    "right": "Bravo ! Tu trouves en {{rank}}ᵉ et gagnes {{laurels}} lauriers.",
+    "rightFirst": "Bravo ! Tu trouves en premier et gagnes {{laurels}} lauriers.",
+    "word": "LE MOT : {{word}}",
+    "mine": "C'est ton dessin : tu regardes la rédaction chercher.",
+    "found": "Tu as trouvé !",
+    "finished": "Partie terminée : le prochain dessin démarre un matin à 8 h.",
+    "finds": "ONT TROUVÉ",
+    "nobody": "Personne n'a encore trouvé.",
+    "post": {
+      "title": "DÉPOSER UN DESSIN",
+      "text": "Dessine en 16 × 16 ou 32 × 32 et choisis le mot : un seul dessin se joue à la fois, les suivants attendent leur tour.",
+      "open": "Dessiner un Pixel mystère",
+      "editor": "Ton Pixel mystère",
+      "word": "LE MOT À DEVINER",
+      "wordHint": "Des lettres seulement, 24 caractères au plus ; majuscules et accents ne comptent pas.",
+      "save": "Déposer le dessin",
+      "started": "Ton dessin est lancé : la rédaction peut chercher.",
+      "queued": "Ton dessin attend son tour : il démarrera un matin à 8 h."
+    },
+    "queue": {
+      "title": "DESSINS DÉPOSÉS",
+      "active": "EN COURS",
+      "queued": "EN ATTENTE",
+      "item": "{{size}} × {{size}} · {{count}} LETTRES",
+      "mine": "« {{word}} », par toi",
+      "other": "Par un·e autre journaliste"
+    }
   }
 }

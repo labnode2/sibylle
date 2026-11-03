@@ -27,6 +27,10 @@ function Detail({ orgId, entry }: { orgId: string; entry: LedgerEntry }) {
     const day = formatDate(`${week[1]}T12:00:00Z`, { day: 'numeric', month: 'long' });
     return <span className={styles.ledgerDetail}>{t('ledger.runner', { day })}</span>;
   }
+  // « pixel:Café »: the word found at Pixel mystère.
+  const pixel = entry.kind === 'minigame' && /^pixel:(.+)$/.exec(entry.reason ?? '');
+  if (pixel)
+    return <span className={styles.ledgerDetail}>{t('ledger.pixel', { word: pixel[1] })}</span>;
   return entry.reason ? <span className={styles.ledgerDetail}>« {entry.reason} »</span> : null;
 }
 

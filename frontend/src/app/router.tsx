@@ -23,6 +23,7 @@ import { OrgSwitcherPage } from '../features/orgs/OrgSwitcher';
 import { CreatePronoPage } from '../features/pronos/CreatePronoPage';
 import { PronoListPage } from '../features/pronos/PronoListPage';
 import { PronoPage } from '../features/pronos/PronoPage';
+import { PixelMysterePage } from '../features/games/pixel-mystere/PixelMysterePage';
 import { RunnerPage } from '../features/games/runner/RunnerPage';
 import { PressCardPage } from '../features/profile/PressCardPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
@@ -111,6 +112,7 @@ export const router = createBrowserRouter([
           { path: 'membres/:memberId', element: <PressCardPage /> },
           { path: 'collection', element: <CollectionPage /> },
           { path: 'jeux/course', element: <RunnerPage /> },
+          { path: 'jeux/pixel', element: <PixelMysterePage /> },
           {
             path: 'reglages',
             element: <AdminLayout />,

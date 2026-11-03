@@ -129,10 +129,10 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | GET | `/orgs/{org}/games` | Membre | → `{runner: {week_start, attempts_left, my_best, top: [{member, score, rank}] (10 premiers)}, pixel: PixelStatus \| null}` |
 | POST | `/orgs/{org}/games/runner/runs` | Membre | → `201 {run_id, seed}` (une partie ouverte compte comme un essai, même jamais finie) ; `409 attempts_exhausted` |
 | POST | `/orgs/{org}/games/runner/runs/{run}/finish` | Membre | `{score, duration_ms}` → `{score, my_best, rank}` ; `409 run_finished` ; `422` si invraisemblable (`score` au-delà de 90 points par seconde, `duration_ms` plus longue que la partie ou au-delà de 30 min) |
-| GET | `/orgs/{org}/games/pixel` | Membre | → `PixelStatus` : `{puzzle_id, size, revealed: "<base64 masqué>", letters, guesses_left_today, finds: [{member, rank}], found_by_me, state, word?}` (`word` seulement si trouvé ou terminé) |
-| POST | `/orgs/{org}/games/pixel/guesses` | Membre | `{word}` → `{correct, rank?, laurels?, guesses_left_today}` |
-| GET | `/orgs/{org}/games/pixel/puzzles` | Journaliste | → file des dessins à venir |
-| POST | `/orgs/{org}/games/pixel/puzzles` | Journaliste | `{drawing: PixelImage, word}` → `201` |
+| GET | `/orgs/{org}/games/pixel` | Membre | → `PixelStatus \| null` : `{puzzle_id, size, revealed, revealed_count, letters, guesses_left_today, finds: [{member, rank}], found_by_me, mine, state, word}`. `revealed` : le dessin en base64, un octet par pixel, 255 pour un pixel encore caché ; dessin entier et `word` seulement pour qui a trouvé, pour l'auteur·rice ou à la fin (sinon `word` vaut `null`). Le dessin actif, ou le dernier terminé tant que le suivant n'a pas démarré |
+| POST | `/orgs/{org}/games/pixel/guesses` | Membre | `{word}` → `{correct, rank, laurels, guesses_left_today}` ; `403` pour l'auteur·rice ; `409 attempts_exhausted` au 4ᵉ essai du jour ; `409 invalid_state` sans dessin actif ou après avoir trouvé |
+| GET | `/orgs/{org}/games/pixel/puzzles` | Journaliste | → `[{puzzle_id, state, size, letters, mine, word, drawing, created_at}]` : le dessin en cours puis ceux qui attendent ; `word` et `drawing` seulement pour ses propres dessins |
+| POST | `/orgs/{org}/games/pixel/puzzles` | Journaliste | `{drawing: PixelImage, word}` → `201` (même forme qu'un élément de la file : `state` dit s'il démarre tout de suite ou attend) ; `422` si le mot n'est pas fait de lettres (2 au moins, 24 caractères au plus) |
 
 ## Divers
 

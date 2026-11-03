@@ -114,6 +114,19 @@ def _games_pay_runner(args: argparse.Namespace) -> None:
     asyncio.run(run())
 
 
+def _games_reveal_pixel(args: argparse.Namespace) -> None:
+    from sibylle.db.session import dispose_engine
+    from sibylle.worker.jobs import reveal_pixel_puzzles
+
+    async def run() -> None:
+        try:
+            print(f"reveal_pixel_puzzles: {await reveal_pixel_puzzles(args.org)}")
+        finally:
+            await dispose_engine()
+
+    asyncio.run(run())
+
+
 def _seasons_close(args: argparse.Namespace) -> None:
     from sibylle.db.session import dispose_engine
     from sibylle.worker.jobs import close_finished_seasons
@@ -213,6 +226,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="verse les gains de la course de la semaine écoulée (toutes les rédactions, ou une)",
     )
     pay_parser.add_argument("--org", type=uuid.UUID, help="identifiant d'une rédaction")
+    reveal_parser = games_commands.add_parser(
+        "reveal-pixel",
+        help="dévoile les pixels du matin et lance les dessins suivants (toutes, ou une rédaction)",
+    )
+    reveal_parser.add_argument("--org", type=uuid.UUID, help="identifiant d'une rédaction")
 
     seasons_parser = commands.add_parser("seasons", help="saisons")
     seasons_commands = seasons_parser.add_subparsers(dest="seasons_command", required=True)
@@ -249,6 +267,7 @@ _HANDLERS: dict[tuple[str, str | None], Callable[[argparse.Namespace], None]] = 
     ("jobs", "list"): _jobs_list,
     ("coins", "grant"): _coins_grant,
     ("games", "pay-runner"): _games_pay_runner,
+    ("games", "reveal-pixel"): _games_reveal_pixel,
     ("seasons", "close"): _seasons_close,
     ("secret-code", "add"): _secret_code_add,
     ("seed-demo", None): _seed_demo,
