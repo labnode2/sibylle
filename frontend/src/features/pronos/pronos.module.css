@@ -29,8 +29,16 @@
 }
 
 .question {
-  font: 800 30px/1.05 var(--font-text);
+  font: 800 34px/1.02 var(--font-text);
   letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.deck {
+  max-width: 36em;
+  font: 400 21px/1.45 var(--font-text);
+  color: var(--ink-2);
+  text-wrap: pretty;
 }
 
 .meta {
@@ -57,7 +65,8 @@
 }
 
 .countdownValue {
-  font: 800 32px/1 var(--font-text);
+  font: 800 34px/1 var(--font-text);
+  font-variant-numeric: tabular-nums;
 }
 
 .countdownUnit {
@@ -81,9 +90,9 @@
 .choice {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
-  min-height: 52px;
+  min-height: 56px;
   padding: 0 10px;
   border: 0;
   border-bottom: 1px solid var(--ink);
@@ -119,7 +128,9 @@
 
 .choiceLabel {
   flex: 1;
-  font: 700 20px/1.1 var(--font-text);
+  min-width: 0;
+  font: 700 21px/1.1 var(--font-text);
+  letter-spacing: -0.01em;
 }
 
 .pct {
@@ -153,7 +164,21 @@
 }
 
 .pot {
-  font-size: 15px;
+  font: 500 13px/1.3 var(--font-text);
+  color: var(--ink-2);
+}
+
+/* On a computer, the pot in large beside the stake. */
+.potLarge {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.potValue {
+  font: 800 28px/1 var(--font-text);
+  letter-spacing: -0.02em;
 }
 
 .note {
@@ -163,7 +188,15 @@
   text-align: center;
 }
 
+.submitRow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .submit {
+  width: 100%;
+  min-height: 52px;
   justify-content: space-between;
 }
 
@@ -205,12 +238,25 @@
 
 .person {
   display: grid;
-  grid-template-columns: 28px 1fr auto;
+  grid-template-columns: 28px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
   min-height: 44px;
-  padding: 0 8px;
   border-top: 1px solid var(--rule);
+}
+
+.personStake {
+  min-width: 72px;
+  font: 500 11px/1 var(--font-mono);
+  color: var(--ink-2);
+  text-align: right;
+}
+
+.peopleNote {
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+  font: 400 14px/1.45 var(--font-text);
+  color: var(--ink-2);
 }
 
 .personName {
@@ -218,7 +264,7 @@
 }
 
 .personAnswer {
-  font: 600 12px/1 var(--font-mono);
+  font: 700 11px/1.2 var(--font-mono);
   text-align: right;
 }
 
@@ -230,20 +276,29 @@
 .rules {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px;
+  gap: 10px;
+  padding: 16px;
+}
+
+.rulesTitle {
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.08em;
 }
 
 .rules dl {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 6px 12px;
+  gap: 10px 14px;
   margin: 0;
   font: 500 12px/1.4 var(--font-mono);
 }
 
 .rules dt {
-  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.rules dd {
+  text-transform: uppercase;
 }
 
 .rules dd {
@@ -259,8 +314,90 @@
 @media (min-width: 1024px) {
   .columns {
     display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
     align-items: start;
+  }
+
+  .columns > :first-child {
+    padding-right: 40px;
+    border-right: 1px solid var(--ink);
+  }
+
+  .columns > :last-child {
+    padding: 12px 0 0 32px;
+  }
+
+  .question {
+    font-size: 64px;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+  }
+
+  .question :global(.key-phrase) {
+    text-decoration-thickness: 4px;
+    text-underline-offset: 9px;
+  }
+
+  .countdown {
+    max-width: 560px;
+  }
+
+  .countdown > div {
+    gap: 6px;
+    padding: 14px 18px;
+  }
+
+  .countdownValue {
+    font-size: 44px;
+  }
+
+  .countdownUnit {
+    font-size: 12px;
+  }
+
+  .ballot {
+    max-width: 640px;
+  }
+
+  .choice {
+    min-height: 64px;
+    gap: 16px;
+    padding: 0 14px;
+  }
+
+  .choiceLabel {
+    font-size: 26px;
+    letter-spacing: -0.015em;
+  }
+
+  .pct {
+    font-size: 14px;
+  }
+
+  .stake {
+    max-width: 640px;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 14px 28px;
+  }
+
+  .submitRow {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+  }
+
+  .submit {
+    width: auto;
+    gap: 10px;
+    padding: 0 22px;
+    font-size: 17px;
+  }
+
+  .note {
+    text-align: left;
+    font-size: 12px;
   }
 }
 
@@ -273,7 +410,7 @@
 }
 
 .filter {
-  min-height: 36px;
+  min-height: var(--tap);
   padding: 0 12px;
   border: 1px solid var(--ink);
   background: transparent;
@@ -289,7 +426,7 @@
 }
 
 .select {
-  min-height: 36px;
+  min-height: var(--tap);
   padding: 0 8px;
   border: 1px solid var(--ink);
   border-radius: 0;
@@ -324,12 +461,113 @@
   color: var(--ink-2);
 }
 
-/* Create form */
+/* Create form (canvas G-Créer) */
 .form {
   display: flex;
   flex-direction: column;
   gap: 16px;
   max-width: 560px;
+}
+
+/* Its own header: close, « PROPOSER UN PRONO », the role. */
+.formHead {
+  display: grid;
+  grid-template-columns: var(--tap) 1fr auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
+  margin-top: -16px;
+  border-bottom: 1px solid var(--ink);
+}
+
+.close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  margin-left: -10px;
+  color: var(--ink);
+}
+
+.formTitle {
+  font: 700 12px/1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.sectionChip {
+  border-width: 2px;
+  padding: 0 14px;
+}
+
+.questionInput {
+  border-width: 2px;
+  font: 800 22px/1.15 var(--font-text);
+  letter-spacing: -0.015em;
+  resize: none;
+}
+
+.addOption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap);
+  margin-right: 50px;
+  border: 1px dashed var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font: 600 15px/1 var(--font-text);
+  cursor: pointer;
+}
+
+/* The closing and the fixed gain side by side. */
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  align-items: end;
+  gap: 12px;
+}
+
+.pair input {
+  padding: 0 8px;
+  font: 600 13px/1 var(--font-mono);
+}
+
+.switches {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--rule);
+}
+
+/* The button stays at the bottom of a phone's screen. */
+.formFoot {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 calc(-1 * var(--gutter));
+  padding: 12px var(--gutter) calc(16px + env(safe-area-inset-bottom));
+  border-top: 2px solid var(--ink);
+  background: var(--surface);
+}
+
+@media (min-width: 1024px) {
+  .formHead {
+    margin-top: 0;
+  }
+
+  .formFoot {
+    position: static;
+    margin: 0;
+    padding: 12px 0 0;
+    border-top: 0;
+    background: transparent;
+  }
 }
 
 .fieldset {
@@ -367,7 +605,8 @@
 
 .optionRow {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
 }
 
 .optionRow input {
@@ -382,14 +621,20 @@
 
 .iconButton {
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: center;
   width: var(--tap);
   min-height: var(--tap);
-  border: 1px solid var(--ink);
+  border: 0;
   background: transparent;
-  color: var(--ink);
+  color: var(--ink-2);
   cursor: pointer;
+}
+
+.iconButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .row {
@@ -436,7 +681,7 @@
   align-items: center;
   gap: 6px;
   min-width: var(--tap);
-  min-height: 36px;
+  min-height: var(--tap);
   padding: 0 10px;
   border: 1px solid var(--ink);
   background: var(--surface);

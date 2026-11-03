@@ -1,7 +1,14 @@
 COMPOSE = docker compose -f deploy/docker-compose.yml --env-file deploy/.env
 
-# Port de l'interface ; `make dev WEB_PORT=5199` quand 5173 est déjà pris.
+# Ports de l'interface et du serveur ; `make dev WEB_PORT=5199 API_PORT=8010` quand 5173 ou
+# 8000 sont déjà pris.
 WEB_PORT ?= 5173
+API_PORT ?= 8000
+# Adresse où l'interface est servie : localhost, ou l'IP du PC sur le réseau local pour ouvrir
+# l'appli depuis un téléphone (`make dev UI_HOST=192.168.71.12`, ou UI_HOST=… dans deploy/.env).
+# L'origine attendue par le serveur la suit.
+UI_HOST ?= $(or $(shell sed -n 's/^UI_HOST=//p' deploy/.env 2>/dev/null),localhost)
+ORIGIN = http://$(UI_HOST):$(WEB_PORT)
 # Les tests de bout en bout ont leurs propres ports (API 8001, interface 5180) : ils ne
 # croisent jamais un `make dev` ouvert à côté.
 E2E_WEB_PORT ?= 5180
@@ -49,18 +56,19 @@ seed: ## Crée la rédaction de démonstration (relançable sans doublon)
 # Lancement
 
 dev: db ## Lance serveur, worker et interface ensemble (Ctrl+C pour tout arrêter)
-	@echo "Interface : http://localhost:$(WEB_PORT)   E-mails : http://localhost:8025"
+	@echo "Interface : $(ORIGIN)   E-mails : http://localhost:8025"
 	$(MAKE) -j3 api worker web
 
-api: ## Lance seulement le serveur (port 8000)
-	cd backend && PUBLIC_ORIGIN=http://localhost:$(WEB_PORT) \
-		uv run uvicorn sibylle.main:create_app --factory --reload --port 8000
+api: ## Lance seulement le serveur (port API_PORT, 8000 par défaut)
+	cd backend && PUBLIC_ORIGIN=$(ORIGIN) \
+		uv run uvicorn sibylle.main:create_app --factory --reload --port $(API_PORT)
 
 worker: ## Lance seulement le worker (tâches planifiées)
-	cd backend && uv run sibylle worker
+	cd backend && PUBLIC_ORIGIN=$(ORIGIN) uv run sibylle worker
 
-web: ## Lance seulement l'interface
-	cd frontend && npm run dev -- --port $(WEB_PORT) --strictPort
+web: ## Lance seulement l'interface (sur UI_HOST)
+	cd frontend && SIBYLLE_API_PORT=$(API_PORT) \
+		npm run dev -- --host $(UI_HOST) --port $(WEB_PORT) --strictPort
 
 # Vérifications
 

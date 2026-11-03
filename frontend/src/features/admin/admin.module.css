@@ -1,13 +1,64 @@
+/* Sections under a 2 px rule, their title in mono capitals (canvas G-Orga). */
 .panel {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 16px;
+  gap: 14px;
+  padding-top: 8px;
+  border-top: 2px solid var(--ink);
 }
 
 .heading {
-  font: 800 22px/1.2 var(--font-text);
-  letter-spacing: -0.01em;
+  font: 700 11px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* What the card will look like: its background, its logo and its name. */
+.preview {
+  background: var(--surface);
+  border: 2px solid var(--ink);
+}
+
+.previewBand {
+  position: relative;
+  height: 88px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.previewLogo {
+  position: absolute;
+  left: 16px;
+  bottom: -30px;
+  line-height: 0;
+  outline: 2px solid var(--ink);
+}
+
+.previewBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 40px 16px 12px;
+}
+
+.previewName {
+  font: 800 24px/1 var(--font-text);
+  letter-spacing: -0.02em;
+}
+
+/* The role, shown as the canvas's label: white, grey or ink. */
+.select.role_reader select {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.select.role_journalist select {
+  background: var(--grey);
+  color: var(--ink);
+}
+
+.select.role_editor select {
+  background: var(--ink);
+  color: var(--on-ink);
 }
 
 .block {
@@ -52,9 +103,22 @@
   max-width: 760px;
 }
 
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .title {
-  font: 800 30px/1.05 var(--font-text);
+  font: 800 32px/1 var(--font-text);
   letter-spacing: -0.03em;
+}
+
+.subtitle {
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-2);
 }
 
 /* Sub-navigation of the settings: the chosen tab underlined in ink. */

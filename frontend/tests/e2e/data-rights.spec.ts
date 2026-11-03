@@ -12,6 +12,7 @@ import {
   newPerson,
   orgIdOf,
   PASSWORD,
+  pot,
   publishProno,
   resetClock,
 } from './helpers';
@@ -27,7 +28,7 @@ test('export, the last editor, then deleting an account', async ({ browser }, te
   const prono = await publishProno(ines, orgId, { question: 'Nice ou Monaco samedi ?' });
   const cami = await newPerson(browser, testInfo, 'Camille', await invitationPath(ines));
   await joinWith(cami, 'Cami');
-  await expect(cami.getByRole('heading', { name: 'Bonjour Cami' })).toBeVisible();
+  await expect(cami.getByRole('heading', { name: /^La une de / })).toBeVisible();
   const nice = prono.options.find((o: { label: string }) => o.label === 'Nice').id;
   const bet = await call(cami, 'POST', `/orgs/${orgId}/pronos/${prono.id}/bets`, {
     option_id: nice,
@@ -37,7 +38,7 @@ test('export, the last editor, then deleting an account', async ({ browser }, te
 
   // 1. Her data, as a file: account, newsroom, bet.
   await cami.getByRole('link', { name: 'PROFIL' }).first().click();
-  await cami.getByRole('link', { name: 'Mes réglages' }).click();
+  await cami.getByRole('link', { name: 'Préférences' }).click();
   await expect(cami.getByRole('heading', { name: 'Mes réglages' })).toBeVisible();
   const download = cami.waitForEvent('download');
   await cami.getByRole('button', { name: 'Télécharger mes données' }).click();
@@ -80,8 +81,8 @@ test('export, the last editor, then deleting an account', async ({ browser }, te
 
   // Her bet still counts, under « Ancien membre ».
   await ines.goto(`/o/${orgId}/pronos/${prono.id}`);
-  const people = ines.getByRole('region', { name: 'QUI A JOUÉ QUOI' });
+  const people = ines.getByRole('region', { name: 'Les pronostiqueurs' });
   await expect(people).toContainText('Ancien membre');
   await expect(people).not.toContainText('Cami');
-  await expect(ines.getByText('Cagnotte : 10 lauriers')).toBeVisible();
+  await expect(pot(ines, 10)).toBeVisible();
 });

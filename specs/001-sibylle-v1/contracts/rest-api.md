@@ -54,7 +54,7 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | Méthode | Route | Qui | Corps → Réponse |
 |---|---|---|---|
 | POST | `/orgs` | Compte | `{title, background_key, logo?, pseudo, avatar}` → `201 {org: Org, membership: MemberSelf}` ; le créateur est `editor` |
-| GET | `/orgs/{org}` | Membre | → `Org` (carte, réglages de lauriers, charte, mot de la rédaction en chef, `my_membership`) |
+| GET | `/orgs/{org}` | Membre | → `Org` (carte, réglages de lauriers, charte, mot de la rédaction en chef, `member_count`, `edition_number` : le jour de la rédaction, « N° 305 », `my_membership`) |
 | PATCH | `/orgs/{org}` | Réd. chef | `{title?, logo?, background_key?, starting_balance?, max_base_gain?, early_bird_pct?, early_bird_count?, editor_note?, charter?}` → `Org` |
 | POST | `/orgs/{org}/access-code` | Réd. chef | → `{access_code}` (nouveau code ; l'ancien ne marche plus) |
 | DELETE | `/orgs/{org}/access-code` | Réd. chef | → `204` (désactive) |
@@ -82,7 +82,7 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 
 | Méthode | Route | Qui | Corps → Réponse |
 |---|---|---|---|
-| GET | `/orgs/{org}/front-page` | Membre | → `FrontPage` : `{headline, open, to_designate (journalistes seulement), latest_results, leaderboard_top, editor_note}` ; l'encadré des jeux lit `GET /orgs/{org}/games` |
+| GET | `/orgs/{org}/front-page` | Membre | → `FrontPage` : `{headline, open, open_count, to_designate (journalistes seulement), latest_results, leaderboard_top (les cinq premiers du mois, puis la ligne du membre s'il n'en est pas), leaderboard_period ("2026-11"), editor_note}` ; `headline` et `open` sont des `FrontProno` = `PronoSummary` + `{options, distribution}` (la jauge de la une) ; l'encadré des jeux lit `GET /orgs/{org}/games` |
 | GET | `/orgs/{org}/pronos` | Membre | `?state=&section=&cursor=` → `[PronoSummary]` |
 | POST | `/orgs/{org}/pronos` | Membre | `PronoInput` → `201 PronoDetail` ; état `open`/`scheduled` pour un·e journaliste, `proposed` pour un·e lecteur·rice |
 | GET | `/orgs/{org}/pronos/{id}` | Membre | → `PronoDetail` |
@@ -102,9 +102,9 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 
 `PronoInput` = `{kind, question, section_id, options?: [label], base_gain, link_url?, image_id?, opens_at?, closes_at?, open_ended?, result_expected_at?, number_unit?}`.
 
-`PronoDetail` = `PronoSummary` + `{options: [{id, label, is_correct, count, stake_total, share_pct}], bets: [{member: MemberPublic, answer, stake, rank, placed_at, outcome, payout}], my_bet, can_rebet, pot, reactions: {kind: count}, my_reactions, events: [PronoEvent], special_edition?: {winners: [{member, payout}], pot_lost: bool, settlement_seq}, rejected_reason?, my_reports: [Report]}` (`my_reports` : les signalements du membre sur ce prono, avec la note de traitement). Pour un prono de nombre ou de date, `options` est remplacé par `distribution` (valeurs regroupées en tranches pour l'affichage).
+`PronoDetail` = `PronoSummary` + `{options: [{id, label, is_correct, count, stake_total, share_pct}], bets: [{member: MemberPublic, answer, stake, rank, placed_at, outcome, payout}], my_bet, can_rebet, pot, reactions: {kind: count}, my_reactions, events: [PronoEvent], special_edition?: {winners: [{member, payout}], pot_lost: bool, settlement_seq, settled_by: MemberPublic}, rejected_reason?, my_reports: [Report]}` (`my_reports` : les signalements du membre sur ce prono, avec la note de traitement). Pour un prono de nombre ou de date, `options` est remplacé par `distribution` (valeurs regroupées en tranches pour l'affichage).
 
-`PronoSummary` = `{id, kind, question, section, state, base_gain, opens_at, closes_at, open_ended, result_expected_at, bet_count, pot, relaunch_count, created_by: MemberPublic, image_url?}`.
+`PronoSummary` = `{id, number, kind, question, section, state, base_gain, opens_at, closes_at, open_ended, result_expected_at, bet_count, pot, relaunch_count, created_by: MemberPublic, image_url?}`.
 
 ## Classements, signalements, collection
 

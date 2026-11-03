@@ -53,10 +53,13 @@ class Prono(Base):
         CheckConstraint("bet_count >= 0 AND pot >= 0", name="counters"),
         Index("ix_pronos_org_id_state_closes_at", "org_id", "state", "closes_at"),
         Index("ix_pronos_org_id_section_id", "org_id", "section_id"),
+        UniqueConstraint("org_id", "number"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
     org_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organisations.id"))
+    # « PRONO N° 128 »: the newsroom's pronos in the order they were written, from 1.
+    number: Mapped[int]
     section_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("sections.id"))
     kind: Mapped[str] = mapped_column(Text)
     question: Mapped[str] = mapped_column(Text)

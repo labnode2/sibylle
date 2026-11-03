@@ -5,6 +5,7 @@ import pytest
 
 from sibylle.domain.seasons import (
     SeasonKey,
+    edition_number,
     month_bounds,
     next_season,
     season_bounds,
@@ -105,3 +106,12 @@ def test_next_season_and_ranges() -> None:
         SeasonKey(2027, "spring"),
         SeasonKey(2027, "summer"),
     ]
+
+
+def test_the_edition_number_counts_the_days_in_paris() -> None:
+    created = datetime(2026, 1, 1, 9, 0, tzinfo=PARIS)
+    assert edition_number(created, created) == 1
+    # The first of November is day 305 of 2026: « N° 305 · DIM. 1 NOV. 2026 ».
+    assert edition_number(created, datetime(2026, 11, 1, 23, 59, tzinfo=PARIS)) == 305
+    # Midnight in Paris turns the page, whatever the time in UTC.
+    assert edition_number(created, datetime(2026, 1, 1, 23, 30, tzinfo=UTC)) == 2

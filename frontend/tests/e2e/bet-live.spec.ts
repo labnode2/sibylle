@@ -11,6 +11,7 @@ import {
   invitationPath,
   joinWith,
   newPerson,
+  pot,
   resetClock,
 } from './helpers';
 
@@ -38,8 +39,8 @@ test('a bet shows up live, then the prono closes', async ({ browser }, testInfo)
 
   await ines.goto(`/o/${orgId}/pronos/nouveau`);
   await ines.getByLabel('LA QUESTION').fill('Qui gagnera le derby de dimanche ?');
-  await ines.getByLabel('Réponse 1').fill('OM');
-  await ines.getByLabel('Réponse 2').fill('OGC Nice');
+  await ines.getByRole('textbox', { name: 'Choix 1' }).fill('OM');
+  await ines.getByRole('textbox', { name: 'Choix 2' }).fill('OGC Nice');
   await ines.getByRole('button', { name: 'Publier le prono' }).click();
   await expect(ines.getByRole('heading', { name: 'Qui gagnera le derby' })).toBeVisible();
   const pronoPath = new URL(ines.url()).pathname;
@@ -61,13 +62,13 @@ test('a bet shows up live, then the prono closes', async ({ browser }, testInfo)
   const started = Date.now();
   const cami = await newPerson(browser, testInfo, 'Camille', invitation);
   await joinWith(cami, 'Cami');
-  await expect(cami.getByRole('heading', { name: 'Bonjour Cami' })).toBeVisible();
-  await cami.getByRole('link', { name: 'PRONOS' }).first().click();
+  await expect(cami.getByRole('heading', { name: /^La une de / })).toBeVisible();
+  await cami.getByRole('link', { name: /^(LES )?PRONOS$/ }).click();
   await cami.getByRole('link', { name: /Qui gagnera le derby/ }).click();
   await cami.getByRole('button', { name: /OGC Nice/ }).click();
   await cami.getByRole('button', { name: 'Plus' }).click();
   await cami.getByRole('button', { name: 'Plus' }).click();
-  await expect(cami.getByText('Cagnotte : 20 lauriers')).toBeVisible();
+  await expect(pot(cami, 20)).toBeVisible();
   await cami.getByRole('button', { name: /Valider mon prono/ }).click();
   await expect(cami.getByText('TON PRONO', { exact: true })).toBeVisible();
   const betAt = Date.now();
@@ -75,10 +76,11 @@ test('a bet shows up live, then the prono closes', async ({ browser }, testInfo)
   testInfo.annotations.push({ type: 'SC-001', description: `${betAt - started} ms` });
 
   // Inès sees it without reloading, in less than 2 s.
-  const people = ines.getByRole('region', { name: 'QUI A JOUÉ QUOI' });
+  const people = ines.getByRole('region', { name: 'Les pronostiqueurs' });
   await expect(people.getByText('Cami')).toBeVisible({ timeout: 2_000 });
-  await expect(people).toContainText('OGC Nice');
-  await expect(ines.getByText('Cagnotte : 20 lauriers')).toBeVisible();
+  // Answers in mono capitals, as on the canvas.
+  await expect(people).toContainText('OGC NICE');
+  await expect(pot(ines, 20)).toBeVisible();
 
   // Cami's choice is final, and her balance went down.
   await expect(cami.getByRole('button', { name: /Valider mon prono/ })).toHaveCount(0);
@@ -92,5 +94,5 @@ test('a bet shows up live, then the prono closes', async ({ browser }, testInfo)
     timeout: 5_000,
   });
   await expect(ines.getByRole('button', { name: /Valider mon prono/ })).toHaveCount(0);
-  await expect(cami.getByText('CLOS', { exact: true }).first()).toBeVisible();
+  await expect(cami.getByText('Les pronos sont clos', { exact: false })).toBeVisible();
 });

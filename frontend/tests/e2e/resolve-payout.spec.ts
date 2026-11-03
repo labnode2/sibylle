@@ -55,7 +55,7 @@ test('the spec example, then a correction and a cancellation', async ({ browser 
   ] as const) {
     const page = await newPerson(browser, testInfo, name, invitation);
     await joinWith(page, pseudo);
-    await expect(page.getByRole('heading', { name: `Bonjour ${pseudo}` })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^La une de / })).toBeVisible();
     players[pseudo] = page;
   }
   await bet(players.Cami!, orgId, prono.id, { option_id: option(prono, 'Nice'), stake: 10 });
@@ -90,7 +90,7 @@ test('the spec example, then a correction and a cancellation', async ({ browser 
   await expect(ines.getByText('3 personnes avaient vu juste')).toBeVisible();
   await ines.getByRole('button', { name: 'Corriger le résultat' }).click();
   await ines.getByRole('button', { name: 'Confirmer' }).click();
-  await expect(ines.getByText('CORRIGÉE', { exact: false })).toBeVisible();
+  await expect(ines.getByText('CORRIGÉ PAR INÈS', { exact: false })).toBeVisible();
   await expect(mine).toContainText('PERDU', { timeout: 5_000 });
 
   const detail = await call(ines, 'GET', `/orgs/${orgId}/pronos/${prono.id}`);
@@ -128,7 +128,7 @@ test('relaunch a prono nobody bet on, and bet again on an open-ended date', asyn
   });
   const cami = await newPerson(browser, testInfo, 'Camille', invitation);
   await joinWith(cami, 'Cami');
-  await expect(cami.getByRole('heading', { name: 'Bonjour Cami' })).toBeVisible();
+  await expect(cami.getByRole('heading', { name: /^La une de / })).toBeVisible();
   await bet(cami, orgId, someday.id, { date_value: dayFromNow(1), stake: 10 });
 
   advanceClock('4d');

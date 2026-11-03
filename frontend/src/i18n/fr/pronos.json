@@ -16,7 +16,8 @@
     "closesAt": "CLÔTURE LE {{date}}",
     "closedAt": "CLOS LE {{date}}",
     "opensAt": "OUVRE LE {{date}}",
-    "propose": "Proposer"
+    "propose": "Proposer",
+    "proposeLong": "Proposer un prono"
   },
   "state": {
     "proposed": "PROPOSÉ",
@@ -66,7 +67,7 @@
     "mineStake": "mise {{stake}}",
     "mineFree": "sans mise",
     "chooseFirst": "Choisis d'abord une réponse.",
-    "people": "QUI A JOUÉ QUOI",
+    "people": "Les pronostiqueurs",
     "nobody": "Personne n'a encore joué. Sois le ou la première !",
     "replaced": "remplacé",
     "distribution": "RÉPARTITION DES PRONOS",
@@ -91,7 +92,18 @@
     "proposed": "En attente : un·e journaliste doit valider cette proposition avant sa publication.",
     "proposedNewsroom": "Proposition de {{author}} : à toi de la publier ou de la refuser.",
     "rejected": "Proposition refusée : {{reason}}",
-    "rejectedNoReason": "Proposition refusée."
+    "rejectedNoReason": "Proposition refusée.",
+    "others_one": "Et {{count}} autre.",
+    "others_other": "Et {{count}} autres.",
+    "visible": "Les choix et les mises de chacun sont visibles par toute la rédaction.",
+    "showAll": "Voir tout le monde",
+    "number": "PRONO N° {{number}}",
+    "resultNumber": "RÉSULTAT · N° {{number}}",
+    "deck": "Les pronos ferment {{date}}. Un·e journaliste désigne le résultat ensuite.",
+    "deckOpenEnded": "Pas de date de clôture : on joue une date, et on peut rejouer si elle passe. Un·e journaliste désigne le résultat.",
+    "potValue_one": "{{pot}} laurier",
+    "potValue_other": "{{pot}} lauriers",
+    "potShared": "DANS LA CAGNOTTE, PARTAGÉE ENTRE LES GAGNANTS AU PRORATA DE LEUR MISE"
   },
   "create": {
     "title": "Nouveau prono",
@@ -100,14 +112,13 @@
     "question": "LA QUESTION",
     "questionPlaceholder": "Le Conseil d'État validera-t-il la réforme avant l'été ?",
     "counter": "{{count}}/200",
-    "options": "LES RÉPONSES",
-    "option": "Réponse {{n}}",
-    "addOption": "Ajouter une réponse",
-    "removeOption": "Retirer la réponse {{n}}",
+    "option": "Choix {{n}}",
+    "addOption": "Ajouter un choix",
+    "removeOption": "Retirer le choix {{n}}",
     "yesNo": "Les réponses seront « Oui » et « Non ».",
     "unit": "UNITÉ (FACULTATIF)",
     "unitPlaceholder": "%, €, buts…",
-    "openEnded": "Sans date de clôture : on joue une date, on peut rejouer si elle passe",
+    "openEnded": "Sans date de clôture",
     "link": "LIEN VERS L'ARTICLE (FACULTATIF)",
     "image": "IMAGE (FACULTATIF)",
     "imageHint": "JPEG, PNG ou WebP · 5 Mo au plus",
@@ -122,7 +133,18 @@
     "submit": "Publier le prono",
     "titlePropose": "Proposer un prono",
     "submitPropose": "Proposer le prono",
-    "proposeNote": "Un·e journaliste relira ta proposition et choisira le gain avant de la publier."
+    "close": "Annuler et revenir à la une",
+    "role": {
+      "reader": "LECTEUR·RICE",
+      "journalist": "JOURNALISTE",
+      "editor": "RÉDACTION EN CHEF"
+    },
+    "options_one": "LES CHOIX · {{count}}",
+    "options_other": "LES CHOIX · {{count}}",
+    "openEndedHint": "ON JOUE UNE DATE, ON PEUT REJOUER SI ELLE PASSE",
+    "scheduleHint": "LES PRONOS OUVRENT À LA DATE CHOISIE",
+    "foot": "TU DÉSIGNERAS LE RÉSULTAT APRÈS L'ÉVÉNEMENT",
+    "footPropose": "UN·E JOURNALISTE RELIRA TA PROPOSITION ET CHOISIRA LE GAIN"
   },
   "reactions": {
     "label": "Réactions",

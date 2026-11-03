@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button, Card, Chip, Field, Icon, Kicker, Stepper } from '../../ui/components';
+import { Button, Chip, Field, Icon, Kicker, Stepper } from '../../ui/components';
 import { useFormErrors } from '../forms';
 import { useInvite } from '../orgs/api';
 import styles from './admin.module.css';
@@ -58,7 +58,7 @@ export function InvitePanel({ orgId, accessCode }: { orgId: string; accessCode: 
   };
 
   return (
-    <Card className={styles.panel} aria-label={t('invite.title')}>
+    <section className={styles.panel} aria-label={t('invite.title')}>
       <h2 className={styles.heading}>{t('invite.title')}</h2>
       {errors.message && (
         <p className={styles.alert} role="alert">
@@ -123,6 +123,6 @@ export function InvitePanel({ orgId, accessCode }: { orgId: string; accessCode: 
           </div>
         </div>
       )}
-    </Card>
+    </section>
   );
 }

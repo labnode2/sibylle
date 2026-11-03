@@ -4,10 +4,19 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, Response
 
-from sibylle.api.deps import SESSION_COOKIE, CurrentAccount, Db, Limits, client_ip, limits
+from sibylle.api.deps import (
+    SESSION_COOKIE,
+    CurrentAccount,
+    Db,
+    Limits,
+    clear_session_cookie,
+    client_ip,
+    limits,
+)
 from sibylle.api.errors import AppError
 from sibylle.api.routes.me import me_of
 from sibylle.api.schemas import LoginIn, Me, ResetConfirm, ResetRequest, SignupIn, TokenIn
+from sibylle.config import get_settings
 from sibylle.services import accounts
 from sibylle.services.accounts import SESSION_LIFETIME
 
@@ -22,7 +31,7 @@ def set_session_cookie(response: Response, token: str) -> None:
         token,
         max_age=int(SESSION_LIFETIME.total_seconds()),
         httponly=True,
-        secure=True,
+        secure=get_settings().secure_cookies,
         samesite="lax",
         path="/",
     )
@@ -66,7 +75,7 @@ async def login(
 @router.post("/logout", status_code=204)
 async def logout(request: Request, response: Response, session: Db) -> None:
     await accounts.logout(session, request.cookies.get(SESSION_COOKIE))
-    response.delete_cookie(SESSION_COOKIE, path="/", secure=True, httponly=True, samesite="lax")
+    clear_session_cookie(response)
 
 
 @router.post("/verify-email", status_code=204)

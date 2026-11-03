@@ -5,6 +5,7 @@ import { useTopic } from '../../api/realtime';
 import type { components } from '../../api/schema';
 
 export type FrontPage = components['schemas']['FrontPage'];
+export type FrontProno = components['schemas']['FrontProno'];
 export type LatestResult = components['schemas']['LatestResult'];
 
 const frontPageKey = (orgId: string) => ['front-page', orgId] as const;

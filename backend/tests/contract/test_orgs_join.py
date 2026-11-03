@@ -70,7 +70,10 @@ async def test_creating_a_newsroom_makes_you_its_editor(
 
     me = (await ines.get("/api/me")).json()
     assert [m["org"]["id"] for m in me["memberships"]] == [org["id"]]
-    assert (await ines.get(f"/api/orgs/{org['id']}")).json()["my_membership"]["role"] == "editor"
+    detail = (await ines.get(f"/api/orgs/{org['id']}")).json()
+    assert detail["my_membership"]["role"] == "editor"
+    # Its first day is the gazette's N° 1.
+    assert (org["edition_number"], detail["edition_number"]) == (1, 1)
 
 
 async def test_inviting_is_for_the_editor(make_account: MakeAccount, client_for: ClientFor) -> None:

@@ -1,10 +1,13 @@
 // The special edition (canvas G-Résultat): the result, what you won or lost, the final split of
 // the answers, who saw it right, and whether the pot was lost. A cancellation says the stakes
 // went back. The mockup's « SÉRIE » line is left out: the spec has no streaks.
+// The head (« Édition spéciale », when and by whom) opens the prono's page; the rest follows the
+// question, then « Voir le classement » and « Partager ».
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { formatDate, formatNumber } from '../../i18n';
-import { Card, Icon, Laurel, Rule } from '../../ui/components';
+import { Button, ButtonLink, Card, Icon, Laurel, Rule } from '../../ui/components';
 import { AvatarStack, PixelImage } from '../../ui/PixelImage';
 import type { PronoDetail } from '../pronos/api';
 import type { SpecialEdition as Edition } from './api';
@@ -88,6 +91,65 @@ function FinalSplit({ prono }: { prono: PronoDetail }) {
   );
 }
 
+/** « Édition spéciale », then « SAM. 31 OCT., 19:12 · VALIDÉ PAR INÈS » and the double rule. */
+export function SpecialEditionHead({ prono }: { prono: PronoDetail }) {
+  const { t } = useTranslation('results');
+  const edition = prono.special_edition;
+  if (!edition) return null;
+  const when = formatDate(edition.settled_at, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).toUpperCase();
+  return (
+    <div className={styles.editionTop}>
+      <div className={styles.editionHead}>
+        <p className={styles.editionTitle}>{t('edition.title')}</p>
+        <p className={styles.small}>
+          {t(`edition.by.${edition.kind}`, {
+            date: when,
+            pseudo: edition.settled_by.pseudo.toUpperCase(),
+          })}
+        </p>
+      </div>
+      <Rule variant="double" />
+    </div>
+  );
+}
+
+/** « Partager »: the share sheet of the phone, or the link copied elsewhere. */
+function Share({ question }: { question: string }) {
+  const { t } = useTranslation('results');
+  const [copied, setCopied] = useState(false);
+  const share = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: question, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+    } catch {
+      // The sheet was closed, or the clipboard refused: nothing to say.
+    }
+  };
+  return (
+    <>
+      <Button variant="secondary" className={styles.share} onClick={() => void share()}>
+        {t('edition.share')}
+      </Button>
+      {copied && (
+        <span role="status" className={styles.small}>
+          {t('edition.copied')}
+        </span>
+      )}
+    </>
+  );
+}
+
 export function SpecialEdition({ orgId, prono }: { orgId: string; prono: PronoDetail }) {
   const { t } = useTranslation('results');
   const edition = prono.special_edition;
@@ -101,24 +163,9 @@ export function SpecialEdition({ orgId, prono }: { orgId: string; prono: PronoDe
           year: 'numeric',
         })
       : edition.result;
-  const when = formatDate(edition.settled_at, {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).toUpperCase();
 
   return (
     <section aria-label={t('edition.title')} className={styles.edition}>
-      <div className={styles.editionHead}>
-        <p className={styles.editionTitle}>{t('edition.title')}</p>
-        <p className={styles.small}>
-          {t('edition.meta', { date: when, seq: edition.settlement_seq })}
-          {edition.kind === 'correction' && ` · ${t('edition.corrected')}`}
-        </p>
-      </div>
-      <Rule variant="double" />
       {cancelled ? (
         <p className={styles.notice}>{t('edition.cancelled')}</p>
       ) : (
@@ -153,6 +200,12 @@ export function SpecialEdition({ orgId, prono }: { orgId: string; prono: PronoDe
                 : t('edition.potLostNobody', { pot: formatNumber(edition.pot) })}
             </p>
           )}
+          <div className={styles.editionActions}>
+            <ButtonLink to={`/o/${orgId}/classement`} className={styles.ranking}>
+              {t('edition.ranking')}
+            </ButtonLink>
+            <Share question={prono.question} />
+          </div>
           <ReportForm orgId={orgId} pronoId={prono.id} initialKind="result_error" />
         </>
       )}

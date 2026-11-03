@@ -1,97 +1,167 @@
+/* La une (canvas B-Accueil, B-Web-Accueil): blocks separated by rules, not boxed. */
 .une {
   display: flex;
   flex-direction: column;
-  gap: 20px;
 }
 
-.hello {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.helloText {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.title {
-  font: 800 28px/1.05 var(--font-text);
-  letter-spacing: -0.025em;
-}
-
-/* One column on a phone; on a computer the main column and, beside it, the ranking, the games
-   and the editor's note. The order on the page stays the spec's. */
-.columns {
-  display: grid;
-  gap: 24px;
-}
-
-.main,
-.side {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  min-width: 0;
-}
-
-@media (min-width: 900px) {
-  .columns {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-    align-items: start;
-  }
-
-  .side {
-    padding-left: 24px;
-    border-left: 1px solid var(--ink);
-  }
-}
-
-.block {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.blockTitle {
-  padding-bottom: 6px;
-  border-bottom: 2px solid var(--ink);
-  font: 700 12px/1 var(--font-mono);
-  letter-spacing: 0.06em;
-}
-
-.meta {
-  font: 500 12px/1.4 var(--font-mono);
-  letter-spacing: 0.03em;
-  color: var(--ink-2);
-}
-
-/* The prono at the top of the page. */
-.headline {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 16px 18px;
-}
-
-.headlineTitle {
-  color: var(--ink);
-  text-decoration: none;
-  font: 800 30px/1.05 var(--font-text);
-  letter-spacing: -0.03em;
-}
-
-.headlineTitle:hover {
-  text-decoration: underline;
-}
-
-.headlineFoot {
+/* « N° 305 · DIM. 1 NOV. 2026 » and my laurels, on a phone. */
+.dateline {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 4px 12px;
+  min-height: var(--tap);
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+
+.mine {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.mine:hover {
+  color: var(--ink);
+}
+
+/* « ÉDITION SOPHIA OFFICE ▾ · 24 LECTEURS » under the title, on a phone. */
+.editionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  min-height: var(--tap);
+  border-bottom: 1px solid var(--ink);
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+
+.columns,
+.main,
+.side {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.main,
+.side {
+  gap: 16px;
+}
+
+/* The prono closing first. */
+.lead {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--ink);
+}
+
+.leadTitle {
+  font: 800 29px/1.04 var(--font-text);
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.leadTitle a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.leadTitle a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+.deck {
+  max-width: 38em;
+  font: 400 20px/1.45 var(--font-text);
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+/* The gauge: the favourite in ink, the others in indigo and mist, on a light grey rail. */
+.poll {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 640px;
+  padding-top: 2px;
+}
+
+.pollRow {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: 10px;
+  min-height: 20px;
+}
+
+.pollLabel {
+  font: 600 14px/1.1 var(--font-text);
+  overflow-wrap: anywhere;
+}
+
+.rail {
+  height: 12px;
+  background: var(--grey);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+}
+
+.fillInk {
+  background: var(--ink);
+}
+
+.fillIndigo {
+  background: var(--indigo);
+}
+
+.fillMist {
+  background: var(--mist);
+}
+
+.pollPct {
+  font: 600 13px/1 var(--font-mono);
+  text-align: right;
+}
+
+.meta {
+  font: 500 11px/1.4 var(--font-mono);
+  letter-spacing: 0.03em;
+  color: var(--ink-2);
+}
+
+.leadActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  padding-top: 2px;
+}
+
+.play {
+  min-height: var(--tap);
+  padding: 0 18px;
+  font-size: 15px;
+}
+
+.allOpen {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--ink);
+  font: 600 14px/1 var(--font-text);
 }
 
 .empty {
@@ -99,22 +169,142 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 10px;
+  margin-top: 16px;
   padding: 16px 18px;
 }
 
-.rows,
+/* On a phone, the next prono beside the games. */
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-bottom: 1px solid var(--ink);
+}
+
+.pairBrief {
+  padding: 12px 14px 12px 0;
+  border-right: 1px solid var(--ink);
+}
+
+.pairGames {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 0 12px 14px;
+}
+
+.pairAlone {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.pairAlone .pairGames {
+  padding-left: 0;
+}
+
+/* A brief: its section, its question, the favourite answer and the closing. */
+.brief {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.brief:hover {
+  color: var(--ink);
+}
+
+.brief:hover .briefTitle {
+  text-decoration: underline;
+}
+
+.briefKicker {
+  font: 600 11px/1.2 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--indigo);
+}
+
+.briefTitle {
+  font: 700 17px/1.12 var(--font-text);
+  letter-spacing: -0.01em;
+  text-wrap: pretty;
+}
+
+.tag {
+  font: 500 11px/1.4 var(--font-mono);
+  color: var(--ink-2);
+}
+
+.tagWon {
+  color: var(--indigo);
+  font-weight: 700;
+}
+
+/* The ranking: rank in Bricolage, laurels in mono, my line on light grey. */
+.ranking {
+  display: flex;
+  flex-direction: column;
+  padding-top: 10px;
+}
+
 .top {
+  display: flex;
+  flex-direction: column;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+.top li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 42px;
+  padding: 0 8px;
+  border-top: 1px solid var(--rule);
+}
+
+.me {
+  background: var(--grey);
+}
+
+.rank {
+  width: 22px;
+  font: 800 22px/1 var(--font-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.topName {
+  flex: 1;
+  min-width: 0;
+  font: 600 15px/1.2 var(--font-text);
+}
+
+.more {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: var(--tap);
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--indigo);
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 10px;
+}
+
 .rows {
   display: flex;
   flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.rows li + li {
+.rows li {
   border-top: 1px solid var(--rule);
 }
 
@@ -135,45 +325,144 @@
   text-decoration: underline;
 }
 
-/* Top of the ranking, the member's own line on light grey. */
-.top {
+.gamesBox {
   display: flex;
   flex-direction: column;
-}
-
-.top li {
-  display: flex;
-  align-items: center;
   gap: 10px;
-  min-height: var(--tap);
-  padding: 0 6px;
-}
-
-.top li + li {
-  border-top: 1px solid var(--rule);
-}
-
-.me {
-  background: var(--grey);
-}
-
-.rank {
-  width: 2ch;
-  font: 800 18px/1 var(--font-text);
-}
-
-.topName {
-  flex: 1;
-  font: 700 15px/1.2 var(--font-text);
-}
-
-.more {
-  font: 700 12px/1 var(--font-mono);
-  letter-spacing: 0.04em;
-  color: var(--indigo);
+  padding: 16px;
 }
 
 .note {
   margin: 0;
   font: italic 500 16px/1.45 var(--font-text);
+}
+
+/* « EN BREF »: the other pronos and the latest results. */
+.briefs {
+  display: flex;
+  flex-direction: column;
+  margin-top: 16px;
+}
+
+.briefsTitle {
+  padding-top: 10px;
+  border-top: 2px solid var(--ink);
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+}
+
+.briefGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: 18px 32px;
+  padding: 16px 0 8px;
+}
+
+@media (max-width: 1023.98px) {
+  .computerOnly {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+    padding-top: 12px;
+  }
+
+  .main {
+    gap: 24px;
+    padding: 0 32px 28px 0;
+    border-right: 1px solid var(--ink);
+  }
+
+  .side {
+    gap: 24px;
+    padding: 0 0 28px 32px;
+  }
+
+  .lead {
+    gap: 14px;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .leadTitle {
+    font-size: 60px;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+  }
+
+  .leadTitle :global(.key-phrase) {
+    text-decoration-thickness: 4px;
+    text-underline-offset: 9px;
+  }
+
+  .pollRow {
+    grid-template-columns: 96px minmax(0, 1fr) 56px;
+    gap: 14px;
+    min-height: 26px;
+  }
+
+  .pollLabel {
+    font: 700 17px/1.1 var(--font-text);
+  }
+
+  .rail {
+    height: 16px;
+  }
+
+  .pollPct {
+    font-size: 14px;
+  }
+
+  .meta {
+    font-size: 12px;
+  }
+
+  .play {
+    min-height: 48px;
+    padding: 0 22px;
+    font-size: 16px;
+  }
+
+  .allOpen {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .ranking {
+    padding-top: 0;
+  }
+
+  .top li {
+    min-height: var(--tap);
+  }
+
+  .briefKicker {
+    font-size: 12px;
+  }
+
+  .briefTitle {
+    font-size: 22px;
+  }
+
+  .tag {
+    align-self: flex-start;
+    padding: 3px 6px;
+    background: var(--grey);
+    color: var(--ink);
+    font: 600 12px/1.3 var(--font-mono);
+  }
+
+  /* Paper on indigo: light on dark in the light theme, dark on light in the dark one. */
+  .tagWon {
+    background: var(--indigo);
+    color: var(--paper);
+  }
+
+  .briefs {
+    margin-top: 0;
+  }
 }

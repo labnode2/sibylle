@@ -40,7 +40,7 @@ test('la une, a proposal and a reaction', async ({ browser }, testInfo) => {
   const invitation = await invitationPath(ines);
   const cami = await newPerson(browser, testInfo, 'Camille', invitation);
   await joinWith(cami, 'Cami');
-  await expect(cami.getByRole('heading', { name: 'Bonjour Cami' })).toBeVisible();
+  await expect(cami.getByRole('heading', { name: /^La une de / })).toBeVisible();
 
   // The prono closing first is the headline; the other one follows.
   await publishProno(ines, orgId, {
@@ -56,16 +56,15 @@ test('la une, a proposal and a reaction', async ({ browser }, testInfo) => {
   const headline = cami.getByRole('article', { name: 'À la une' });
   await expect(headline.getByRole('link', { name: 'Combien de cafés jeudi ?' })).toBeVisible();
   await expect(headline).toContainText('0 PRONO · CAGNOTTE 0');
-  const others = cami.getByRole('region', { name: 'LES AUTRES PRONOS OUVERTS' });
-  await expect(others.getByRole('link', { name: /Qui gagne le baby-foot/ })).toBeVisible();
-  await expect(cami.getByRole('region', { name: 'À DÉSIGNER' })).toHaveCount(0);
+  await expect(cami.getByRole('link', { name: /Qui gagne le baby-foot/ })).toBeVisible();
+  await expect(cami.getByRole('region', { name: 'À désigner' })).toHaveCount(0);
 
   // Cami proposes a prono; it waits for a journalist.
   await cami.goto(`/o/${orgId}/pronos/nouveau`);
   await expect(cami.getByRole('heading', { name: 'Proposer un prono' })).toBeVisible();
   await cami.getByLabel('LA QUESTION').fill('Le pot de vendredi aura-t-il lieu ?');
-  await cami.getByLabel('Réponse 1').fill('Oui, à 18 h');
-  await cami.getByLabel('Réponse 2').fill('Non, reporté');
+  await cami.getByRole('textbox', { name: 'Choix 1' }).fill('Oui, à 18 h');
+  await cami.getByRole('textbox', { name: 'Choix 2' }).fill('Non, reporté');
   await cami.getByRole('button', { name: 'Proposer le prono' }).click();
   await expect(
     cami.getByText('En attente : un·e journaliste doit valider', { exact: false }),
@@ -82,15 +81,17 @@ test('la une, a proposal and a reaction', async ({ browser }, testInfo) => {
   await expect(proposals).toHaveCount(0);
 
   await cami.goto(proposalUrl);
-  await expect(cami.getByText('OUVERT', { exact: true })).toBeVisible();
+  await expect(cami.getByRole('timer')).toBeVisible();
   await expect(cami.getByText('En attente', { exact: false })).toHaveCount(0);
 
-  // A reaction on the headline reaches Inès's screen; a second press takes it back.
+  // A reaction on the headline's page reaches Inès's screen; a second press takes it back.
   await openFollowing(ines, `/o/${orgId}/pronos/${coffee.id}`, `prono:${coffee.id}`);
   await cami.goto(`/o/${orgId}`);
-  const camiReactions = cami
+  await cami
     .getByRole('article', { name: 'À la une' })
-    .getByRole('group', { name: 'Réactions' });
+    .getByRole('link', { name: 'Je pronostique' })
+    .click();
+  const camiReactions = cami.getByRole('group', { name: 'Réactions' });
   const inesReactions = ines.getByRole('group', { name: 'Réactions' });
   await camiReactions.getByRole('button', { name: 'Bien vu (0)' }).click();
   await expect(camiReactions.getByRole('button', { name: 'Bien vu (1)' })).toHaveAttribute(

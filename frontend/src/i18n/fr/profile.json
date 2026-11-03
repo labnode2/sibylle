@@ -8,15 +8,17 @@
     "editor": "RÉDACTION EN CHEF"
   },
   "stats": {
+    "label": "Statistiques",
     "laurels": "LAURIERS",
-    "played": "PRONOS JOUÉS",
-    "wins": "PRONOS GAGNÉS",
-    "rate": "TAUX DE RÉUSSITE"
+    "played": "PRONOS",
+    "rate": "RÉUSSITE"
   },
   "editor": {
-    "open": "Redessiner mon avatar",
-    "title": "Mon avatar",
-    "save": "Enregistrer mon avatar"
+    "open": "Modifier mon pixel art",
+    "sizes": "16×16 · 32×32",
+    "title": "MON PIXEL ART",
+    "save": "Enregistrer",
+    "saved": "Avatar enregistré."
   },
   "collectionLink": "Ma collection",
   "frame": {
@@ -30,7 +32,7 @@
     "winter": "HIVER"
   },
   "trophies": {
-    "title": "LES TROPHÉES",
+    "title": "Les trophées",
     "none": "Pas encore de trophée : chaque saison jouée en grave un.",
     "season": "{{season}} {{year}}",
     "score": "{{score}} LAURIERS · {{rank}}E"
@@ -50,7 +52,8 @@
     "confirm": "Acheter pour {{price}} pièces ?",
     "yes": "Acheter",
     "no": "Annuler",
-    "backToCard": "Retour à ma carte de presse"
+    "backToCard": "Retour à ma carte de presse",
+    "back": "PROFIL"
   },
   "secret": {
     "title": "Un code secret ?",
@@ -60,7 +63,7 @@
     "unlocked": "Débloqué : {{name}} !"
   },
   "ledger": {
-    "title": "MON RELEVÉ",
+    "title": "Mon relevé",
     "amount": "{{value}} AU SOLDE",
     "score": "{{value}} AU SCORE",
     "more": "Plus ancien",
@@ -123,5 +126,53 @@
     "ball-christmas": "Boule de Noël",
     "ball-new-year": "Boule du Nouvel An"
   },
-  "settingsLink": "Mes réglages"
+  "settingsLink": "Mes réglages",
+  "profile": "Profil",
+  "titleOf": "Carte de presse de {{pseudo}}",
+  "backRanking": "CLASSEMENT",
+  "balls": {
+    "title": "Boules collectionnées",
+    "count": "{{owned}} / {{total}}",
+    "none": "Pas encore de boule.",
+    "locked": "{{name}} (à débloquer)",
+    "more": "Voir la collection →"
+  },
+  "ballShort": {
+    "ball-spring": "PRINTEMPS",
+    "ball-summer": "ÉTÉ",
+    "ball-autumn": "AUTOMNE",
+    "ball-winter": "HIVER",
+    "ball-epiphany": "ÉPIPHANIE",
+    "ball-candlemas": "CHANDELEUR",
+    "ball-valentines": "ST-VALENTIN",
+    "ball-april-fools": "1ER AVRIL",
+    "ball-easter": "PÂQUES",
+    "ball-may-day": "1ER MAI",
+    "ball-music-day": "MUSIQUE",
+    "ball-bastille-day": "14 JUIL.",
+    "ball-halloween": "HALLOWEEN",
+    "ball-beaujolais": "BEAUJOLAIS",
+    "ball-christmas": "NOËL",
+    "ball-new-year": "NOUVEL AN"
+  },
+  "lines": {
+    "label": "Ma rédaction et mes réglages",
+    "members_one": "{{count}} MEMBRE",
+    "members_other": "{{count}} MEMBRES",
+    "newsroomSettings": "Réglages de la rédaction",
+    "preferences": "Préférences",
+    "account": "Compte"
+  },
+  "newsroom": {
+    "title": "Mon organisation",
+    "editors": "RÉDACTION EN CHEF : {{names}}",
+    "invite": "Inviter",
+    "inviteHint": "UN LIEN D'INVITATION OU UN E-MAIL",
+    "inviteOpen": "Inviter",
+    "code": "Code d'accès",
+    "codeHint": "POUR REJOINDRE SANS LE LIEN"
+  },
+  "objects": {
+    "title": "Couleurs et cadres"
+  }
 }

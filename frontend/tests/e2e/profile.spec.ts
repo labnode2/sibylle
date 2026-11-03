@@ -25,7 +25,7 @@ test('a press card, an avatar drawn by hand and a collection', async ({ browser 
   expect((await call(ines, 'PATCH', `/orgs/${orgId}`, { starting_balance: 500 })).status).toBe(200);
   const cami = await newPerson(browser, testInfo, 'Camille', await invitationPath(ines));
   await joinWith(cami, 'Cami');
-  await expect(cami.getByRole('heading', { name: 'Bonjour Cami' })).toBeVisible();
+  await expect(cami.getByRole('heading', { name: /^La une de / })).toBeVisible();
 
   // Her press card: the second to arrive.
   await cami.getByRole('link', { name: 'PROFIL' }).click();
@@ -35,15 +35,15 @@ test('a press card, an avatar drawn by hand and a collection', async ({ browser 
   await expect(card).toContainText(/MEMBRE DEPUIS [A-ZÉÛ]+ \d{4}/);
 
   // She redraws her avatar in 32 × 32, with the mouse and the keyboard.
-  await cami.getByRole('button', { name: 'Redessiner mon avatar' }).click();
-  const editor = cami.getByRole('region', { name: 'Mon avatar' });
+  await cami.getByRole('link', { name: 'Modifier mon pixel art' }).click();
+  const editor = cami.getByRole('region', { name: 'MON PIXEL ART' });
   await editor.getByRole('button', { name: '32 × 32' }).click();
-  await editor.getByRole('radio', { name: 'Couleur 13' }).click();
+  await editor.getByRole('radio', { name: 'Rouge', exact: true }).click();
   const grid = editor.getByRole('application');
   await grid.click({ position: { x: 5, y: 5 } });
   await grid.press('ArrowRight');
   await grid.press('Space');
-  await editor.getByRole('button', { name: 'Enregistrer mon avatar' }).click();
+  await editor.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(editor).toHaveCount(0);
   // Everyone sees it.
   const members = await call(ines, 'GET', `/orgs/${orgId}/members`);
@@ -79,12 +79,15 @@ test('a press card, an avatar drawn by hand and a collection', async ({ browser 
 
   // Back on the card: the colour is in the palette; the laurels statement has no purchase.
   await cami.getByRole('link', { name: 'Retour à ma carte de presse' }).click();
-  const collection = cami.getByRole('region', { name: 'La collection' });
-  await expect(collection).toContainText('Couleur Rouge vif');
-  await expect(collection).toContainText("Boule d'Halloween");
-  const statement = cami.getByRole('region', { name: 'MON RELEVÉ' });
+  await expect(cami.getByRole('region', { name: 'Couleurs et cadres' })).toContainText(
+    'Couleur Rouge vif',
+  );
+  await expect(cami.getByRole('region', { name: 'Boules collectionnées' })).toContainText(
+    "Boule d'Halloween",
+  );
+  const statement = cami.getByRole('region', { name: 'Mon relevé' });
   await expect(statement).toContainText('SOLDE DE DÉPART');
   await expect(statement).not.toContainText('ACHAT');
-  await cami.getByRole('button', { name: 'Redessiner mon avatar' }).click();
-  await expect(cami.getByRole('radio', { name: 'Couleur 41' })).toBeVisible();
+  await cami.getByRole('link', { name: 'Modifier mon pixel art' }).click();
+  await expect(cami.getByRole('radio', { name: 'Rouge vif' })).toBeVisible();
 });

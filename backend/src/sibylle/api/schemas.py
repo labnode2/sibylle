@@ -18,9 +18,11 @@ from pydantic import (
 )
 from pydantic_core import PydanticCustomError
 
+from sibylle import clock
 from sibylle.db.models import Account, Membership, Organisation
 from sibylle.domain.coins import gold
 from sibylle.domain.notifications import allowed_push_endpoint
+from sibylle.domain.seasons import edition_number
 
 EMAIL_PATTERN = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
 
@@ -143,6 +145,8 @@ class Org(OrgCard):
     # Only the editor sees the access code.
     access_code: str | None
     member_count: int
+    # « N° 305 »: the day of the newsroom's life, its first day being N° 1 (Paris time).
+    edition_number: int
     my_membership: MemberSelf
 
     @classmethod
@@ -165,6 +169,7 @@ class Org(OrgCard):
             charter=org.charter,
             access_code=org.access_code if me.role == "editor" else None,
             member_count=member_count,
+            edition_number=edition_number(org.created_at, clock.now()),
             my_membership=MemberSelf.build(me, in_play=in_play, unlocked=unlocked),
         )
 
@@ -319,6 +324,8 @@ class SectionOut(BaseModel):
 
 class PronoSummary(BaseModel):
     id: uuid.UUID
+    # « PRONO N° 128 »: its number in the newsroom.
+    number: int
     kind: Kind
     question: str
     section: SectionOut
@@ -391,6 +398,8 @@ class SpecialEditionOut(BaseModel):
     kind: Literal["resolution", "correction", "cancellation"]
     result: str | None
     settled_at: datetime
+    # « VALIDÉ PAR INÈS »: who designated the result, corrected it or cancelled the prono.
+    settled_by: MemberPublic
     pot: int
     pot_lost: bool
     winners: list[WinnerOut]
@@ -557,6 +566,13 @@ class SeasonOut(BaseModel):
     ends_at: datetime
 
 
+class FrontProno(PronoSummary):
+    """A prono of la une, with the split of the answers its gauge draws."""
+
+    options: list[OptionOut]
+    distribution: list[BucketOut]
+
+
 class LatestResult(BaseModel):
     prono: PronoSummary
     result: str | None
@@ -569,12 +585,17 @@ class LatestResult(BaseModel):
 class FrontPage(BaseModel):
     """La une, its blocks in the spec's order."""
 
-    headline: PronoSummary | None
-    open: list[PronoSummary]
+    headline: FrontProno | None
+    open: list[FrontProno]
+    # Every open prono the member sees, the headline included.
+    open_count: int
     # Journalists and the editor only; None for a reader.
     to_designate: list[PronoSummary] | None
     latest_results: list[LatestResult]
+    # The month's first five, then the member's own line when they are not among them.
     leaderboard_top: list[LeaderboardRow]
+    # "2026-11": the month of that ranking.
+    leaderboard_period: str
     editor_note: str | None
 
 

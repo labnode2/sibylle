@@ -1,12 +1,11 @@
 {
-  "title": "Classement",
+  "title": "Le classement",
   "kicker": "Saison {{season}} {{year}} · jusqu'au {{until}}",
   "metricLabel": "Classer par",
   "periodLabel": "Période",
   "option": {
     "laurels": "LAURIERS",
     "wins": "PRONOS GAGNÉS",
-    "month": "MOIS",
     "season": "SAISON",
     "all_time": "DEPUIS TOUJOURS"
   },
@@ -24,17 +23,15 @@
     "laurels": "LAURIERS GAGNÉS · {{period}}",
     "wins": "PRONOS GAGNÉS · {{period}}"
   },
-  "column": {
-    "rank": "Rang",
-    "member": "Membre",
-    "laurels": "Lauriers",
-    "wins": "Pronos gagnés"
-  },
-  "you": "TOI",
-  "wins_one": "{{value}} prono",
-  "wins_other": "{{value}} pronos",
+  "you": "{{pseudo}} (toi)",
+  "wins_one": "{{value}} JUSTE",
+  "wins_other": "{{value}} JUSTES",
   "note": {
     "laurels": "Le score : gains des pronos moins mises perdues. Les achats et les mini-jeux n'y comptent pas.",
     "wins": "Le nombre de pronos gagnés, comptés au jour du résultat."
-  }
+  },
+  "back": "LA UNE",
+  "newsroom_one": "{{org}} · {{count}} MEMBRE",
+  "newsroom_other": "{{org}} · {{count}} MEMBRES",
+  "updated": "MIS À JOUR APRÈS CHAQUE RÉSULTAT"
 }

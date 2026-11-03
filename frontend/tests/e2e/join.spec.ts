@@ -2,7 +2,7 @@
 // join, and never see another member's private data.
 import { expect, test, type Page } from '@playwright/test';
 
-import { createNewsroom, joinWith, newPerson } from './helpers';
+import { createNewsroom, joinWith, newPerson, openSettings } from './helpers';
 
 const PRIVATE_KEYS = ['first_name', 'last_name', 'email', 'password_hash'];
 
@@ -30,7 +30,7 @@ test('invite with a link and join a newsroom', async ({ browser }, testInfo) => 
   watchPrivacy(ines, leaks);
   await createNewsroom(ines, 'Sophia Office', 'Inès');
   // The invitations live with the members, in the newsroom's settings.
-  await ines.getByRole('link', { name: 'RÉGLAGES' }).click();
+  await openSettings(ines);
   await ines.getByRole('link', { name: 'MEMBRES' }).click();
 
   // The settings pages have several steppers: this one is the link's number of places.
@@ -52,14 +52,14 @@ test('invite with a link and join a newsroom', async ({ browser }, testInfo) => 
   await joinWith(cami, 'inès');
   await expect(cami.getByRole('alert')).toContainText('déjà pris');
   await joinWith(cami, 'Cami');
-  await expect(cami.getByRole('heading', { name: 'Bonjour Cami' })).toBeVisible();
+  await expect(cami.getByRole('heading', { name: /^La une de / })).toBeVisible();
   // The starting balance, all of it to stake.
   await expect(cami.getByRole('main').getByText('100 lauriers verts à miser')).toBeAttached();
 
   // Third person takes the last place; the fourth is turned away.
   const leo = await newPerson(browser, testInfo, 'Léo', path);
   await joinWith(leo, 'Léo');
-  await expect(leo.getByRole('heading', { name: 'Bonjour Léo' })).toBeVisible();
+  await expect(leo.getByRole('heading', { name: /^La une de / })).toBeVisible();
 
   const manon = await newPerson(browser, testInfo, 'Manon', path);
   await expect(manon.getByRole('alert')).toContainText("Cette invitation n'est plus valable");

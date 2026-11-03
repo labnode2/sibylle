@@ -22,10 +22,10 @@
     'Bricolage Grotesque Variable', 'Bricolage Grotesque', 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, monospace;
 
-  --gutter: 16px;
+  --gutter: 20px;
   --tap: 44px;
   --page-max: 1200px;
-  --tabbar-height: 64px;
+  --tabbar-height: 72px;
 }
 
 :root[data-theme='dark'] {

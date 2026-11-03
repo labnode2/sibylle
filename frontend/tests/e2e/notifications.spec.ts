@@ -73,7 +73,7 @@ test('push offered after a bet, then set kind by kind in the settings', async ({
   const second = await publishProno(ines, orgId, { question: 'Nice ou Lyon dimanche ?' });
   const cami = await newPerson(browser, testInfo, 'Camille', await invitationPath(ines));
   await joinWith(cami, 'Cami');
-  await expect(cami.getByRole('heading', { name: 'Bonjour Cami' })).toBeVisible();
+  await expect(cami.getByRole('heading', { name: /^La une de / })).toBeVisible();
   await pushCapableDevice(cami);
 
   // After her bet, the offer; « Plus tard » sets it aside, also for the next bets.

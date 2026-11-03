@@ -6,7 +6,7 @@ import { useParams } from 'react-router';
 
 import type { MemberPublic } from '../../api/types';
 import { formatDate } from '../../i18n';
-import { Button, Card, Chip, Field, Kicker } from '../../ui/components';
+import { Button, Chip, Field, Kicker } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
 import { useFormErrors } from '../forms';
 import { useOrg } from '../orgs/api';
@@ -66,7 +66,7 @@ function MemberRow({
           {member.pseudo}
           {isMe && <span className={styles.you}> {t('members.you')}</span>}
         </span>
-        <label className={styles.select}>
+        <label className={`${styles.select} ${styles[`role_${member.role}`]}`}>
           <span className="visually-hidden">{t('members.role', { pseudo: member.pseudo })}</span>
           <select
             value={member.role}
@@ -150,7 +150,7 @@ function Invitations({ orgId }: { orgId: string }) {
   const list = invitations.data ?? [];
   if (list.length === 0) return null;
   return (
-    <Card className={styles.panel} aria-label={t('invitations.title')}>
+    <section className={styles.panel} aria-label={t('invitations.title')}>
       <h2 className={styles.heading}>{t('invitations.title')}</h2>
       <ul className={styles.rows}>
         {list.map((invitation) => {
@@ -185,7 +185,7 @@ function Invitations({ orgId }: { orgId: string }) {
           );
         })}
       </ul>
-    </Card>
+    </section>
   );
 }
 
@@ -193,7 +193,7 @@ function AccessCode({ orgId, code }: { orgId: string; code: string | null }) {
   const { t } = useTranslation('admin');
   const { renew, disable } = useAccessCode(orgId);
   return (
-    <Card className={styles.panel} aria-label={t('code.title')}>
+    <section className={styles.panel} aria-label={t('code.title')}>
       <h2 className={styles.heading}>{t('code.title')}</h2>
       <p className={styles.hint}>{t('code.hint')}</p>
       <div className={styles.inline}>
@@ -207,7 +207,7 @@ function AccessCode({ orgId, code }: { orgId: string; code: string | null }) {
           </Button>
         )}
       </div>
-    </Card>
+    </section>
   );
 }
 
@@ -221,7 +221,7 @@ export function MembersPage() {
 
   return (
     <>
-      <Card className={styles.panel} aria-label={t('members.title')}>
+      <section className={styles.panel} aria-label={t('members.title')}>
         <h2 className={styles.heading}>{t('members.title')}</h2>
         <Kicker>{t('members.count', { count: members.data?.length ?? 0 })}</Kicker>
         <ul className={styles.rows}>
@@ -229,7 +229,7 @@ export function MembersPage() {
             <MemberRow key={member.id} orgId={orgId} member={member} isMe={member.id === me.id} />
           ))}
         </ul>
-      </Card>
+      </section>
       <InvitePanel orgId={orgId} accessCode={null} />
       <Invitations orgId={orgId} />
       <AccessCode orgId={orgId} code={org.data.access_code} />

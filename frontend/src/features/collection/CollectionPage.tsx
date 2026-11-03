@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
 import { formatNumber } from '../../i18n';
-import { Button, Card, Chip, Coins, Field } from '../../ui/components';
+import { Button, Card, Chip, Coins, Field, TopBar } from '../../ui/components';
 import { useFormErrors } from '../forms';
 import { useOrg } from '../orgs/api';
 import { useCatalog, useCollectionActions, type CatalogEntry } from '../profile/api';
@@ -124,6 +124,7 @@ export function CollectionPage() {
 
   return (
     <div className={styles.page}>
+      <TopBar back={`/o/${orgId}/profil`} backLabel={t('collection.back')} />
       <div className={styles.top}>
         <h1 className={styles.title}>{t('collection.title')}</h1>
         <span className={styles.balance}>

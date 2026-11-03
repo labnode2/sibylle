@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle import clock
-from sibylle.api.deps import SESSION_COOKIE, CurrentAccount, Db
+from sibylle.api.deps import SESSION_COOKIE, CurrentAccount, Db, clear_session_cookie
 from sibylle.api.schemas import AccountDeletion, Me, MePatch, PasswordChange
 from sibylle.db.models import Account, Membership, Organisation
 from sibylle.domain.seasons import PARIS
@@ -78,4 +78,4 @@ async def delete_me(
     body: AccountDeletion, response: Response, account: CurrentAccount, session: Db
 ) -> None:
     await accounts.delete_account(session, account)
-    response.delete_cookie(SESSION_COOKIE, path="/", secure=True, httponly=True, samesite="lax")
+    clear_session_cookie(response)

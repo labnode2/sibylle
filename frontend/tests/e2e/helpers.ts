@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 
-import { expect, type Browser, type Page, type TestInfo } from '@playwright/test';
+import { expect, type Browser, type Locator, type Page, type TestInfo } from '@playwright/test';
 
 // A password for throwaway test accounts on the local app only.
 export const PASSWORD = 'lauriers-de-test';
@@ -38,7 +38,19 @@ export async function createNewsroom(page: Page, title: string, pseudo: string):
   await page.getByLabel('NOM DE LA RÉDACTION').fill(title);
   await page.getByLabel('TON PSEUDO DANS CETTE RÉDACTION').fill(pseudo);
   await page.getByRole('button', { name: 'Créer la rédaction' }).click();
-  await expect(page.getByRole('heading', { name: `Bonjour ${pseudo}` })).toBeVisible();
+  await expect(page.getByRole('heading', { name: `La une de ${title}` })).toBeVisible();
+}
+
+/** A prono's pot as shown: « Cagnotte : 20 lauriers… » on a phone, « 20 lauriers » in large on
+ *  a computer. */
+export function pot(page: Page, laurels: number): Locator {
+  return page.getByText(new RegExp(`^(Cagnotte : )?${laurels} lauriers`)).filter({ visible: true });
+}
+
+/** The newsroom's settings: the editor reaches them from the press card. */
+export async function openSettings(page: Page): Promise<void> {
+  await page.getByRole('link', { name: /^(MON )?PROFIL$/ }).click();
+  await page.getByRole('link', { name: 'Réglages de la rédaction', exact: true }).click();
 }
 
 export async function joinWith(page: Page, pseudo: string): Promise<void> {

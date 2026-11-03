@@ -8,6 +8,7 @@ import {
   joinWith,
   laurels,
   newPerson,
+  openSettings,
   orgIdOf,
   publishProno,
   resetClock,
@@ -26,11 +27,12 @@ test('the editor runs the newsroom', async ({ browser }, testInfo) => {
   await joinWith(hugo, 'Hugo');
   const cami = await newPerson(browser, testInfo, 'Camille', invitation);
   await joinWith(cami, 'Cami');
-  await expect(cami.getByRole('heading', { name: 'Bonjour Cami' })).toBeVisible();
+  await expect(cami.getByRole('heading', { name: /^La une de / })).toBeVisible();
 
   // The gain ceiling goes down to 30.
-  await ines.getByRole('link', { name: 'RÉGLAGES' }).click();
-  await expect(ines.getByRole('heading', { name: 'Réglages de la rédaction' })).toBeVisible();
+  await openSettings(ines);
+  await expect(ines.getByRole('heading', { name: 'Sophia Office', level: 1 })).toBeVisible();
+  await expect(ines.getByText('Réglages de la rédaction', { exact: true })).toBeVisible();
   const ceiling = ines.getByRole('group', { name: 'Gain fixe maximum' });
   for (let i = 0; i < 4; i += 1) await ceiling.getByRole('button', { name: 'Moins' }).click();
   await expect(ceiling).toContainText('30');
@@ -89,8 +91,9 @@ test('the editor runs the newsroom', async ({ browser }, testInfo) => {
 
   // The settings stay closed to the journalist and the reader.
   for (const page of [hugo, cami]) {
-    await page.goto(`/o/${orgId}`);
-    await expect(page.getByRole('link', { name: 'RÉGLAGES' })).toHaveCount(0);
+    await page.goto(`/o/${orgId}/profil`);
+    await expect(page.getByRole('heading', { name: 'Profil' })).toBeAttached();
+    await expect(page.getByRole('link', { name: /Réglages de la rédaction/ })).toHaveCount(0);
     await page.goto(`/o/${orgId}/reglages`);
     await expect(
       page.getByText('Ces réglages sont réservés à la rédaction en chef.'),

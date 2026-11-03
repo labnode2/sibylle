@@ -109,3 +109,9 @@ def month_bounds(instant: datetime) -> tuple[datetime, datetime]:
     else:
         following = date(local.year, local.month + 1, 1)
     return _midnight(first), _midnight(following)
+
+
+def edition_number(created_at: datetime, now: datetime) -> int:
+    """« N° 305 »: the day of a newsroom's life in Paris, its first day being N° 1."""
+    first = created_at.astimezone(PARIS).date()
+    return max(1, (now.astimezone(PARIS).date() - first).days + 1)

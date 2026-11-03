@@ -3,12 +3,13 @@
 import base64
 import uuid
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import asdict
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import Select, and_, delete, func, or_, select, tuple_
+from sqlalchemy import Select, and_, delete, func, or_, select, tuple_, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -190,8 +191,16 @@ async def create_prono(session: AsyncSession, member: Membership, fields: dict[s
     labels = _validated(fields, fields.get("options") or [], org)
     now = clock.now()
     opens_at = fields.get("opens_at")
+    # The newsroom's row stays locked until the commit: two pronos never share a number.
+    number = await session.scalar(
+        update(Organisation)
+        .where(Organisation.id == org.id)
+        .values(last_prono_number=Organisation.last_prono_number + 1)
+        .returning(Organisation.last_prono_number)
+    )
     prono = Prono(
         org_id=org.id,
+        number=number,
         **{name: fields.get(name) for name in EDITABLE_FIELDS},
         state=(
             State.PROPOSED
@@ -464,6 +473,7 @@ async def summaries(session: AsyncSession, pronos: list[Prono]) -> list[dict[str
     return [
         {
             "id": p.id,
+            "number": p.number,
             "kind": p.kind,
             "question": p.question,
             "section": sections[p.section_id],
@@ -535,6 +545,8 @@ async def special_edition(
             select(Bet).where(Bet.prono_id == prono.id, Bet.outcome == "won").order_by(Bet.rank)
         )
     ).all()
+    settler = await session.get(Membership, settlement.created_by)
+    assert settler is not None
     cancelled = settlement.kind == "cancellation"
     shared = any(LedgerKind.POT_SHARE.value in amounts for amounts in paid.values())
     return {
@@ -542,6 +554,7 @@ async def special_edition(
         "kind": settlement.kind,
         "result": None if cancelled else result_label(prono, options),
         "settled_at": settlement.created_at,
+        "settled_by": public_member(settler),
         "pot": prono.pot,
         "pot_lost": not cancelled and prono.pot > 0 and not shared,
         "winners": [
@@ -563,6 +576,63 @@ def _pct(part: int, total: int) -> int:
     return round(part * 100 / total) if total else 0
 
 
+def _shares(
+    options: Sequence[PronoOption], active: Sequence[Bet]
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Each answer with its share of the bets in force, and the split of the numbers or dates."""
+    counts: dict[uuid.UUID, list[int]] = defaultdict(lambda: [0, 0])
+    for bet in active:
+        if bet.option_id is not None:
+            counts[bet.option_id][0] += 1
+            counts[bet.option_id][1] += bet.stake
+    total = len(active)
+    values = [
+        (bet.number_value if bet.number_value is not None else bet.date_value, bet.stake)
+        for bet in active
+        if bet.number_value is not None or bet.date_value is not None
+    ]
+    buckets = [
+        {**asdict(b), "share_pct": _pct(b.count, total)}
+        for b in distribution(values)  # type: ignore[arg-type]
+    ]
+    option_rows = [
+        {
+            "id": o.id,
+            "label": o.label,
+            "is_correct": o.is_correct,
+            "count": counts[o.id][0],
+            "stake_total": counts[o.id][1],
+            "share_pct": _pct(counts[o.id][0], total),
+        }
+        for o in options
+    ]
+    return option_rows, buckets
+
+
+async def with_shares(session: AsyncSession, pronos: list[Prono]) -> list[dict[str, Any]]:
+    """The list view of several pronos, each with the split of its answers (la une's gauges)."""
+    ids = [p.id for p in pronos]
+    options: dict[uuid.UUID, list[PronoOption]] = defaultdict(list)
+    for option in (
+        await session.scalars(
+            select(PronoOption)
+            .where(PronoOption.prono_id.in_(ids))
+            .order_by(PronoOption.prono_id, PronoOption.position)
+        )
+    ).all():
+        options[option.prono_id].append(option)
+    active: dict[uuid.UUID, list[Bet]] = defaultdict(list)
+    for bet in (
+        await session.scalars(select(Bet).where(Bet.prono_id.in_(ids), Bet.superseded_at.is_(None)))
+    ).all():
+        active[bet.prono_id].append(bet)
+    views = []
+    for prono, summary in zip(pronos, await summaries(session, pronos), strict=True):
+        option_rows, buckets = _shares(options[prono.id], active[prono.id])
+        views.append({**summary, "options": option_rows, "distribution": buckets})
+    return views
+
+
 async def detail(session: AsyncSession, member: Membership, prono: Prono) -> dict[str, Any]:
     [summary] = await summaries(session, [prono])
     options = (
@@ -582,21 +652,7 @@ async def detail(session: AsyncSession, member: Membership, prono: Prono) -> dic
         )
     ).all()
     active = [bet for bet, _ in rows if bet.superseded_at is None]
-    counts: dict[uuid.UUID, list[int]] = defaultdict(lambda: [0, 0])
-    for bet in active:
-        if bet.option_id is not None:
-            counts[bet.option_id][0] += 1
-            counts[bet.option_id][1] += bet.stake
-    total = len(active)
-    values = [
-        (bet.number_value if bet.number_value is not None else bet.date_value, bet.stake)
-        for bet in active
-        if bet.number_value is not None or bet.date_value is not None
-    ]
-    buckets = [
-        {**asdict(b), "share_pct": _pct(b.count, total)}
-        for b in distribution(values)  # type: ignore[arg-type]
-    ]
+    option_rows, buckets = _shares(options, active)
     mine = next((bet for bet, m in rows if m.id == member.id and bet.superseded_at is None), None)
     members = {m.id: public_member(m) for _, m in rows}
     today = clock.now().astimezone(PARIS).date()
@@ -618,17 +674,7 @@ async def detail(session: AsyncSession, member: Membership, prono: Prono) -> dic
     ).all()
     return {
         **summary,
-        "options": [
-            {
-                "id": o.id,
-                "label": o.label,
-                "is_correct": o.is_correct,
-                "count": counts[o.id][0],
-                "stake_total": counts[o.id][1],
-                "share_pct": _pct(counts[o.id][0], total),
-            }
-            for o in options
-        ],
+        "options": option_rows,
         "distribution": buckets,
         "bets": [bet_view(bet, prono, m, labels) for bet, m in rows],
         "my_bet": bet_view(mine, prono, member, labels) if mine else None,

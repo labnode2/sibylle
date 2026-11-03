@@ -67,6 +67,36 @@
   gap: 14px;
 }
 
+.editionTop {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editionActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.ranking {
+  flex: 1;
+  min-height: 48px;
+}
+
+.share {
+  min-height: 48px;
+  padding: 0 18px;
+  font-size: 16px;
+}
+
+@media (min-width: 1024px) {
+  .ranking {
+    flex: 0 0 auto;
+  }
+}
+
 .editionHead {
   display: flex;
   flex-direction: column;

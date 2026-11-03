@@ -40,8 +40,10 @@ export function LedgerList({ orgId }: { orgId: string }) {
   const entries = ledger.data?.pages.flatMap((page) => page.items) ?? [];
 
   return (
-    <section className={styles.section} aria-label={t('ledger.title')}>
-      <h2 className={styles.sectionTitle}>{t('ledger.title')}</h2>
+    <section className={styles.section} aria-labelledby="card-ledger">
+      <h2 id="card-ledger" className={styles.intertitle}>
+        {t('ledger.title')}
+      </h2>
       <ul className={styles.ledger}>
         {entries.map((entry) => (
           <li key={entry.id} className={styles.ledgerRow}>

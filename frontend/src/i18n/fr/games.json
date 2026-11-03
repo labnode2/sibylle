@@ -60,10 +60,10 @@
       "title": "DÉPOSER UN DESSIN",
       "text": "Dessine en 16 × 16 ou 32 × 32 et choisis le mot : un seul dessin se joue à la fois, les suivants attendent leur tour.",
       "open": "Dessiner un Pixel mystère",
-      "editor": "Ton Pixel mystère",
+      "editor": "Ton dessin",
       "word": "LE MOT À DEVINER",
       "wordHint": "Des lettres seulement, 24 caractères au plus ; majuscules et accents ne comptent pas.",
-      "save": "Déposer le dessin",
+      "save": "Déposer",
       "started": "Ton dessin est lancé : la rédaction peut chercher.",
       "queued": "Ton dessin attend son tour : il démarrera un matin à 8 h."
     },

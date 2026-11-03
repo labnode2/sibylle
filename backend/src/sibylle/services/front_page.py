@@ -3,7 +3,7 @@
 from collections import defaultdict
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle.db.models import Bet, Membership, Organisation, Prono, PronoOption
@@ -15,7 +15,8 @@ from sibylle.services.orgs import public_member
 
 OPEN_LIMIT = 12
 RESULTS_LIMIT = 3
-TOP = 3
+# Five on a computer; a phone shows the first three.
+TOP = 5
 
 
 async def _latest_results(session: AsyncSession, member: Membership) -> list[dict[str, Any]]:
@@ -59,13 +60,15 @@ async def _latest_results(session: AsyncSession, member: Membership) -> list[dic
     ]
 
 
-async def _leaderboard_top(session: AsyncSession, member: Membership) -> list[dict[str, Any]]:
-    """The season's first three, then the member's own line when they are not among them."""
-    board = await leaderboard.board(session, member.org_id, Metric.LAURELS, Period.SEASON)
+async def _leaderboard_top(
+    session: AsyncSession, member: Membership
+) -> tuple[str, list[dict[str, Any]]]:
+    """The month's first five, then the member's own line when they are not among them."""
+    board = await leaderboard.board(session, member.org_id, Metric.LAURELS, Period.MONTH)
     lines = board.lines[:TOP]
     if all(line.member.id != member.id for line in lines):
         lines += [line for line in board.lines[TOP:] if line.member.id == member.id]
-    return [
+    return board.period_label, [
         {
             "rank": line.rank,
             "member": public_member(line.member),
@@ -90,7 +93,12 @@ async def front_page(session: AsyncSession, member: Membership) -> dict[str, Any
             )
         ).all()
     )
-    summaries = await pronos.summaries(session, open_pronos)
+    summaries = await pronos.with_shares(session, open_pronos)
+    open_count = await session.scalar(
+        select(func.count())
+        .select_from(Prono)
+        .where(pronos.visible_to(member), Prono.state == State.OPEN.value)
+    )
     to_designate = None
     if can(member.role, Action.DESIGNATE_RESULT):
         closed = list(
@@ -103,11 +111,14 @@ async def front_page(session: AsyncSession, member: Membership) -> dict[str, Any
             ).all()
         )
         to_designate = await pronos.summaries(session, closed)
+    period, top = await _leaderboard_top(session, member)
     return {
         "headline": summaries[0] if summaries else None,
         "open": summaries[1:],
+        "open_count": open_count or 0,
         "to_designate": to_designate,
         "latest_results": await _latest_results(session, member),
-        "leaderboard_top": await _leaderboard_top(session, member),
+        "leaderboard_top": top,
+        "leaderboard_period": period,
         "editor_note": org.editor_note,
     }

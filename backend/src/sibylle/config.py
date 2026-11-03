@@ -3,6 +3,7 @@
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal, Self
+from urllib.parse import urlsplit
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -43,6 +44,18 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
+
+    @property
+    def secure_cookies(self) -> bool:
+        """The session cookie is `Secure`, except in development on a local network address in
+        plain http (`make dev UI_HOST=192.168.71.12`, to try the app on a phone): browsers keep
+        `Secure` cookies only on https and on localhost. Production always keeps it."""
+        origin = urlsplit(self.public_origin)
+        return (
+            self.is_production
+            or origin.scheme == "https"
+            or origin.hostname in ("localhost", "127.0.0.1", "::1")
+        )
 
 
 @lru_cache

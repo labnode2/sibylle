@@ -1,3 +1,4 @@
+import asyncio
 import io
 from datetime import timedelta
 from typing import Any
@@ -68,6 +69,23 @@ async def test_a_journalist_publishes_a_prono(make_org: MakeOrg, person: MakePer
 
     yes_no = await publish(hugo.client, str(org.id), kind="yes_no", options=[])
     assert [o["label"] for o in yes_no["options"]] == ["Oui", "Non"]
+
+
+async def test_each_newsroom_numbers_its_pronos(make_org: MakeOrg, person: MakePerson) -> None:
+    """« PRONO N° 128 »: one count per newsroom, proposals included, never twice the same."""
+    org = await make_org()
+    other = await make_org("Autre rédaction")
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    stranger = await person(other, "journalist", "Inconnu")
+    first = await publish(hugo.client, str(org.id))
+    proposal = await publish(cami.client, str(org.id), question="Une idée de Cami ?")
+    elsewhere = await publish(stranger.client, str(other.id))
+    concurrent = await asyncio.gather(*(publish(hugo.client, str(org.id)) for _ in range(4)))
+    assert (first["number"], proposal["number"], elsewhere["number"]) == (1, 2, 1)
+    assert sorted(p["number"] for p in concurrent) == [3, 4, 5, 6]
+    listed = (await hugo.client.get(f"/api/orgs/{org.id}/pronos", params={"state": "open"})).json()
+    assert sorted(p["number"] for p in listed["items"]) == [1, 3, 4, 5, 6]
 
 
 async def test_publishing_is_checked(make_org: MakeOrg, person: MakePerson) -> None:

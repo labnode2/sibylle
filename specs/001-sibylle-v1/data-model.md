@@ -59,7 +59,8 @@ PK (`account_id`, `type`, `channel`) ; `type` ∈ `new_prono`, `closing_soon`, `
 | early_bird_count | integer | ≥ 0, défaut 5 |
 | editor_note | text | « le mot de la rédaction en chef », facultatif |
 | charter | text | charte acceptée en rejoignant, texte par défaut fourni |
-| created_at, deleted_at | timestamptz | |
+| last_prono_number | integer | numéro du dernier prono écrit ; le suivant prend le numéro d'après (« PRONO N° 128 ») |
+| created_at, deleted_at | timestamptz | `created_at` donne aussi le numéro d'édition de la une : « N° 305 » est le 305ᵉ jour de la rédaction, heure de Paris |
 
 ### memberships (membre)
 
@@ -96,6 +97,7 @@ Règles : au moins un `editor` actif par organisation qui a des membres actifs ;
 |---|---|---|
 | id | uuid | PK |
 | org_id, section_id | uuid | la rubrique appartient à la même organisation |
+| number | integer | numéro du prono dans sa rédaction, à partir de 1, propositions comprises ; unique (`org_id`, `number`) ; pris sous le verrou de la ligne de la rédaction |
 | kind | PronoKind | non modifiable après le premier pari |
 | question | text | 5 à 200 caractères |
 | link_url | text | `https` seulement, facultatif |

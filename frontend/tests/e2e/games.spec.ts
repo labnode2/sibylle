@@ -24,9 +24,9 @@ test('five runs a week, the best one counts, Monday pays', async ({ browser }, t
   await createNewsroom(ines, 'Sophia Office', 'Inès');
   const orgId = orgIdOf(ines);
 
-  const games = ines.getByRole('region', { name: 'LES JEUX DE LA SEMAINE' });
+  const games = ines.getByRole('region', { name: 'Jeux de la semaine' });
   await expect(games).toContainText('PAS ENCORE DE RECORD · 5 ESSAIS SUR 5');
-  await games.getByRole('link', { name: 'Jouer' }).click();
+  await games.getByRole('link', { name: /Course de la boule/ }).click();
   await expect(ines.getByRole('heading', { name: 'Course de la boule' })).toBeVisible();
 
   // Nobody jumps: each run ends on the first obstacle, after a couple of seconds.
@@ -71,7 +71,7 @@ test('Pixel mystère: drawn, guessed in order, ended both ways', async ({ browse
   ] as const) {
     const page = await newPerson(browser, testInfo, name, invitation);
     await joinWith(page, pseudo);
-    await expect(page.getByRole('heading', { name: `Bonjour ${pseudo}` })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^La une de / })).toBeVisible();
     people.push(page);
   }
   const [camiPage, leoPage, manonPage] = people as [Page, Page, Page];
@@ -81,18 +81,18 @@ test('Pixel mystère: drawn, guessed in order, ended both ways', async ({ browse
   await expect(ines.getByText('Pas de Pixel mystère en cours.')).toBeVisible();
   await ines.getByRole('button', { name: 'Dessiner un Pixel mystère' }).click();
   await ines.getByLabel('LE MOT À DEVINER').fill('Café');
-  const editor = ines.getByRole('region', { name: 'Ton Pixel mystère' });
-  await editor.getByRole('radio', { name: 'Couleur 13' }).click();
+  const editor = ines.getByRole('region', { name: 'Ton dessin' });
+  await editor.getByRole('radio', { name: 'Rouge', exact: true }).click();
   await editor.getByRole('application').click({ position: { x: 40, y: 40 } });
-  await editor.getByRole('button', { name: 'Déposer le dessin' }).click();
+  await editor.getByRole('button', { name: 'Déposer' }).click();
   await expect(ines.getByText('Ton dessin est lancé')).toBeVisible();
   await expect(ines.getByText('LE MOT : Café')).toBeVisible();
 
   // Cami, from la une: a wrong guess, then the word without its accent.
-  const box = camiPage.getByRole('region', { name: 'LES JEUX DE LA SEMAINE' });
+  const box = camiPage.getByRole('region', { name: 'Jeux de la semaine' });
   await camiPage.reload();
   await expect(box).toContainText('UN MOT DE 4 LETTRES · LANCÉ PAR LA RÉDACTION');
-  await box.getByRole('link', { name: 'Jouer' }).last().click();
+  await box.getByRole('link', { name: /Pixel mystère/ }).click();
   await expect(camiPage.getByRole('heading', { name: 'Pixel mystère' })).toBeVisible();
   await expect(camiPage.getByRole('img', { name: /37 pixels dévoilés sur 256/ })).toBeVisible();
   await camiPage.getByLabel('TA PROPOSITION').fill('thé');

@@ -30,12 +30,13 @@
     "label": "Navigation principale",
     "une": "LA UNE",
     "pronos": "PRONOS",
-    "ranking": "CLASSEMENT",
+    "pronosLong": "LES PRONOS",
     "profile": "PROFIL",
-    "settings": "RÉGLAGES"
+    "profileLong": "MON PROFIL"
   },
   "shell": {
     "loading": "Chargement…",
+    "dateline": "N° {{number}} · {{date}}",
     "offline": "Tu es hors ligne : tu peux relire la dernière édition, mais parier demande une connexion.",
     "notFound": "Cette page n'existe pas.",
     "backHome": "Retour à la une",

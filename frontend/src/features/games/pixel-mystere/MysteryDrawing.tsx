@@ -15,11 +15,14 @@ export function MysteryDrawing({
   size,
   revealed,
   label,
+  className = styles.mystery,
 }: {
   size: 16 | 32;
   /** Base64, one byte per pixel: a palette index, or 255 for a pixel not shown yet. */
   revealed: string;
-  label: string;
+  /** Without one, the drawing is decorative (a thumbnail beside its title). */
+  label?: string;
+  className?: string;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
 
@@ -52,9 +55,10 @@ export function MysteryDrawing({
       ref={canvas}
       width={size}
       height={size}
-      className={styles.mystery}
-      role="img"
+      className={className}
+      role={label ? 'img' : undefined}
       aria-label={label}
+      aria-hidden={label ? undefined : true}
     />
   );
 }

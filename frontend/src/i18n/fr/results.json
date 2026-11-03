@@ -40,7 +40,6 @@
   },
   "edition": {
     "title": "Édition spéciale",
-    "meta": "{{date}} · N° {{seq}}",
     "corrected": "CORRIGÉE",
     "result": "Résultat :",
     "cancelled": "Prono annulé : toutes les mises ont été rendues.",
@@ -59,7 +58,15 @@
     "winners": "ILS AVAIENT VU JUSTE · {{count}}",
     "nobody": "Personne n'avait vu juste.",
     "potLost": "La cagnotte de {{pot}} lauriers est perdue : personne n'avait misé sur la bonne réponse.",
-    "potLostNobody": "La cagnotte de {{pot}} lauriers est perdue : personne n'avait vu juste."
+    "potLostNobody": "La cagnotte de {{pot}} lauriers est perdue : personne n'avait vu juste.",
+    "by": {
+      "resolution": "{{date}} · VALIDÉ PAR {{pseudo}}",
+      "correction": "{{date}} · CORRIGÉ PAR {{pseudo}}",
+      "cancellation": "{{date}} · ANNULÉ PAR {{pseudo}}"
+    },
+    "ranking": "Voir le classement",
+    "share": "Partager",
+    "copied": "Lien copié."
   },
   "report": {
     "open": "Signaler une erreur",

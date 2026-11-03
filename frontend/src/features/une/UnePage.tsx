@@ -1,20 +1,37 @@
-// La une (canvas B-Accueil on a phone, B-Web-Accueil on a computer): the prono closing first,
-// the other open pronos, what waits for a result (journalists), the latest results, the top of
-// the ranking, the games of the week and the editor's note, in that order (FR-080).
-import type { ReactNode } from 'react';
+// La une (canvas B-Accueil on a phone, B-Web-Accueil on a computer). On a phone: the number and
+// date of the edition with my laurels, the newspaper's title, the edition and its readers, then
+// the prono closing first with its gauge, a brief beside the games, the month's ranking and the
+// other briefs. On a computer the title and the navigation come from the frame; the prono runs
+// large beside the ranking and the games, and « En bref » closes the page. The blocks keep the
+// spec's order (FR-080): pronos, what waits for a result (journalists), results, ranking, games,
+// the editor's note.
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
+import type { Org } from '../../api/types';
 import { formatDate, formatNumber } from '../../i18n';
-import { ButtonLink, Card, Kicker, Laurel, Wallet } from '../../ui/components';
+import {
+  ButtonLink,
+  Card,
+  Kicker,
+  KeyPhrase,
+  Laurel,
+  Masthead,
+  SectionHead,
+  Wallet,
+} from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
 import { WeeklyGames } from '../games/WeeklyGames';
+import { EditionLink } from '../orgs/OrgSwitcher';
 import { useOrg } from '../orgs/api';
 import type { PronoSummary } from '../pronos/api';
 import { ProposalsPanel } from '../pronos/ProposalsPanel';
-import { ReactionBar } from '../pronos/ReactionBar';
-import { useFrontPage, type LatestResult } from './api';
+import { useFrontPage, type FrontPage, type FrontProno, type LatestResult } from './api';
 import styles from './une.module.css';
+
+// On a phone, the ranking stops at the third line (and mine).
+const PHONE_TOP = 3;
 
 const closing = (value: string) =>
   formatDate(value, {
@@ -25,80 +42,209 @@ const closing = (value: string) =>
     minute: '2-digit',
   }).toUpperCase();
 
-function Block({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className={styles.block} aria-label={title}>
-      <h2 className={styles.blockTitle}>{title}</h2>
-      {children}
-    </section>
-  );
+/** "2026-11" → "NOVEMBRE". */
+const monthName = (period: string) => {
+  const [year, month] = period.split('-').map(Number);
+  return formatDate(new Date(year!, month! - 1, 15), { month: 'long' }).toUpperCase();
+};
+
+/** The answers and their shares, the favourite first: options, or the split of the values. */
+function shares(prono: FrontProno): { label: string; pct: number }[] {
+  const rows = prono.options.length
+    ? prono.options.map((o) => ({ label: o.label, pct: o.share_pct }))
+    : prono.distribution.map((b) => ({ label: b.label, pct: b.share_pct }));
+  return rows;
 }
 
 /** "CLÔTURE {day time} · {n} PRONOS · CAGNOTTE {pot}" */
-function PronoLine({ prono }: { prono: PronoSummary }) {
+function PronoLine({ prono, gain = false }: { prono: PronoSummary; gain?: boolean }) {
   const { t } = useTranslation('une');
   return (
-    <span className={styles.meta}>
+    <p className={styles.meta}>
       {[
         prono.closes_at ? t('closes', { date: closing(prono.closes_at) }) : t('openEnded'),
         t('bets', { count: prono.bet_count }),
         t('pot', { pot: formatNumber(prono.pot) }),
       ].join(' · ')}
-    </span>
+      {gain && <span className="only-desktop">{` · ${t('gain', { gain: prono.base_gain })}`}</span>}
+    </p>
   );
 }
 
-function Headline({ orgId, prono }: { orgId: string; prono: PronoSummary }) {
+/** The gauge of la une: the favourite in ink, the others in indigo and mist (canvas G-Style). */
+function Poll({ prono }: { prono: FrontProno }) {
   const { t } = useTranslation('une');
+  const rows = shares(prono);
+  if (prono.bet_count === 0 || rows.length === 0) return null;
+  const top = Math.max(...rows.map((r) => r.pct));
+  let other = 0;
+  const label = t('poll', { split: rows.map((r) => `${r.label} ${r.pct} %`).join(', ') });
   return (
-    <Card as="article" className={styles.headline} aria-label={t('headline')}>
-      <Kicker tone="indigo">
-        {t('headlineKicker', { section: prono.section.name.toUpperCase() })}
-      </Kicker>
-      <Link to={`/o/${orgId}/pronos/${prono.id}`} className={styles.headlineTitle}>
-        {prono.question}
-      </Link>
-      <PronoLine prono={prono} />
-      <div className={styles.headlineFoot}>
-        <ReactionBar orgId={orgId} pronoId={prono.id} />
-        <ButtonLink to={`/o/${orgId}/pronos/${prono.id}`}>{t('play')}</ButtonLink>
-      </div>
-    </Card>
-  );
-}
-
-function PronoRows({ orgId, pronos }: { orgId: string; pronos: PronoSummary[] }) {
-  return (
-    <ul className={styles.rows}>
-      {pronos.map((prono) => (
-        <li key={prono.id}>
-          <Link to={`/o/${orgId}/pronos/${prono.id}`} className={styles.row}>
-            <span className={styles.rowTitle}>{prono.question}</span>
-            <PronoLine prono={prono} />
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function ResultRows({ orgId, results }: { orgId: string; results: LatestResult[] }) {
-  const { t } = useTranslation('une');
-  return (
-    <ul className={styles.rows}>
-      {results.map(({ prono, result, my_outcome, my_payout }) => (
-        <li key={prono.id}>
-          <Link to={`/o/${orgId}/pronos/${prono.id}`} className={styles.row}>
-            <span className={styles.rowTitle}>{prono.question}</span>
-            <span className={styles.meta}>
-              {t('result', { result: result ?? '—' })}
-              {my_outcome === 'won' && ` · ${t('won', { payout: formatNumber(my_payout ?? 0) })}`}
-              {my_outcome === 'lost' && ` · ${t('lost')}`}
+    <div className={styles.poll} role="img" aria-label={label}>
+      {rows.map((row) => {
+        const tone =
+          row.pct === top ? styles.fillInk : other++ % 2 ? styles.fillIndigo : styles.fillMist;
+        return (
+          <div key={row.label} className={styles.pollRow} aria-hidden="true">
+            <span className={styles.pollLabel}>{row.label}</span>
+            <span className={styles.rail}>
+              <span className={`${styles.fill} ${tone}`} style={{ width: `${row.pct}%` }} />
             </span>
-          </Link>
-        </li>
-      ))}
-    </ul>
+            <span className={styles.pollPct}>{row.pct} %</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function Headline({ orgId, front }: { orgId: string; front: FrontPage }) {
+  const { t } = useTranslation('une');
+  const prono = front.headline!;
+  const to = `/o/${orgId}/pronos/${prono.id}`;
+  const deck =
+    (prono.closes_at
+      ? t('deckClose', {
+          date: formatDate(prono.closes_at, {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        })
+      : t('deckOpenEnded')) +
+    ' ' +
+    (prono.bet_count === 0 ? t('deckNobody') : t('deckCount', { count: prono.bet_count }));
+  return (
+    <article className={styles.lead} aria-label={t('headline')}>
+      <Kicker tone="indigo">
+        {t('headlineKicker', {
+          section: prono.section.name.toUpperCase(),
+          author: prono.created_by.pseudo.toUpperCase(),
+        })}
+      </Kicker>
+      <h2 id="une-headline" className={styles.leadTitle}>
+        <Link to={to} state={{ from: 'une' }}>
+          <KeyPhrase text={prono.question} />
+        </Link>
+      </h2>
+      <p className={`only-desktop ${styles.deck}`}>{deck}</p>
+      <Poll prono={prono} />
+      <PronoLine prono={prono} gain />
+      <div className={styles.leadActions}>
+        <ButtonLink to={to} state={{ from: 'une' }} className={styles.play}>
+          {t('play')}
+        </ButtonLink>
+        <Link to={`/o/${orgId}/pronos`} className={styles.allOpen}>
+          {front.open_count > 1 ? t('allOpen', { count: front.open_count }) : t('allPronos')}
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+/** "NON 72 % · JEU. 9:00": the favourite answer, then the closing. */
+function briefTag(t: TFunction<'une'>, prono: FrontProno): string {
+  const rows = shares(prono);
+  const favourite = rows.reduce<{ label: string; pct: number } | null>(
+    (best, row) => (!best || row.pct > best.pct ? row : best),
+    null,
+  );
+  return [
+    prono.bet_count > 0 && favourite ? `${favourite.label.toUpperCase()} ${favourite.pct} %` : null,
+    prono.closes_at ? t('closes', { date: closing(prono.closes_at) }) : t('openEnded'),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+function Brief({ orgId, prono }: { orgId: string; prono: FrontProno }) {
+  const { t } = useTranslation('une');
+  return (
+    <Link to={`/o/${orgId}/pronos/${prono.id}`} state={{ from: 'une' }} className={styles.brief}>
+      <span className={styles.briefKicker}>{prono.section.name.toUpperCase()}</span>
+      <span className={styles.briefTitle}>{prono.question}</span>
+      <span className={styles.tag}>{briefTag(t, prono)}</span>
+    </Link>
+  );
+}
+
+function ResultBrief({ orgId, latest }: { orgId: string; latest: LatestResult }) {
+  const { t } = useTranslation('une');
+  const { prono, result, my_outcome, my_payout } = latest;
+  const won = my_outcome === 'won';
+  return (
+    <Link to={`/o/${orgId}/pronos/${prono.id}`} state={{ from: 'une' }} className={styles.brief}>
+      <span className={styles.briefKicker}>
+        {t('resultKicker', { section: prono.section.name.toUpperCase() })}
+      </span>
+      <span className={styles.briefTitle}>{prono.question}</span>
+      <span className={`${styles.tag} ${won ? styles.tagWon : ''}`}>
+        {[
+          t('result', { result: result ?? '—' }),
+          won ? t('won', { payout: formatNumber(my_payout ?? 0) }) : null,
+          my_outcome === 'lost' ? t('lost') : null,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+      </span>
+    </Link>
+  );
+}
+
+function Ranking({ orgId, front }: { orgId: string; front: FrontPage }) {
+  const { t } = useTranslation('une');
+  return (
+    <section className={styles.ranking} aria-labelledby="une-ranking">
+      <SectionHead
+        id="une-ranking"
+        title={t('leaderboard')}
+        meta={monthName(front.leaderboard_period)}
+      />
+      <ol className={styles.top}>
+        {front.leaderboard_top.map((row, index) => (
+          <li
+            key={row.member.id}
+            className={[
+              row.is_me ? styles.me : '',
+              index >= PHONE_TOP && !row.is_me ? styles.computerOnly : '',
+            ].join(' ')}
+            aria-current={row.is_me ? 'true' : undefined}
+          >
+            <span className={styles.rank}>{row.rank}</span>
+            <PixelImage image={row.member.avatar} size={28} />
+            <span className={styles.topName}>
+              {row.is_me ? t('you', { pseudo: row.member.pseudo }) : row.member.pseudo}
+            </span>
+            <Laurel value={row.value} />
+          </li>
+        ))}
+      </ol>
+      <Link to={`/o/${orgId}/classement`} className={styles.more}>
+        {t('fullLeaderboard')}
+      </Link>
+    </section>
+  );
+}
+
+/** « N° 305 · DIM. 1 NOV. 2026 », then my laurels: the phone's top line. */
+function Dateline({ orgId, org }: { orgId: string; org: Org }) {
+  const { t } = useTranslation('une');
+  const me = org.my_membership;
+  const today = formatDate(new Date(), {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).toUpperCase();
+  return (
+    <div className={`only-mobile ${styles.dateline}`}>
+      <span>{t('common:shell.dateline', { number: org.edition_number, date: today })}</span>
+      <Link to={`/o/${orgId}/profil`} className={styles.mine}>
+        <Wallet balance={me.balance} gold={me.gold} coins={me.coins} />
+      </Link>
+    </div>
   );
 }
 
@@ -111,88 +257,116 @@ export function UnePage() {
   const me = org.data.my_membership;
   const front = page.data;
   const newsroom = me.role !== 'reader';
+  const [first, ...others] = front?.open ?? [];
 
   return (
     <div className={styles.une}>
-      <div className={styles.hello}>
-        <PixelImage image={me.avatar} size={48} />
-        <div className={styles.helloText}>
-          <Kicker tone="indigo">
-            {t('orgs:une.edition', { title: org.data.title.toUpperCase() })}
-          </Kicker>
-          <h1 className={styles.title}>{t('orgs:une.hello', { pseudo: me.pseudo })}</h1>
-          <Wallet balance={me.balance} gold={me.gold} coins={me.coins} captions />
-        </div>
+      <h1 className="visually-hidden">{t('title', { org: org.data.title })}</h1>
+      <Dateline orgId={orgId} org={org.data} />
+      <div className="only-mobile">
+        <Masthead size="compact" />
+      </div>
+      <div className={`only-mobile ${styles.editionBar}`}>
+        <EditionLink org={org.data} />
+        <span>{t('readers', { count: org.data.member_count })}</span>
       </div>
 
       {!front ? (
         <p role="status">{t('common:shell.loading')}</p>
       ) : (
-        <div className={styles.columns}>
-          <div className={styles.main}>
-            {front.headline ? (
-              <Headline orgId={orgId} prono={front.headline} />
-            ) : (
-              <Card shadow={0} className={styles.empty}>
-                <p>{t('noOpen')}</p>
-                <ButtonLink to={`/o/${orgId}/pronos/nouveau`} variant="secondary">
-                  {t(newsroom ? 'publish' : 'propose')}
-                </ButtonLink>
+        <>
+          <div className={styles.columns}>
+            <div className={styles.main}>
+              {front.headline ? (
+                <Headline orgId={orgId} front={front} />
+              ) : (
+                <Card shadow={0} className={styles.empty}>
+                  <p>{t('noOpen')}</p>
+                  <ButtonLink to={`/o/${orgId}/pronos/nouveau`} variant="secondary">
+                    {t(newsroom ? 'publish' : 'propose')}
+                  </ButtonLink>
+                </Card>
+              )}
+
+              {/* On a phone, the next prono beside the games. */}
+              <div className={`only-mobile ${styles.pair} ${first ? '' : styles.pairAlone}`}>
+                {first && (
+                  <div className={styles.pairBrief}>
+                    <Brief orgId={orgId} prono={first} />
+                  </div>
+                )}
+                <section className={styles.pairGames} aria-label={t('games')}>
+                  <span className={styles.briefKicker}>{t('games').toUpperCase()}</span>
+                  <WeeklyGames orgId={orgId} size={32} />
+                </section>
+              </div>
+
+              {front.to_designate && front.to_designate.length > 0 && (
+                <section className={styles.block} aria-labelledby="une-designate">
+                  <SectionHead
+                    id="une-designate"
+                    title={t('toDesignate')}
+                    meta={String(front.to_designate.length)}
+                  />
+                  <ul className={styles.rows}>
+                    {front.to_designate.map((prono) => (
+                      <li key={prono.id}>
+                        <Link to={`/o/${orgId}/pronos/${prono.id}`} className={styles.row}>
+                          <span className={styles.rowTitle}>{prono.question}</span>
+                          <PronoLine prono={prono} />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+              {newsroom && <ProposalsPanel orgId={orgId} />}
+            </div>
+
+            <aside className={styles.side} aria-label={t('aside')}>
+              <Ranking orgId={orgId} front={front} />
+              <Card
+                as="section"
+                className={`only-desktop ${styles.gamesBox}`}
+                aria-label={t('games')}
+              >
+                <span className={styles.briefKicker}>{t('games').toUpperCase()}</span>
+                <WeeklyGames orgId={orgId} size={48} />
               </Card>
-            )}
-            {front.open.length > 0 && (
-              <Block title={t('open')}>
-                <PronoRows orgId={orgId} pronos={front.open} />
-              </Block>
-            )}
-            {front.to_designate && front.to_designate.length > 0 && (
-              <Block title={t('toDesignate')}>
-                <PronoRows orgId={orgId} pronos={front.to_designate} />
-              </Block>
-            )}
-            {newsroom && <ProposalsPanel orgId={orgId} />}
-            {front.latest_results.length > 0 && (
-              <Block title={t('latestResults')}>
-                <ResultRows orgId={orgId} results={front.latest_results} />
-              </Block>
-            )}
+              {front.editor_note && (
+                <section className={styles.block} aria-labelledby="une-note">
+                  <SectionHead id="une-note" title={t('editorNote')} />
+                  <blockquote className={styles.note}>{front.editor_note}</blockquote>
+                </section>
+              )}
+            </aside>
           </div>
 
-          <aside className={styles.side}>
-            <Block title={t('leaderboard')}>
-              <ol className={styles.top}>
-                {front.leaderboard_top.map((row) => (
-                  <li
-                    key={row.member.id}
-                    className={row.is_me ? styles.me : undefined}
-                    aria-current={row.is_me ? 'true' : undefined}
-                  >
-                    <span className={styles.rank}>{row.rank}</span>
-                    <PixelImage image={row.member.avatar} size={24} />
-                    <span className={styles.topName}>{row.member.pseudo}</span>
-                    <Laurel value={row.value} />
-                  </li>
+          {(others.length > 0 || front.latest_results.length > 0 || first) && (
+            <section
+              className={`${styles.briefs} ${others.length || front.latest_results.length ? '' : 'only-desktop'}`}
+              aria-labelledby="une-briefs"
+            >
+              <h2 id="une-briefs" className={styles.briefsTitle}>
+                {t('briefs')}
+              </h2>
+              <div className={styles.briefGrid}>
+                {first && (
+                  <div className="only-desktop">
+                    <Brief orgId={orgId} prono={first} />
+                  </div>
+                )}
+                {others.map((prono) => (
+                  <Brief key={prono.id} orgId={orgId} prono={prono} />
                 ))}
-              </ol>
-              <Link to={`/o/${orgId}/classement`} className={styles.more}>
-                {t('fullLeaderboard')}
-              </Link>
-            </Block>
-            <Block title={t('games')}>
-              <WeeklyGames orgId={orgId} />
-            </Block>
-            {front.editor_note && (
-              <Block title={t('editorNote')}>
-                <blockquote className={styles.note}>{front.editor_note}</blockquote>
-              </Block>
-            )}
-          </aside>
-        </div>
+                {front.latest_results.map((latest) => (
+                  <ResultBrief key={latest.prono.id} orgId={orgId} latest={latest} />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
       )}
-
-      <Link to="/redactions" className={styles.more}>
-        {t('orgs:une.switch')}
-      </Link>
     </div>
   );
 }

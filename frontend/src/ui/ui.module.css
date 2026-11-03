@@ -34,6 +34,138 @@
   line-height: 0.85;
 }
 
+/* The title in one line on a computer's other pages: the ball and « Sibylle » at 48 px. */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.logo:hover {
+  color: var(--ink);
+}
+.logoName {
+  font: 400 48px/1 var(--font-title);
+}
+
+/* A page's top line on a phone: « ‹ LA UNE » on the left, what the page is on the right. */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  border-bottom: 1px solid var(--ink);
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap);
+  color: var(--ink);
+  text-decoration: none;
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+}
+.back:hover {
+  color: var(--ink);
+}
+.topBarAside {
+  font: 500 11px/1.3 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  text-align: right;
+}
+@media (min-width: 1024px) {
+  .topBar {
+    min-height: var(--tap);
+    border-bottom: 0;
+  }
+}
+
+/* Intertitles: Bricolage 800, a word in mono on the right (« Le classement · NOVEMBRE »). */
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 6px;
+}
+.intertitle {
+  font: 800 18px/1.2 var(--font-text);
+  letter-spacing: -0.01em;
+}
+.sectionMeta {
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  text-transform: uppercase;
+}
+@media (min-width: 1024px) {
+  .intertitle {
+    font-size: 22px;
+  }
+  .sectionMeta {
+    font-size: 12px;
+  }
+}
+
+/* Joined choices in a 2 px frame, the chosen one in ink. */
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(var(--segments, 2), minmax(0, 1fr));
+  border: 2px solid var(--ink);
+  background: var(--surface);
+}
+.segment {
+  min-height: var(--tap);
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 700 12px/1.1 var(--font-mono);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.segment + .segment {
+  border-left: 1px solid var(--ink);
+}
+.segment[aria-pressed='true'],
+.segment[aria-checked='true'] {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+/* The same as underlined words: periods of the ranking. */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+}
+.tabsButton {
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font: 600 11px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.tabsButton[aria-pressed='true'],
+.tabsButton[aria-checked='true'] {
+  color: var(--ink);
+  font-weight: 700;
+}
+.tabsButton > span {
+  padding: 3px 0;
+}
+.tabsButton[aria-pressed='true'] > span,
+.tabsButton[aria-checked='true'] > span {
+  border-bottom: 2px solid var(--ink);
+}
+
 /* Rules: 1 px to separate, 2 px to frame, a double rule (4 + 1 px) under the masthead. */
 .ruleDouble {
   height: 2px;
@@ -205,6 +337,14 @@
   color: var(--rule);
   cursor: not-allowed;
 }
+.stepperBlock {
+  display: flex;
+  width: 100%;
+}
+.stepperBlock .stepperValue {
+  flex: 1;
+  min-width: 0;
+}
 .stepperValue {
   display: flex;
   align-items: center;
@@ -303,9 +443,11 @@
   color: var(--ink-2);
 }
 
-/* Switch: on in ink, off in white. */
+/* Switch: on in ink, off in white; it takes touches 44 px high around it. */
 .switch {
+  position: relative;
   display: inline-flex;
+  flex: none;
   align-items: center;
   justify-content: flex-start;
   width: 44px;
@@ -314,6 +456,50 @@
   border: 2px solid var(--ink);
   background: var(--surface);
   cursor: pointer;
+}
+.switch::before {
+  content: '';
+  position: absolute;
+  inset: -12px -2px;
+}
+.switchRow .switch::before {
+  content: none;
+}
+
+/* A whole line that switches. */
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 54px;
+  padding: 6px 0;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.switchRowText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+}
+.switchRowLabel {
+  font: 600 16px/1.15 var(--font-text);
+}
+.switchRowHint {
+  font: 500 11px/1.3 var(--font-mono);
+  color: var(--ink-2);
+}
+.switchRow[aria-checked='true'] .switch {
+  justify-content: flex-end;
+  background: var(--ink);
+}
+.switchRow[aria-checked='true'] .switchKnob {
+  background: var(--surface);
 }
 .switch[aria-checked='true'] {
   justify-content: flex-end;

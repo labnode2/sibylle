@@ -1,7 +1,8 @@
-// The pixel art editor (canvas G-Pixel): a 16 × 16 or 32 × 32 grid, the base palette and the
-// member's unlocked colours, pencil, eraser and fill, undo, and a preview at whole scales.
+// The pixel art editor (canvas G-Pixel): « Annuler · MON PIXEL ART · Enregistrer » on top, the
+// size, a 16 × 16 or 32 × 32 grid, pencil, eraser, fill and eyedropper with the colour in use,
+// the base palette and the member's unlocked colours, undo, and the preview at a whole scale.
 // It works with a pointer or the keyboard (arrows to move, Space to draw, Ctrl+Z to undo).
-// Avatars, the newsroom's logo and Pixel mystère drawings all use it.
+// Avatars, the newsroom's logo and Pixel mystère drawings all use it; `screen` fills a page.
 import {
   useEffect,
   useRef,
@@ -11,16 +12,18 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '../../ui/components';
+import { Button, Segmented } from '../../ui/components';
 import { BASE_INDICES, PALETTE } from '../../ui/palette';
 import { decodePixels, encodePixels, PixelImage, type PixelImageData } from '../../ui/PixelImage';
 import { floodFill, paint, resize, type Size } from './grid';
 import styles from './pixel-editor.module.css';
 
-type Tool = 'pencil' | 'eraser' | 'fill';
-const TOOLS: Tool[] = ['pencil', 'eraser', 'fill'];
+type Tool = 'pencil' | 'eraser' | 'fill' | 'picker';
+const TOOLS: Tool[] = ['pencil', 'eraser', 'fill', 'picker'];
 // The grid is drawn at 320 px, whatever its size.
 const GRID_PX = 320;
+// The preview, at the largest whole scale under 64 px: 48 px for 16 × 16, 64 px for 32 × 32.
+const previewScale = (size: Size) => Math.floor(64 / size);
 
 /** A drawing as the server stores it. */
 export type Drawing = { size: Size; palette: 'base-v1'; pixels: string };
@@ -36,6 +39,8 @@ export type PixelEditorProps = {
   onCancel?: () => void;
   busy?: boolean;
   error?: string | null;
+  /** `screen`: the editor is the whole page (the avatar); `box`: it sits inside a form. */
+  layout?: 'box' | 'screen';
 };
 
 function blank(size: Size): Uint8Array {
@@ -52,6 +57,7 @@ export function PixelEditor({
   onCancel,
   busy,
   error,
+  layout = 'box',
 }: PixelEditorProps) {
   const { t } = useTranslation('pixel');
   const [size, setSize] = useState<Size>(initial?.size ?? sizes[0]!);
@@ -97,6 +103,13 @@ export function PixelEditor({
     return paint(current, size, x, y, tool === 'eraser' ? 0 : color);
   };
 
+  // The eyedropper takes the colour under it, then hands back the pencil.
+  const pick = (x: number, y: number) => {
+    const index = pixels[y * size + x] ?? 0;
+    if (index) setColor(index);
+    setTool('pencil');
+  };
+
   const undo = () => {
     const previous = history.at(-1);
     if (!previous) return;
@@ -115,6 +128,11 @@ export function PixelEditor({
   const onPointerDown = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     event.currentTarget.setPointerCapture(event.pointerId);
     const { x, y } = cellAt(event);
+    if (tool === 'picker') {
+      setCursor({ x, y });
+      pick(x, y);
+      return;
+    }
     remember();
     drawing.current = tool !== 'fill';
     setCursor({ x, y });
@@ -144,6 +162,10 @@ export function PixelEditor({
       }));
     } else if (event.key === ' ' || event.key === 'Enter') {
       event.preventDefault();
+      if (tool === 'picker') {
+        pick(cursor.x, cursor.y);
+        return;
+      }
       remember();
       setPixels((current) => apply(cursor.x, cursor.y, current));
     } else if (event.key === 'z' && (event.ctrlKey || event.metaKey)) {
@@ -161,24 +183,38 @@ export function PixelEditor({
   };
 
   const image: Drawing = { size, palette: 'base-v1', pixels: encodePixels(pixels) };
+  const colorName = (index: number) =>
+    t(`colors.${index}`, { defaultValue: t('color', { index }) });
+  const scale = previewScale(size);
 
   return (
-    <section className={styles.editor} aria-label={title}>
-      <h2 className={styles.title}>{title}</h2>
+    <section
+      className={`${styles.editor} ${layout === 'screen' ? styles.screen : ''}`}
+      aria-label={title}
+    >
+      <header className={styles.bar}>
+        {onCancel ? (
+          <button type="button" className={styles.cancel} onClick={onCancel} disabled={busy}>
+            {t('cancel')}
+          </button>
+        ) : (
+          <span />
+        )}
+        <h2 className={styles.title}>{title}</h2>
+        <Button className={styles.save} onClick={() => onSave(image)} disabled={busy}>
+          {saveLabel}
+        </Button>
+      </header>
       {sizes.length > 1 && (
-        <div className={styles.row} role="group" aria-label={t('size')}>
-          {sizes.map((value) => (
-            <button
-              key={value}
-              type="button"
-              className={styles.toggle}
-              aria-pressed={size === value}
-              onClick={() => changeSize(value)}
-            >
-              {t('sizeValue', { size: value })}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          label={t('size')}
+          options={sizes.map((value) => ({
+            value: String(value),
+            label: t('sizeValue', { size: value }),
+          }))}
+          value={String(size)}
+          onChange={(value) => changeSize(Number(value) as Size)}
+        />
       )}
 
       <div className={styles.workspace}>
@@ -198,19 +234,20 @@ export function PixelEditor({
           onKeyDown={onKeyDown}
         />
         <div className={styles.side}>
-          <div className={styles.row} role="radiogroup" aria-label={t('tools')}>
-            {TOOLS.map((value) => (
-              <button
-                key={value}
-                type="button"
-                role="radio"
-                aria-checked={tool === value}
-                className={styles.toggle}
-                onClick={() => setTool(value)}
-              >
-                {t(`tool.${value}`)}
-              </button>
-            ))}
+          <div className={styles.toolRow}>
+            <Segmented
+              label={t('tools')}
+              mode="radio"
+              options={TOOLS.map((value) => ({ value, label: t(`tool.${value}`) }))}
+              value={tool}
+              onChange={setTool}
+            />
+            <span
+              className={styles.current}
+              role="img"
+              aria-label={t('current', { name: colorName(color) })}
+              style={{ background: PALETTE[color] ?? 'transparent' }}
+            />
           </div>
           <div className={styles.palette} role="radiogroup" aria-label={t('palette')}>
             {colors.map((index) => (
@@ -219,24 +256,27 @@ export function PixelEditor({
                 type="button"
                 role="radio"
                 aria-checked={color === index}
-                aria-label={t('color', { index })}
+                aria-label={colorName(index)}
                 className={styles.swatch}
                 style={{ background: PALETTE[index] ?? 'transparent' }}
                 onClick={() => {
                   setColor(index);
-                  if (tool === 'eraser') setTool('pencil');
+                  if (tool === 'eraser' || tool === 'picker') setTool('pencil');
                 }}
               />
             ))}
           </div>
-          <div className={styles.row}>
+          <div className={styles.previewRow}>
+            <div className={styles.preview} aria-label={t('preview')} role="group">
+              <PixelImage image={image} size={size * scale} label={t('previewAt', { scale })} />
+            </div>
+            <div className={styles.previewText}>
+              <span className={styles.previewTitle}>{t('previewTitle')}</span>
+              <span className={styles.help}>{t('previewHint', { px: size * scale })}</span>
+            </div>
             <Button variant="secondary" onClick={undo} disabled={history.length === 0}>
               {t('undo')}
             </Button>
-          </div>
-          <div className={styles.preview} aria-label={t('preview')} role="group">
-            <PixelImage image={image} size={size * 2} label={t('previewAt', { scale: 2 })} />
-            <PixelImage image={image} size={size * 4} label={t('previewAt', { scale: 4 })} />
           </div>
         </div>
       </div>
@@ -251,16 +291,6 @@ export function PixelEditor({
           {error}
         </p>
       )}
-      <div className={styles.actions}>
-        {onCancel && (
-          <Button variant="secondary" onClick={onCancel} disabled={busy}>
-            {t('cancel')}
-          </Button>
-        )}
-        <Button onClick={() => onSave(image)} disabled={busy}>
-          {saveLabel}
-        </Button>
-      </div>
     </section>
   );
 }

@@ -14,19 +14,16 @@
   padding-top: 16px;
 }
 
+/* A page with its own header and no tabs: less room kept at the bottom. */
+.pageBare {
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+}
+
 .offline {
   margin: 12px 0 0;
   padding: 10px 12px;
   background: var(--grey);
   font: 500 12px/1.4 var(--font-mono);
-}
-
-.mobileOnly {
-  display: block;
-}
-
-.desktopOnly {
-  display: none;
 }
 
 .infoBar {
@@ -50,6 +47,12 @@
   gap: 8px 24px;
   min-height: 60px;
   border-bottom: 1px solid var(--ink);
+}
+
+/* The other pages: the title in one line, the navigation and the action beside it. */
+.navBarCompact {
+  min-height: 76px;
+  border-bottom: 0;
 }
 
 .nav {
@@ -83,6 +86,13 @@
   border-bottom: 2px solid var(--ink);
 }
 
+/* « Proposer un prono » beside the navigation: 44 px, like the canvas. */
+.action {
+  min-height: var(--tap);
+  padding: 0 16px;
+  font-size: 14px;
+}
+
 .slot {
   display: flex;
   align-items: center;
@@ -93,14 +103,6 @@
 @media (min-width: 1024px) {
   .page {
     padding: 0 32px 48px;
-  }
-
-  .mobileOnly {
-    display: none;
-  }
-
-  .desktopOnly {
-    display: block;
   }
 }
 

@@ -41,6 +41,7 @@ export function Rule({ variant = 'thin' }: { variant?: 'double' | 'thin' | 'ligh
   return <div aria-hidden="true" className={className} />;
 }
 
+/** The newspaper's title: on la une and the public pages only (canvas B-Accueil, G-Rejoindre). */
 export function Masthead({ size = 'compact' }: { size?: 'compact' | 'large' }) {
   const { t } = useTranslation();
   return (
@@ -54,6 +55,123 @@ export function Masthead({ size = 'compact' }: { size?: 'compact' | 'large' }) {
       </header>
       <Rule variant="double" />
     </>
+  );
+}
+
+/** The title in one line, back to la une: the computer's other pages (canvas B-Web-Prono). */
+export function Logo({ to }: { to: string }) {
+  const { t } = useTranslation();
+  return (
+    <Link to={to} className={styles.logo}>
+      <CrystalBall size={48} label={t('masthead.ball')} />
+      <span className={styles.logoName}>{t('masthead.name')}</span>
+    </Link>
+  );
+}
+
+/** A page's top line on a phone: the way back, and on the right what the page is
+ *  (« ‹ LA UNE · PRONO N° 128 »). On a computer the right side can stay on phones only. */
+export function TopBar({
+  back,
+  backLabel,
+  aside,
+  asideOnPhoneOnly = false,
+}: {
+  back: LinkProps['to'];
+  backLabel: string;
+  aside?: ReactNode;
+  asideOnPhoneOnly?: boolean;
+}) {
+  return (
+    <div className={styles.topBar}>
+      <Link to={back} className={styles.back}>
+        <Icon name="chevronLeft" size={24} />
+        <span>{backLabel}</span>
+      </Link>
+      {aside && (
+        <span className={cx(styles.topBarAside, asideOnPhoneOnly && 'only-mobile')}>{aside}</span>
+      )}
+    </div>
+  );
+}
+
+/** An intertitle in Bricolage with, on its right, a word in mono (« Le classement · NOVEMBRE »). */
+export function SectionHead({
+  title,
+  meta,
+  id,
+  level = 2,
+}: {
+  title: ReactNode;
+  meta?: ReactNode;
+  id?: string;
+  level?: 1 | 2;
+}) {
+  const Heading = level === 1 ? 'h1' : 'h2';
+  return (
+    <div className={styles.sectionHead}>
+      <Heading id={id} className={styles.intertitle}>
+        {title}
+      </Heading>
+      {meta !== undefined && <span className={styles.sectionMeta}>{meta}</span>}
+    </div>
+  );
+}
+
+/** The question with its key idea underlined in gold, once per screen: what follows the colon
+ *  (« Derby de la Côte d'Azur : <u>Nice ou Monaco ?</u> »). Without a colon, nothing is. */
+export function KeyPhrase({ text }: { text: string }) {
+  const match = /^(.*?\S)(\s*:\s+)(\S.*)$/su.exec(text);
+  if (!match) return <>{text}</>;
+  return (
+    <>
+      {match[1]}
+      {match[2]}
+      <mark className="key-phrase">{match[3]}</mark>
+    </>
+  );
+}
+
+export type SegmentOption<T extends string> = { value: T; label: ReactNode };
+
+/** Joined choices in a 2 px frame, the chosen one in ink (canvas G-Créer « TYPE »,
+ *  G-Classement « LAURIERS / PRONOS GAGNÉS »). `tabs` draws them as underlined words. */
+export function Segmented<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+  variant = 'boxes',
+  mode = 'pressed',
+}: {
+  label: string;
+  options: SegmentOption<T>[];
+  value: T;
+  onChange: (value: T) => void;
+  variant?: 'boxes' | 'tabs';
+  mode?: 'pressed' | 'radio';
+}) {
+  return (
+    <div
+      className={variant === 'tabs' ? styles.tabs : styles.segmented}
+      role={mode === 'radio' ? 'radiogroup' : 'group'}
+      aria-label={label}
+      style={{ ['--segments' as string]: options.length }}
+    >
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          role={mode === 'radio' ? 'radio' : undefined}
+          aria-checked={mode === 'radio' ? value === option.value : undefined}
+          aria-pressed={mode === 'pressed' ? value === option.value : undefined}
+          className={variant === 'tabs' ? styles.tabsButton : styles.segment}
+          onClick={() => onChange(option.value)}
+        >
+          <span>{option.label}</span>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -193,6 +311,7 @@ export function Stepper({
   step = 1,
   label,
   format = String,
+  block = false,
 }: {
   value: number;
   onChange: (value: number) => void;
@@ -201,10 +320,16 @@ export function Stepper({
   step?: number;
   label: string;
   format?: (value: number) => string;
+  /** Takes the whole width of its column. */
+  block?: boolean;
 }) {
   const { t } = useTranslation();
   return (
-    <div className={styles.stepper} role="group" aria-label={label}>
+    <div
+      className={cx(styles.stepper, block && styles.stepperBlock)}
+      role="group"
+      aria-label={label}
+    >
       <button
         type="button"
         className={styles.stepperButton}
@@ -357,6 +482,37 @@ export function Switch({
       onClick={() => onChange(!checked)}
     >
       <span className={styles.switchKnob} />
+    </button>
+  );
+}
+
+/** A whole line that switches, its words on the left (canvas G-Créer « Relancer si… »). */
+export function SwitchRow({
+  checked,
+  onChange,
+  label,
+  hint,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+  hint?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      className={styles.switchRow}
+      onClick={() => onChange(!checked)}
+    >
+      <span className={styles.switchRowText}>
+        <span className={styles.switchRowLabel}>{label}</span>
+        {hint && <span className={styles.switchRowHint}>{hint}</span>}
+      </span>
+      <span className={styles.switch} aria-hidden="true">
+        <span className={styles.switchKnob} />
+      </span>
     </button>
   );
 }

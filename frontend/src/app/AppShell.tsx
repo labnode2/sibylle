@@ -1,11 +1,13 @@
-// The frame of a newsroom's pages: compact masthead and bottom tabs on a phone; date bar, large
-// masthead and top navigation on a computer (canvas pages « Mobile » and « Ordinateur »).
+// The frame of a newsroom's pages (canvas pages « Mobile » and « Ordinateur »). On a phone: the
+// page itself, then three tabs at the bottom; only la une shows the newspaper's title, the other
+// pages a top line of their own. On a computer: the date bar, then the large title and the
+// navigation on la une, or the title in one line with the navigation on the other pages.
 import { useSyncExternalStore, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavLink, Outlet, useParams } from 'react-router';
+import { NavLink, Outlet, useMatch, useMatches, useParams } from 'react-router';
 
 import { formatDate } from '../i18n';
-import { Masthead, TabBar, type Tab } from '../ui/components';
+import { Logo, Masthead, Rule, TabBar, type Tab } from '../ui/components';
 import styles from './shell.module.css';
 
 function subscribeOnline(callback: () => void) {
@@ -39,69 +41,85 @@ export function OfflineBanner() {
 export type ShellSlots = {
   /** Right side of the desktop date bar (laurels, avatar, pseudo). */
   account?: ReactNode;
-  /** Left side of the desktop navigation (newsroom switcher). */
+  /** Left side of la une's navigation on a computer (newsroom switcher). */
   edition?: ReactNode;
   /** Right side of the desktop navigation (main action). */
   action?: ReactNode;
-  /** The editor also gets the newsroom's settings. */
-  admin?: boolean;
+  /** « N° 305 »: the day of the newsroom's life, before the date. */
+  issue?: number;
 };
 
-export function AppShell({ account, edition, action, admin = false }: ShellSlots) {
+/** A route's `handle`: `bare` pages (an editor, a form with its own header) have no tabs. */
+export type RouteHandle = { bare?: boolean };
+
+export function AppShell({ account, edition, action, issue }: ShellSlots) {
   const { t } = useTranslation();
   const { orgId = '' } = useParams();
   const base = `/o/${orgId}`;
-  const tabs: Tab[] = [
-    { to: base, label: t('tabs.une'), icon: 'home', end: true },
-    { to: `${base}/pronos`, label: t('tabs.pronos'), icon: 'ball' },
-    { to: `${base}/classement`, label: t('tabs.ranking'), icon: 'trophy' },
-    { to: `${base}/profil`, label: t('tabs.profile'), icon: 'user' },
-    ...(admin ? [{ to: `${base}/reglages`, label: t('tabs.settings'), icon: 'gear' } as Tab] : []),
+  const onUne = useMatch({ path: '/o/:orgId', end: true }) !== null;
+  const bare = useMatches().some((match) => (match.handle as RouteHandle | undefined)?.bare);
+  const tabs: (Tab & { long: string })[] = [
+    { to: base, label: t('tabs.une'), long: t('tabs.une'), icon: 'home', end: true },
+    { to: `${base}/pronos`, label: t('tabs.pronos'), long: t('tabs.pronosLong'), icon: 'ball' },
+    { to: `${base}/profil`, label: t('tabs.profile'), long: t('tabs.profileLong'), icon: 'user' },
   ];
   const today = formatDate(new Date(), {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  });
+  }).toUpperCase();
+  const nav = (
+    <nav className={styles.nav} aria-label={t('tabs.label')}>
+      {tabs.map((tab) => (
+        <NavLink
+          key={tab.to}
+          to={tab.to}
+          end={tab.end}
+          className={({ isActive }) => `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`}
+        >
+          <span>{tab.long}</span>
+        </NavLink>
+      ))}
+    </nav>
+  );
 
   return (
-    <div className={styles.page}>
-      <div className={styles.desktopOnly}>
+    <div className={`${styles.page} ${bare ? styles.pageBare : ''}`}>
+      <div className="only-desktop">
         <div className={styles.infoBar}>
-          <span>{today.toUpperCase()}</span>
+          <span>{issue ? t('shell.dateline', { number: issue, date: today }) : today}</span>
           <span className={styles.slot}>{account}</span>
         </div>
-        <Masthead size="large" />
-        <div className={styles.navBar}>
-          <span className={styles.slot}>{edition}</span>
-          <nav className={styles.nav} aria-label={t('tabs.label')}>
-            {tabs.map((tab) => (
-              <NavLink
-                key={tab.to}
-                to={tab.to}
-                end={tab.end}
-                className={({ isActive }) =>
-                  `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
-                }
-              >
-                <span>{tab.label}</span>
-              </NavLink>
-            ))}
-          </nav>
-          <span className={styles.slot}>{action}</span>
-        </div>
-      </div>
-      <div className={styles.mobileOnly}>
-        <Masthead size="compact" />
+        {onUne ? (
+          <>
+            <Masthead size="large" />
+            <div className={styles.navBar}>
+              <span className={styles.slot}>{edition}</span>
+              {nav}
+              <span className={styles.slot}>{action}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className={`${styles.navBar} ${styles.navBarCompact}`}>
+              <Logo to={base} />
+              {nav}
+              <span className={styles.slot}>{action}</span>
+            </div>
+            <Rule variant="double" />
+          </>
+        )}
       </div>
       <OfflineBanner />
       <main className={styles.main}>
         <Outlet />
       </main>
-      <div className={styles.mobileOnly}>
-        <TabBar tabs={tabs} label={t('tabs.label')} />
-      </div>
+      {!bare && (
+        <div className="only-mobile">
+          <TabBar tabs={tabs} label={t('tabs.label')} />
+        </div>
+      )}
     </div>
   );
 }

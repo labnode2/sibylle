@@ -19,8 +19,13 @@ Puis ouvrir http://localhost:5173 et se connecter avec un compte de démonstrati
 `ines@demo.sibylle.test` (rédaction en chef), mot de passe `lauriers-de-demo` (liste complète dans
 `backend/seed/README.md`). Les e-mails envoyés en local arrivent dans Mailpit : http://localhost:8025.
 
-Si le port 5173 est déjà pris : `make dev WEB_PORT=5199`. Les tests de bout en bout ont leurs
-propres ports (API 8001, interface 5180) et peuvent tourner pendant `make dev`.
+Si les ports 5173 ou 8000 sont déjà pris : `make dev WEB_PORT=5199 API_PORT=8010`. Les tests de
+bout en bout ont leurs propres ports (API 8001, interface 5180) et peuvent tourner pendant
+`make dev`.
+
+Pour ouvrir l'appli depuis un téléphone du même réseau : `make dev UI_HOST=192.168.71.12` (l'IP du
+PC), ou `UI_HOST=192.168.71.12` dans `deploy/.env`, puis http://192.168.71.12:5173, y compris sur
+le PC lui-même. Le pare-feu du PC doit laisser passer le port 5173.
 
 Les fois suivantes, `make dev` suffit ; après avoir récupéré de nouvelles migrations, lancer
 `make migrate`. `make stop` arrête la base et Mailpit sans perdre les données. `make` seul liste

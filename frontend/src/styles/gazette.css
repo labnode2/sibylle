@@ -54,11 +54,26 @@ p {
 
 /* The key idea of a screen, once per screen. */
 .key-phrase {
+  background: transparent;
+  color: inherit;
   text-decoration-line: underline;
   text-decoration-color: var(--gold-line);
   text-decoration-thickness: 3px;
   text-underline-offset: 5px;
   text-decoration-skip-ink: none;
+}
+
+/* A phone shows one layout, a computer (1 024 px and wider) the other. */
+@media (min-width: 1024px) {
+  .only-mobile {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1023.98px) {
+  .only-desktop {
+    display: none !important;
+  }
 }
 
 .visually-hidden {

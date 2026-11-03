@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 
 import type { Org } from '../../api/types';
-import { Button, Card, Field, Icon, Kicker, Stepper } from '../../ui/components';
+import { Button, Field, Icon, Kicker, Stepper } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
 import { useFormErrors } from '../forms';
 import { useContent, useOrg } from '../orgs/api';
@@ -65,8 +65,21 @@ function SettingsForm({ orgId, org }: { orgId: string; org: Org }) {
 
   return (
     <form className={styles.page} onSubmit={submit} noValidate>
-      <Card className={styles.panel} aria-label={t('card.title')}>
+      <section className={styles.panel} aria-label={t('card.title')}>
         <h2 className={styles.heading}>{t('card.title')}</h2>
+        <div className={styles.preview} aria-hidden="true">
+          <div className={`${styles.previewBand} bg-${background}`}>
+            {logo && (
+              <span className={styles.previewLogo}>
+                <PixelImage image={logo} size={64} avatar={false} />
+              </span>
+            )}
+          </div>
+          <div className={styles.previewBody}>
+            <span className={styles.previewName}>{title || org.title}</span>
+            <span className={styles.hint}>{t('card.preview', { count: org.member_count })}</span>
+          </div>
+        </div>
         <Field
           label={t('card.name')}
           value={title}
@@ -111,9 +124,9 @@ function SettingsForm({ orgId, org }: { orgId: string; org: Org }) {
           onChange={setBackground}
           labelId="admin-background"
         />
-      </Card>
+      </section>
 
-      <Card className={styles.panel} aria-label={t('laurels.title')}>
+      <section className={styles.panel} aria-label={t('laurels.title')}>
         <h2 className={styles.heading}>{t('laurels.title')}</h2>
         <Setting label={t('laurels.maxGain')} hint={t('laurels.maxGainHint')}>
           <Stepper
@@ -155,9 +168,9 @@ function SettingsForm({ orgId, org }: { orgId: string; org: Org }) {
             max={50}
           />
         </Setting>
-      </Card>
+      </section>
 
-      <Card className={styles.panel} aria-label={t('words.title')}>
+      <section className={styles.panel} aria-label={t('words.title')}>
         <h2 className={styles.heading}>{t('words.title')}</h2>
         <label className={styles.block}>
           <span className={styles.label}>{t('words.note')}</span>
@@ -177,7 +190,7 @@ function SettingsForm({ orgId, org }: { orgId: string; org: Org }) {
             onChange={(event) => setCharter(event.target.value)}
           />
         </label>
-      </Card>
+      </section>
 
       {(errors.message || errors.field('charter')) && (
         <p role="alert" className={styles.alert}>
@@ -207,7 +220,7 @@ function SectionsPanel({ orgId }: { orgId: string }) {
   };
 
   return (
-    <Card className={styles.panel} aria-label={t('sections.title')}>
+    <section className={styles.panel} aria-label={t('sections.title')}>
       <h2 className={styles.heading}>{t('sections.title')}</h2>
       <p className={styles.hint}>{t('sections.hint')}</p>
       <ul className={styles.rows}>
@@ -290,7 +303,7 @@ function SectionsPanel({ orgId }: { orgId: string }) {
           {errors.field('name') ?? errors.message}
         </p>
       )}
-    </Card>
+    </section>
   );
 }
 

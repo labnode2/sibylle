@@ -1,11 +1,13 @@
-// Publishing a prono (canvas G-Créer): type, section, question, answers, dates and fixed gain.
-// Journalists and the editor publish directly; a reader proposes, and a journalist publishes.
+// Publishing a prono (canvas G-Créer): its own header (close, title, role), type, section,
+// question, choices, closing and fixed gain side by side, the switches, and the button kept at
+// the bottom of the screen. Journalists and the editor publish directly; a reader proposes, and
+// a journalist publishes.
 import { useId, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 
 import { fromParisInput, parisDayAt } from '../../i18n';
-import { Button, Field, Icon, Stepper, Switch } from '../../ui/components';
+import { Button, Chip, Field, Icon, Segmented, Stepper, SwitchRow } from '../../ui/components';
 import { useFormErrors } from '../forms';
 import { useOrg } from '../orgs/api';
 import { useCreateProno, useSections, useUpload, type PronoIn } from './api';
@@ -81,24 +83,24 @@ export function CreatePronoPage() {
 
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
-      <h1 className={styles.question}>{t(proposing ? 'create.titlePropose' : 'create.title')}</h1>
-      {proposing && <p className={styles.meta}>{t('create.proposeNote')}</p>}
+      <header className={styles.formHead}>
+        <Link to={`/o/${orgId}`} className={styles.close} aria-label={t('create.close')}>
+          <Icon name="cross" size={24} />
+        </Link>
+        <h1 className={styles.formTitle}>
+          {t(proposing ? 'create.titlePropose' : 'create.title')}
+        </h1>
+        <Chip variant="ink">{t(`create.role.${me.role}`)}</Chip>
+      </header>
 
       <fieldset className={styles.fieldset}>
         <legend>{t('create.kind')}</legend>
-        <div className={styles.filters}>
-          {KINDS.map((value) => (
-            <button
-              key={value}
-              type="button"
-              className={styles.filter}
-              aria-pressed={kind === value}
-              onClick={() => setKind(value)}
-            >
-              {t(`kind.${value}`)}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          label={t('create.kind')}
+          options={KINDS.map((value) => ({ value, label: t(`kind.${value}`) }))}
+          value={kind}
+          onChange={setKind}
+        />
       </fieldset>
 
       <fieldset className={styles.fieldset}>
@@ -108,7 +110,7 @@ export function CreatePronoPage() {
             <button
               key={s.id}
               type="button"
-              className={styles.filter}
+              className={`${styles.filter} ${styles.sectionChip}`}
               aria-pressed={section === s.id}
               onClick={() => setSectionId(s.id)}
             >
@@ -124,7 +126,8 @@ export function CreatePronoPage() {
         </label>
         <textarea
           id={questionId}
-          className={styles.textarea}
+          className={`${styles.textarea} ${styles.questionInput}`}
+          rows={2}
           value={question}
           maxLength={QUESTION_MAX}
           placeholder={t('create.questionPlaceholder')}
@@ -145,7 +148,7 @@ export function CreatePronoPage() {
 
       {kind === 'choice' && (
         <fieldset className={styles.fieldset}>
-          <legend>{t('create.options')}</legend>
+          <legend>{t('create.options', { count: options.length })}</legend>
           {options.map((option, index) => (
             <div key={index} className={styles.optionRow}>
               <input
@@ -154,21 +157,24 @@ export function CreatePronoPage() {
                 maxLength={80}
                 onChange={(event) => setOption(index, event.target.value)}
               />
-              {options.length > 2 && (
-                <button
-                  type="button"
-                  className={styles.iconButton}
-                  aria-label={t('create.removeOption', { n: index + 1 })}
-                  onClick={() => setOptions((current) => current.filter((_, i) => i !== index))}
-                >
-                  <Icon name="cross" size={12} />
-                </button>
-              )}
+              <button
+                type="button"
+                className={styles.iconButton}
+                aria-label={t('create.removeOption', { n: index + 1 })}
+                disabled={options.length <= 2}
+                onClick={() => setOptions((current) => current.filter((_, i) => i !== index))}
+              >
+                <Icon name="cross" size={24} />
+              </button>
             </div>
           ))}
-          <Button variant="secondary" onClick={() => setOptions((current) => [...current, ''])}>
+          <button
+            type="button"
+            className={styles.addOption}
+            onClick={() => setOptions((current) => [...current, ''])}
+          >
             <Icon name="plus" size={12} /> {t('create.addOption')}
-          </Button>
+          </button>
           {errors.field('options') && (
             <span role="alert" className={styles.alert}>
               {errors.field('options')}
@@ -186,27 +192,7 @@ export function CreatePronoPage() {
           onChange={(event) => setUnit(event.target.value)}
         />
       )}
-      {kind === 'date' && (
-        <div className={styles.switchRow}>
-          <span>{t('create.openEnded')}</span>
-          <Switch checked={openEnded} onChange={setOpenEnded} label={t('create.openEnded')} />
-        </div>
-      )}
-
-      <div className={styles.switchRow}>
-        <span>{t('create.schedule')}</span>
-        <Switch checked={scheduled} onChange={setScheduled} label={t('create.schedule')} />
-      </div>
-      <div className={styles.row}>
-        {scheduled && (
-          <Field
-            label={t('create.opensAt')}
-            type="datetime-local"
-            value={opensAt}
-            onChange={(event) => setOpensAt(event.target.value)}
-            error={errors.field('opens_at')}
-          />
-        )}
+      <div className={styles.pair}>
         {!isOpenEnded && (
           <Field
             label={t('create.closesAt')}
@@ -217,14 +203,52 @@ export function CreatePronoPage() {
             required
           />
         )}
-        <Field
-          label={t('create.resultAt')}
-          type="datetime-local"
-          value={resultAt}
-          onChange={(event) => setResultAt(event.target.value)}
-          error={errors.field('result_expected_at')}
+        <div className={styles.fieldset}>
+          <span className={styles.label}>{t('create.gain', { max: maxGain })}</span>
+          <Stepper
+            label={t('create.gainLabel')}
+            value={baseGain}
+            onChange={setGain}
+            min={0}
+            max={maxGain}
+            step={GAIN_STEP}
+            block
+          />
+        </div>
+      </div>
+
+      <div className={styles.switches}>
+        {kind === 'date' && (
+          <SwitchRow
+            checked={openEnded}
+            onChange={setOpenEnded}
+            label={t('create.openEnded')}
+            hint={t('create.openEndedHint')}
+          />
+        )}
+        <SwitchRow
+          checked={scheduled}
+          onChange={setScheduled}
+          label={t('create.schedule')}
+          hint={t('create.scheduleHint')}
         />
       </div>
+      {scheduled && (
+        <Field
+          label={t('create.opensAt')}
+          type="datetime-local"
+          value={opensAt}
+          onChange={(event) => setOpensAt(event.target.value)}
+          error={errors.field('opens_at')}
+        />
+      )}
+      <Field
+        label={t('create.resultAt')}
+        type="datetime-local"
+        value={resultAt}
+        onChange={(event) => setResultAt(event.target.value)}
+        error={errors.field('result_expected_at')}
+      />
 
       <Field
         label={t('create.link')}
@@ -258,26 +282,17 @@ export function CreatePronoPage() {
         )}
       </div>
 
-      <div className={styles.switchRow}>
-        <span className={styles.label}>{t('create.gain', { max: maxGain })}</span>
-        <Stepper
-          label={t('create.gainLabel')}
-          value={baseGain}
-          onChange={setGain}
-          min={0}
-          max={maxGain}
-          step={GAIN_STEP}
-        />
-      </div>
-
       {(errors.message || errors.field('base_gain') || errors.field('section_id')) && (
         <p role="alert" className={styles.alert}>
           {errors.message ?? errors.field('base_gain') ?? errors.field('section_id')}
         </p>
       )}
-      <Button type="submit" block disabled={create.isPending || upload.isPending}>
-        {t(proposing ? 'create.submitPropose' : 'create.submit')}
-      </Button>
+      <footer className={styles.formFoot}>
+        <Button type="submit" block disabled={create.isPending || upload.isPending}>
+          {t(proposing ? 'create.submitPropose' : 'create.submit')}
+        </Button>
+        <p className={styles.note}>{t(proposing ? 'create.footPropose' : 'create.foot')}</p>
+      </footer>
     </form>
   );
 }

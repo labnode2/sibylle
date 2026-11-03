@@ -25,7 +25,7 @@ test('Monday turns gold laurels into coins, and says so once', async ({ browser 
   const prono = await publishProno(ines, orgId, { question: 'Nice ou Monaco ?' });
   const cami = await newPerson(browser, testInfo, 'Camille', await invitationPath(ines));
   await joinWith(cami, 'Cami');
-  await expect(cami.getByRole('heading', { name: 'Bonjour Cami' })).toBeVisible();
+  await expect(cami.getByRole('heading', { name: /^La une de / })).toBeVisible();
 
   // A stake of 30: 70 green laurels left to stake, still 100 gold ones, no coins yet.
   const nice = prono.options.find((o: { label: string }) => o.label === 'Nice').id;
@@ -55,7 +55,7 @@ test('Monday turns gold laurels into coins, and says so once', async ({ browser 
   const weekly = cami.waitForResponse((r) => r.url().endsWith('/coins/weekly'));
   await cami.reload();
   await weekly;
-  await expect(cami.getByRole('heading', { name: 'Bonjour Cami' })).toBeVisible();
+  await expect(cami.getByRole('heading', { name: /^La une de / })).toBeVisible();
   await expect(cami.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByText('70 lauriers verts à miser')).toBeAttached();
   await expect(page.getByText('100 pièces', { exact: true })).toBeAttached();

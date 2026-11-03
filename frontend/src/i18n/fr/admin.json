@@ -13,8 +13,9 @@
     "logo": "LOGO",
     "background": "FOND DE LA CARTE",
     "drawLogo": "Dessiner le logo",
-    "takeLogo": "Prendre ce logo",
-    "currentLogo": "Le logo actuel"
+    "takeLogo": "Prendre",
+    "currentLogo": "Le logo actuel",
+    "preview": "{{count}} MEMBRES · APERÇU DE LA CARTE"
   },
   "laurels": {
     "title": "Les lauriers",
@@ -99,5 +100,6 @@
     "note": "NOTE POUR SON AUTEUR·RICE (FACULTATIF)",
     "dismiss": "Rejeter",
     "resolve": "Clore : c'est réglé"
-  }
+  },
+  "back": "PROFIL"
 }

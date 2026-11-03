@@ -7,12 +7,13 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Annotated
 
-from fastapi import Depends, Request
+from fastapi import Depends, Request, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle import clock
 from sibylle.api.errors import AppError
+from sibylle.config import get_settings
 from sibylle.db.models import Account, AuthSession, Membership, Organisation
 from sibylle.db.session import transaction
 from sibylle.domain.permissions import Action, can
@@ -22,6 +23,17 @@ from sibylle.services.security import token_hash
 SESSION_COOKIE = "sibylle_session"
 # A session's expiry slides forward at most once an hour, to spare a write on every request.
 TOUCH_EVERY = timedelta(hours=1)
+
+
+def clear_session_cookie(response: Response) -> None:
+    """Removes the session cookie, with the attributes it was set with."""
+    response.delete_cookie(
+        SESSION_COOKIE,
+        path="/",
+        secure=get_settings().secure_cookies,
+        httponly=True,
+        samesite="lax",
+    )
 
 
 async def get_db() -> AsyncIterator[AsyncSession]:

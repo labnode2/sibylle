@@ -34,6 +34,8 @@ class Organisation(Base):
     early_bird_count: Mapped[int] = mapped_column(default=5, server_default="5")
     editor_note: Mapped[str | None] = mapped_column(Text)
     charter: Mapped[str] = mapped_column(Text)
+    # The number of the newsroom's last prono; the next one takes the following number.
+    last_prono_number: Mapped[int] = mapped_column(default=0, server_default="0")
     created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
     deleted_at: Mapped[datetime | None]
 

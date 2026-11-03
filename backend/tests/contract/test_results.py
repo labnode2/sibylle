@@ -75,6 +75,8 @@ async def test_four_stakes_of_ten_and_one_winner(
         "Nice",
     )
     assert (edition["pot"], edition["pot_lost"]) == (40, False)
+    # « VALIDÉ PAR HUGO »
+    assert edition["settled_by"]["pseudo"] == "Hugo"
     [won] = edition["winners"]
     assert won["member"]["pseudo"] == "Cami"
     assert (won["base_gain"], won["early_bird"], won["pot_share"], won["payout"]) == (20, 0, 40, 60)

@@ -3,6 +3,7 @@
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useParams } from 'react-router';
 
+import { Chip, TopBar } from '../../ui/components';
 import { useOrg } from '../orgs/api';
 import { useReports } from './api';
 import styles from './admin.module.css';
@@ -27,7 +28,15 @@ export function AdminLayout() {
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>{t('title')}</h1>
+      <TopBar
+        back={`/o/${orgId}/profil`}
+        backLabel={t('back')}
+        aside={<Chip variant="ink">{t('roles.editor').toUpperCase()}</Chip>}
+      />
+      <header className={styles.head}>
+        <h1 className={styles.title}>{org.data.title}</h1>
+        <p className={styles.subtitle}>{t('title')}</p>
+      </header>
       <nav className={styles.tabs} aria-label={t('nav')}>
         <NavLink to={base} end className={link}>
           {t('tabs.card')}

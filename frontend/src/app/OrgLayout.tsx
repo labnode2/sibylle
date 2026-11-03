@@ -15,6 +15,7 @@ import { EditionLink } from '../features/orgs/OrgSwitcher';
 import { ButtonLink, Icon, Wallet } from '../ui/components';
 import { PixelImage } from '../ui/PixelImage';
 import { AppShell } from './AppShell';
+import styles from './shell.module.css';
 
 export function OrgLayout() {
   const { t } = useTranslation('pronos');
@@ -56,10 +57,10 @@ export function OrgLayout() {
           </>
         }
         edition={<EditionLink org={org.data} />}
-        admin={me.role === 'editor'}
+        issue={org.data.edition_number}
         action={
-          <ButtonLink to={`/o/${orgId}/pronos/nouveau`}>
-            <Icon name="plus" size={12} /> {t(me.role === 'reader' ? 'list.propose' : 'list.new')}
+          <ButtonLink to={`/o/${orgId}/pronos/nouveau`} className={styles.action}>
+            <Icon name="plus" size={12} /> {t('list.proposeLong')}
           </ButtonLink>
         }
       />

@@ -1197,17 +1197,74 @@ export interface components {
          * @description La une, its blocks in the spec's order.
          */
         FrontPage: {
-            headline: components["schemas"]["PronoSummary"] | null;
+            headline: components["schemas"]["FrontProno"] | null;
             /** Open */
-            open: components["schemas"]["PronoSummary"][];
+            open: components["schemas"]["FrontProno"][];
+            /** Open Count */
+            open_count: number;
             /** To Designate */
             to_designate: components["schemas"]["PronoSummary"][] | null;
             /** Latest Results */
             latest_results: components["schemas"]["LatestResult"][];
             /** Leaderboard Top */
             leaderboard_top: components["schemas"]["LeaderboardRow"][];
+            /** Leaderboard Period */
+            leaderboard_period: string;
             /** Editor Note */
             editor_note: string | null;
+        };
+        /**
+         * FrontProno
+         * @description A prono of la une, with the split of the answers its gauge draws.
+         */
+        FrontProno: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Number */
+            number: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "choice" | "yes_no" | "number" | "date";
+            /** Question */
+            question: string;
+            section: components["schemas"]["SectionOut"];
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "proposed" | "rejected" | "scheduled" | "open" | "closed" | "resolved" | "cancelled";
+            /** Base Gain */
+            base_gain: number;
+            /** Opens At */
+            opens_at: string | null;
+            /** Closes At */
+            closes_at: string | null;
+            /** Open Ended */
+            open_ended: boolean;
+            /** Result Expected At */
+            result_expected_at: string | null;
+            /** Number Unit */
+            number_unit: string | null;
+            /** Link Url */
+            link_url: string | null;
+            /** Image Url */
+            image_url: string | null;
+            /** Bet Count */
+            bet_count: number;
+            /** Pot */
+            pot: number;
+            /** Relaunch Count */
+            relaunch_count: number;
+            created_by: components["schemas"]["MemberPublic"];
+            /** Options */
+            options: components["schemas"]["OptionOut"][];
+            /** Distribution */
+            distribution: components["schemas"]["BucketOut"][];
         };
         /** Games */
         Games: {
@@ -1577,6 +1634,8 @@ export interface components {
             access_code: string | null;
             /** Member Count */
             member_count: number;
+            /** Edition Number */
+            edition_number: number;
             my_membership: components["schemas"]["MemberSelf"];
         };
         /** OrgCard */
@@ -1821,6 +1880,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /** Number */
+            number: number;
             /**
              * Kind
              * @enum {string}
@@ -1986,6 +2047,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /** Number */
+            number: number;
             /**
              * Kind
              * @enum {string}
@@ -2326,6 +2389,7 @@ export interface components {
              * Format: date-time
              */
             settled_at: string;
+            settled_by: components["schemas"]["MemberPublic"];
             /** Pot */
             pot: number;
             /** Pot Lost */

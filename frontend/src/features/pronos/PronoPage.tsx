@@ -1,11 +1,21 @@
 // A prono's page (canvas B-Prono, B-Web-Prono): the question, the countdown, the ballot with who
 // played what, the stake and the rules. Bets of the others arrive live through `prono:<id>`.
+// Once settled, the special edition (canvas G-Résultat) heads the page.
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router';
+import { useLocation, useParams } from 'react-router';
 
 import { formatDate, formatNumber, parisDay, parseDecimal } from '../../i18n';
-import { Button, Card, ExternalLink, Icon, Laurel, Stepper } from '../../ui/components';
+import {
+  Button,
+  Card,
+  ExternalLink,
+  Icon,
+  KeyPhrase,
+  SectionHead,
+  Stepper,
+  TopBar,
+} from '../../ui/components';
 import { AvatarStack, PixelImage } from '../../ui/PixelImage';
 import { useFormErrors } from '../forms';
 import { PushPrompt } from '../notifications/PushPrompt';
@@ -13,7 +23,7 @@ import { useOrg } from '../orgs/api';
 import { DesignatePanel } from '../results/DesignatePanel';
 import { MyReports } from '../results/MyReports';
 import { ReportForm } from '../results/ReportForm';
-import { SpecialEdition } from '../results/SpecialEdition';
+import { SpecialEdition, SpecialEditionHead } from '../results/SpecialEdition';
 import { usePlaceBet, useProno, type Bet, type PronoDetail } from './api';
 import { ProposalDecision } from './ProposalsPanel';
 import { ReactionBar } from './ReactionBar';
@@ -21,6 +31,8 @@ import styles from './pronos.module.css';
 
 const STAKE_STEP = 10;
 const SHOWN_AVATARS = 3;
+// « Les pronostiqueurs »: the first six, then « Et 25 autres ».
+const SHOWN_PEOPLE = 6;
 
 function useNow(every: number): number {
   const [now, setNow] = useState(() => Date.now());
@@ -141,9 +153,6 @@ function Ballot({
               />
               <span className={styles.pct}>{t('detail.share', { pct: option.share_pct })}</span>
             </button>
-            <div className={styles.gauge} aria-hidden="true">
-              <span style={{ width: `${option.share_pct}%` }} />
-            </div>
           </div>
         );
       })}
@@ -174,30 +183,46 @@ function Distribution({ prono }: { prono: PronoDetail }) {
   );
 }
 
+/** « Les pronostiqueurs »: who played what and staked how much, the first six, then the rest
+ *  on demand. Everyone's choice and stake are seen by the whole newsroom. */
 function People({ bets }: { bets: Bet[] }) {
   const { t } = useTranslation('pronos');
+  const [all, setAll] = useState(false);
+  const players = new Set(bets.filter((bet) => !bet.superseded).map((bet) => bet.member.id)).size;
+  const shown = all ? bets : bets.slice(0, SHOWN_PEOPLE);
+  const hidden = bets.length - shown.length;
   return (
-    <section className={styles.people} aria-label={t('detail.people')}>
-      <span className={styles.label}>{t('detail.people')}</span>
+    <section className={styles.people} aria-labelledby="prono-people">
+      <SectionHead id="prono-people" title={t('detail.people')} meta={String(players)} />
       {bets.length === 0 && <p className={styles.empty}>{t('detail.nobody')}</p>}
       <ul className={styles.peopleList}>
-        {bets.map((bet) => (
+        {shown.map((bet) => (
           <li key={bet.id} className={styles.person}>
             <PixelImage image={bet.member.avatar} size={28} />
             <span className={styles.personName}>{bet.member.pseudo}</span>
             <span className={`${styles.personAnswer} ${bet.superseded ? styles.replaced : ''}`}>
-              {bet.answer}
-              {bet.stake > 0 && (
-                <>
-                  {' '}
-                  · <Laurel value={bet.stake} />
-                </>
-              )}
+              {bet.answer.toUpperCase()}
               {bet.superseded && <span className="visually-hidden"> ({t('detail.replaced')})</span>}
+            </span>
+            <span className={styles.personStake}>
+              {bet.stake > 0
+                ? t('detail.submitStake', { stake: formatNumber(bet.stake) })
+                : t('detail.submitFree')}
             </span>
           </li>
         ))}
       </ul>
+      {bets.length > 0 && (
+        <p className={styles.peopleNote}>
+          {hidden > 0 && `${t('detail.others', { count: hidden })} `}
+          {t('detail.visible')}
+        </p>
+      )}
+      {hidden > 0 && (
+        <Button variant="link" onClick={() => setAll(true)}>
+          {t('detail.showAll')}
+        </Button>
+      )}
     </section>
   );
 }
@@ -206,8 +231,10 @@ function Rules({ prono }: { prono: PronoDetail }) {
   const { t } = useTranslation('pronos');
   const creator = prono.created_by.pseudo;
   return (
-    <Card as="aside" shadow={0} className={styles.rules} aria-label={t('detail.rules')}>
-      <span className={styles.label}>{t('detail.rules')}</span>
+    <Card as="aside" className={styles.rules} aria-labelledby="prono-rules">
+      <h2 id="prono-rules" className={styles.rulesTitle}>
+        {t('detail.rules')}
+      </h2>
       <dl>
         <dt>{t('detail.rulesClose')}</dt>
         <dd>
@@ -233,6 +260,7 @@ function Rules({ prono }: { prono: PronoDetail }) {
 export function PronoPage() {
   const { t } = useTranslation('pronos');
   const { orgId = '', pronoId = '' } = useParams();
+  const location = useLocation();
   const org = useOrg(orgId);
   const query = useProno(orgId, pronoId);
   const placeBet = usePlaceBet(orgId, pronoId);
@@ -287,28 +315,41 @@ export function PronoPage() {
     errors.field('number_value') ??
     errors.field('date_value') ??
     errors.field('stake');
-  const back = `/o/${orgId}/pronos`;
+  // From la une, the way back leads there; otherwise to the list of pronos.
+  const fromUne = (location.state as { from?: string } | null)?.from === 'une';
+  const numbered = t('detail.number', { number: prono.number });
+  const settled = Boolean(prono.special_edition);
 
   return (
     <article className={styles.page}>
-      <div className={styles.top}>
-        <Link to={back} className={styles.back}>
-          <Icon name="chevronLeft" size={12} />
-          {t('detail.backList')}
-        </Link>
-        <span className={styles.label}>{t(`state.${prono.state}`)}</span>
-      </div>
+      <TopBar
+        back={fromUne ? `/o/${orgId}` : `/o/${orgId}/pronos`}
+        backLabel={fromUne ? t('detail.back') : t('detail.backList')}
+        aside={settled ? t('detail.resultNumber', { number: prono.number }) : numbered}
+        asideOnPhoneOnly
+      />
 
       <div className={styles.columns}>
         <div className={styles.page}>
+          {prono.special_edition && <SpecialEditionHead prono={prono} />}
           <span className={styles.kicker}>
             {t('detail.kicker', {
               section: prono.section.name.toUpperCase(),
               org: org.data.title.toUpperCase(),
               creator: prono.created_by.pseudo.toUpperCase(),
             })}
+            <span className="only-desktop">{` · ${numbered}`}</span>
           </span>
-          <h1 className={styles.question}>{prono.question}</h1>
+          <h1 className={styles.question}>
+            <KeyPhrase text={prono.question} />
+          </h1>
+          {prono.state === 'open' && (
+            <p className={`only-desktop ${styles.deck}`}>
+              {prono.closes_at
+                ? t('detail.deck', { date: longDate(prono.closes_at) })
+                : t('detail.deckOpenEnded')}
+            </p>
+          )}
           {prono.image_url && (
             <img src={prono.image_url} alt={t('detail.image')} className={styles.preview} />
           )}
@@ -326,9 +367,6 @@ export function PronoPage() {
 
           {prono.state === 'proposed' && me.role !== 'reader' && (
             <ProposalDecision orgId={orgId} prono={prono} />
-          )}
-          {prono.state !== 'proposed' && prono.state !== 'rejected' && (
-            <ReactionBar orgId={orgId} pronoId={prono.id} />
           )}
 
           {prono.my_bet && !prono.special_edition && (
@@ -391,7 +429,7 @@ export function PronoPage() {
                   <span className={styles.label}>
                     {t('detail.stake', { balance: formatNumber(me.balance) })}
                   </span>
-                  <span className={styles.pot}>
+                  <span className={`only-mobile ${styles.pot}`}>
                     {t('detail.pot', {
                       count: prono.pot + stake,
                       pot: formatNumber(prono.pot + stake),
@@ -407,33 +445,43 @@ export function PronoPage() {
                   step={STAKE_STEP}
                   format={formatNumber}
                 />
+                <div className={`only-desktop ${styles.potLarge}`}>
+                  <span className={styles.potValue}>
+                    {t('detail.potValue', {
+                      count: prono.pot + stake,
+                      pot: formatNumber(prono.pot + stake),
+                    })}
+                  </span>
+                  <span className={styles.label}>{t('detail.potShared')}</span>
+                </div>
               </div>
               {(missing || errors.message || fieldError) && (
                 <p role="alert" className={styles.alert}>
                   {missing ? t('detail.chooseFirst') : (errors.message ?? fieldError)}
                 </p>
               )}
-              <Button
-                block
-                className={styles.submit}
-                onClick={submit}
-                disabled={placeBet.isPending}
-              >
-                <span>{prono.my_bet ? t('detail.rebet') : t('detail.submit')}</span>
-                <span className={styles.submitTag}>
-                  {stake > 0
-                    ? t('detail.submitStake', { stake: formatNumber(stake) })
-                    : t('detail.submitFree')}
-                </span>
-              </Button>
-              <p className={styles.note}>
-                {t('detail.note', { gain: prono.base_gain })}
-                <br />
-                {prono.open_ended ? t('detail.noteOpenEnded') : t('detail.noteReport')}
-              </p>
+              <div className={styles.submitRow}>
+                <Button className={styles.submit} onClick={submit} disabled={placeBet.isPending}>
+                  <span>{prono.my_bet ? t('detail.rebet') : t('detail.submit')}</span>
+                  <span className={styles.submitTag}>
+                    {stake > 0
+                      ? t('detail.submitStake', { stake: formatNumber(stake) })
+                      : t('detail.submitFree')}
+                  </span>
+                </Button>
+                <p className={styles.note}>
+                  {t('detail.note', { gain: prono.base_gain })}
+                  <br className="only-mobile" />
+                  <span className="only-desktop"> · </span>
+                  {prono.open_ended ? t('detail.noteOpenEnded') : t('detail.noteReport')}
+                </p>
+              </div>
             </>
           )}
           <DesignatePanel orgId={orgId} prono={prono} role={me.role} />
+          {prono.state !== 'proposed' && prono.state !== 'rejected' && (
+            <ReactionBar orgId={orgId} pronoId={prono.id} />
+          )}
         </div>
 
         <div className={styles.page}>
