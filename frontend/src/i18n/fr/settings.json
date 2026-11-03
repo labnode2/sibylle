@@ -1,0 +1,50 @@
+{
+  "title": "Mes réglages",
+  "back": "Retour à ma rédaction",
+  "display": {
+    "title": "AFFICHAGE",
+    "theme": "Thème",
+    "themes": {
+      "light": "Clair",
+      "dark": "Sombre",
+      "auto": "Automatique"
+    },
+    "autoHint": "Automatique suit le réglage de ton appareil.",
+    "reduceMotion": "Couper les animations",
+    "reduceMotionHint": "La boule de cristal et les transitions restent immobiles.",
+    "failed": "Ce réglage n'a pas été enregistré sur ton compte. Réessaie dans un instant."
+  },
+  "newsrooms": {
+    "title": "MES RÉDACTIONS",
+    "none": "Tu n'es plus dans aucune rédaction.",
+    "join": "Rejoindre ou créer une rédaction",
+    "role": {
+      "reader": "Lecteur·rice",
+      "journalist": "Journaliste",
+      "editor": "Rédaction en chef"
+    },
+    "leave": "Quitter",
+    "leaveLabel": "Quitter {{org}}",
+    "confirm": "Quitter {{org}} ? Tes paris restent comptés et tu retrouveras ton profil si tu reviens avec une invitation. Si tu es la dernière personne de la rédaction, elle disparaît avec toi.",
+    "confirmYes": "Oui, quitter",
+    "cancel": "Annuler",
+    "left": "Tu as quitté {{org}}."
+  },
+  "lastEditor": "Tu es la seule rédaction en chef de {{org}} : nomme d'abord une autre rédaction en chef.",
+  "lastEditorLink": "Gérer les membres de {{org}}",
+  "data": {
+    "title": "MES DONNÉES",
+    "text": "Télécharge un fichier avec ton compte, tes rédactions, tes paris, tes relevés de lauriers et de pièces et ta collection.",
+    "export": "Télécharger mes données",
+    "failed": "Le téléchargement n'a pas marché. Réessaie dans un instant."
+  },
+  "delete": {
+    "title": "SUPPRIMER MON COMPTE",
+    "text": "Ton e-mail, tes nom et prénom et ton mot de passe sont effacés. Tes paris passés restent comptés pour les autres, sous le nom « Ancien membre ».",
+    "open": "Supprimer mon compte",
+    "confirm": "C'est définitif : tu ne pourras plus te connecter avec ce compte. Une rédaction dont tu es le seul membre disparaît avec toi.",
+    "confirmYes": "Oui, supprimer mon compte",
+    "cancel": "Annuler"
+  },
+  "logout": "Me déconnecter"
+}

@@ -34,6 +34,10 @@ export function OrgSwitcherPage() {
         <Icon name="plus" />
         {t('switcher.more')}
       </ButtonLink>
+      <ButtonLink to="/compte" variant="secondary">
+        <Icon name="gear" />
+        {t('switcher.settings')}
+      </ButtonLink>
       <Button
         variant="link"
         disabled={logout.isPending}

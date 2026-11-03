@@ -62,7 +62,7 @@ async function bet(page: Page, orgId: string, pronoId: string): Promise<void> {
   await expect(page.getByText('TON PRONO', { exact: true })).toBeVisible();
 }
 
-test('push offered after a bet, then set kind by kind in the profile', async ({
+test('push offered after a bet, then set kind by kind in the settings', async ({
   browser,
 }, testInfo) => {
   test.setTimeout(120_000);
@@ -85,8 +85,8 @@ test('push offered after a bet, then set kind by kind in the profile', async ({
   await bet(cami, orgId, second.id);
   await expect(offer).toBeHidden();
 
-  // In her profile: this device, then the eight switches.
-  await cami.goto(`/o/${orgId}/profil#notifications`);
+  // In her settings: this device, then the eight switches.
+  await cami.goto('/compte#notifications');
   const settings = cami.getByRole('region', { name: 'NOTIFICATIONS' });
   await expect(settings).toContainText('ne sont pas activées sur cet appareil');
   const subscribed = cami.waitForResponse(

@@ -9,14 +9,12 @@ from sibylle.domain.notifications import NotificationType
 from sibylle.i18n import t
 
 ICON = "/icon-192.png"
+# The account's settings, where each notification e-mail leads.
+PREFS_PATH = "/compte#notifications"
 
 
 def prono_path(payload: dict[str, Any]) -> str:
     return f"/o/{payload['org_id']}/pronos/{payload['prono_id']}"
-
-
-def prefs_path(payload: dict[str, Any]) -> str:
-    return f"/o/{payload['org_id']}/profil#notifications"
 
 
 def _result_key(payload: dict[str, Any]) -> str:
@@ -57,5 +55,5 @@ def email_values(notification: Notification, locale: str) -> dict[str, Any]:
         **notification.payload,
         "lead": lead(notification, locale),
         "link": origin + prono_path(notification.payload),
-        "prefs_link": origin + prefs_path(notification.payload),
+        "prefs_link": origin + PREFS_PATH,
     }

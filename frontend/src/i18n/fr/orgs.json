@@ -47,7 +47,8 @@
     "title": "Mes rédactions",
     "more": "Rejoindre ou créer une rédaction",
     "edition": "ÉDITION {{title}}",
-    "logout": "Se déconnecter"
+    "logout": "Se déconnecter",
+    "settings": "Mes réglages"
   },
   "une": {
     "edition": "ÉDITION {{title}}",

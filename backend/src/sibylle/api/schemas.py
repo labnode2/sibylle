@@ -231,6 +231,10 @@ class MePatch(BaseModel):
     locale: Literal["fr"] | None = None
 
 
+class AccountDeletion(BaseModel):
+    confirm: Literal[True]
+
+
 class PasswordChange(BaseModel):
     current_password: str
     new_password: Password

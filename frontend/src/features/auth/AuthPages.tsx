@@ -35,6 +35,7 @@ export function LoginPage() {
   return (
     <section className={styles.page}>
       <h1 className={styles.title}>{t('login.title')}</h1>
+      {search.get('compte') === 'supprime' && <p role="status">{t('login.deleted')}</p>}
       <form className={styles.form} onSubmit={submit} noValidate>
         <Alert>{errors.message}</Alert>
         <Field

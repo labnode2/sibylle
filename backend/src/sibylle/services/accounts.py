@@ -1,17 +1,27 @@
-"""Accounts and sessions: sign-up, sign-in, address check, password changes."""
+"""Accounts and sessions: sign-up, sign-in, address check, password changes, deletion."""
 
 import uuid
 from datetime import timedelta
 from typing import Any
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle import clock
 from sibylle.api.errors import AppError
 from sibylle.config import get_settings
-from sibylle.db.models import Account, AuthSession, EmailToken
-from sibylle.services import notifications
+from sibylle.db.models import (
+    Account,
+    AuthSession,
+    EmailToken,
+    Invitation,
+    Membership,
+    Notification,
+    NotificationPref,
+    PushSubscription,
+)
+from sibylle.domain.content import DEFAULT_AVATAR
+from sibylle.services import notifications, orgs
 from sibylle.services.security import (
     hash_password,
     needs_rehash,
@@ -194,3 +204,56 @@ async def reset_password(session: AsyncSession, token: str, password: str) -> No
     account = await _use_token(session, token, "reset_password")
     account.password_hash = hash_password(password)
     await close_sessions(session, account.id)
+
+
+ANONYMOUS_PSEUDO = "Ancien membre"
+
+
+async def delete_account(session: AsyncSession, account: Account) -> None:
+    """Deletes an account (research.md R20): what identifies the person goes, their bets and
+    ledger entries stay under « Ancien membre », so that past pots stay right for the others.
+
+    The newsroom's last editor names another first (`last_editor`, with its `org_id`); a
+    newsroom whose only member this was goes with it.
+    """
+    memberships = list(
+        (
+            await session.scalars(
+                select(Membership)
+                .where(Membership.account_id == account.id)
+                .order_by(Membership.org_id)
+            )
+        ).all()
+    )
+    active = [member for member in memberships if member.status == "active"]
+    # Every newsroom locked first, always in the same order, then every check before any change.
+    for member in active:
+        await orgs.lock_editors(session, member.org_id)
+    others_stay = {member.id: await orgs.may_go(session, member) for member in active}
+
+    for member in memberships:
+        member.pseudo = ANONYMOUS_PSEUDO
+        member.avatar = DEFAULT_AVATAR
+        member.avatar_frame_item_id = None
+        if member.status == "active":
+            await orgs.depart(session, member, "anonymized")
+            if not others_stay[member.id]:
+                await orgs.close(session, member.org_id)
+        else:
+            member.status = "anonymized"
+
+    email = account.email
+    for table in (AuthSession, EmailToken, PushSubscription, NotificationPref, Notification):
+        await session.execute(delete(table).where(table.account_id == account.id))
+    if email:
+        address = email.lower()
+        await session.execute(delete(Invitation).where(func.lower(Invitation.email) == address))
+        await session.execute(
+            delete(Notification).where(func.lower(Notification.payload["to"].astext) == address)
+        )
+    account.email = None
+    account.password_hash = None
+    account.first_name = None
+    account.last_name = None
+    account.email_verified_at = None
+    account.deleted_at = clock.now()

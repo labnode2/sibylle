@@ -38,7 +38,7 @@ Le corps est la question suivie d'une phrase propre au type (« Tu n'as pas enco
 
 ## E-mails
 
-Envoyés par le relais SMTP de Brevo depuis `Sibylle <ne-pas-repondre@<domaine>>`, en texte et en HTML (style Gazette, sans image distante ni pixel de suivi, suivi des clics désactivé chez Brevo). Chaque e-mail de notification contient un lien direct vers ses préférences.
+Envoyés par le relais SMTP de Brevo depuis `Sibylle <ne-pas-repondre@<domaine>>`, en texte et en HTML (style Gazette, sans image distante ni pixel de suivi, suivi des clics désactivé chez Brevo). Chaque e-mail de notification contient un lien direct vers ses préférences (`/compte#notifications`).
 
 | Modèle | Objet (fr) |
 |---|---|

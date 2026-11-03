@@ -24,6 +24,7 @@ import { CreatePronoPage } from '../features/pronos/CreatePronoPage';
 import { PronoListPage } from '../features/pronos/PronoListPage';
 import { PronoPage } from '../features/pronos/PronoPage';
 import { PressCardPage } from '../features/profile/PressCardPage';
+import { SettingsPage } from '../features/settings/SettingsPage';
 import { UnePage } from '../features/une/UnePage';
 import { ButtonLink, Masthead } from '../ui/components';
 import { OfflineBanner } from './AppShell';
@@ -93,6 +94,7 @@ export const router = createBrowserRouter([
           { path: '/rejoindre', element: <JoinPage /> },
           { path: '/rejoindre/:token', element: <JoinPage /> },
           { path: '/redactions', element: <OrgSwitcherPage /> },
+          { path: '/compte', element: <SettingsPage /> },
         ],
       },
       {

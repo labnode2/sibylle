@@ -243,7 +243,7 @@ async def _active_member(
     return member
 
 
-async def _lock_editors(session: AsyncSession, org_id: uuid.UUID) -> None:
+async def lock_editors(session: AsyncSession, org_id: uuid.UUID) -> None:
     """Locks the newsroom before a member's role or status changes, so that two editors
     demoting each other at once cannot both pass `_keeps_an_editor`. `NO KEY UPDATE` leaves bets
     and ledger entries, whose foreign keys point at the newsroom, free to go on meanwhile."""
@@ -253,7 +253,7 @@ async def _lock_editors(session: AsyncSession, org_id: uuid.UUID) -> None:
 
 
 async def _keeps_an_editor(session: AsyncSession, member: Membership) -> None:
-    """Refuses to take away the newsroom's last active editor. Call `_lock_editors` first."""
+    """Refuses to take away the newsroom's last active editor. Call `lock_editors` first."""
     if member.role != "editor":
         return
     editors = await session.scalar(
@@ -266,13 +266,35 @@ async def _keeps_an_editor(session: AsyncSession, member: Membership) -> None:
         )
     )
     if int(editors or 0) <= 1:
-        raise AppError("last_editor")
+        raise AppError("last_editor", {"org_id": str(member.org_id)})
+
+
+async def _others(session: AsyncSession, member: Membership) -> int:
+    count = await session.scalar(
+        select(func.count())
+        .select_from(Membership)
+        .where(
+            Membership.org_id == member.org_id,
+            Membership.status == "active",
+            Membership.id != member.id,
+        )
+    )
+    return int(count or 0)
+
+
+async def may_go(session: AsyncSession, member: Membership) -> bool:
+    """Checks that the member may leave: the last editor names another first, unless nobody
+    else is left. Returns whether others stay. Call `lock_editors` first."""
+    others = await _others(session, member)
+    if others:
+        await _keeps_an_editor(session, member)
+    return others > 0
 
 
 async def change_role(
     session: AsyncSession, org_id: uuid.UUID, member_id: uuid.UUID, role: str
 ) -> Membership:
-    await _lock_editors(session, org_id)
+    await lock_editors(session, org_id)
     member = await _active_member(session, org_id, member_id, lock=True)
     if role != member.role:
         if role != "editor":
@@ -288,23 +310,46 @@ async def change_role(
     return member
 
 
-async def remove_member(session: AsyncSession, org_id: uuid.UUID, member_id: uuid.UUID) -> None:
-    """The member leaves the newsroom: their bets and stakes stay, their screens stop at once.
-    Coming back, they find their profile again, as a reader."""
-    await _lock_editors(session, org_id)
-    member = await _active_member(session, org_id, member_id, lock=True)
-    await _keeps_an_editor(session, member)
-    member.status = "left"
-    member.left_at = clock.now()
+async def depart(session: AsyncSession, member: Membership, status: str = "left") -> None:
+    """The member is out of the newsroom: their bets and stakes stay, their screens stop at
+    once. Someone who left finds their profile again on coming back, as a reader."""
+    member.status = status
+    member.left_at = member.left_at or clock.now()
     member.role = "reader"
     await session.flush()
     await bus.publish(
         session,
         "member.left",
         {"member": public_member(member)},
-        topics=[f"org:{org_id}"],
-        revoke={"account_id": str(member.account_id), "org_id": str(org_id)},
+        topics=[f"org:{member.org_id}"],
+        revoke={"account_id": str(member.account_id), "org_id": str(member.org_id)},
     )
+
+
+async def close(session: AsyncSession, org_id: uuid.UUID) -> None:
+    """The newsroom is gone with its last member: nobody could come back to it."""
+    org = await session.get(Organisation, org_id)
+    assert org is not None
+    org.deleted_at = clock.now()
+    org.access_code = None
+
+
+async def remove_member(session: AsyncSession, org_id: uuid.UUID, member_id: uuid.UUID) -> None:
+    """The editor removes a member."""
+    await lock_editors(session, org_id)
+    member = await _active_member(session, org_id, member_id, lock=True)
+    await _keeps_an_editor(session, member)
+    await depart(session, member)
+
+
+async def leave(session: AsyncSession, member: Membership) -> None:
+    """The member leaves on their own; the last one out closes the newsroom."""
+    await lock_editors(session, member.org_id)
+    member = await _active_member(session, member.org_id, member.id, lock=True)
+    others_stay = await may_go(session, member)
+    await depart(session, member)
+    if not others_stay:
+        await close(session, member.org_id)
 
 
 async def adjust_laurels(

@@ -76,6 +76,13 @@ async def my_ledger(
     return LedgerPage(items=[entry_out(e, q) for e, q in page], next_cursor=next_cursor)
 
 
+@router.delete("/me", status_code=204)
+async def leave(org_id: uuid.UUID, member: CurrentMember, session: Db) -> Response:
+    """Leaving the newsroom; declared before `/{member_id}`, which would take « me » for an id."""
+    await orgs.leave(session, member)
+    return Response(status_code=204)
+
+
 @router.patch("/{member_id}/role")
 async def change_role(
     org_id: uuid.UUID, member_id: uuid.UUID, body: RoleIn, editor: Gatekeeper, session: Db

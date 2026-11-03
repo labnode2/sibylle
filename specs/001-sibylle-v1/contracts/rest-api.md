@@ -39,8 +39,8 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | GET | `/me` | Compte | → `Me` |
 | PATCH | `/me` | Compte | `{first_name?, last_name?, theme?, reduce_motion?, locale?}` → `Me` |
 | POST | `/me/password` | Compte | `{current_password, new_password}` → `204` |
-| GET | `/me/export` | Compte | → fichier JSON (compte, rédactions, paris, relevés, collections) |
-| DELETE | `/me` | Compte | `{confirm: true}` → `204` ; `409 last_editor` si seule rédaction en chef d'une rédaction qui a d'autres membres |
+| GET | `/me/export` | Compte | → fichier JSON `sibylle-mes-donnees-AAAA-MM-JJ.json` (compte, rédactions, paris, relevés de lauriers et de pièces, collections, trophées, signalements, préférences, appareils sans leur adresse push) |
+| DELETE | `/me` | Compte | `{confirm: true}` → `204` (cookie effacé) ; `409 last_editor` avec `fields.org_id` si seule rédaction en chef d'une rédaction qui a d'autres membres |
 | GET | `/me/notification-prefs` | Compte | → `[{type, channel, enabled}]` |
 | PUT | `/me/notification-prefs` | Compte | `[{type, channel, enabled}]` → idem |
 | GET | `/push/vapid-public-key` | Compte | → `{key}` (`null` si le serveur n'a pas de clés VAPID) |
@@ -66,7 +66,7 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | GET | `/orgs/{org}/members` | Membre | → `[MemberPublic]` |
 | GET | `/orgs/{org}/members/{member}` | Membre | → `PressCard` (carte de presse : pseudo, avatar, cadre, rôle, arrivée, statistiques, trophées, collection) |
 | PATCH | `/orgs/{org}/members/me` | Membre | `{pseudo?, avatar?, avatar_frame_item_id?}` → `MemberSelf` |
-| DELETE | `/orgs/{org}/members/me` | Membre | → `204` (quitter) ; `409 last_editor` |
+| DELETE | `/orgs/{org}/members/me` | Membre | → `204` (quitter ; la dernière personne qui part ferme la rédaction) ; `409 last_editor` avec `fields.org_id` |
 | PATCH | `/orgs/{org}/members/{member}/role` | Réd. chef | `{role}` → `MemberPublic` ; `409 last_editor` si on retire la dernière |
 | DELETE | `/orgs/{org}/members/{member}` | Réd. chef | → `204` (retire un membre) |
 | POST | `/orgs/{org}/members/{member}/adjustments` | Réd. chef | `{amount (≠ 0), reason}` → `201 LedgerEntry` |

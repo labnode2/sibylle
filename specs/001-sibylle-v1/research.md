@@ -125,7 +125,7 @@ Le contexte technique du plan ne contient aucun « NEEDS CLARIFICATION » : les 
 
 ### R20. Suppression de compte
 
-- **Decision**: la suppression efface l'e-mail, les nom et prénom, le mot de passe, les sessions, les abonnements push et les préférences ; chaque appartenance passe à l'état `anonymized` avec le pseudo « Ancien membre » et l'avatar par défaut. Les paris et les écritures du registre restent, pour que les cagnottes et les éditions passées restent justes. Si le compte est la seule rédaction en chef d'une organisation qui a d'autres membres, il doit d'abord en nommer une autre ; s'il en est le seul membre, l'organisation est supprimée avec lui.
+- **Decision**: la suppression efface l'e-mail, les nom et prénom, le mot de passe, les sessions, les abonnements push et les préférences ; chaque appartenance passe à l'état `anonymized` avec le pseudo « Ancien membre » et l'avatar par défaut. Les paris et les écritures du registre restent, pour que les cagnottes et les éditions passées restent justes. Si le compte est la seule rédaction en chef d'une organisation qui a d'autres membres, il doit d'abord en nommer une autre ; s'il en est le seul membre, l'organisation est supprimée avec lui. De même, la dernière personne qui quitte une rédaction la ferme : personne ne pourrait plus y revenir. Le compte supprimé n'apparaît plus dans les invitations par e-mail qui lui étaient adressées.
 - **Rationale**: principe I, sans casser l'historique des autres.
 
 ## Règles de jeu précisées

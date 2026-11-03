@@ -1,13 +1,20 @@
-"""The signed-in account: its own data and its newsrooms."""
+"""The signed-in account: its own data and its newsrooms, the export of everything about it,
+and its deletion (US11)."""
 
-from fastapi import APIRouter, Request
+from typing import Any
+
+from fastapi import APIRouter, Request, Response
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sibylle import clock
 from sibylle.api.deps import SESSION_COOKIE, CurrentAccount, Db
-from sibylle.api.schemas import Me, MePatch, PasswordChange
+from sibylle.api.schemas import AccountDeletion, Me, MePatch, PasswordChange
 from sibylle.db.models import Account, Membership, Organisation
-from sibylle.services import accounts, coins
+from sibylle.domain.seasons import PARIS
+from sibylle.services import accounts, coins, export
 
 router = APIRouter(tags=["me"])
 
@@ -50,3 +57,25 @@ async def change_password(
         body.new_password,
         request.cookies.get(SESSION_COOKIE),
     )
+
+
+@router.get(
+    "/me/export",
+    response_class=JSONResponse,
+    responses={200: {"description": "Un fichier JSON à télécharger"}},
+)
+async def export_my_data(account: CurrentAccount, session: Db) -> JSONResponse:
+    data: dict[str, Any] = await export.export(session, account)
+    day = clock.now().astimezone(PARIS).date().isoformat()
+    return JSONResponse(
+        jsonable_encoder(data),
+        headers={"Content-Disposition": f'attachment; filename="sibylle-mes-donnees-{day}.json"'},
+    )
+
+
+@router.delete("/me", status_code=204)
+async def delete_me(
+    body: AccountDeletion, response: Response, account: CurrentAccount, session: Db
+) -> None:
+    await accounts.delete_account(session, account)
+    response.delete_cookie(SESSION_COOKIE, path="/", secure=True, httponly=True, samesite="lax")

@@ -67,7 +67,7 @@ def test_notification_emails_render(type: str) -> None:
     notification = Notification(type=type, payload={**ABOUT, **NOTIFICATIONS[type]})
     mail = Renderer().render(type, "cami@exemple.fr", email_values(notification, "fr"))
     assert mail.subject.startswith("Sophia Office · ")
-    prono, prefs = f"{ORIGIN}/o/org/pronos/prono", f"{ORIGIN}/o/org/profil#notifications"
+    prono, prefs = f"{ORIGIN}/o/org/pronos/prono", f"{ORIGIN}/compte#notifications"
     for link in (prono, prefs):
         assert link in mail.text and link in mail.html
     assert "Nice ou Monaco samedi ?" in mail.html

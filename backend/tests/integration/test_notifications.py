@@ -397,8 +397,8 @@ async def test_notification_emails_link_to_their_preferences(
     assert mail.subject == "Sophia Office · Nouveau prono : Nice ou Monaco samedi ?"
     origin = "http://localhost:5173"
     assert f"{origin}/o/{org.id}/pronos/{prono['id']}" in mail.html
-    assert f"{origin}/o/{org.id}/profil#notifications" in mail.html
-    assert f"{origin}/o/{org.id}/profil#notifications" in mail.text
+    assert f"{origin}/compte#notifications" in mail.html
+    assert f"{origin}/compte#notifications" in mail.text
 
 
 async def test_a_deleted_account_gets_nothing(make_org: MakeOrg, person: MakePerson) -> None:

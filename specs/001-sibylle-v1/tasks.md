@@ -316,7 +316,7 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 - [x] T122 [US8] Implémenter `backend/src/sibylle/api/routes/notifications.py` (`GET` et `PUT /me/notification-prefs`, `GET /push/vapid-public-key`, `POST` et `DELETE /me/push-subscriptions`) et la commande `sibylle gen-secrets` (clés VAPID et mot de passe PostgreSQL) dans `backend/src/sibylle/cli.py` ; régénérer `frontend/src/api/schema.d.ts`.
 - [x] T123 [P] [US8] Ajouter à `frontend/src/sw.ts` les gestionnaires `push` (titre, texte, icône, `tag`) et `notificationclick` (ouvre l'appli sur `url` ou la met au premier plan), et écrire `frontend/src/features/notifications/usePush.ts` (permission demandée sur un clic, abonnement envoyé au serveur, explication pour l'iPhone : iOS 16.4 ou plus et appli ajoutée à l'écran d'accueil).
 - [x] T124 [P] [US8] Écrire `frontend/src/features/notifications/NotificationPrefs.tsx` : quatre types × deux canaux (push, e-mail), avec l'état de l'abonnement push de l'appareil.
-- [x] T125 [US8] Afficher `NotificationPrefs` dans le profil, proposer d'activer les notifications après le premier pari dans `frontend/src/features/pronos/PronoPage.tsx`, et ajouter `frontend/src/i18n/fr/notifications.json`.
+- [x] T125 [US8] Afficher `NotificationPrefs` dans le profil (déplacé ensuite dans les réglages du compte `/compte` par T133, avec un lien depuis la carte de presse), proposer d'activer les notifications après le premier pari dans `frontend/src/features/pronos/PronoPage.tsx`, et ajouter `frontend/src/i18n/fr/notifications.json`.
 
 **Checkpoint**: les quatre notifications arrivent par push et par e-mail, chacune une seule fois, selon les préférences.
 
@@ -351,13 +351,13 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 
 ### Tests for User Story 11 ⚠️
 
-- [ ] T131 [P] [US11] Écrire `backend/tests/contract/test_data_rights.py` : `GET /me/export` (compte, rédactions, paris, relevés de lauriers et de pièces, collections) ; `DELETE /me` avec `confirm: true` (e-mail, nom, prénom, mot de passe, sessions, abonnements push et préférences effacés ; chaque membre passe en `anonymized` avec le pseudo « Ancien membre » et l'avatar par défaut ; paris et registre conservés ; connexion impossible ensuite) ; `last_editor` pour la seule rédaction en chef d'une rédaction qui a d'autres membres ; rédaction supprimée quand son seul membre supprime son compte ; `DELETE /orgs/{org}/members/me` (quitter ; `last_editor`).
+- [x] T131 [P] [US11] Écrire `backend/tests/contract/test_data_rights.py` : `GET /me/export` (compte, rédactions, paris, relevés de lauriers et de pièces, collections) ; `DELETE /me` avec `confirm: true` (e-mail, nom, prénom, mot de passe, sessions, abonnements push et préférences effacés ; chaque membre passe en `anonymized` avec le pseudo « Ancien membre » et l'avatar par défaut ; paris et registre conservés ; connexion impossible ensuite) ; `last_editor` pour la seule rédaction en chef d'une rédaction qui a d'autres membres ; rédaction supprimée quand son seul membre supprime son compte ; `DELETE /orgs/{org}/members/me` (quitter ; `last_editor`).
 
 ### Implementation for User Story 11
 
-- [ ] T132 [US11] Implémenter `backend/src/sibylle/services/export.py` (export JSON), la suppression avec anonymisation et le départ d'une rédaction dans `backend/src/sibylle/services/accounts.py` (research.md R20), et les routes `GET /me/export`, `DELETE /me` et `DELETE /orgs/{org}/members/me` dans `backend/src/sibylle/api/routes/me.py` et `backend/src/sibylle/api/routes/members.py` ; régénérer `frontend/src/api/schema.d.ts`.
-- [ ] T133 [P] [US11] Écrire `frontend/src/features/settings/SettingsPage.tsx` : thème clair, sombre ou automatique et « couper les animations » (enregistrés par `PATCH /me` et appliqués tout de suite), notifications (US8), quitter une rédaction, exporter mes données (téléchargement du fichier), supprimer mon compte (confirmation), message « nomme d'abord une autre rédaction en chef » sur `last_editor`.
-- [ ] T134 [US11] Brancher la route, ajouter `frontend/src/i18n/fr/settings.json` et écrire `frontend/tests/e2e/data-rights.spec.ts` (quickstart V10, points 1 à 3).
+- [x] T132 [US11] Implémenter `backend/src/sibylle/services/export.py` (export JSON), la suppression avec anonymisation et le départ d'une rédaction dans `backend/src/sibylle/services/accounts.py` (research.md R20), et les routes `GET /me/export`, `DELETE /me` et `DELETE /orgs/{org}/members/me` dans `backend/src/sibylle/api/routes/me.py` et `backend/src/sibylle/api/routes/members.py` ; régénérer `frontend/src/api/schema.d.ts`.
+- [x] T133 [P] [US11] Écrire `frontend/src/features/settings/SettingsPage.tsx` : thème clair, sombre ou automatique et « couper les animations » (enregistrés par `PATCH /me` et appliqués tout de suite), notifications (US8), quitter une rédaction, exporter mes données (téléchargement du fichier), supprimer mon compte (confirmation), message « nomme d'abord une autre rédaction en chef » sur `last_editor`.
+- [x] T134 [US11] Brancher la route, ajouter `frontend/src/i18n/fr/settings.json` et écrire `frontend/tests/e2e/data-rights.spec.ts` (quickstart V10, points 1 à 3).
 
 **Checkpoint**: export, suppression et départ respectent le principe I sans casser l'historique des autres.
 

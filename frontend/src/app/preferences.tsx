@@ -1,7 +1,15 @@
 // Theme and motion preferences, applied to <html>: data-theme (light, dark, or auto to follow the
-// system) and the reduce-motion class. The account's own settings (PATCH /me) are passed in once
+// system) and the reduce-motion class. The account's own settings (PATCH /me) are adopted once
 // known; until then the last choice made on this device is used, and the light theme by default.
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 
 export type Theme = 'auto' | 'light' | 'dark';
 
@@ -10,6 +18,8 @@ type Stored = { theme: Theme; reduceMotion: boolean };
 type Preferences = Stored & {
   setTheme: (theme: Theme) => void;
   setReduceMotion: (reduce: boolean) => void;
+  /** The signed-in account's settings, which win over this device's last choice. */
+  adopt: (account: Stored) => void;
 };
 
 // ".v2": the first version saved its "auto" default on every load, before anyone could choose a
@@ -48,6 +58,17 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     root.classList.toggle('reduce-motion', state.reduceMotion);
   }, [state]);
 
+  // Stable, so that adopting the account's settings never undoes a choice made meanwhile.
+  const adopt = useCallback((account: Stored) => {
+    setState((current) => {
+      if (current.theme === account.theme && current.reduceMotion === account.reduceMotion) {
+        return current;
+      }
+      save(account);
+      return account;
+    });
+  }, []);
+
   const value = useMemo<Preferences>(() => {
     const choose = (next: Stored) => {
       setState(next);
@@ -57,8 +78,9 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       ...state,
       setTheme: (theme) => choose({ ...state, theme }),
       setReduceMotion: (reduceMotion) => choose({ ...state, reduceMotion }),
+      adopt,
     };
-  }, [state]);
+  }, [state, adopt]);
 
   return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>;
 }

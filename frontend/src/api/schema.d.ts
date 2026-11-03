@@ -165,7 +165,8 @@ export interface paths {
         get: operations["get_me_api_me_get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete Me */
+        delete: operations["delete_me_api_me_delete"];
         options?: never;
         head?: never;
         /** Update Me */
@@ -183,6 +184,23 @@ export interface paths {
         put?: never;
         /** Change Password */
         post: operations["change_password_api_me_password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export My Data */
+        get: operations["export_my_data_api_me_export_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -377,7 +395,11 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Leave
+         * @description Leaving the newsroom; declared before `/{member_id}`, which would take « me » for an id.
+         */
+        delete: operations["leave_api_orgs__org_id__members_me_delete"];
         options?: never;
         head?: never;
         /** Update My Profile */
@@ -930,6 +952,14 @@ export interface components {
         AccessCodeOut: {
             /** Access Code */
             access_code: string;
+        };
+        /** AccountDeletion */
+        AccountDeletion: {
+            /**
+             * Confirm
+             * @constant
+             */
+            confirm: true;
         };
         /** AdjustmentIn */
         AdjustmentIn: {
@@ -2421,6 +2451,37 @@ export interface operations {
             };
         };
     };
+    delete_me_api_me_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountDeletion"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     update_me_api_me_patch: {
         parameters: {
             query?: never;
@@ -2481,6 +2542,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_my_data_api_me_export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Un fichier JSON à télécharger */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
         };
@@ -2930,6 +3011,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MemberPublic"][];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leave_api_orgs__org_id__members_me_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
