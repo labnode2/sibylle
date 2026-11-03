@@ -10,7 +10,7 @@
 
 Sibylle v1 est une appli web installable (PWA) où des rédactions fermées de 10 à 50 personnes pronostiquent des événements, misent des lauriers et se classent par saison. Elle comprend les comptes, les organisations et leurs invitations, les quatre types de pronos avec mises et cagnotte, la désignation des résultats et les relances, les classements et les saisons, la carte de presse avec avatar en pixel art et collection, les notifications push et e-mail, et deux mini-jeux.
 
-Approche technique : une API **FastAPI** (Python 3.14) sur **PostgreSQL**, un processus de tâches pour tout ce qui dépend de l'heure (clôtures, rappels, saisons, mini-jeux, envoi des notifications), et une interface **React + TypeScript** construite avec Vite. Le temps réel passe par **une WebSocket par client**, alimentée par `LISTEN/NOTIFY` de PostgreSQL, ce qui évite d'ajouter Redis. Les règles du jeu (cycle de vie, gains, cagnotte, saisons, classements, mini-jeux) vivent dans un module de domaine pur, testé d'abord. Chaque mouvement de lauriers est une écriture d'un registre en ajout seul. Le tout tourne en Docker Compose sur la machine à domicile, derrière Caddy, exposée par frp depuis le VPS qui porte le domaine. Les e-mails partent par Brevo et les notifications push par Web Push (VAPID). Le détail des choix est dans [research.md](research.md).
+Approche technique : une API **FastAPI** (Python 3.14) sur **PostgreSQL**, un processus de tâches pour tout ce qui dépend de l'heure (clôtures, rappels, saisons, mini-jeux, envoi des notifications), et une interface **React + TypeScript** construite avec Vite. Le temps réel passe par **une WebSocket par client**, alimentée par `LISTEN/NOTIFY` de PostgreSQL, ce qui évite d'ajouter Redis. Les règles du jeu (cycle de vie, gains, cagnotte, saisons, classements, mini-jeux) vivent dans un module de domaine pur, testé d'abord. Chaque mouvement de lauriers est une écriture d'un registre en ajout seul. Le tout tourne en Docker Compose sur la machine à domicile, derrière nginx (certificat Let's Encrypt obtenu et renouvelé par certbot), exposée par frp depuis le VPS qui porte le domaine. Les e-mails partent par Brevo et les notifications push par Web Push (VAPID). Le détail des choix est dans [research.md](research.md).
 
 ## Technical Context
 
@@ -44,7 +44,7 @@ Constitution 1.0.0 (`.specify/memory/constitution.md`).
 | II. Rédactions étanches | Toutes les routes de jeu sont sous `/api/orgs/{org_id}/…` ; une dépendance FastAPI charge le membre et son rôle et refuse sinon ; les sujets temps réel sont filtrés par appartenance ; une suite de tests d'accès parcourt toutes les routes (contracts/rest-api.md). | ✅ | ✅ |
 | III. Les lauriers sont un registre | Table `ledger_entries` en ajout seul ; solde et score mis en cache sur `memberships` dans la même transaction ; corrections par écritures inverses rattachées à un `settlement` ; vérification nocturne cache = somme. | ✅ | ✅ |
 | IV. Règles testées d'abord | Paquet `sibylle.domain` sans FastAPI ni SQLAlchemy ; tests unitaires et Hypothesis écrits avant le code ; tests de contrat et parcours Playwright pour rejoindre, parier, désigner, être payé. | ✅ | ✅ |
-| V. Simple à héberger | Quatre services Compose : `caddy`, `api`, `worker`, `db` (plus une tâche de sauvegarde) ; pas de Redis ni de file de messages : `LISTEN/NOTIFY` et une table de notifications suffisent. | ✅ | ✅ |
+| V. Simple à héberger | Services Compose : `nginx` (et `certbot` pour son certificat), `api`, `worker`, `db` (plus une tâche de sauvegarde) ; pas de Redis ni de file de messages : `LISTEN/NOTIFY` et une table de notifications suffisent. | ✅ | ✅ |
 | VI. Français d'abord, accessible, Gazette | i18next côté interface, catalogue Jinja2 côté e-mails, `fr` seul livré ; fuseau `Europe/Paris` dans le domaine ; jetons de couleur et polices de la Gazette dans `tokens.css` ; axe-core en CI ; `prefers-reduced-motion` et réglage « couper les animations ». | ✅ | ✅ |
 
 Aucun écart : la section Complexity Tracking reste vide.
@@ -142,9 +142,10 @@ frontend/
     └── e2e/                     # Playwright + axe-core
 
 deploy/
-├── docker-compose.yml           # caddy, api, worker, db, backup ; profil dev : mailpit
-├── Caddyfile                    # HTTPS, proxy protocol, CSP, fichiers statiques
-├── frpc.toml.example            # tunnel 80/443 vers Caddy
+├── docker-compose.yml           # nginx, certbot, api, worker, db, backup ; profil dev : mailpit
+├── nginx/                       # Dockerfile (interface construite par Node) et configuration :
+│                                # HTTPS, proxy protocol, CSP, fichiers statiques
+├── frpc.toml.example            # tunnel 80/443 vers nginx
 ├── .env.example
 └── backup/                      # pg_dump quotidien et restauration
 

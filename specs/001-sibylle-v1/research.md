@@ -58,7 +58,7 @@ Le contexte technique du plan ne contient aucun « NEEDS CLARIFICATION » : les 
 
 ### R8. Interface : Vite, React, TypeScript
 
-- **Decision**: application monopage construite par Vite, servie en fichiers statiques par Caddy. React Router pour la navigation, TanStack Query pour les données serveur (pas de magasin global), CSS Modules et variables CSS pour les jetons Gazette (thèmes clair et sombre), i18next pour les textes, vite-plugin-pwa en mode `injectManifest` pour un service worker sur mesure (push, coque hors ligne). Client d'API typé généré par openapi-typescript à partir de l'OpenAPI de FastAPI, appelé avec openapi-fetch.
+- **Decision**: application monopage construite par Vite, servie en fichiers statiques par nginx. React Router pour la navigation, TanStack Query pour les données serveur (pas de magasin global), CSS Modules et variables CSS pour les jetons Gazette (thèmes clair et sombre), i18next pour les textes, vite-plugin-pwa en mode `injectManifest` pour un service worker sur mesure (push, coque hors ligne). Client d'API typé généré par openapi-typescript à partir de l'OpenAPI de FastAPI, appelé avec openapi-fetch.
 - **Rationale**: pas besoin de rendu serveur pour une appli derrière connexion ; un build statique est le plus simple à héberger ; les types générés empêchent l'interface et l'API de diverger.
 - **Alternatives considered**: Next.js (rendu serveur inutile ici, hébergement plus lourd) ; Redux ou Zustand (inutile, l'état est surtout serveur) ; Tailwind (les maquettes reposent déjà sur une poignée de jetons et de styles propres à la Gazette).
 
@@ -72,7 +72,7 @@ Le contexte technique du plan ne contient aucun « NEEDS CLARIFICATION » : les 
 
 - **Decision**: envoi limité à 5 Mo ; Pillow réencode en WebP de 1 200 px de côté au plus et retire les métadonnées (EXIF) ; fichier nommé par un identifiant aléatoire ; servi par l'API après contrôle d'appartenance à l'organisation, avec cache privé.
 - **Rationale**: principe II (une image d'une rédaction n'est pas lisible par une autre) et principe I (pas de données de localisation dans les photos).
-- **Alternatives considered**: fichiers publics servis par Caddy (adresse devinable impossible, mais l'isolation ne serait plus vérifiée).
+- **Alternatives considered**: fichiers publics servis par nginx (adresse devinable impossible, mais l'isolation ne serait plus vérifiée).
 
 ### R11. Concurrence des paris et des invitations
 
@@ -94,13 +94,13 @@ Le contexte technique du plan ne contient aucun « NEEDS CLARIFICATION » : les 
 
 ### R14. Hébergement, HTTPS et sauvegardes
 
-- **Decision**: Docker Compose sur la machine à domicile avec `caddy`, `api`, `worker`, `db` et une tâche `backup`. frpc, sur la machine, ouvre vers le frps du VPS deux tunnels TCP (80 et 443) avec le PROXY protocol v2 ; le DNS du domaine pointe sur le VPS. Caddy, à domicile, obtient le certificat (ACME) et termine le TLS : le VPS ne voit que du trafic chiffré, et Caddy récupère l'IP réelle des visiteurs grâce au PROXY protocol (utile à la limitation de débit). Sauvegarde nocturne : `pg_dump` au format personnalisé et archive des images, 14 jours gardés sur la machine, copie chiffrée (age) sur le VPS. La restauration est répétée avant le lancement.
+- **Decision**: Docker Compose sur la machine à domicile avec `nginx`, `certbot`, `api`, `worker`, `db` et une tâche `backup`. frpc, sur la machine, ouvre vers le frps du VPS deux tunnels TCP (80 et 443) avec le PROXY protocol v2 ; le DNS du domaine pointe sur le VPS. nginx, à domicile, termine le TLS avec un certificat Let's Encrypt que certbot obtient et renouvelle (défi HTTP-01 : les deux conteneurs partagent le dossier servi sous `/.well-known/acme-challenge/`) : le VPS ne voit que du trafic chiffré. nginx lit l'IP réelle des visiteurs dans l'en-tête PROXY (`$proxy_protocol_addr`) et la transmet à l'API dans `X-Forwarded-For` (utile à la limitation de débit). Comme nginx exige cet en-tête sur ses ports 80 et 443, ceux-ci ne sont publiés que sur `127.0.0.1`, où frpc les atteint. Au tout premier démarrage, un certificat autosigné provisoire permet à nginx de démarrer, et nginx se recharge quand certbot pose ou renouvelle le vrai certificat. Sauvegarde nocturne : `pg_dump` au format personnalisé et archive des images, 14 jours gardés sur la machine, copie chiffrée (age) sur le VPS. La restauration est répétée avant le lancement.
 - **Rationale**: chiffrement jusqu'à la machine (principe I), un seul point d'entrée, et frps déjà en place sur le VPS.
-- **Alternatives considered**: terminer le TLS sur le VPS (le VPS verrait le trafic en clair) ; tunnel Cloudflare (tiers non européen qui voit le trafic).
+- **Alternatives considered**: terminer le TLS sur le VPS (le VPS verrait le trafic en clair) ; tunnel Cloudflare (tiers non européen qui voit le trafic) ; Caddy, qui gère seul ses certificats (premier choix, remplacé par nginx).
 
 ### R15. En-têtes de sécurité
 
-- **Decision**: Caddy envoie `Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; connect-src 'self' wss://<domaine>; style-src 'self'; font-src 'self'; frame-ancestors 'none'`, HSTS, `Referrer-Policy: no-referrer`, et une `Permissions-Policy` restrictive.
+- **Decision**: nginx envoie `Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; connect-src 'self' wss://<domaine>; style-src 'self'; font-src 'self'; frame-ancestors 'none'`, HSTS, `Referrer-Policy: no-referrer`, et une `Permissions-Policy` restrictive. Ces en-têtes sont posés avec `add_header … always` dans chaque bloc `location` : dès qu'un bloc déclare son propre `add_header` (le `Cache-Control` des fichiers, par exemple), nginx n'hérite plus de ceux du bloc parent.
 - **Rationale**: la CSP rend impossible l'ajout involontaire d'une ressource tierce (SC-005).
 
 ### R16. Polices et ressources graphiques

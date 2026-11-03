@@ -35,6 +35,6 @@ make e2e     # parcours de bout en bout dans le navigateur (Playwright)
 
 ## Mise en production
 
-Pas encore prête : les images Docker, Caddy, le tunnel frpc et les sauvegardes sont prévus dans
-`specs/001-sibylle-v1/tasks.md` (T140 à T145). `make setup` et `make dev` servent au développement
-seulement.
+Pas encore prête : les images Docker, nginx et certbot, le tunnel frpc et les sauvegardes sont
+prévus dans `specs/001-sibylle-v1/tasks.md` (T140 à T145). `make setup` et `make dev` servent au
+développement seulement.

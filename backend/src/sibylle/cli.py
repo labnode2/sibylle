@@ -52,10 +52,39 @@ def _clock_show(_: argparse.Namespace) -> None:
     print(clock.now().isoformat())
 
 
-def _worker(_: argparse.Namespace) -> None:
-    from sibylle.worker.main import run_worker
+def _worker(args: argparse.Namespace) -> None:
+    from sibylle.worker.main import alive, run_worker
 
+    if args.check:
+        sys.exit(0 if alive() else 1)
     asyncio.run(run_worker())
+
+
+def _migrate(_: argparse.Namespace) -> None:
+    from sibylle.config import get_settings
+    from sibylle.db.migrate import upgrade
+    from sibylle.logs import configure_logging
+
+    configure_logging(get_settings().log_level)
+    upgrade()
+
+
+def _serve(args: argparse.Namespace) -> None:
+    """Migrations, then one uvicorn process: the WebSocket hub lives in memory, so a single
+    process serves every browser. The visitor's address comes from X-Forwarded-For, trusted
+    from the addresses in FORWARDED_ALLOW_IPS (`*` in the container, which only nginx reaches).
+    No access log: no visitor address is written down."""
+    import uvicorn
+
+    _migrate(args)
+    uvicorn.run(
+        "sibylle.main:create_app",
+        factory=True,
+        host=args.host,
+        port=args.port,
+        proxy_headers=True,
+        access_log=False,
+    )
 
 
 def _jobs_run(args: argparse.Namespace) -> None:
@@ -203,7 +232,19 @@ def build_parser() -> argparse.ArgumentParser:
     advance_parser.add_argument("duration", type=parse_duration)
     clock_commands.add_parser("show", help="affiche l'instant courant")
 
-    commands.add_parser("worker", help="lance le processus de tâches planifiées")
+    serve_parser = commands.add_parser(
+        "serve", help="applique les migrations puis lance le serveur (un seul processus)"
+    )
+    serve_parser.add_argument("--host", default="0.0.0.0")
+    serve_parser.add_argument("--port", type=int, default=8000)
+    commands.add_parser("migrate", help="applique les migrations de la base")
+
+    worker_parser = commands.add_parser("worker", help="lance le processus de tâches planifiées")
+    worker_parser.add_argument(
+        "--check",
+        action="store_true",
+        help="vérifie que le worker tourne (contrôle de santé du conteneur)",
+    )
 
     jobs_parser = commands.add_parser("jobs", help="tâches du worker")
     jobs_commands = jobs_parser.add_subparsers(dest="jobs_command", required=True)
@@ -262,6 +303,8 @@ _HANDLERS: dict[tuple[str, str | None], Callable[[argparse.Namespace], None]] = 
     ("clock", "set"): _clock_set,
     ("clock", "advance"): _clock_advance,
     ("clock", "show"): _clock_show,
+    ("serve", None): _serve,
+    ("migrate", None): _migrate,
     ("worker", None): _worker,
     ("jobs", "run"): _jobs_run,
     ("jobs", "list"): _jobs_list,

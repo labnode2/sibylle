@@ -15,14 +15,13 @@ from zoneinfo import ZoneInfo
 import httpx
 import pytest
 import pytest_asyncio
-from alembic import command
-from alembic.config import Config
 from sqlalchemy import text
 from testcontainers.community.postgres import PostgresContainer
 
 from sibylle import clock
 from sibylle.config import get_settings
 from sibylle.db.base import new_id
+from sibylle.db.migrate import upgrade
 from sibylle.db.models import Account, AuthSession, Base, Membership, Organisation, Section
 from sibylle.db.session import dispose_engine, transaction
 from sibylle.domain.content import AVATAR_TEMPLATES
@@ -35,7 +34,6 @@ DEFAULT_NOW = datetime(2026, 11, 2, 10, 0, tzinfo=PARIS)
 ORIGIN = "http://localhost:5173"
 PASSWORD = "lauriers-et-boules"
 DEFAULT_AVATAR: dict[str, Any] = AVATAR_TEMPLATES[0]["image"]
-BACKEND = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture(autouse=True)
@@ -59,10 +57,7 @@ def database_url(tmp_path_factory: pytest.TempPathFactory) -> Iterator[str]:
             UPLOAD_DIR=str(tmp_path_factory.mktemp("uploads")),
         )
         get_settings.cache_clear()
-        config = Config(str(BACKEND / "alembic.ini"))
-        config.attributes["database_url"] = url
-        config.attributes["configure_logger"] = False
-        command.upgrade(config, "head")
+        upgrade(url)
         yield url
 
 
