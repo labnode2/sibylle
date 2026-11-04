@@ -5,6 +5,7 @@
   "tabs": {
     "card": "CARTE ET LAURIERS",
     "members": "MEMBRES",
+    "games": "JEUX",
     "reports": "SIGNALEMENTS"
   },
   "card": {
@@ -100,6 +101,43 @@
     "note": "NOTE POUR SON AUTEUR·RICE (FACULTATIF)",
     "dismiss": "Rejeter",
     "resolve": "Clore : c'est réglé"
+  },
+  "games": {
+    "ordinary": {
+      "title": "Une semaine ordinaire",
+      "hint": "Les jeux d'une semaine sans programme propre. Un changement vaut à partir de la semaine prochaine : cette semaine garde ses jeux."
+    },
+    "weeks": {
+      "title": "Les quatre semaines",
+      "hint": "Coche les jeux de cette semaine et des trois suivantes. Une semaine peut n'en avoir aucun : l'encadré « Jeux de la semaine » disparaît alors de la une.",
+      "week": "SEMAINE",
+      "current": "Cette semaine",
+      "next": "Semaine du {{date}}",
+      "range": "DU {{from}} AU {{to}}",
+      "inPlay": "EN COURS",
+      "planned": "PROGRAMMÉE",
+      "ordinary": "ORDINAIRE",
+      "reset": "Revenir à une semaine ordinaire"
+    },
+    "names": {
+      "runner": "Course de la boule",
+      "pixel": "Pixel mystère"
+    },
+    "columns": {
+      "runner": "COURSE",
+      "pixel": "PIXEL"
+    },
+    "box": {
+      "current": "{{game}}, cette semaine",
+      "next": "{{game}}, semaine du {{date}}"
+    },
+    "remove": {
+      "runner": "Retirer la course de la boule de cette semaine ? Elle s'arrête aussitôt, et les essais déjà joués ne rapporteront rien lundi.",
+      "pixel": "Retirer Pixel mystère de cette semaine ? Le dessin en cours s'arrête et son mot est donné ; les lauriers déjà gagnés restent.",
+      "yes": "Retirer",
+      "no": "Garder"
+    },
+    "saved": "Programme enregistré."
   },
   "back": "LA RÉDACTION"
 }

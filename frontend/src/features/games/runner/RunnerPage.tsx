@@ -1,4 +1,5 @@
-// The ball's race: the game, the attempts left and the week's ranking, with what Monday pays.
+// The ball's race: the game, the attempts left and the week's ranking, with what Monday pays; or,
+// in a week the editor left it out of (US12), a word saying so.
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
@@ -22,8 +23,8 @@ export function RunnerPage() {
   const { orgId = '' } = useParams();
   const games = useGames(orgId);
   const org = useOrg(orgId);
-  const runner = games.data?.runner;
-  if (!runner || !org.data) return <p role="status">{t('common:shell.loading')}</p>;
+  if (!games.data || !org.data) return <p role="status">{t('common:shell.loading')}</p>;
+  const runner = games.data.runner;
   const me = org.data.my_membership.id;
 
   return (
@@ -34,38 +35,44 @@ export function RunnerPage() {
       </Link>
       <h1 className={styles.title}>{t('runner.title')}</h1>
       <p className={styles.text}>{t('runner.intro')}</p>
-      <p className={styles.label}>{t('runner.attempts', { count: runner.attempts_left })}</p>
-      <RunnerGame orgId={orgId} attemptsLeft={runner.attempts_left} />
-      {runner.attempts_left === 0 && (
-        <p className={styles.text}>
-          {t('runner.exhausted', { date: nextMonday(runner.week_start) })}
-        </p>
-      )}
+      {!runner ? (
+        <p className={styles.note}>{t('runner.off')}</p>
+      ) : (
+        <>
+          <p className={styles.label}>{t('runner.attempts', { count: runner.attempts_left })}</p>
+          <RunnerGame orgId={orgId} attemptsLeft={runner.attempts_left} />
+          {runner.attempts_left === 0 && (
+            <p className={styles.text}>
+              {t('runner.exhausted', { date: nextMonday(runner.week_start) })}
+            </p>
+          )}
 
-      <section className={styles.section} aria-labelledby="runner-week">
-        <h2 id="runner-week" className={styles.sectionTitle}>
-          {t('runner.week')}
-        </h2>
-        {runner.top.length === 0 ? (
-          <p className={styles.note}>{t('runner.nobody')}</p>
-        ) : (
-          <ol className={styles.top}>
-            {runner.top.map((row) => (
-              <li
-                key={row.member.id}
-                className={row.member.id === me ? styles.me : undefined}
-                aria-current={row.member.id === me ? 'true' : undefined}
-              >
-                <span className={styles.rank}>{row.rank}</span>
-                <PixelImage image={row.member.avatar} size={24} />
-                <span className={styles.name}>{row.member.pseudo}</span>
-                <span className={styles.score}>{formatNumber(row.score)}</span>
-              </li>
-            ))}
-          </ol>
-        )}
-        <p className={styles.note}>{t('runner.gains')}</p>
-      </section>
+          <section className={styles.section} aria-labelledby="runner-week">
+            <h2 id="runner-week" className={styles.sectionTitle}>
+              {t('runner.week')}
+            </h2>
+            {runner.top.length === 0 ? (
+              <p className={styles.note}>{t('runner.nobody')}</p>
+            ) : (
+              <ol className={styles.top}>
+                {runner.top.map((row) => (
+                  <li
+                    key={row.member.id}
+                    className={row.member.id === me ? styles.me : undefined}
+                    aria-current={row.member.id === me ? 'true' : undefined}
+                  >
+                    <span className={styles.rank}>{row.rank}</span>
+                    <PixelImage image={row.member.avatar} size={24} />
+                    <span className={styles.name}>{row.member.pseudo}</span>
+                    <span className={styles.score}>{formatNumber(row.score)}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+            <p className={styles.note}>{t('runner.gains')}</p>
+          </section>
+        </>
+      )}
     </article>
   );
 }

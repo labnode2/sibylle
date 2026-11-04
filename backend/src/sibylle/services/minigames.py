@@ -9,6 +9,10 @@ Pixel mystère: a journalist posts a drawing and its word; one drawing is active
 others wait. A seventh of its pixels shows at the opening and each morning; the first members to
 find the word are paid at once. The game ends when every other member found or every pixel shows,
 and the next drawing starts the following morning.
+
+Both follow the week's games (US12, research.md J7). Out of them, the race opens and finishes no
+run, and Monday does not pay its week; Pixel mystère takes no guess and starts no drawing, and
+the drawing in play ends with its word given.
 """
 
 import base64
@@ -32,6 +36,7 @@ from sibylle.db.models import (
     PixelPuzzle,
     RunnerRun,
 )
+from sibylle.domain.game_schedule import Game
 from sibylle.domain.ledger import minigame
 from sibylle.domain.minigames import (
     PIXEL_GUESSES_PER_DAY,
@@ -56,11 +61,29 @@ from sibylle.domain.pixels import decode
 from sibylle.domain.seasons import PARIS, week_start
 from sibylle.realtime import bus
 from sibylle.services import ledger, seasons
+from sibylle.services.game_schedule import games_of
 from sibylle.services.orgs import checked_drawing, public_member, unlocked_colors
 
 TOP = 10
 # The browser's clock and the server's may differ a little.
 CLOCK_SLACK_MS = 2_000
+
+
+async def _on(
+    session: AsyncSession, org_id: uuid.UUID, game: Game, week: date | None = None
+) -> bool:
+    """Whether the game is among the newsroom's games of that week (this week by default)."""
+    return game in await games_of(session, org_id, week or week_start(clock.now()))
+
+
+async def games(session: AsyncSession, member: Membership) -> dict[str, Any]:
+    """What a member sees of the games: those of the current week, and the state of each."""
+    scheduled = await games_of(session, member.org_id, week_start(clock.now()))
+    return {
+        "scheduled": scheduled,
+        "runner": await runner_status(session, member) if "runner" in scheduled else None,
+        "pixel": await pixel_status(session, member, on="pixel" in scheduled),
+    }
 
 
 async def _ranking(session: AsyncSession, org_id: uuid.UUID, week: date) -> list[RunResult]:
@@ -123,6 +146,8 @@ async def start_run(session: AsyncSession, member: Membership) -> RunnerRun:
     # One attempt at a time per member, so two taps cannot open a sixth run.
     await session.execute(select(Membership.id).where(Membership.id == member.id).with_for_update())
     week = week_start(clock.now())
+    if not await _on(session, member.org_id, "runner", week):
+        raise AppError("game_not_scheduled")
     if await _attempts(session, member, week) >= RUNNER_ATTEMPTS:
         raise AppError("attempts_exhausted")
     run = RunnerRun(
@@ -148,6 +173,9 @@ async def finish_run(
         raise AppError("not_found")
     if run.finished_at is not None:
         raise AppError("run_finished")
+    # A run counts for the week it started in, even when it ends on the Monday after.
+    if not await _on(session, member.org_id, "runner", run.week_start):
+        raise AppError("game_not_scheduled")
     now = clock.now()
     elapsed_ms = int((now - run.started_at).total_seconds() * 1000)
     if elapsed_ms > RUN_MAX.total_seconds() * 1000 + CLOCK_SLACK_MS:
@@ -186,7 +214,8 @@ async def pay_runner_week(session: AsyncSession, *, org_id: uuid.UUID | None = N
     """Pays the last finished week to each newsroom's players, once; returns how many were paid.
 
     A newsroom whose season closure is due waits for it, so that the season's reset never wipes
-    the gains out. `org_id` keeps one newsroom only (tests on a shared database).
+    the gains out. A week whose games no longer had the race when it ended is not paid. `org_id`
+    keeps one newsroom only (tests on a shared database).
     """
     week = week_to_pay(clock.now())
     period = week.isoformat()
@@ -207,7 +236,7 @@ async def pay_runner_week(session: AsyncSession, *, org_id: uuid.UUID | None = N
     ).all()
     paid = 0
     for org in org_ids:
-        if await seasons.due(session, org):
+        if await seasons.due(session, org) or not await _on(session, org, "runner", week):
             continue
         claimed = await session.scalar(
             insert(MinigamePayout)
@@ -281,11 +310,16 @@ def _total(puzzle: PixelPuzzle) -> int:
     return int(puzzle.drawing["size"]) ** 2
 
 
-async def pixel_status(session: AsyncSession, member: Membership) -> dict[str, Any] | None:
+async def pixel_status(
+    session: AsyncSession, member: Membership, *, on: bool | None = None
+) -> dict[str, Any] | None:
     """What a member sees: the pixels shown so far, or the whole drawing and its word once they
-    found it, drew it, or the game ended."""
+    found it, drew it, or the game ended. In a week without Pixel mystère (`on` false), only the
+    last drawing once finished, so that the word of a drawing stopped by the planning is given."""
+    if on is None:
+        on = await _on(session, member.org_id, "pixel")
     puzzle = await _current(session, member.org_id)
-    if puzzle is None:
+    if puzzle is None or (not on and puzzle.state != "finished"):
         return None
     finds = await _finds(session, puzzle)
     found = any(m.id == member.id for _, m in finds)
@@ -327,12 +361,14 @@ async def _activate(session: AsyncSession, puzzle: PixelPuzzle, now: datetime) -
 
 
 async def _activate_next(session: AsyncSession, org_id: uuid.UUID) -> bool:
-    """Starts the oldest waiting drawing when none is active and the last one ended before this
-    morning's 08:00. Returns whether one started."""
+    """Starts the oldest waiting drawing when Pixel mystère is among the week's games, none is
+    active and the last one ended before this morning's 08:00. Returns whether one started."""
     # One activation at a time per newsroom: two posts at once cannot both start theirs.
     await session.execute(
         select(Organisation.id).where(Organisation.id == org_id).with_for_update(key_share=True)
     )
+    if not await _on(session, org_id, "pixel"):
+        return False
     states = dict(
         (
             await session.execute(
@@ -442,6 +478,8 @@ async def queue(session: AsyncSession, member: Membership) -> list[dict[str, Any
 
 
 async def guess(session: AsyncSession, member: Membership, word: str) -> dict[str, Any]:
+    if not await _on(session, member.org_id, "pixel"):
+        raise AppError("game_not_scheduled")
     puzzle = await _current(session, member.org_id, lock=True)
     if puzzle is None or puzzle.state != "active":
         raise AppError("invalid_state")
@@ -484,8 +522,9 @@ async def guess(session: AsyncSession, member: Membership, word: str) -> dict[st
 
 
 async def reveal_pixel_puzzles(session: AsyncSession, *, org_id: uuid.UUID | None = None) -> int:
-    """Shows the morning's pixels, ends the drawings fully shown or found by everyone, and starts
-    the waiting ones whose morning has come. Returns how many drawings changed."""
+    """Shows the morning's pixels, ends the drawings fully shown or found by everyone, or whose
+    newsroom has no Pixel mystère this week, and starts the waiting ones whose morning has come.
+    Returns how many drawings changed."""
     now = clock.now()
     newsroom = PixelPuzzle.org_id == org_id if org_id is not None else true()
     changed = 0
@@ -498,6 +537,10 @@ async def reveal_pixel_puzzles(session: AsyncSession, *, org_id: uuid.UUID | Non
     ).all()
     for puzzle in active:
         assert puzzle.started_at is not None
+        if not await _on(session, puzzle.org_id, "pixel"):
+            await _finish(session, puzzle)
+            changed += 1
+            continue
         target = revealed_count(int(puzzle.drawing["size"]), puzzle.started_at, now)
         if target >= _total(puzzle) or await _everyone_found(session, puzzle):
             await _finish(session, puzzle)
@@ -519,3 +562,18 @@ async def reveal_pixel_puzzles(session: AsyncSession, *, org_id: uuid.UUID | Non
     for org in waiting:
         changed += await _activate_next(session, org)
     return changed
+
+
+async def follow_schedule(session: AsyncSession, org_id: uuid.UUID) -> None:
+    """Makes Pixel mystère follow a change of the current week's games: taken out, the drawing
+    in play ends and gives its word, the laurels won staying; put back, the next one may start."""
+    if await _on(session, org_id, "pixel"):
+        await _activate_next(session, org_id)
+        return
+    playing = await session.scalar(
+        select(PixelPuzzle)
+        .where(PixelPuzzle.org_id == org_id, PixelPuzzle.state == "active")
+        .with_for_update()
+    )
+    if playing is not None:
+        await _finish(session, playing)

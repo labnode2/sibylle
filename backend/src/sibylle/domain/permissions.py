@@ -29,6 +29,7 @@ class Action(StrEnum):
     CANCEL_PRONO = "cancel_prono"
     ADJUST_LAURELS = "adjust_laurels"
     HANDLE_REPORTS = "handle_reports"
+    SCHEDULE_GAMES = "schedule_games"
 
 
 _EVERYONE = frozenset(Role)
@@ -56,6 +57,7 @@ _ALLOWED: dict[Action, frozenset[Role]] = {
     Action.CANCEL_PRONO: _EDITOR,
     Action.ADJUST_LAURELS: _EDITOR,
     Action.HANDLE_REPORTS: _EDITOR,
+    Action.SCHEDULE_GAMES: _EDITOR,
 }
 
 

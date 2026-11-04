@@ -11,6 +11,8 @@ from sibylle.db.models.collection import (
 )
 from sibylle.db.models.ledger import LedgerEntry
 from sibylle.db.models.minigames import (
+    GameDefault,
+    GameWeek,
     MinigamePayout,
     PixelFind,
     PixelGuess,
@@ -43,6 +45,8 @@ __all__ = [
     "Base",
     "Bet",
     "EmailToken",
+    "GameDefault",
+    "GameWeek",
     "Invitation",
     "LedgerEntry",
     "Membership",

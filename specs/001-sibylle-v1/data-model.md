@@ -288,11 +288,21 @@ PK (`org_id`, `game`, `period_key`) ; `paid_at`. Marqueur d'idempotence des gain
 
 `pixel_guesses` : `id`, `puzzle_id`, `membership_id`, `guess_normalized`, `correct`, `day` (date, Paris), `created_at` ; au plus 3 par (`puzzle_id`, `membership_id`, `day`). `pixel_finds` : unique (`puzzle_id`, `membership_id`), `rank`, `laurels` (10, 7, 5, puis 3), `found_at` ; le gain écrit une ligne `minigame` au registre.
 
+### game_weeks (semaine programmée)
+
+PK (`org_id`, `week_start`) ; `week_start` (date du lundi, Paris ; contrainte : un lundi), `games` (`text[]` parmi `runner` et `pixel`, rangés dans cet ordre, sans doublon, éventuellement vide), `updated_at`. Une ligne par semaine que la rédaction en chef a programmée. Seules la semaine en cours et les 3 suivantes s'écrivent ; une semaine à venir peut être effacée (elle redevient ordinaire), pas la semaine en cours.
+
+### game_defaults (semaine ordinaire)
+
+PK (`org_id`, `from_week`) ; `from_week` (date du lundi, Paris ; contrainte : un lundi), `games` (comme ci-dessus), `updated_at`. Les jeux d'une semaine sans programme propre, à partir de `from_week`. Un changement écrit ou remplace la ligne du lundi suivant, et les semaines déjà commencées gardent la ligne en vigueur pour elles. Sans aucune ligne, une semaine ordinaire a les deux jeux.
+
+Les jeux d'une semaine `W` : sa ligne de `game_weeks` s'il y en a une ; sinon la ligne de `game_defaults` au plus grand `from_week ≤ W` ; sinon `runner` et `pixel`. Les parties, les propositions, le paiement de la course et l'arrêt d'un dessin de Pixel mystère lisent cette règle (research.md J7).
+
 ## Relations principales
 
 ```text
 accounts 1─n memberships n─1 organisations
-organisations 1─n sections, invitations, pronos, uploads, pixel_puzzles
+organisations 1─n sections, invitations, pronos, uploads, pixel_puzzles, game_weeks, game_defaults
 pronos 1─n prono_options, bets, settlements, prono_events, reactions, reports
 memberships 1─n bets, ledger_entries, trophies, owned_items, runner_runs
 settlements 1─n ledger_entries

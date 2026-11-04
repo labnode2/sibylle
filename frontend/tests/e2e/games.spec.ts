@@ -1,6 +1,7 @@
 // Quickstart V9: five runs of the ball's race from la une, a sixth refused, then Monday pays the
 // week to the balance only (US9); a Pixel mystère drawn in the editor, guessed in order, and
-// ended both ways: everyone found, or every pixel shown (US10).
+// ended both ways: everyone found, or every pixel shown (US10); the editor planning the games
+// week by week, members seeing and playing only those (US12).
 import { expect, test, type Page } from '@playwright/test';
 
 import {
@@ -10,6 +11,7 @@ import {
   joinWith,
   laurels,
   newPerson,
+  openSettings,
   orgIdOf,
   resetClock,
   sibylle,
@@ -155,4 +157,95 @@ test('Pixel mystère: drawn, guessed in order, ended both ways', async ({ browse
   sibylle('games', 'reveal-pixel', '--org', orgId);
   await camiPage.goto(`/o/${orgId}`);
   await expect(box).toContainText('LE MOT ÉTAIT « Boule »');
+});
+
+test('the editor plans the games, members see and play only those', async ({
+  browser,
+}, testInfo) => {
+  test.setTimeout(150_000);
+  const ines = await newPerson(browser, testInfo, 'Inès');
+  await createNewsroom(ines, 'Sophia Office', 'Inès');
+  const orgId = orgIdOf(ines);
+  const cami = await newPerson(browser, testInfo, 'Camille', await invitationPath(ines));
+  await joinWith(cami, 'Cami');
+  await expect(cami.getByRole('heading', { name: /^La une de / })).toBeVisible();
+  const box = cami.getByRole('region', { name: 'Jeux de la semaine' });
+  await expect(box.getByRole('link', { name: /Course de la boule/ })).toBeVisible();
+
+  // The planning is the editor's only.
+  await cami.goto(`/o/${orgId}/reglages/jeux`);
+  await expect(cami.getByText('Ces réglages sont réservés à la rédaction en chef.')).toBeVisible();
+  expect((await call(cami, 'GET', `/orgs/${orgId}/games/schedule`)).status).toBe(403);
+
+  // Inès takes the race out of this week, after a word on what it cancels.
+  await openSettings(ines);
+  await ines
+    .getByRole('navigation', { name: 'Réglages' })
+    .getByRole('link', { name: 'JEUX' })
+    .click();
+  const weeks = ines.getByRole('region', { name: 'Les quatre semaines' });
+  await expect(weeks.getByRole('row')).toHaveCount(5);
+  const race = weeks.getByRole('checkbox', { name: 'Course de la boule, cette semaine' });
+  await expect(race).toBeChecked();
+  await race.click();
+  await expect(weeks.getByText(/^Retirer la course de la boule de cette semaine \?/)).toBeVisible();
+  await weeks.getByRole('button', { name: 'Retirer' }).click();
+  await expect(race).not.toBeChecked();
+
+  // Cami no longer sees it on la une, nor plays it.
+  await cami.goto(`/o/${orgId}`);
+  await expect(box.getByRole('link', { name: /Pixel mystère/ })).toBeVisible();
+  await expect(box.getByRole('link', { name: /Course de la boule/ })).toHaveCount(0);
+  await cami.goto(`/o/${orgId}/jeux/course`);
+  await expect(
+    cami.getByText("La course de la boule n'est pas au programme cette semaine."),
+  ).toBeVisible();
+  const run = await call(cami, 'POST', `/orgs/${orgId}/games/runner/runs`);
+  expect([run.status, run.body.error.code]).toEqual([409, 'game_not_scheduled']);
+
+  // With a drawing in play, taking Pixel mystère out too stops it and gives its word: the week
+  // has no game left, and la une no games block.
+  const blue = Buffer.from(new Uint8Array(256).fill(4)).toString('base64');
+  const posted = await call(ines, 'POST', `/orgs/${orgId}/games/pixel/puzzles`, {
+    word: 'Boule',
+    drawing: { size: 16, palette: 'base-v1', pixels: blue },
+  });
+  expect(posted.body.state).toBe('active');
+  const pixel = weeks.getByRole('checkbox', { name: 'Pixel mystère, cette semaine' });
+  await pixel.click();
+  await expect(weeks.getByText(/^Retirer Pixel mystère de cette semaine \?/)).toBeVisible();
+  await weeks.getByRole('button', { name: 'Retirer' }).click();
+  await expect(pixel).not.toBeChecked();
+  await cami.goto(`/o/${orgId}`);
+  await expect(cami.getByRole('heading', { name: /^La une de / })).toBeVisible();
+  await expect(box).toHaveCount(0);
+  await cami.goto(`/o/${orgId}/jeux/pixel`);
+  await expect(cami.getByText("Pixel mystère n'est pas au programme cette semaine.")).toBeVisible();
+  await expect(cami.getByText('LE MOT : Boule')).toBeVisible();
+
+  // An upcoming week planned, then back to an ordinary week.
+  const third = weeks.getByRole('row').nth(3);
+  await third.getByRole('checkbox', { name: /^Pixel mystère/ }).click();
+  await expect(third).toContainText('PROGRAMMÉE');
+  await third.getByRole('button', { name: 'Revenir à une semaine ordinaire' }).click();
+  await expect(third).toContainText('ORDINAIRE');
+  await expect(third.getByRole('checkbox', { name: /^Pixel mystère/ })).toBeChecked();
+
+  // An ordinary week without Pixel mystère holds from next week on; this week keeps its own.
+  const ordinary = ines.getByRole('region', { name: 'Une semaine ordinaire' });
+  const usualPixel = ordinary.getByRole('checkbox', { name: 'Pixel mystère', exact: true });
+  await usualPixel.click();
+  await expect(usualPixel).not.toBeChecked();
+  const nextPixel = weeks
+    .getByRole('row')
+    .nth(2)
+    .getByRole('checkbox', { name: /^Pixel mystère/ });
+  await expect(nextPixel).not.toBeChecked();
+  await expect(
+    weeks.getByRole('checkbox', { name: 'Course de la boule, cette semaine' }),
+  ).not.toBeChecked();
+  sibylle('clock', 'advance', '7d');
+  await cami.goto(`/o/${orgId}`);
+  await expect(box).toContainText('PAS ENCORE DE RECORD · 5 ESSAIS SUR 5');
+  await expect(box.getByRole('link', { name: /Pixel mystère/ })).toHaveCount(0);
 });

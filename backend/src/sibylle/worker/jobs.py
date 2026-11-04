@@ -106,7 +106,8 @@ async def grant_weekly_coins(org_id: uuid.UUID | None = None) -> int:
 @job("pay_runner_week", minute="*")
 async def pay_runner_week(org_id: uuid.UUID | None = None) -> int:
     """Pays the ball's race of the past week, once per newsroom, from Monday 00:30 (Paris): a
-    run started on Sunday evening may still finish until then.
+    run started on Sunday evening may still finish until then. A week whose games no longer had
+    the race when it ended pays nothing (research.md J7).
 
     Checked every minute, like the coins, so that a worker restarted later still pays. `org_id`
     keeps one newsroom only (`sibylle games pay-runner --org`, for tests on a shared database).
@@ -120,8 +121,10 @@ async def pay_runner_week(org_id: uuid.UUID | None = None) -> int:
 @job("reveal_pixel_puzzles", minute="*")
 async def reveal_pixel_puzzles(org_id: uuid.UUID | None = None) -> int:
     """Shows each morning's Pixel mystère pixels at 08:00 (Paris), ends the drawings fully shown,
-    and starts the next ones. Checked every minute, so that a worker restarted later catches up.
-    `org_id` keeps one newsroom only (`sibylle games reveal-pixel --org`)."""
+    and starts the next ones. A week without Pixel mystère ends the drawing in play at its first
+    minute, its word given, and starts none (research.md J7). Checked every minute, so that a
+    worker restarted later catches up. `org_id` keeps one newsroom only (`sibylle games
+    reveal-pixel --org`)."""
     from sibylle.services import minigames
 
     async with transaction() as session:

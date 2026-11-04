@@ -25,6 +25,7 @@ STATUS: dict[str, int] = {
     "last_editor": 409,
     "attempts_exhausted": 409,
     "run_finished": 409,
+    "game_not_scheduled": 409,
     "too_large": 413,
     "validation_error": 422,
     "rate_limited": 429,

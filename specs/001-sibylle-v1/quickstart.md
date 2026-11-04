@@ -94,11 +94,12 @@ Sur le domaine en HTTPS, avec l'appli installée sur Android, iOS 16.4+ et un or
 2. Un prono qui ferme dans 2 h : seuls les membres sans pari sont prévenus, une seule fois.
 3. Couper l'e-mail pour `new_prono` : seule la notification push arrive.
 
-### V9. Jeux de la semaine (US9, US10)
+### V9. Jeux de la semaine (US9, US10, US12)
 
 1. Jouer 5 parties de course ; la 6ᵉ est refusée. Avancer au lundi 00:30 (`sibylle clock advance 7d`, puis `sibylle games pay-runner`) : 10, 7, 5 lauriers aux trois premiers, 2 aux autres, au solde seulement.
 2. Hugo dépose un Pixel mystère ; un premier lot de pixels apparaît ; Cami trouve en premier (10), Léo ensuite (7) ; un essai sans accents ni majuscules est accepté ; un 4ᵉ essai dans la journée est refusé.
 3. Quand tous les membres sauf Hugo ont trouvé, le jeu se termine ; un autre dessin attend le lendemain 08:00 ; avancer 7 jours (`sibylle clock advance 7d`, puis `sibylle games reveal-pixel`) : tous les pixels sont dévoilés et le jeu se termine.
+4. Dans l'onglet « Jeux » des réglages, Inès retire la course de la semaine en cours (après confirmation) : Cami ne la voit plus sur la une et sa partie est refusée (`game_not_scheduled`). Elle retire Pixel mystère en plein dessin : le dessin s'arrête, son mot est donné, et la une n'a plus d'encadré des jeux. Elle décoche Pixel mystère dans « Une semaine ordinaire » : la semaine en cours garde ses jeux ; après `sibylle clock advance 7d`, la une ne propose que la course.
 
 ### V10. Données et préférences (US11, SC-005, SC-007)
 

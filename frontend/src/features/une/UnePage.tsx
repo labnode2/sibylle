@@ -4,7 +4,7 @@
 // other briefs. On a computer the title and the navigation come from the frame; the prono runs
 // large beside the ranking and the games, and « En bref » closes the page. The blocks keep the
 // spec's order (FR-080): pronos, what waits for a result (journalists), results, ranking, games,
-// the editor's note.
+// the editor's note. A week without a game (US12) has no games block at all.
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
@@ -22,6 +22,7 @@ import {
   Wallet,
 } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
+import { useGames } from '../games/api';
 import { WeeklyGames } from '../games/WeeklyGames';
 import { NewsroomCardLink } from '../orgs/NewsroomPage';
 import { useOrg } from '../orgs/api';
@@ -253,11 +254,14 @@ export function UnePage() {
   const { orgId = '' } = useParams();
   const org = useOrg(orgId);
   const page = useFrontPage(orgId);
+  const games = useGames(orgId);
   if (!org.data) return <p role="status">{t('common:shell.loading')}</p>;
   const me = org.data.my_membership;
   const front = page.data;
   const newsroom = me.role !== 'reader';
   const [first, ...others] = front?.open ?? [];
+  // The games' place stays while they load; it goes once the week turns out to have none.
+  const hasGames = !games.data || games.data.scheduled.length > 0;
 
   return (
     <div className={styles.une}>
@@ -288,17 +292,23 @@ export function UnePage() {
               )}
 
               {/* On a phone, the next prono beside the games. */}
-              <div className={`only-mobile ${styles.pair} ${first ? '' : styles.pairAlone}`}>
-                {first && (
-                  <div className={styles.pairBrief}>
-                    <Brief orgId={orgId} prono={first} />
-                  </div>
-                )}
-                <section className={styles.pairGames} aria-label={t('games')}>
-                  <span className={styles.briefKicker}>{t('games').toUpperCase()}</span>
-                  <WeeklyGames orgId={orgId} size={32} />
-                </section>
-              </div>
+              {(first || hasGames) && (
+                <div
+                  className={`only-mobile ${styles.pair} ${first && hasGames ? '' : styles.pairAlone}`}
+                >
+                  {first && (
+                    <div className={styles.pairBrief}>
+                      <Brief orgId={orgId} prono={first} />
+                    </div>
+                  )}
+                  {hasGames && (
+                    <section className={styles.pairGames} aria-label={t('games')}>
+                      <span className={styles.briefKicker}>{t('games').toUpperCase()}</span>
+                      <WeeklyGames orgId={orgId} size={32} />
+                    </section>
+                  )}
+                </div>
+              )}
 
               {front.to_designate && front.to_designate.length > 0 && (
                 <section className={styles.block} aria-labelledby="une-designate">
@@ -324,14 +334,16 @@ export function UnePage() {
 
             <aside className={styles.side} aria-label={t('aside')}>
               <Ranking orgId={orgId} front={front} />
-              <Card
-                as="section"
-                className={`only-desktop ${styles.gamesBox}`}
-                aria-label={t('games')}
-              >
-                <span className={styles.briefKicker}>{t('games').toUpperCase()}</span>
-                <WeeklyGames orgId={orgId} size={48} />
-              </Card>
+              {hasGames && (
+                <Card
+                  as="section"
+                  className={`only-desktop ${styles.gamesBox}`}
+                  aria-label={t('games')}
+                >
+                  <span className={styles.briefKicker}>{t('games').toUpperCase()}</span>
+                  <WeeklyGames orgId={orgId} size={48} />
+                </Card>
+              )}
               {front.editor_note && (
                 <section className={styles.block} aria-labelledby="une-note">
                   <SectionHead id="une-note" title={t('editorNote')} />

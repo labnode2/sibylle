@@ -194,6 +194,12 @@
   padding-left: 0;
 }
 
+/* A week without a game: the brief alone. */
+.pairAlone .pairBrief {
+  padding-right: 0;
+  border-right: 0;
+}
+
 /* A brief: its section, its question, the favourite answer and the closing. */
 .brief {
   display: flex;

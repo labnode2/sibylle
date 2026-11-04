@@ -6,7 +6,8 @@ pytestmark = pytest.mark.unit
 
 READER, JOURNALIST, EDITOR = Role.READER, Role.JOURNALIST, Role.EDITOR
 
-# The rights matrix of the spec (« Rôles et droits »), plus the reports and Pixel mystère puzzles.
+# The rights matrix of the spec (« Rôles et droits »), plus the reports, Pixel mystère puzzles and
+# the games' planning.
 MATRIX: dict[Action, set[Role]] = {
     Action.BET: {READER, JOURNALIST, EDITOR},
     Action.REACT: {READER, JOURNALIST, EDITOR},
@@ -27,6 +28,7 @@ MATRIX: dict[Action, set[Role]] = {
     Action.CANCEL_PRONO: {EDITOR},
     Action.ADJUST_LAURELS: {EDITOR},
     Action.HANDLE_REPORTS: {EDITOR},
+    Action.SCHEDULE_GAMES: {EDITOR},
 }
 
 

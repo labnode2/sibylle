@@ -16,7 +16,7 @@ description: "Liste des tâches pour implémenter Sibylle v1"
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: parallélisable (fichiers différents, aucune dépendance sur une tâche non terminée)
-- **[Story]**: histoire de spec.md (US1 à US11)
+- **[Story]**: histoire de spec.md (US1 à US12)
 - Chaque tâche cite ses fichiers.
 
 ## Path Conventions
@@ -325,6 +325,24 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 
 ---
 
+## Phase 9d: User Story 12 - Programmer les jeux de la semaine (Priority: P3)
+
+**Goal**: la rédaction en chef choisit les jeux d'une semaine ordinaire, et ceux de la semaine en cours et des 3 suivantes ; les membres ne voient et ne jouent que les jeux de la semaine ; un jeu retiré en cours de semaine annule sa semaine (spec FR-113 à FR-117, research.md J7).
+
+**Independent Test**: retirer la course de la semaine en cours, puis vérifier qu'elle disparaît de la une d'un·e lecteur·rice et qu'une partie est refusée ; programmer une semaine sans jeu et vérifier que l'encadré disparaît ; retirer Pixel mystère pendant un dessin et vérifier que le mot est donné ; passer au lundi et vérifier que la semaine annulée ne paie rien.
+
+- [x] T173 [P] [US12] Écrire `backend/tests/unit/test_game_schedule.py` (research.md J7 : programme propre, sinon semaine ordinaire en vigueur cette semaine-là, sinon les deux jeux ; jeux rangés sans doublon ; la semaine en cours et les 3 suivantes, des lundis seulement) et `backend/tests/contract/test_game_schedule.py` (routes réservées à la rédaction en chef, 404 hors de la rédaction ; semaine ordinaire changée à partir de la semaine suivante ; semaine sans jeu ; retour à une semaine ordinaire ; `422` hors de l'horizon ou pour un autre jour qu'un lundi ; `scheduled` dans `GET …/games` ; `game_not_scheduled` pour une partie ou une proposition hors programme ; course retirée, rien payé le lundi ; dessin arrêté et mot donné, au retrait comme au lundi d'une semaine sans Pixel mystère ; dessin suivant à la prochaine semaine avec Pixel mystère) ; ajouter `SCHEDULE_GAMES` à `backend/tests/unit/test_permissions.py`.
+- [x] T174 [US12] Ajouter `game_weeks` et `game_defaults` (`games` en `text[]` parmi `runner` et `pixel`, semaines repérées par leur lundi) à `backend/src/sibylle/db/models/minigames.py`, avec la révision Alembic `backend/src/sibylle/db/migrations/versions/0017_game_schedule.py`.
+- [x] T175 [US12] Implémenter `backend/src/sibylle/domain/game_schedule.py` (pour faire passer T173), `backend/src/sibylle/services/game_schedule.py` (jeux d'une semaine, programme, semaine ordinaire, semaine programmée, retour à une semaine ordinaire, événement `games.schedule.changed`), l'action `SCHEDULE_GAMES` de `backend/src/sibylle/domain/permissions.py`, l'erreur `game_not_scheduled`, et les routes `…/games/schedule` de `backend/src/sibylle/api/routes/minigames.py`.
+- [x] T176 [US12] Faire suivre le programme à `backend/src/sibylle/services/minigames.py` (`scheduled` et `runner: null` dans `GET …/games` ; parties et propositions refusées hors programme ; dessin arrêté ou suivant démarré par `follow_schedule` ; aucun dessin activé hors programme) et aux tâches `pay_runner_week` et `reveal_pixel_puzzles` de `backend/src/sibylle/worker/jobs.py` ; régénérer `frontend/src/api/schema.d.ts`.
+- [x] T177 [P] [US12] Écrire `frontend/src/features/admin/GameSchedulePage.tsx` (onglet « Jeux » de `frontend/src/features/admin/AdminLayout.tsx`, route `/o/:orgId/reglages/jeux` dans `frontend/src/app/router.tsx`) : une semaine ordinaire, puis la semaine en cours et les 3 suivantes, une case par jeu ; confirmation avant de retirer un jeu de la semaine en cours ; « Revenir à une semaine ordinaire » ; libellés dans `frontend/src/i18n/fr/admin.json`.
+- [x] T178 [P] [US12] Ne montrer que les jeux de la semaine dans `frontend/src/features/games/WeeklyGames.tsx` et `frontend/src/features/une/UnePage.tsx` (l'encadré disparaît sans jeu) ; dire « pas au programme cette semaine » dans `frontend/src/features/games/runner/RunnerPage.tsx` et `frontend/src/features/games/pixel-mystere/PixelMysterePage.tsx` ; recharger les jeux sur `games.schedule.changed` (`frontend/src/features/games/api.ts`) ; libellés dans `frontend/src/i18n/fr/games.json`.
+- [x] T179 [US12] Étendre `frontend/tests/e2e/games.spec.ts` : Inès retire la course de la semaine en cours, Cami ne la voit plus sur la une et sa partie est refusée ; une semaine sans jeu fait disparaître l'encadré ; Pixel mystère retiré en plein dessin donne son mot.
+
+**Checkpoint**: chaque rédaction dose ses jeux semaine par semaine ; les membres ne voient et ne jouent que ceux de la semaine.
+
+---
+
 ## Phase 10: User Story 8 - Être prévenu (Priority: P3)
 
 **Goal**: notifications push (appli installée) et e-mails pour quatre événements, réglables type par type et canal par canal.
@@ -452,6 +470,7 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 - **US9 (P3)** : après US1 ; son encadré sur la une suppose US5.
 - **US11 (P3)** : après US1 ; le réglage des notifications suppose US8.
 - **US10 (P4)** : après US7 (éditeur pixel art) et US9 (encadré « Jeux de la semaine »).
+- **US12 (P3)** : après US9 et US10 (les deux jeux qu'elle programme) ; son onglet rejoint les réglages de US6.
 
 ### Within Each User Story
 

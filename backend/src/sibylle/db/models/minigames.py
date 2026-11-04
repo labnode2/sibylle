@@ -3,6 +3,7 @@ from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import CheckConstraint, ForeignKey, Index, LargeBinary, Text, UniqueConstraint, text
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from sibylle import clock
@@ -42,6 +43,40 @@ class MinigamePayout(Base):
     game: Mapped[str] = mapped_column(Text, primary_key=True)
     period_key: Mapped[str] = mapped_column(Text, primary_key=True)
     paid_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
+
+
+class GameWeek(Base):
+    """A week the editor planned (US12): its games, whatever an ordinary week has."""
+
+    __tablename__ = "game_weeks"
+    __table_args__ = (
+        CheckConstraint("extract(isodow FROM week_start) = 1", name="monday"),
+        CheckConstraint("games <@ ARRAY['runner', 'pixel']::text[]", name="games"),
+    )
+
+    org_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organisations.id"), primary_key=True)
+    # The Monday (Paris) of the week.
+    week_start: Mapped[date] = mapped_column(primary_key=True)
+    # In their usual order, each once; empty for a week without a game.
+    games: Mapped[list[str]] = mapped_column(ARRAY(Text))
+    updated_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
+
+
+class GameDefault(Base):
+    """The games of an ordinary week from `from_week` on: a week without a planning of its own
+    takes the latest one not after it (research.md J7)."""
+
+    __tablename__ = "game_defaults"
+    __table_args__ = (
+        CheckConstraint("extract(isodow FROM from_week) = 1", name="monday"),
+        CheckConstraint("games <@ ARRAY['runner', 'pixel']::text[]", name="games"),
+    )
+
+    org_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organisations.id"), primary_key=True)
+    # A Monday (Paris): a change holds from the week after the one it was made in.
+    from_week: Mapped[date] = mapped_column(primary_key=True)
+    games: Mapped[list[str]] = mapped_column(ARRAY(Text))
+    updated_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
 
 
 class PixelPuzzle(Base):

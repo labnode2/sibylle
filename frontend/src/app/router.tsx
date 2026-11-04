@@ -15,6 +15,7 @@ import { RequireAuth } from '../features/auth/RequireAuth';
 import { NewsroomPage } from '../features/orgs/NewsroomPage';
 import { CreateOrgPage, HomeRedirect, JoinPage, StartPage } from '../features/orgs/OrgPages';
 import { AdminLayout } from '../features/admin/AdminLayout';
+import { GameSchedulePage } from '../features/admin/GameSchedulePage';
 import { MembersPage } from '../features/admin/MembersPage';
 import { OrgSettingsPage } from '../features/admin/OrgSettingsPage';
 import { ReportsPage } from '../features/admin/ReportsPage';
@@ -123,6 +124,7 @@ export const router = createBrowserRouter([
             children: [
               { index: true, element: <OrgSettingsPage /> },
               { path: 'membres', element: <MembersPage /> },
+              { path: 'jeux', element: <GameSchedulePage /> },
               { path: 'signalements', element: <ReportsPage /> },
             ],
           },

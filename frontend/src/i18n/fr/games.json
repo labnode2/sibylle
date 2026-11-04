@@ -16,6 +16,7 @@
     "back": "Retour à la une",
     "title": "Course de la boule",
     "intro": "Saute les obstacles le plus loin possible. 5 essais par semaine : seul ton meilleur score compte.",
+    "off": "La course de la boule n'est pas au programme cette semaine.",
     "gains": "Lundi, le classement de la semaine rapporte 10, 7 et 5 lauriers aux trois premiers, et 2 lauriers à chaque autre joueur.",
     "canvas": "Course de la boule : saute les obstacles avec la barre d'espace, la flèche du haut, ou en touchant le jeu.",
     "controls": "Espace, flèche du haut ou toucher le jeu : sauter.",
@@ -39,6 +40,7 @@
     "title": "Pixel mystère",
     "intro": "Un dessin se dévoile un peu plus chaque matin à 8 h. Trouve le mot avant les autres : 10, 7 et 5 lauriers aux trois premiers, puis 3 lauriers. 3 essais par jour.",
     "none": "Pas de Pixel mystère en cours.",
+    "off": "Pixel mystère n'est pas au programme cette semaine.",
     "drawing": "Le dessin du Pixel mystère, {{shown}} pixels dévoilés sur {{total}}",
     "letters": "UN MOT DE {{count}} LETTRES",
     "shown": "{{shown}} PIXELS DÉVOILÉS SUR {{total}}",
@@ -65,7 +67,8 @@
       "wordHint": "Des lettres seulement, 24 caractères au plus ; majuscules et accents ne comptent pas.",
       "save": "Déposer",
       "started": "Ton dessin est lancé : la rédaction peut chercher.",
-      "queued": "Ton dessin attend son tour : il démarrera un matin à 8 h."
+      "queued": "Ton dessin attend son tour : il démarrera un matin à 8 h.",
+      "queuedOff": "Ton dessin attend son tour : il démarrera quand Pixel mystère reviendra au programme."
     },
     "queue": {
       "title": "DESSINS DÉPOSÉS",

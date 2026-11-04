@@ -1013,6 +1013,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/orgs/{org_id}/games/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Schedule */
+        get: operations["get_schedule_api_orgs__org_id__games_schedule_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/games/schedule/default": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Ordinary Week */
+        put: operations["put_ordinary_week_api_orgs__org_id__games_schedule_default_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/games/schedule/weeks/{week_start}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Week */
+        put: operations["put_week_api_orgs__org_id__games_schedule_weeks__week_start__put"];
+        post?: never;
+        /** Delete Week */
+        delete: operations["delete_week_api_orgs__org_id__games_schedule_weeks__week_start__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/orgs/{org_id}/uploads": {
         parameters: {
             query?: never;
@@ -1266,10 +1318,47 @@ export interface components {
             /** Distribution */
             distribution: components["schemas"]["BucketOut"][];
         };
-        /** Games */
+        /**
+         * GameSchedule
+         * @description `default`: the games of an ordinary week, from next week on. `weeks`: the current week and
+         *     the three after it; `planned` when a week has games of its own.
+         */
+        GameSchedule: {
+            /** Default */
+            default: ("runner" | "pixel")[];
+            /** Weeks */
+            weeks: components["schemas"]["GameWeekOut"][];
+        };
+        /** GameWeekOut */
+        GameWeekOut: {
+            /**
+             * Week Start
+             * Format: date
+             */
+            week_start: string;
+            /** Games */
+            games: ("runner" | "pixel")[];
+            /** Planned */
+            planned: boolean;
+        };
+        /**
+         * Games
+         * @description The current week's games (`scheduled`), and each one's state: `runner` is null when the
+         *     race is not on; out of the week's games, `pixel` is only the last drawing once finished.
+         */
         Games: {
-            runner: components["schemas"]["RunnerStatus"];
+            /** Scheduled */
+            scheduled: ("runner" | "pixel")[];
+            runner: components["schemas"]["RunnerStatus"] | null;
             pixel: components["schemas"]["PixelStatus"] | null;
+        };
+        /**
+         * GamesIn
+         * @description Games for a week; their order and repeats do not matter.
+         */
+        GamesIn: {
+            /** Games */
+            games: ("runner" | "pixel")[];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -4800,6 +4889,140 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PixelQueueItem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_schedule_api_orgs__org_id__games_schedule_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameSchedule"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_ordinary_week_api_orgs__org_id__games_schedule_default_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GamesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameSchedule"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_week_api_orgs__org_id__games_schedule_weeks__week_start__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                week_start: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GamesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameSchedule"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_week_api_orgs__org_id__games_schedule_weeks__week_start__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                week_start: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameSchedule"];
                 };
             };
             /** @description Validation Error */

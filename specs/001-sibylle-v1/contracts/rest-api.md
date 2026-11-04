@@ -20,7 +20,7 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | 403 | `forbidden` | rôle insuffisant dans l'organisation |
 | 404 | `not_found` | absent ou hors de l'organisation |
 | 409 | `invalid_state` | transition interdite (prono non ouvert, déjà résolu…) |
-| 409 | `already_bet`, `insufficient_balance`, `insufficient_coins`, `pseudo_taken`, `email_taken`, `invitation_invalid`, `token_invalid`, `last_editor`, `attempts_exhausted` | règles métier (`token_invalid` : lien de vérification ou de réinitialisation expiré ou déjà utilisé) |
+| 409 | `already_bet`, `insufficient_balance`, `insufficient_coins`, `pseudo_taken`, `email_taken`, `invitation_invalid`, `token_invalid`, `last_editor`, `attempts_exhausted`, `game_not_scheduled` | règles métier (`token_invalid` : lien de vérification ou de réinitialisation expiré ou déjà utilisé ; `game_not_scheduled` : jeu absent du programme de la semaine) |
 | 413 | `too_large` | image > 5 Mo |
 | 422 | `validation_error` | champs invalides (`fields`) |
 | 429 | `rate_limited` | trop de tentatives |
@@ -128,13 +128,19 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 
 | Méthode | Route | Qui | Corps → Réponse |
 |---|---|---|---|
-| GET | `/orgs/{org}/games` | Membre | → `{runner: {week_start, attempts_left, my_best, top: [{member, score, rank}] (10 premiers)}, pixel: PixelStatus \| null}` |
-| POST | `/orgs/{org}/games/runner/runs` | Membre | → `201 {run_id, seed}` (une partie ouverte compte comme un essai, même jamais finie) ; `409 attempts_exhausted` |
-| POST | `/orgs/{org}/games/runner/runs/{run}/finish` | Membre | `{score, duration_ms}` → `{score, my_best, rank}` ; `409 run_finished` ; `422` si invraisemblable (`score` au-delà de 90 points par seconde, `duration_ms` plus longue que la partie ou au-delà de 30 min) |
-| GET | `/orgs/{org}/games/pixel` | Membre | → `PixelStatus \| null` : `{puzzle_id, size, revealed, revealed_count, letters, guesses_left_today, finds: [{member, rank}], found_by_me, mine, state, word}`. `revealed` : le dessin en base64, un octet par pixel, 255 pour un pixel encore caché ; dessin entier et `word` seulement pour qui a trouvé, pour l'auteur·rice ou à la fin (sinon `word` vaut `null`). Le dessin actif, ou le dernier terminé tant que le suivant n'a pas démarré |
-| POST | `/orgs/{org}/games/pixel/guesses` | Membre | `{word}` → `{correct, rank, laurels, guesses_left_today}` ; `403` pour l'auteur·rice ; `409 attempts_exhausted` au 4ᵉ essai du jour ; `409 invalid_state` sans dessin actif ou après avoir trouvé |
+| GET | `/orgs/{org}/games` | Membre | → `{scheduled, runner, pixel}`. `scheduled` : les jeux de la semaine en cours, parmi `"runner"` et `"pixel"`. `runner` : `{week_start, attempts_left, my_best, top: [{member, score, rank}] (10 premiers)}`, ou `null` si la course n'est pas au programme. `pixel` : `PixelStatus \| null` (hors programme, seulement le dernier dessin terminé, avec son mot) |
+| POST | `/orgs/{org}/games/runner/runs` | Membre | → `201 {run_id, seed}` (une partie ouverte compte comme un essai, même jamais finie) ; `409 attempts_exhausted` ; `409 game_not_scheduled` si la course n'est pas au programme de la semaine |
+| POST | `/orgs/{org}/games/runner/runs/{run}/finish` | Membre | `{score, duration_ms}` → `{score, my_best, rank}` ; `409 run_finished` ; `409 game_not_scheduled` si la course n'est plus au programme de la semaine de la partie ; `422` si invraisemblable (`score` au-delà de 90 points par seconde, `duration_ms` plus longue que la partie ou au-delà de 30 min) |
+| GET | `/orgs/{org}/games/pixel` | Membre | → `PixelStatus \| null` : `{puzzle_id, size, revealed, revealed_count, letters, guesses_left_today, finds: [{member, rank}], found_by_me, mine, state, word}`. `revealed` : le dessin en base64, un octet par pixel, 255 pour un pixel encore caché ; dessin entier et `word` seulement pour qui a trouvé, pour l'auteur·rice ou à la fin (sinon `word` vaut `null`). Le dessin actif, ou le dernier terminé tant que le suivant n'a pas démarré ; hors programme, seulement le dernier dessin terminé |
+| POST | `/orgs/{org}/games/pixel/guesses` | Membre | `{word}` → `{correct, rank, laurels, guesses_left_today}` ; `403` pour l'auteur·rice ; `409 attempts_exhausted` au 4ᵉ essai du jour ; `409 invalid_state` sans dessin actif ou après avoir trouvé ; `409 game_not_scheduled` si Pixel mystère n'est pas au programme de la semaine |
 | GET | `/orgs/{org}/games/pixel/puzzles` | Journaliste | → `[{puzzle_id, state, size, letters, mine, word, drawing, created_at}]` : le dessin en cours puis ceux qui attendent ; `word` et `drawing` seulement pour ses propres dessins |
-| POST | `/orgs/{org}/games/pixel/puzzles` | Journaliste | `{drawing: PixelImage, word}` → `201` (même forme qu'un élément de la file : `state` dit s'il démarre tout de suite ou attend) ; `422` si le mot n'est pas fait de lettres (2 au moins, 24 caractères au plus) |
+| POST | `/orgs/{org}/games/pixel/puzzles` | Journaliste | `{drawing: PixelImage, word}` → `201` (même forme qu'un élément de la file : `state` dit s'il démarre tout de suite ou attend ; une semaine sans Pixel mystère, il attend) ; `422` si le mot n'est pas fait de lettres (2 au moins, 24 caractères au plus) |
+| GET | `/orgs/{org}/games/schedule` | Réd. chef | → `GameSchedule` |
+| PUT | `/orgs/{org}/games/schedule/default` | Réd. chef | `{games}` → `GameSchedule` : les jeux d'une semaine ordinaire, à partir de la semaine suivante |
+| PUT | `/orgs/{org}/games/schedule/weeks/{week_start}` | Réd. chef | `{games}` → `GameSchedule` ; `422` avec `fields.week_start` : `not_monday`, ou `out_of_range` hors de la semaine en cours et des 3 suivantes. Pour la semaine en cours, un jeu retiré s'arrête aussitôt (research.md J7) et l'événement `games.schedule.changed` part |
+| DELETE | `/orgs/{org}/games/schedule/weeks/{week_start}` | Réd. chef | → `GameSchedule` : la semaine redevient ordinaire ; `409 invalid_state` pour la semaine en cours ; `422` comme ci-dessus |
+
+`GameSchedule` = `{default: [game], weeks: [{week_start, games: [game], planned}]}`. `default` : les jeux d'une semaine ordinaire à partir de la semaine suivante. `weeks` : la semaine en cours puis les 3 suivantes, avec leurs jeux ; `planned` est vrai si la semaine a son propre programme. Un `game` vaut `"runner"` ou `"pixel"` ; une liste `games` revient dans cet ordre, sans doublon, et peut être vide.
 
 ## Divers
 

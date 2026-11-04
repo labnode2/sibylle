@@ -10,6 +10,15 @@
 
 Sibylle est un jeu de pronostics gratuit et sans enjeu réel, pour des organisations de 10 à 50 personnes. Chaque organisation est une rédaction fermée ; on y pronostique des événements, on gagne des lauriers en voyant juste, on peut en miser, et on se classe par saison. Vocabulaire : un **prono** est une question ; un **pari** est la réponse d'un membre à un prono ; la **rédaction en chef** administre l'organisation.
 
+## Clarifications
+
+### Session 2026-11-04
+
+- Q: Quels jeux tournent une semaine que la rédaction en chef n'a pas programmée ? → A: Ceux d'une « semaine ordinaire », réglée par la rédaction en chef : les deux jeux au départ. Le programme semaine par semaine ne sert qu'aux exceptions.
+- Q: Une semaine peut-elle n'avoir aucun jeu ? → A: Oui ; l'encadré « Jeux de la semaine » disparaît alors de la une.
+- Q: Que deviennent les parties déjà jouées quand un jeu est retiré de la semaine en cours ? → A: La semaine de ce jeu est annulée. La course ne paie rien le lundi. Le dessin de Pixel mystère en cours s'arrête et son mot est donné. Les lauriers déjà gagnés restent. La même règle vaut quand une semaine sans Pixel mystère commence pendant un dessin.
+- Q: Jusqu'à combien de semaines la rédaction en chef programme-t-elle ? → A: La semaine en cours et les 3 suivantes.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Entrer dans une rédaction (Priority: P1)
@@ -214,6 +223,27 @@ Cami choisit le thème clair, sombre ou automatique, coupe les animations, règl
 
 ---
 
+### User Story 12 - Programmer les jeux de la semaine (Priority: P3)
+
+Inès, rédaction en chef, ouvre l'onglet « Jeux » des réglages. Une semaine ordinaire, Sophia Office joue à la course de la boule et à Pixel mystère. Pour la semaine de Noël, Inès décoche les deux jeux ; pour la suivante, elle ne garde que la course. Les membres ne voient sur la une et ne jouent que les jeux de la semaine en cours. Un mercredi, Inès retire Pixel mystère : le dessin en cours s'arrête et son mot est donné.
+
+**Why this priority**: les jeux restent un bonus ; les programmer laisse chaque rédaction les doser selon ses semaines, sans toucher au reste.
+
+**Independent Test**: avec la rédaction en chef, retirer la course de la semaine en cours, puis vérifier qu'elle disparaît de la une d'un·e lecteur·rice et qu'une partie est refusée. Programmer une semaine sans jeu, avancer l'horloge et vérifier que l'encadré disparaît. Retirer Pixel mystère pendant un dessin et vérifier que le mot est donné. Vérifier qu'un·e journaliste ne peut ni voir ni changer le programme.
+
+**Acceptance Scenarios**:
+
+1. **Given** une rédaction qui n'a rien programmé, **When** une semaine commence, **Then** ses jeux sont ceux d'une semaine ordinaire : au départ, la course de la boule et Pixel mystère.
+2. **Given** la rédaction en chef, **When** elle décoche Pixel mystère dans « Une semaine ordinaire », **Then** les semaines suivantes sans programme propre n'ont plus que la course ; la semaine en cours garde ses jeux.
+3. **Given** l'onglet « Jeux », **When** Inès décoche les deux jeux de la semaine du 21 décembre, **Then** cette semaine-là n'a aucun jeu : l'encadré « Jeux de la semaine » disparaît de la une, et les pages des jeux disent qu'ils ne sont pas au programme.
+4. **Given** une semaine sans la course, **When** Cami lance une partie, **Then** l'appli refuse : la course n'est pas au programme cette semaine.
+5. **Given** des essais déjà joués cette semaine, **When** Inès retire la course de la semaine en cours, **Then** plus aucune partie ne s'ouvre ni ne se termine, et le lundi ne verse rien pour cette semaine. Si Inès remet la course avant la fin de la semaine, les essais joués comptent de nouveau.
+6. **Given** un Pixel mystère en cours, **When** Inès retire Pixel mystère de la semaine en cours, ou qu'une semaine sans Pixel mystère commence, **Then** le dessin s'arrête, son mot est donné et les lauriers déjà gagnés restent ; les dessins déposés attendent la prochaine semaine avec Pixel mystère.
+7. **Given** la semaine en cours et les trois suivantes, **When** Inès veut programmer une semaine passée ou une cinquième semaine, **Then** l'appli refuse. Une semaine à venir déjà programmée peut redevenir une semaine ordinaire.
+8. **Given** un·e journaliste ou un·e lecteur·rice, **When** il ou elle veut voir ou changer le programme, **Then** l'appli refuse.
+
+---
+
 ### Edge Cases
 
 - Deux membres parient au même instant avec le même solde : chaque pari est traité à part et aucun solde ne devient négatif par une mise.
@@ -228,6 +258,9 @@ Cami choisit le thème clair, sombre ou automatique, coupe les animations, règl
 - Personne n'a parié avant la clôture : le prono est relancé ou annulé par un·e journaliste, il ne se résout pas.
 - La machine redémarre pendant une clôture de saison : la clôture reprend sans verser deux fois les trophées ni les remises au solde.
 - Un membre ouvre l'appli hors ligne : il voit la dernière version chargée et un message lui indique que les paris demandent une connexion.
+- Une partie de course commencée le dimanche soir finit le lundi, dans une semaine sans course : elle compte pour la semaine où elle a commencé.
+- La rédaction en chef change la semaine ordinaire le lundi à 00:10, avant le paiement de la course. La semaine écoulée et la semaine en cours gardent leurs jeux, et la course de la semaine écoulée est payée.
+- Deux rédactions en chef changent le programme de la même semaine au même moment : la dernière modification l'emporte.
 
 ## Requirements *(mandatory)*
 
@@ -326,6 +359,11 @@ Cami choisit le thème clair, sombre ou automatique, coupe les animations, règl
 - **FR-110**: La course de la boule DOIT offrir 5 essais par membre et par semaine (du lundi 00:00 au dimanche 23:59, heure de Paris), ne retenir que le meilleur score et verser 10, 7, 5 lauriers aux trois premiers et 2 aux autres joueurs à la fin de la semaine.
 - **FR-111**: Pixel mystère DOIT permettre à un·e journaliste ou à la rédaction en chef de déposer un dessin et son mot ; chaque jour, des pixels se dévoilent au hasard, de sorte que le dessin soit entier en 7 jours au plus.
 - **FR-112**: Pixel mystère DOIT verser 10, 7, 5 lauriers aux trois premiers qui trouvent, puis 3 aux suivants ; 3 essais par jour et par membre ; l'auteur·rice ne joue pas ; le jeu se termine quand tous les autres membres ont trouvé ou quand tous les pixels sont dévoilés.
+- **FR-113**: La rédaction en chef DOIT pouvoir choisir les jeux de la semaine en cours et des 3 suivantes (du lundi 00:00 au dimanche 23:59, heure de Paris), parmi la course de la boule et Pixel mystère. Une semaine peut n'avoir aucun jeu. Seule la rédaction en chef voit et change ce programme.
+- **FR-114**: Une semaine sans programme propre DOIT prendre les jeux d'une semaine ordinaire, que règle la rédaction en chef (les deux jeux à la création de la rédaction). Un changement de ce réglage vaut à partir de la semaine suivante : la semaine en cours et les semaines passées gardent leurs jeux. Une semaine à venir programmée DOIT pouvoir redevenir une semaine ordinaire.
+- **FR-115**: Les membres NE DOIVENT voir et jouer que les jeux de la semaine en cours. L'encadré « Jeux de la semaine » ne montre qu'eux et disparaît s'il n'y en a aucun ; la page d'un jeu hors programme le dit, et le serveur refuse ses parties et ses propositions.
+- **FR-116**: Retirer la course de la semaine en cours DOIT annuler sa semaine : plus aucune partie ne s'ouvre ni ne se termine, et le lundi ne verse rien pour elle. Le lundi ne paie une semaine que si la course est encore à son programme quand elle se termine.
+- **FR-117**: Retirer Pixel mystère de la semaine en cours, ou commencer une semaine sans lui, DOIT arrêter le dessin en cours : son mot est donné et les lauriers déjà gagnés restent. Les dessins déposés entre-temps attendent la prochaine semaine où Pixel mystère est au programme.
 
 **Modération et données**
 
@@ -356,6 +394,7 @@ Cami choisit le thème clair, sombre ou automatique, coupe les animations, règl
 - **Objet de collection** : couleur ou cadre acheté avec des pièces, ou surprise débloquée par code secret (boule, couleur rare).
 - **Réaction, signalement, notification** : interactions autour d'un prono.
 - **Partie de course et Pixel mystère** : essais, scores, dessins, mots et propositions.
+- **Programme des jeux** : les jeux de chaque semaine programmée, et ceux d'une semaine ordinaire, datés de la semaine à partir de laquelle ils valent.
 
 ## Success Criteria *(mandatory)*
 

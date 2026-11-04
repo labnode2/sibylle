@@ -51,6 +51,7 @@ Enveloppe commune : `{"type": "event", "topic": "<sujet>", "event": "<nom>", "at
 | `games.pixel.revealed` | `org` | `{puzzle_id, revealed_count}` |
 | `games.pixel.found` | `org` | `{puzzle_id, member, rank}` |
 | `games.pixel.finished` | `org` | `{puzzle_id, word}` |
+| `games.schedule.changed` | `org` | `{week_start, games}` : la rédaction en chef a changé les jeux de la semaine en cours ; le client recharge les jeux |
 | `season.closed` | `org` | `{season: {year, name}}` ; le client recharge profil, collection et classements |
 
 ## Bus interne

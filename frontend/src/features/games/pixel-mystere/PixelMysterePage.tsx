@@ -1,6 +1,7 @@
 // Pixel mystère: the drawing as far as it shows, its number of letters, my guesses left today,
 // who found and in what order, the word at the end; and for journalists, a drawing to post with
-// the pixel editor and the drawings waiting their turn.
+// the pixel editor and the drawings waiting their turn. In a week the editor left it out of
+// (US12), a word saying so, and the last drawing with its word once it ended.
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
@@ -54,13 +55,15 @@ function GuessForm({ guess, status }: { guess: ReturnType<typeof useGuess>; stat
   );
 }
 
-function Puzzle({ orgId, status }: { orgId: string; status: PixelStatus }) {
+function Puzzle({ orgId, status, on }: { orgId: string; status: PixelStatus; on: boolean }) {
   const { t } = useTranslation('games');
   const guess = useGuess(orgId);
   const total = status.size * status.size;
   const message =
     status.state === 'finished'
-      ? t('pixel.finished')
+      ? on
+        ? t('pixel.finished')
+        : null
       : status.mine
         ? t('pixel.mine')
         : status.found_by_me
@@ -117,7 +120,7 @@ function Puzzle({ orgId, status }: { orgId: string; status: PixelStatus }) {
   );
 }
 
-function PostPuzzle({ orgId, unlocked }: { orgId: string; unlocked: number[] }) {
+function PostPuzzle({ orgId, unlocked, on }: { orgId: string; unlocked: number[]; on: boolean }) {
   const { t } = useTranslation('games');
   const post = usePostPuzzle(orgId);
   const queue = usePixelQueue(orgId, true);
@@ -133,7 +136,11 @@ function PostPuzzle({ orgId, unlocked }: { orgId: string; unlocked: number[] }) 
       <p className={styles.text}>{t('pixel.post.text')}</p>
       {post.data && !open && (
         <p role="status" className={styles.text}>
-          {post.data.state === 'active' ? t('pixel.post.started') : t('pixel.post.queued')}
+          {post.data.state === 'active'
+            ? t('pixel.post.started')
+            : on
+              ? t('pixel.post.queued')
+              : t('pixel.post.queuedOff')}
         </p>
       )}
       {open ? (
@@ -220,6 +227,7 @@ export function PixelMysterePage() {
   if (!games.data || !org.data) return <p role="status">{t('common:shell.loading')}</p>;
   const me = org.data.my_membership;
   const status = games.data.pixel;
+  const on = games.data.scheduled.includes('pixel');
 
   return (
     <article className={styles.page}>
@@ -229,12 +237,13 @@ export function PixelMysterePage() {
       </Link>
       <h1 className={styles.title}>{t('pixel.title')}</h1>
       <p className={styles.text}>{t('pixel.intro')}</p>
+      {!on && <p className={styles.note}>{t('pixel.off')}</p>}
       {status ? (
-        <Puzzle orgId={orgId} status={status} />
+        <Puzzle orgId={orgId} status={status} on={on} />
       ) : (
-        <p className={styles.note}>{t('pixel.none')}</p>
+        on && <p className={styles.note}>{t('pixel.none')}</p>
       )}
-      {me.role !== 'reader' && <PostPuzzle orgId={orgId} unlocked={me.unlocked_colors} />}
+      {me.role !== 'reader' && <PostPuzzle orgId={orgId} unlocked={me.unlocked_colors} on={on} />}
     </article>
   );
 }

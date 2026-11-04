@@ -21,6 +21,7 @@ from pydantic_core import PydanticCustomError
 from sibylle import clock
 from sibylle.db.models import Account, Membership, Organisation
 from sibylle.domain.coins import gold
+from sibylle.domain.game_schedule import GAMES, Game
 from sibylle.domain.notifications import allowed_push_endpoint
 from sibylle.domain.seasons import edition_number
 
@@ -857,8 +858,32 @@ class PixelStatus(BaseModel):
 
 
 class Games(BaseModel):
-    runner: RunnerStatus
+    """The current week's games (`scheduled`), and each one's state: `runner` is null when the
+    race is not on; out of the week's games, `pixel` is only the last drawing once finished."""
+
+    scheduled: list[Game]
+    runner: RunnerStatus | None
     pixel: PixelStatus | None
+
+
+class GamesIn(BaseModel):
+    """Games for a week; their order and repeats do not matter."""
+
+    games: list[Game] = Field(max_length=len(GAMES))
+
+
+class GameWeekOut(BaseModel):
+    week_start: date
+    games: list[Game]
+    planned: bool
+
+
+class GameSchedule(BaseModel):
+    """`default`: the games of an ordinary week, from next week on. `weeks`: the current week and
+    the three after it; `planned` when a week has games of its own."""
+
+    default: list[Game]
+    weeks: list[GameWeekOut]
 
 
 class PixelPuzzleIn(BaseModel):

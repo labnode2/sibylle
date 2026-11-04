@@ -18,7 +18,8 @@
     "validation_error": "Certains champs sont invalides.",
     "rate_limited": "Trop d'essais. Réessaie dans quelques minutes.",
     "error": "Une erreur est survenue.",
-    "run_finished": "Cette partie est déjà terminée."
+    "run_finished": "Cette partie est déjà terminée.",
+    "game_not_scheduled": "Ce jeu n'est pas au programme cette semaine."
   },
   "email": {
     "subject": {
