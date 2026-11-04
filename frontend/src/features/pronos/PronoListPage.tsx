@@ -44,7 +44,13 @@ function PronoItem({ orgId, prono }: { orgId: string; prono: PronoSummary }) {
           </span>
           <span className={styles.itemTitle}>{prono.question}</span>
           <span className={styles.meta}>
-            {[when, t('list.bets', { count: prono.bet_count })].filter(Boolean).join(' · ')}
+            {[
+              when,
+              t('list.bets', { count: prono.bet_count }),
+              prono.message_count > 0 && t('list.messages', { count: prono.message_count }),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </span>
           <span className={styles.meta}>
             {t('list.pot', { pot: formatNumber(prono.pot) })} <Laurel />

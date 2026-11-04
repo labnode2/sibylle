@@ -1,4 +1,5 @@
-// Creating a newsroom, joining one (G-Rejoindre), and the start page for accounts without one.
+// Creating a newsroom, joining one (G-Rejoindre), and the welcome page: join with a code, create
+// a newsroom, or go back to one of the account's newsrooms.
 import { useId, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
@@ -9,6 +10,7 @@ import { PixelImage as Pixels } from '../../ui/PixelImage';
 import { useMe } from '../auth/api';
 import { useFormErrors } from '../forms';
 import { useContent, useCreateOrg, useJoin, useJoinPreview, type JoinSource } from './api';
+import { OrgLogo } from './NewsroomPage';
 import { PixelEditor } from '../pixel-editor/PixelEditor';
 import styles from './orgs.module.css';
 import { AvatarPicker, BackgroundPicker } from './pickers';
@@ -23,7 +25,9 @@ export function HomeRedirect() {
 export function StartPage() {
   const { t } = useTranslation('orgs');
   const navigate = useNavigate();
+  const me = useMe();
   const [code, setCode] = useState('');
+  const memberships = me.data?.memberships ?? [];
   return (
     <section className={styles.page}>
       <h1 className={styles.title}>{t('start.title')}</h1>
@@ -50,6 +54,25 @@ export function StartPage() {
       <ButtonLink to="/creer" block>
         {t('start.create')}
       </ButtonLink>
+      {memberships.length > 0 && (
+        <nav className={styles.switcher} aria-labelledby="start-newsrooms">
+          <h2 id="start-newsrooms" className={styles.switcherTitle}>
+            {t('switcher.title')}
+          </h2>
+          {memberships.map(({ org }) => (
+            <Link key={org.id} to={`/o/${org.id}`} className={styles.switcherItem}>
+              <span
+                className={`${styles.switcherBand} bg-${org.background_key}`}
+                aria-hidden="true"
+              >
+                <OrgLogo org={org} size={24} />
+              </span>
+              <span className={styles.switcherName}>{org.title}</span>
+              <Icon name="chevronRight" />
+            </Link>
+          ))}
+        </nav>
+      )}
     </section>
   );
 }

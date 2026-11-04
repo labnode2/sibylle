@@ -2,6 +2,8 @@
   "title": "Carte de presse",
   "number": "CARTE DE PRESSE N° {{number}}",
   "since": "MEMBRE DEPUIS {{date}}",
+  "record_one": "RECORD : {{count}} PRONO GAGNÉ D'AFFILÉE",
+  "record_other": "RECORD : {{count}} PRONOS GAGNÉS D'AFFILÉE",
   "roles": {
     "reader": "LECTEUR·RICE",
     "journalist": "JOURNALISTE",
@@ -42,6 +44,13 @@
     },
     "owned": "À TOI",
     "buyLabel": "Acheter {{name}} pour {{price}} pièces",
+    "buyDealLabel": "Acheter {{name}} pour {{price}} pièces au lieu de {{regular}}",
+    "deal": {
+      "title": "La promo de la semaine",
+      "off": "−{{pct}} %",
+      "was": "au lieu de",
+      "until": "JUSQU'AU {{day}} AU SOIR · UN OBJET TIRÉ AU HASARD CHAQUE LUNDI"
+    },
     "confirm": "Acheter pour {{price}} pièces ?",
     "yes": "Acheter",
     "no": "Annuler",
@@ -148,8 +157,8 @@
   },
   "lines": {
     "label": "Ma collection et mes réglages",
-    "preferences": "Préférences",
-    "account": "Compte"
+    "settings": "Réglages",
+    "logout": "Déconnexion"
   },
   "objects": {
     "title": "Couleurs et cadres"

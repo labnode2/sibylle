@@ -655,6 +655,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/orgs/{org_id}/pronos/{prono_id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Messages */
+        get: operations["list_messages_api_orgs__org_id__pronos__prono_id__messages_get"];
+        put?: never;
+        /** Write Message */
+        post: operations["write_message_api_orgs__org_id__pronos__prono_id__messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/pronos/{prono_id}/messages/{message_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Message */
+        delete: operations["delete_message_api_orgs__org_id__pronos__prono_id__messages__message_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/pronos/{prono_id}/messages/{message_id}/like": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Like Message */
+        put: operations["like_message_api_orgs__org_id__pronos__prono_id__messages__message_id__like_put"];
+        post?: never;
+        /** Unlike Message */
+        delete: operations["unlike_message_api_orgs__org_id__pronos__prono_id__messages__message_id__like_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/orgs/{org_id}/pronos/{prono_id}/bets": {
         parameters: {
             query?: never;
@@ -1195,6 +1248,12 @@ export interface components {
             item: components["schemas"]["CatalogItemOut"];
             /** Price */
             price: number | null;
+            /** Regular Price */
+            regular_price?: number | null;
+            /** Discount Pct */
+            discount_pct?: number | null;
+            /** Discount Until */
+            discount_until?: string | null;
             /** Owned */
             owned: boolean;
         };
@@ -1312,6 +1371,8 @@ export interface components {
             pot: number;
             /** Relaunch Count */
             relaunch_count: number;
+            /** Message Count */
+            message_count: number;
             created_by: components["schemas"]["MemberPublic"];
             /** Options */
             options: components["schemas"]["OptionOut"][];
@@ -1496,6 +1557,8 @@ export interface components {
             value: number;
             /** Is Me */
             is_me: boolean;
+            /** Streak */
+            streak: number;
         };
         /** LedgerEntryOut */
         LedgerEntryOut: {
@@ -1585,6 +1648,34 @@ export interface components {
             /** Locale */
             locale?: "fr" | null;
         };
+        /**
+         * MemberListed
+         * @description A member in the newsroom's list, with their chain of wins under way (US13).
+         */
+        MemberListed: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Pseudo */
+            pseudo: string;
+            avatar: components["schemas"]["PixelImage"];
+            /** Frame */
+            frame?: string | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "reader" | "journalist" | "editor";
+            /**
+             * Joined At
+             * Format: date-time
+             */
+            joined_at: string;
+            /** Streak */
+            streak: number;
+        };
         /** MemberPatch */
         MemberPatch: {
             /** Pseudo */
@@ -1658,6 +1749,42 @@ export interface components {
         MembershipEntry: {
             org: components["schemas"]["OrgCard"];
             membership: components["schemas"]["MemberSelf"];
+        };
+        /** MessageIn */
+        MessageIn: {
+            /** Body */
+            body: string;
+        };
+        /** MessageOut */
+        MessageOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            author: components["schemas"]["MemberPublic"];
+            /** Body */
+            body: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Likes */
+            likes: number;
+            /** Liked */
+            liked: boolean;
+            /** Likers */
+            likers: string[];
+            /** Can Delete */
+            can_delete: boolean;
+        };
+        /** MessagePage */
+        MessagePage: {
+            /** Items */
+            items: components["schemas"]["MessageOut"][];
+            /** Has More */
+            has_more: boolean;
         };
         /**
          * Metric
@@ -1965,6 +2092,10 @@ export interface components {
             wins: number;
             /** Success Rate */
             success_rate: number | null;
+            /** Streak */
+            streak: number;
+            /** Best Streak */
+            best_streak: number;
         };
         /** PronoDetail */
         PronoDetail: {
@@ -2010,6 +2141,8 @@ export interface components {
             pot: number;
             /** Relaunch Count */
             relaunch_count: number;
+            /** Message Count */
+            message_count: number;
             created_by: components["schemas"]["MemberPublic"];
             /** Options */
             options: components["schemas"]["OptionOut"][];
@@ -2177,7 +2310,14 @@ export interface components {
             pot: number;
             /** Relaunch Count */
             relaunch_count: number;
+            /** Message Count */
+            message_count: number;
             created_by: components["schemas"]["MemberPublic"];
+        };
+        /** PurchaseIn */
+        PurchaseIn: {
+            /** Price */
+            price?: number | null;
         };
         /** PurchaseOut */
         PurchaseOut: {
@@ -3448,7 +3588,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MemberPublic"][];
+                    "application/json": components["schemas"]["MemberListed"][];
                 };
             };
             /** @description Validation Error */
@@ -4160,6 +4300,170 @@ export interface operations {
             };
         };
     };
+    list_messages_api_orgs__org_id__pronos__prono_id__messages_get: {
+        parameters: {
+            query?: {
+                before?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                org_id: string;
+                prono_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessagePage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    write_message_api_orgs__org_id__pronos__prono_id__messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                prono_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_message_api_orgs__org_id__pronos__prono_id__messages__message_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                prono_id: string;
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    like_message_api_orgs__org_id__pronos__prono_id__messages__message_id__like_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                prono_id: string;
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unlike_message_api_orgs__org_id__pronos__prono_id__messages__message_id__like_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                prono_id: string;
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     place_bet_api_orgs__org_id__pronos__prono_id__bets_post: {
         parameters: {
             query?: never;
@@ -4551,7 +4855,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PurchaseIn"] | null;
+            };
+        };
         responses: {
             /** @description Successful Response */
             201: {

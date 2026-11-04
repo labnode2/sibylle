@@ -248,6 +248,10 @@ PK (`org_id`, `season_id`), `closed_at`. Écrite dans la même transaction que l
 
 Comme le registre des lauriers : aucune mise à jour ni suppression, et `memberships.coins` est mis à jour dans la même transaction. Unique (`membership_id`, `week_start`) : une seule conversion par semaine. Une conversion à 0 pièce est écrite aussi, pour ne pas revenir sur ce membre. Index : (`membership_id`, `id`).
 
+### weekly_deals (promotion de la semaine)
+
+PK (`org_id`, `week_start`) ; `week_start` (date du lundi, Paris), `item_id` (un objet à vendre du catalogue : couleur ou cadre), `discount_pct` (20, 30, 40 ou 50), `created_at`. Tirée au hasard à la première lecture de la collection ou au premier achat de la semaine, puis figée (research.md J10). Le prix payé, réduit, est celui de l'écriture de pièces de l'achat.
+
 ### secret_codes, secret_code_redemptions
 
 `secret_codes` : `id`, `code_hash` (unique), `item_id`, `active`. `secret_code_redemptions` : unique (`secret_code_id`, `membership_id`), `redeemed_at`. Saisie limitée en débit pour empêcher l'essai systématique.
@@ -257,6 +261,18 @@ Comme le registre des lauriers : aucune mise à jour ni suppression, et `members
 ### reactions
 
 PK (`prono_id`, `membership_id`, `kind`) ; `kind` dans le jeu fixe de la plateforme ; `created_at`. Ajout et retrait par bascule.
+
+### messages (message de discussion)
+
+`id` (UUIDv7, qui suit l'ordre d'écriture), `prono_id`, `membership_id` (l'auteur·rice), `body` (1 à 500 caractères, espaces autour retirés), `created_at`. Index (`prono_id`, `id`). Un message ne se modifie pas ; il se supprime pour de bon, par son auteur·rice ou par la rédaction en chef, avec ses « J'aime ». La suppression d'un compte efface ses messages (research.md J9).
+
+### message_likes (« J'aime »)
+
+PK (`message_id`, `membership_id`) ; `created_at`. Supprimé avec son message (`ON DELETE CASCADE`). Ajout et retrait par bascule, comme les réactions.
+
+### Chaîne de victoires (calculée)
+
+Aucune table : la chaîne en cours et le record se calculent depuis `bets` (paris actifs `won` ou `lost`) rangés selon le premier règlement de leur prono (`settlements.seq = 1`), voir research.md J8.
 
 ### reports (signalement)
 
@@ -303,7 +319,8 @@ Les jeux d'une semaine `W` : sa ligne de `game_weeks` s'il y en a une ; sinon la
 ```text
 accounts 1─n memberships n─1 organisations
 organisations 1─n sections, invitations, pronos, uploads, pixel_puzzles, game_weeks, game_defaults
-pronos 1─n prono_options, bets, settlements, prono_events, reactions, reports
+pronos 1─n prono_options, bets, settlements, prono_events, reactions, reports, messages
+messages 1─n message_likes
 memberships 1─n bets, ledger_entries, trophies, owned_items, runner_runs
 settlements 1─n ledger_entries
 seasons 1─n ledger_entries, trophies, season_closures

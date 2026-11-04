@@ -11,9 +11,12 @@ export type PronoIn = components['schemas']['PronoIn'];
 export type Bet = components['schemas']['BetOut'];
 export type BetIn = components['schemas']['BetIn'];
 export type Section = components['schemas']['SectionOut'];
+export type Message = components['schemas']['MessageOut'];
 
 export const pronoKey = (orgId: string, pronoId: string) => ['prono', orgId, pronoId] as const;
 export const pronoListKey = (orgId: string) => ['pronos', orgId] as const;
+export const messagesKey = (orgId: string, pronoId: string) =>
+  ['messages', orgId, pronoId] as const;
 
 export function useSections(orgId: string) {
   return useQuery({
@@ -53,7 +56,17 @@ export function usePronoList(orgId: string, states: string[], section?: string) 
 
 export function useProno(orgId: string, pronoId: string) {
   const client = useQueryClient();
-  useTopic(`prono:${pronoId}`, () => {
+  useTopic(`prono:${pronoId}`, (event) => {
+    // The discussion reloads itself; the prono only takes its new number of messages.
+    if (event.event.startsWith('message.')) {
+      const count = event.data.message_count;
+      if (typeof count === 'number') {
+        client.setQueryData<PronoDetail>(pronoKey(orgId, pronoId), (prono) =>
+          prono ? { ...prono, message_count: count } : prono,
+        );
+      }
+      return;
+    }
     void client.invalidateQueries({ queryKey: pronoKey(orgId, pronoId) });
   });
   return useQuery({
@@ -157,4 +170,73 @@ export function useReact(orgId: string, pronoId: string) {
     },
     onSettled: () => client.invalidateQueries({ queryKey: pronoKey(orgId, pronoId) }),
   });
+}
+
+/** The discussion of a prono (US14): the latest messages first loaded, older pages on demand;
+ *  `message.*` events of the prono's topic reload what is on screen. */
+export function useMessages(orgId: string, pronoId: string) {
+  const client = useQueryClient();
+  useTopic(`prono:${pronoId}`, (event) => {
+    if (event.event.startsWith('message.')) {
+      void client.invalidateQueries({ queryKey: messagesKey(orgId, pronoId) });
+    }
+  });
+  return useInfiniteQuery({
+    queryKey: messagesKey(orgId, pronoId),
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
+      unwrap(
+        api.GET('/api/orgs/{org_id}/pronos/{prono_id}/messages', {
+          params: {
+            path: { org_id: orgId, prono_id: pronoId },
+            query: pageParam ? { before: pageParam } : {},
+          },
+        }),
+      ),
+    // The next page holds the older messages, before the oldest one shown.
+    getNextPageParam: (page) => (page.has_more ? (page.items[0]?.id ?? null) : null),
+  });
+}
+
+export function useDiscussion(orgId: string, pronoId: string) {
+  const client = useQueryClient();
+  const refresh = () => client.invalidateQueries({ queryKey: messagesKey(orgId, pronoId) });
+  const path = { org_id: orgId, prono_id: pronoId };
+  return {
+    write: useMutation({
+      mutationFn: (body: string) =>
+        unwrap(
+          api.POST('/api/orgs/{org_id}/pronos/{prono_id}/messages', {
+            params: { path },
+            body: { body },
+          }),
+        ),
+      onSuccess: refresh,
+    }),
+    like: useMutation({
+      mutationFn: async ({ id, on }: { id: string; on: boolean }) => {
+        const params = { path: { ...path, message_id: id } };
+        await unwrap(
+          on
+            ? api.PUT('/api/orgs/{org_id}/pronos/{prono_id}/messages/{message_id}/like', {
+                params,
+              })
+            : api.DELETE('/api/orgs/{org_id}/pronos/{prono_id}/messages/{message_id}/like', {
+                params,
+              }),
+        );
+      },
+      onSettled: refresh,
+    }),
+    remove: useMutation({
+      mutationFn: async (id: string) => {
+        await unwrap(
+          api.DELETE('/api/orgs/{org_id}/pronos/{prono_id}/messages/{message_id}', {
+            params: { path: { ...path, message_id: id } },
+          }),
+        );
+      },
+      onSettled: refresh,
+    }),
+  };
 }

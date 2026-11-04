@@ -99,6 +99,9 @@ async def test_the_press_card(
         "settled": 2,
         "wins": 1,
         "success_rate": 50,
+        # Won, then lost: no chain under way, a record of one (US13).
+        "streak": 0,
+        "best_streak": 1,
     }
     assert [(t["season"], t["score"], t["rank"], t["podium"]) for t in card["trophies"]] == [
         ({"year": 2026, "name": "autumn"}, 30, 1, True)

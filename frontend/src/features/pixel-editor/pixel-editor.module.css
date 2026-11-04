@@ -57,9 +57,9 @@
   gap: 16px;
 }
 
-/* The grid keeps its pixels square and crisp at any width. */
+/* The grid keeps its pixels square and crisp at any width: 400 px at most. */
 .grid {
-  width: min(320px, 100%);
+  width: min(400px, 100%);
   aspect-ratio: 1;
   border: 2px solid var(--ink);
   background: repeating-conic-gradient(var(--grey) 0% 25%, var(--surface) 0% 50%) 0 0 / 20px 20px;
@@ -76,19 +76,65 @@
   min-width: 0;
 }
 
-/* The tools, then the colour in use. */
+/* The tools, then the colour in use; under them, the mirror, the grid lines, undo, redo and
+   clear. Each button shows its pixel icon over its name. */
 .toolRow {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 10px;
 }
 
-.toolRow > :first-child {
+.tools,
+.actions {
+  display: grid;
   flex: 1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 2px solid var(--ink);
+}
+
+.actions {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 56px;
+  padding: 6px 2px;
+  border: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font: 700 10px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.tool + .tool {
+  border-left: 1px solid var(--ink);
+}
+
+.tool:hover:not(:disabled) {
+  background: var(--grey);
+}
+
+.tool[aria-checked='true'],
+.tool[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.tool:disabled {
+  color: var(--ink-2);
+  cursor: default;
+  opacity: 0.45;
 }
 
 .current {
   flex: none;
+  align-self: center;
   width: var(--tap);
   height: var(--tap);
   border: 2px solid var(--ink);

@@ -38,7 +38,10 @@ export async function createNewsroom(page: Page, title: string, pseudo: string):
   await page.getByLabel('NOM DE LA RÉDACTION').fill(title);
   await page.getByLabel('TON PSEUDO DANS CETTE RÉDACTION').fill(pseudo);
   await page.getByRole('button', { name: 'Créer la rédaction' }).click();
-  await expect(page.getByRole('heading', { name: `La une de ${title}` })).toBeVisible();
+  // The first visit to la une compiles its modules when the dev server has just started.
+  await expect(page.getByRole('heading', { name: `La une de ${title}` })).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 /** A prono's pot as shown: « Cagnotte : 20 lauriers… » on a phone, « 20 lauriers » in large on

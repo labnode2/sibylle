@@ -45,9 +45,7 @@
   },
   "switcher": {
     "title": "Mes rédactions",
-    "more": "Rejoindre ou créer une rédaction",
-    "logout": "Se déconnecter",
-    "settings": "Mes réglages"
+    "more": "Rejoindre ou créer une rédaction"
   },
   "newsroom": {
     "title": "La rédaction",

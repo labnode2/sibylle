@@ -1,10 +1,11 @@
 """Everything Sibylle keeps about an account, as one file (US11, principle I): the account, then
-each newsroom with its membership, bets, laurels, coins, collection, trophies and reports."""
+each newsroom with its membership, bets, laurels, coins, collection, trophies, messages and
+reports."""
 
 import uuid
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle import clock
@@ -15,6 +16,8 @@ from sibylle.db.models import (
     CoinEntry,
     LedgerEntry,
     Membership,
+    Message,
+    MessageLike,
     Organisation,
     OwnedItem,
     Prono,
@@ -114,6 +117,21 @@ async def _newsroom(session: AsyncSession, org: Organisation, member: Membership
                 .join(Season, Season.id == Trophy.season_id)
                 .where(Trophy.membership_id == member.id)
                 .order_by(Season.starts_at)
+            )
+        ],
+        "messages": [
+            {
+                "prono_id": message.prono_id,
+                "body": message.body,
+                "created_at": message.created_at,
+                "likes": int(likes),
+            }
+            for message, likes in await session.execute(
+                select(Message, func.count(MessageLike.membership_id))
+                .outerjoin(MessageLike, MessageLike.message_id == Message.id)
+                .where(Message.membership_id == member.id)
+                .group_by(Message.id)
+                .order_by(Message.id)
             )
         ],
         "reports": [

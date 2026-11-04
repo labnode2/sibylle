@@ -138,7 +138,7 @@
 }
 
 .member {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
   color: var(--ink);
   text-decoration: none;
@@ -149,6 +149,11 @@
   content: '';
   position: absolute;
   inset: 0;
+}
+
+/* The role at the right end, the chain of wins right after the pseudo. */
+.role {
+  margin-left: auto;
 }
 
 .line:hover .member {
@@ -174,16 +179,25 @@
 }
 
 /* The small card: at the right of the navigation on a computer, on la une on a phone. It opens
-   the newsroom list. */
+   the menu of the account's newsrooms below it. */
+.switcher {
+  position: relative;
+  display: inline-flex;
+}
+
 .cardLink {
   display: inline-flex;
   align-items: stretch;
   min-height: var(--tap);
+  padding: 0;
   border: 2px solid var(--ink);
   background: var(--surface);
   box-shadow: 3px 3px 0 var(--shadow);
   color: var(--ink);
+  font: inherit;
+  text-align: left;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .cardLinkBand {
@@ -219,6 +233,82 @@
   display: flex;
   align-items: center;
   padding-right: 10px;
+}
+
+.cardLink[aria-expanded='true'] .cardLinkMore svg {
+  transform: rotate(180deg);
+}
+
+/* The menu: the newsrooms, the current one ticked, then the way to join or create another. */
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  min-width: 100%;
+  max-width: min(320px, calc(100vw - 32px));
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.menuStart {
+  right: auto;
+  left: 0;
+}
+
+.menuList {
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+}
+
+.menuItem,
+.menuMore {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  padding: 4px 12px;
+  color: var(--ink);
+  font: 700 14px/1.2 var(--font-text);
+  text-decoration: none;
+}
+
+.menuItem:hover,
+.menuMore:hover {
+  background: var(--grey);
+}
+
+.menuBand {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--ink);
+}
+
+.menuBand > * {
+  outline: 1px solid var(--ink);
+}
+
+.menuName {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.menuItem:not([aria-current]) .menuName {
+  font-weight: 600;
+}
+
+.menuMore {
+  border-top: 1px solid var(--ink);
 }
 
 @media (min-width: 1024px) {

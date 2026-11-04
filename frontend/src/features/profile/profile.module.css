@@ -109,6 +109,19 @@
   overflow-wrap: anywhere;
 }
 
+/* The pseudo, then the flame of its chain of wins. */
+.pseudoLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 4px 10px;
+}
+
+.pseudoStreak {
+  padding-bottom: 2px;
+  font-size: 15px;
+}
+
 .role {
   padding: 1px 4px;
   background: var(--ink);
@@ -211,6 +224,23 @@
 .lineText {
   flex: 1;
   font: 700 16px/1.1 var(--font-text);
+}
+
+/* « Déconnexion »: a line too, though it is a button, in red. */
+.lineButton {
+  width: 100%;
+  padding: 0;
+  border-width: 0 0 1px;
+  border-style: solid;
+  border-color: var(--rule);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lineButton .lineText,
+.lineButton:hover .lineText {
+  color: var(--danger);
 }
 
 .section {

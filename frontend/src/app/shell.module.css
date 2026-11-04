@@ -14,6 +14,23 @@
   padding-top: 16px;
 }
 
+/* The masthead of the pages outside a newsroom, with the settings' gear at its right. */
+.publicHead {
+  position: relative;
+}
+
+.publicSettings {
+  position: absolute;
+  top: 20px;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  color: var(--ink);
+}
+
 /* A page with its own header and no tabs: less room kept at the bottom. */
 .pageBare {
   padding-bottom: calc(24px + env(safe-area-inset-bottom));

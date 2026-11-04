@@ -101,3 +101,47 @@
   letter-spacing: 0.04em;
   color: var(--indigo);
 }
+
+/* « La promo de la semaine »: the object on sale, its share off, until Sunday night. */
+.deal {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+
+.dealText {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dealTitle {
+  font: 800 22px/1.2 var(--font-text);
+}
+
+.dealLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font: 700 14px/1 var(--font-mono);
+}
+
+.dealPrice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.was {
+  color: var(--ink-2);
+  font: 600 12px/1 var(--font-mono);
+}
+
+/* The object on sale, in the grid: drawn in ink. */
+.itemDeal {
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--shadow);
+}

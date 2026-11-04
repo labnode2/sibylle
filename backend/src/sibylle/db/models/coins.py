@@ -44,3 +44,21 @@ class CoinEntry(Base):
     # The catalog item of a purchase.
     item_key: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
+
+
+class WeeklyDeal(Base):
+    """A newsroom's deal of the week (research.md J10): one colour or frame of the catalog at a
+    share off, drawn at random on the week's first look at the collection, then kept."""
+
+    __tablename__ = "weekly_deals"
+    __table_args__ = (
+        CheckConstraint("extract(isodow FROM week_start) = 1", name="monday"),
+        CheckConstraint("discount_pct IN (20, 30, 40, 50)", name="discount_pct"),
+    )
+
+    org_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organisations.id"), primary_key=True)
+    # The Monday of the week, in Paris.
+    week_start: Mapped[date] = mapped_column(primary_key=True)
+    item_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("catalog_items.id"))
+    discount_pct: Mapped[int]
+    created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())

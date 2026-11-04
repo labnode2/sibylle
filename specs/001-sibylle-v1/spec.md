@@ -244,6 +244,44 @@ Inès, rédaction en chef, ouvre l'onglet « Jeux » des réglages. Une semaine 
 
 ---
 
+### User Story 13 - Enchaîner les victoires (Priority: P3)
+
+Cami gagne trois pronos d'affilée : une petite flamme en pixel art, animée, s'allume à côté de son pseudo dans le classement, sur la une et dans la liste des membres, avec le chiffre 3. Sur sa carte de presse, la flamme suit aussi son pseudo, et son record s'affiche. Un prono perdu éteint la flamme ; un prono qu'elle n'a pas joué, ou un prono annulé, ne la casse pas.
+
+**Why this priority**: la chaîne donne une raison de revenir parier et de bien parier, mais le jeu se joue sans.
+
+**Independent Test**: régler trois pronos gagnés par un membre, vérifier la flamme et le chiffre 3 dans le classement et sur sa carte de presse ; lui faire perdre un prono et vérifier que la flamme s'éteint et que le record reste à 3 ; vérifier qu'un prono annulé ou qu'il n'a pas joué ne casse pas la chaîne, et qu'une correction de résultat la recalcule.
+
+**Acceptance Scenarios**:
+
+1. **Given** Cami a gagné ses deux derniers pronos réglés, **When** on ouvre le classement, **Then** une flamme animée et le chiffre 2 suivent son pseudo ; avec une seule victoire d'affilée, il n'y a pas de flamme.
+2. **Given** une chaîne de 3, **When** Cami perd un prono, **Then** la flamme s'éteint partout, et sa carte de presse garde son record : 3 pronos gagnés d'affilée.
+3. **Given** une chaîne de 3, **When** un prono qu'elle a joué est annulé, ou qu'un prono qu'elle n'a pas joué est réglé, **Then** sa chaîne reste à 3.
+4. **Given** une chaîne de 3, **When** la rédaction en chef corrige le résultat de l'avant-dernier de ces pronos et que Cami l'a alors perdu, **Then** sa chaîne passe à 1 : un prono corrigé garde sa place dans l'ordre des résultats.
+5. **Given** « couper les animations » activé, **When** Cami regarde une flamme, **Then** elle reste immobile.
+
+---
+
+### User Story 14 - Discuter d'un prono (Priority: P3)
+
+Sous « Nice ou Monaco samedi ? », Hugo écrit : « Monaco n'a pas gagné à Nice depuis 2019. » Cami, qui regarde le prono, voit le message arriver sans recharger, et l'aime : le compteur passe à 1 pour tout le monde. Chacun peut supprimer ses propres messages ; la rédaction en chef retire ceux qui sortent de la charte.
+
+**Why this priority**: la discussion fait vivre les pronos entre deux paris, mais le jeu se joue sans.
+
+**Independent Test**: depuis deux navigateurs, écrire un message sous un prono et vérifier que l'autre le voit sans recharger ; l'aimer puis retirer son « J'aime » ; supprimer son propre message ; retirer le message d'un autre avec la rédaction en chef ; vérifier qu'un·e lecteur·rice ne peut pas supprimer le message d'un autre et qu'un membre d'une autre rédaction ne voit rien.
+
+**Acceptance Scenarios**:
+
+1. **Given** un prono publié, **When** Cami écrit un message de 1 à 500 caractères, **Then** il apparaît sous le prono avec son pseudo, son avatar et l'heure, chez chaque membre qui regarde le prono, dans les 2 secondes.
+2. **Given** un message, **When** Cami appuie sur « J'aime », **Then** le compteur augmente de 1 pour tout le monde ; un second appui retire son « J'aime ». À côté du compteur, on lit qui a aimé.
+3. **Given** un message de Cami, **When** elle le supprime, **Then** il disparaît pour tout le monde, avec ses « J'aime ».
+4. **Given** un message d'Hugo hors charte, **When** la rédaction en chef le retire, **Then** il disparaît pour tout le monde ; un·e journaliste ou un·e lecteur·rice ne peut retirer que ses propres messages.
+5. **Given** un prono proposé ou refusé, **When** quelqu'un veut en discuter, **Then** l'appli refuse : la discussion s'ouvre avec la publication et reste ouverte après le résultat.
+6. **Given** des pronos avec des messages, **When** Cami regarde la une ou la liste des pronos, **Then** chaque prono indique son nombre de messages.
+7. **Given** une discussion de plus de 20 messages, **When** Cami ouvre le prono, **Then** elle voit les 20 derniers, du plus ancien au plus récent, et peut afficher les précédents.
+
+---
+
 ### Edge Cases
 
 - Deux membres parient au même instant avec le même solde : chaque pari est traité à part et aucun solde ne devient négatif par une mise.
@@ -261,6 +299,11 @@ Inès, rédaction en chef, ouvre l'onglet « Jeux » des réglages. Une semaine 
 - Une partie de course commencée le dimanche soir finit le lundi, dans une semaine sans course : elle compte pour la semaine où elle a commencé.
 - La rédaction en chef change la semaine ordinaire le lundi à 00:10, avant le paiement de la course. La semaine écoulée et la semaine en cours gardent leurs jeux, et la course de la semaine écoulée est payée.
 - Deux rédactions en chef changent le programme de la même semaine au même moment : la dernière modification l'emporte.
+- Deux pronos sont réglés au même instant : la chaîne de victoires suit l'ordre dans lequel ils ont été réglés pour la première fois.
+- Un message vide ou fait d'espaces est refusé ; les espaces qui l'entourent sont retirés.
+- Deux membres aiment le même message au même instant : chaque « J'aime » compte une fois ; aimer deux fois ne change rien.
+- Un message est supprimé pendant qu'un autre membre l'aime : le « J'aime » est refusé et le message disparaît de son écran.
+- Un membre quitte la rédaction : ses messages restent sous son pseudo. Un compte supprimé : ses messages sont effacés, ses « J'aime » restent comptés sous « Ancien membre ».
 
 ## Requirements *(mandatory)*
 
@@ -331,23 +374,26 @@ Inès, rédaction en chef, ouvre l'onglet « Jeux » des réglages. Une semaine 
 - **FR-071**: Les saisons DOIVENT être : printemps du 21 mars au 20 juin, été du 21 juin au 22 septembre, automne du 23 septembre au 20 décembre, hiver du 21 décembre au 20 mars (heure de Paris).
 - **FR-072**: À la fin d'une saison, chaque membre ayant parié au moins une fois dans la saison DOIT recevoir un trophée gravé (année, saison, score) ; les trois premiers ont un cadre doré ; puis chaque solde repart au solde de départ et chaque score à zéro.
 - **FR-073**: Le classement des lauriers « depuis toujours » DOIT additionner les scores gravés sur les trophées et le score de la saison en cours.
+- **FR-074**: La chaîne de victoires d'un membre DOIT compter ses pronos gagnés d'affilée, du plus récent vers le plus ancien, dans l'ordre où les pronos ont été réglés pour la première fois. Un prono perdu la remet à zéro ; un prono annulé ou qu'il n'a pas joué ne la change pas ; une correction de résultat la recalcule. Elle ne repart pas à zéro en fin de saison. Le record est la plus longue chaîne du membre dans la rédaction.
+- **FR-075**: À partir de 2 victoires d'affilée, une flamme en pixel art animée et le nombre de victoires DOIVENT suivre le pseudo du membre dans le classement, dans le haut du classement de la une, dans la liste des membres et sur la carte de presse, qui DOIT aussi montrer le record dès qu'il atteint 2. La flamme reste immobile quand les animations sont coupées.
 
 **La une**
 
 - **FR-080**: La une DOIT afficher, dans l'ordre : le prono ouvert dont la clôture est la plus proche, les autres pronos ouverts, les pronos à désigner (pour les journalistes), les derniers résultats, le haut du classement, les jeux de la semaine, le mot de la rédaction en chef.
-- **FR-081**: Chaque membre DOIT pouvoir réagir à un prono avec un jeu fixe de réactions rapides, sans commentaires.
+- **FR-081**: Chaque membre DOIT pouvoir réagir à un prono avec un jeu fixe de réactions rapides, et en discuter (FR-140 à FR-143).
 
 **Profil et collection**
 
 - **FR-090**: Le profil DOIT prendre la forme d'une carte de presse : pseudo, avatar, date d'arrivée, statistiques (lauriers, pronos joués, taux de réussite) et collection.
-- **FR-091**: L'éditeur d'avatar DOIT permettre de dessiner en 16×16 ou 32×32 avec une palette fixe ; des couleurs et des cadres supplémentaires se débloquent contre des pièces.
+- **FR-091**: L'éditeur d'avatar DOIT permettre de dessiner en 16×16 ou 32×32 avec une palette fixe ; des couleurs et des cadres supplémentaires se débloquent contre des pièces. Il DOIT offrir crayon, gomme, remplissage et pipette (aussi au clic droit), un miroir qui dessine les deux moitiés à la fois, la grille à afficher ou masquer, défaire, refaire et tout effacer. Un trait DOIT rester continu même quand le doigt ou la souris va vite, et tout DOIT se faire aussi au clavier.
 - **FR-092**: La collection DOIT contenir les trophées de saison (la boule gravée) et les boules débloquées par code secret ; les boules ne s'achètent pas.
 - **FR-093**: Des codes secrets DOIVENT pouvoir débloquer une seule fois une surprise (variante de boule, couleur rare).
 - **FR-094**: Chaque lundi à 00:00 (heure de Paris), chaque membre actif arrivé avant ce moment DOIT recevoir autant de pièces que ses lauriers en or (solde plus mises des paris pas encore réglés ; rien s'ils sont à zéro ou négatifs). Ses lauriers ne changent pas. La conversion a lieu une seule fois par semaine et par membre, même si le `worker` redémarre.
-- **FR-095**: Les pièces DOIVENT être le seul moyen de payer dans la collection ; elles ne comptent dans aucun classement et ne repartent pas à zéro en fin de saison.
+- **FR-095**: Les pièces DOIVENT être le seul moyen de payer dans la collection ; elles ne comptent dans aucun classement et ne repartent pas à zéro en fin de saison. Chaque semaine (du lundi 00:00 au dimanche 23:59, heure de Paris), un objet à vendre de la collection, tiré au hasard pour chaque rédaction, DOIT être en promotion d'un pourcentage lui aussi tiré au hasard (20, 30, 40 ou 50 %), pendant toute la semaine : la collection montre l'ancien prix barré et le nouveau, et l'achat se paie au prix réduit. Si la semaine change entre l'affichage et l'achat, l'achat est refusé et la collection montre le nouveau prix.
 - **FR-096**: L'appli DOIT montrer séparément les lauriers verts (le solde, ce qu'on peut miser), les lauriers en or (solde plus mises en jeu) et les pièces. On mise et on gagne des lauriers verts : les mises, les gains, la carte de presse et les classements les montrent en vert. Chaque compteur DOIT expliquer ce qu'il représente au survol, au focus ou au toucher. À la première ouverture après une conversion, une fenêtre DOIT annoncer les pièces reçues, une seule fois.
-- **FR-097**: Le menu principal DOIT avoir un onglet « Rédaction » : la carte de la rédaction (logo, nom, membres, rédaction en chef ; pour la rédaction en chef, les invitations, le code d'accès et les réglages), puis la liste des membres avec leur rôle (rédaction en chef, journalistes, puis lecteur·rices), chacun ouvrant sa carte de presse ; le relevé reste visible de son seul titulaire. Une petite carte de la rédaction (logo, nom, membres), à droite de la navigation sur ordinateur et sur la une sur téléphone, DOIT ouvrir la liste de ses rédactions pour en changer. Tant que la rédaction n'a pas de logo, son initiale en tient lieu.
+- **FR-097**: Le menu principal DOIT avoir un onglet « Rédaction » : la carte de la rédaction (logo, nom, membres, rédaction en chef ; pour la rédaction en chef, les invitations, le code d'accès et les réglages), puis la liste des membres avec leur rôle (rédaction en chef, journalistes, puis lecteur·rices), chacun ouvrant sa carte de presse ; le relevé reste visible de son seul titulaire. Une petite carte de la rédaction (logo, nom, membres), à droite de la navigation sur ordinateur et sur la une sur téléphone, DOIT ouvrir sur place un menu déroulant : les rédactions du compte, celle en cours marquée, pour en changer, puis en dernier « Rejoindre ou créer une rédaction ». Tant que la rédaction n'a pas de logo, son initiale en tient lieu.
 - **FR-098**: Chaque membre DOIT pouvoir personnaliser sa carte sur un seul écran : pseudo, avatar dessiné, cadre parmi ceux qu'il possède, et jusqu'à trois objets de sa collection ou trophées de saison mis en avant, montrés dans l'ordre choisi. L'écran DOIT montrer la carte telle que les autres membres la verront, mise à jour à chaque changement, avec dessous « Annuler » (qui remet ce qui était enregistré) et « Enregistrer » (qui garde tout d'un geste), actifs seulement après une modification ; l'écran reste ouvert après l'enregistrement. Un objet qui ne lui appartient plus disparaît de la carte.
+- **FR-099**: La page d'accueil « Bienvenue sur Sibylle » DOIT lister, sous « Créer une rédaction », les rédactions du compte pour y revenir. Hors d'une rédaction, une roue crantée en haut à droite DOIT ouvrir « Mes réglages ». Sur sa propre carte de presse, après « Ma collection », chaque membre DOIT trouver « Réglages » puis « Déconnexion », en rouge, qui demande confirmation avant de déconnecter (comme le bouton des réglages). Les réglages DOIVENT ramener là d'où l'on vient : le profil de la rédaction, ou la page d'accueil.
 
 **Notifications**
 
@@ -372,6 +418,13 @@ Inès, rédaction en chef, ouvre l'onglet « Jeux » des réglages. Une semaine 
 - **FR-122**: Chaque membre DOIT pouvoir exporter ses données et supprimer son compte ; la suppression efface les données personnelles et rend anonymes les traces de jeu.
 - **FR-123**: Chaque membre DOIT pouvoir quitter une organisation ; s'il revient avec le même compte, il retrouve son profil et son historique.
 
+**Discussion**
+
+- **FR-140**: Chaque prono publié DOIT avoir sa discussion, ouverte dans tous ses états sauf proposé et refusé : tout membre actif peut y écrire des messages de 1 à 500 caractères, montrés du plus ancien au plus récent avec le pseudo, l'avatar et l'heure de leur auteur·rice, mis à jour en direct (comme les paris, SC-002). L'écran montre les 20 derniers messages et peut afficher les précédents.
+- **FR-141**: Chaque membre DOIT pouvoir aimer un message une fois et retirer son « J'aime ». Le nombre de « J'aime » et les pseudos de qui a aimé sont visibles par toute la rédaction.
+- **FR-142**: L'auteur·rice d'un message DOIT pouvoir le supprimer, et la rédaction en chef DOIT pouvoir retirer tout message ; un message supprimé disparaît pour tous, avec ses « J'aime ». Un message ne se modifie pas.
+- **FR-143**: La une et la liste des pronos DOIVENT indiquer le nombre de messages de chaque prono. L'export d'un compte DOIT contenir ses messages ; la suppression du compte les efface.
+
 **Préférences et plateforme**
 
 - **FR-130**: Chaque membre DOIT pouvoir choisir le thème clair, sombre ou automatique et couper les animations.
@@ -390,9 +443,11 @@ Inès, rédaction en chef, ouvre l'onglet « Jeux » des réglages. Une semaine 
 - **Pari** : la réponse d'un membre à un prono, avec sa mise et son rang d'arrivée.
 - **Écriture de lauriers** : un mouvement du registre (mise, gain, part de cagnotte, mini-jeu, ajustement, remise au solde), avec son motif.
 - **Écriture de pièces** : la conversion du lundi ou un achat dans la collection.
+- **Promotion de la semaine** : l'objet et le pourcentage de réduction d'une rédaction pour une semaine.
 - **Saison et trophée** : une période fixe du calendrier ; le trophée grave le score d'un membre à la fin de la saison.
 - **Objet de collection** : couleur ou cadre acheté avec des pièces, ou surprise débloquée par code secret (boule, couleur rare).
 - **Réaction, signalement, notification** : interactions autour d'un prono.
+- **Message et « J'aime »** : la discussion d'un prono, message par message, et qui a aimé chacun.
 - **Partie de course et Pixel mystère** : essais, scores, dessins, mots et propositions.
 - **Programme des jeux** : les jeux de chaque semaine programmée, et ceux d'une semaine ordinaire, datés de la semaine à partir de laquelle ils valent.
 

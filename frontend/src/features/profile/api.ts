@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { api, unwrap } from '../../api/client';
+import { api, ApiError, unwrap } from '../../api/client';
 import type { components } from '../../api/schema';
 import { orgKey } from '../orgs/api';
 
@@ -78,14 +78,20 @@ export function useCollectionActions(orgId: string) {
     void client.invalidateQueries({ queryKey: ['press-card', orgId] });
   };
   return {
+    // The price shown goes along: a week that ended meanwhile refuses it, and the collection
+    // reloads with this week's prices.
     buy: useMutation({
-      mutationFn: (itemId: string) =>
+      mutationFn: ({ itemId, price }: { itemId: string; price: number }) =>
         unwrap(
           api.POST('/api/orgs/{org_id}/catalog/{item_id}/purchase', {
             params: { path: { org_id: orgId, item_id: itemId } },
+            body: { price },
           }),
         ),
       onSuccess: refresh,
+      onError: (error) => {
+        if (error instanceof ApiError && error.code === 'price_changed') refresh();
+      },
     }),
     redeem: useMutation({
       mutationFn: (code: string) =>

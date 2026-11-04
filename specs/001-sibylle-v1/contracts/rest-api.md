@@ -63,8 +63,8 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | GET | `/orgs/{org}/invitations` | Réd. chef | → `[Invitation]` |
 | POST | `/orgs/{org}/invitations` | Réd. chef | `{kind: "link", max_uses, expires_at}` → `201 {invitation, url}` (l'URL n'est montrée qu'une fois) ; `{kind: "email", email}` → `201 {invitation}` et envoi |
 | DELETE | `/orgs/{org}/invitations/{id}` | Réd. chef | → `204` (révoque) |
-| GET | `/orgs/{org}/members` | Membre | → `[MemberPublic]` |
-| GET | `/orgs/{org}/members/{member}` | Membre | → `PressCard` (carte de presse : pseudo, avatar, cadre, rôle, arrivée, statistiques, trophées `{id, season, score, rank, podium}`, collection, `showcase`) ; tout membre de la rédaction peut la lire |
+| GET | `/orgs/{org}/members` | Membre | → `[MemberPublic + {streak}]` : `streak`, la chaîne de victoires en cours (research.md J8) |
+| GET | `/orgs/{org}/members/{member}` | Membre | → `PressCard` (carte de presse : pseudo, avatar, cadre, rôle, arrivée, statistiques `{laurels, pronos_played, settled, wins, success_rate, streak, best_streak}`, trophées `{id, season, score, rank, podium}`, collection, `showcase`) ; tout membre de la rédaction peut la lire |
 | PATCH | `/orgs/{org}/members/me` | Membre | `{pseudo?, avatar?, avatar_frame_item_id?, showcase?: [{kind: "item" \| "trophy", id}]}` → `MemberSelf` ; `showcase` remplace toute la sélection : 3 au plus (`fields.showcase` : `too_many`, `duplicate`, `not_owned`) |
 | DELETE | `/orgs/{org}/members/me` | Membre | → `204` (quitter ; la dernière personne qui part ferme la rédaction) ; `409 last_editor` avec `fields.org_id` |
 | PATCH | `/orgs/{org}/members/{member}/role` | Réd. chef | `{role}` → `MemberPublic` ; `409 last_editor` si on retire la dernière |
@@ -84,7 +84,7 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 
 | Méthode | Route | Qui | Corps → Réponse |
 |---|---|---|---|
-| GET | `/orgs/{org}/front-page` | Membre | → `FrontPage` : `{headline, open, open_count, to_designate (journalistes seulement), latest_results, leaderboard_top (les cinq premiers du mois, puis la ligne du membre s'il n'en est pas), leaderboard_period ("2026-11"), editor_note}` ; `headline` et `open` sont des `FrontProno` = `PronoSummary` + `{options, distribution}` (la jauge de la une) ; l'encadré des jeux lit `GET /orgs/{org}/games` |
+| GET | `/orgs/{org}/front-page` | Membre | → `FrontPage` : `{headline, open, open_count, to_designate (journalistes seulement), latest_results, leaderboard_top (les cinq premiers du mois, puis la ligne du membre s'il n'en est pas ; chaque ligne avec sa streak), leaderboard_period ("2026-11"), editor_note}` ; `headline` et `open` sont des `FrontProno` = `PronoSummary` + `{options, distribution}` (la jauge de la une) ; l'encadré des jeux lit `GET /orgs/{org}/games` |
 | GET | `/orgs/{org}/pronos` | Membre | `?state=&section=&cursor=` → `[PronoSummary]` |
 | POST | `/orgs/{org}/pronos` | Membre | `PronoInput` → `201 PronoDetail` ; état `open`/`scheduled` pour un·e journaliste, `proposed` pour un·e lecteur·rice |
 | GET | `/orgs/{org}/pronos/{id}` | Membre | → `PronoDetail` |
@@ -98,6 +98,11 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | POST | `/orgs/{org}/pronos/{id}/cancel` | Réd. chef | `{reason}` → `PronoDetail` |
 | PUT | `/orgs/{org}/pronos/{id}/reactions/{kind}` | Membre | → `204` (ajoute) |
 | DELETE | `/orgs/{org}/pronos/{id}/reactions/{kind}` | Membre | → `204` (retire) |
+| GET | `/orgs/{org}/pronos/{id}/messages` | Membre | `?before=<message>&limit=` → `{items: [Message], has_more}` : les `limit` messages (20 par défaut, 50 au plus) écrits avant `before`, ou les derniers, rangés du plus ancien au plus récent ; `has_more` dit s'il en reste de plus anciens ; `409 invalid_state` pour un prono proposé ou refusé (`404` pour qui ne le voit pas) |
+| POST | `/orgs/{org}/pronos/{id}/messages` | Membre | `{body}` → `201 Message` ; `409 invalid_state` pour un prono proposé ou refusé ; `422` si `body` est vide une fois les espaces retirés, ou dépasse 500 caractères |
+| DELETE | `/orgs/{org}/pronos/{id}/messages/{message}` | auteur·rice, Réd. chef | → `204` ; `403` pour le message d'un autre |
+| PUT | `/orgs/{org}/pronos/{id}/messages/{message}/like` | Membre | → `204` (aime ; deux fois ne change rien) |
+| DELETE | `/orgs/{org}/pronos/{id}/messages/{message}/like` | Membre | → `204` (n'aime plus) |
 | POST | `/orgs/{org}/pronos/{id}/reports` | Membre | `{kind: "result_error" \| "content", message?}` → `201 Report` |
 | POST | `/orgs/{org}/uploads` | Membre | `multipart/form-data` `file` → `201 {id, width, height}` |
 | GET | `/orgs/{org}/uploads/{id}` | Membre | → `image/webp` |
@@ -106,18 +111,20 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 
 `PronoDetail` = `PronoSummary` + `{options: [{id, label, is_correct, count, stake_total, share_pct}], bets: [{member: MemberPublic, answer, stake, rank, placed_at, outcome, payout}], my_bet, can_rebet, pot, reactions: {kind: count}, my_reactions, events: [PronoEvent], special_edition?: {winners: [{member, payout}], pot_lost: bool, settlement_seq, settled_by: MemberPublic}, rejected_reason?, my_reports: [Report]}` (`my_reports` : les signalements du membre sur ce prono, avec la note de traitement). Pour un prono de nombre ou de date, `options` est remplacé par `distribution` (valeurs regroupées en tranches pour l'affichage).
 
-`PronoSummary` = `{id, number, kind, question, section, state, base_gain, opens_at, closes_at, open_ended, result_expected_at, bet_count, pot, relaunch_count, created_by: MemberPublic, image_url?}`.
+`PronoSummary` = `{id, number, kind, question, section, state, base_gain, opens_at, closes_at, open_ended, result_expected_at, bet_count, pot, relaunch_count, message_count, created_by: MemberPublic, image_url?}`.
+
+`Message` = `{id, author: MemberPublic, body, created_at, likes, liked, likers: [pseudo], can_delete}` : `liked`, si le membre qui lit l'aime ; `likers`, les pseudos de qui l'aime, dans l'ordre des « J'aime » ; `can_delete`, pour son auteur·rice et la rédaction en chef.
 
 ## Classements, signalements, collection
 
 | Méthode | Route | Qui | Corps → Réponse |
 |---|---|---|---|
-| GET | `/orgs/{org}/leaderboard` | Membre | `?metric=laurels\|wins&period=month\|season\|all_time` → `{period_label, rows: [{rank, member: MemberPublic, value, is_me}]}` |
+| GET | `/orgs/{org}/leaderboard` | Membre | `?metric=laurels\|wins&period=month\|season\|all_time` → `{period_label, rows: [{rank, member: MemberPublic, value, is_me, streak}]}` ; `streak` : la chaîne de victoires en cours, quelle que soit la période |
 | GET | `/orgs/{org}/seasons/current` | Membre | → `{year, name, starts_at, ends_at}` |
 | GET | `/orgs/{org}/reports` | Réd. chef | `?state=open` → `[Report]` |
 | POST | `/orgs/{org}/reports/{id}/handle` | Réd. chef | `{state: "resolved" \| "dismissed", note?}` → `Report` |
-| GET | `/orgs/{org}/catalog` | Membre | → `[{item, price, owned}]` : ce qui est à vendre (couleurs, cadres), plus les objets sans prix que le membre a débloqués ; les boules ne sont jamais à vendre |
-| POST | `/orgs/{org}/catalog/{item}/purchase` | Membre | → `201 {owned_item, coins}` ; payé en pièces ; `insufficient_coins` |
+| GET | `/orgs/{org}/catalog` | Membre | → `[{item, price, regular_price, discount_pct, discount_until, owned}]` : ce qui est à vendre (couleurs, cadres), plus les objets sans prix que le membre a débloqués ; les boules ne sont jamais à vendre. `price` est le prix de cette semaine : pour la promotion de la semaine (un seul objet), `discount_pct` vaut 20, 30, 40 ou 50, `regular_price` le prix habituel et `discount_until` le lundi suivant 00:00 (Paris) ; sinon ces trois champs valent `null` |
+| POST | `/orgs/{org}/catalog/{item}/purchase` | Membre | `{price?}` (le prix affiché) → `201 {owned_item, coins}` ; payé en pièces, au prix de la semaine ; `insufficient_coins` ; `409 price_changed` si `price` n'est plus le prix de la semaine |
 | GET | `/orgs/{org}/coins/weekly` | Membre | → `WeeklyCoins` ou `null` : la dernière conversion pas encore annoncée (montant > 0) |
 | POST | `/orgs/{org}/coins/weekly/seen` | Membre | `{week_start}` → `204` ; la fenêtre ne revient plus pour cette semaine ni les précédentes |
 | POST | `/orgs/{org}/secret-codes/redeem` | Membre | `{code}` → `201 {item}` ; limité en débit |

@@ -1,0 +1,39 @@
+/* « Te déconnecter ? »: a small dialog, the way out in red. */
+.dialog {
+  width: min(380px, calc(100vw - 2 * var(--gutter)));
+  margin: auto;
+  padding: 24px;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.dialog::backdrop {
+  background: rgb(21 22 45 / 55%);
+}
+
+.title {
+  margin: 0 0 10px;
+  font: 700 24px/1.15 var(--font-text);
+}
+
+.text {
+  margin: 0;
+  font: 400 15px/1.45 var(--font-text);
+  color: var(--ink-2);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.confirm {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: var(--on-ink);
+}

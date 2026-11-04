@@ -1,10 +1,10 @@
 // The collection: colours for the pixel editor, avatar frames and crystal balls, bought with
-// coins (laurels and score never move), and secret codes for surprises.
+// coins (laurels and score never move), the deal of the week, and secret codes for surprises.
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
-import { formatNumber } from '../../i18n';
+import { formatDate, formatNumber } from '../../i18n';
 import { Button, Card, Chip, Coins, Field, TopBar } from '../../ui/components';
 import { useFormErrors } from '../forms';
 import { useOrg } from '../orgs/api';
@@ -13,6 +13,52 @@ import { ItemPreview } from './ItemPreview';
 import styles from './collection.module.css';
 
 const KINDS = ['color', 'frame', 'ball'] as const;
+
+type Avatar = Parameters<typeof ItemPreview>[0]['avatar'];
+
+/** « −30 % », the usual price struck through, then the deal's. */
+function DealPrice({ entry }: { entry: CatalogEntry }) {
+  const { t } = useTranslation('profile');
+  return (
+    <span className={styles.dealPrice}>
+      <Chip variant="stamp">{t('collection.deal.off', { pct: entry.discount_pct })}</Chip>
+      <s className={styles.was}>
+        <span className="visually-hidden">{t('collection.deal.was')} </span>
+        {formatNumber(entry.regular_price ?? 0)}
+      </s>
+    </span>
+  );
+}
+
+/** « La promo de la semaine »: the object on sale this week, its share off and until when. */
+function Deal({ entry, avatar }: { entry: CatalogEntry; avatar: Avatar }) {
+  const { t } = useTranslation('profile');
+  // The deal ends next Monday at 00:00: it runs until Sunday night.
+  const lastDay = formatDate(new Date(new Date(entry.discount_until!).getTime() - 60_000), {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+  return (
+    <Card className={styles.deal} aria-labelledby="collection-deal">
+      <ItemPreview item={entry.item} avatar={avatar} />
+      <div className={styles.dealText}>
+        <h2 id="collection-deal" className={styles.dealTitle}>
+          {t('collection.deal.title')}
+        </h2>
+        <p className={styles.name}>{t(`catalog.${entry.item.key}`)}</p>
+        <p className={styles.dealLine}>
+          <DealPrice entry={entry} />
+          <Coins value={entry.price ?? 0} />
+        </p>
+        <p className={styles.hint}>
+          {t('collection.deal.until', { day: lastDay.toUpperCase() })}
+          {entry.owned && ` · ${t('collection.owned')}`}
+        </p>
+      </div>
+    </Card>
+  );
+}
 
 function Item({
   orgId,
@@ -23,7 +69,7 @@ function Item({
   orgId: string;
   entry: CatalogEntry;
   coins: number;
-  avatar: Parameters<typeof ItemPreview>[0]['avatar'];
+  avatar: Avatar;
 }) {
   const { t } = useTranslation('profile');
   const { buy } = useCollectionActions(orgId);
@@ -31,11 +77,13 @@ function Item({
   const [confirming, setConfirming] = useState(false);
   const name = t(`catalog.${entry.item.key}`);
   const price = entry.price ?? 0;
+  const onSale = entry.discount_pct != null;
 
   return (
-    <li className={styles.item} aria-label={name}>
+    <li className={`${styles.item} ${onSale ? styles.itemDeal : ''}`} aria-label={name}>
       <ItemPreview item={entry.item} avatar={avatar} />
       <span className={styles.name}>{name}</span>
+      {onSale && !entry.owned && <DealPrice entry={entry} />}
       {entry.owned ? (
         <Chip variant="ink">{t('collection.owned')}</Chip>
       ) : confirming ? (
@@ -45,7 +93,12 @@ function Item({
             {t('collection.no')}
           </Button>
           <Button
-            onClick={() => buy.mutate(entry.item.id, { onSuccess: () => setConfirming(false) })}
+            onClick={() =>
+              buy.mutate(
+                { itemId: entry.item.id, price },
+                { onSuccess: () => setConfirming(false) },
+              )
+            }
             disabled={buy.isPending}
           >
             {t('collection.yes')}
@@ -56,7 +109,11 @@ function Item({
           variant="secondary"
           onClick={() => setConfirming(true)}
           disabled={price > coins}
-          aria-label={t('collection.buyLabel', { name, price })}
+          aria-label={
+            onSale
+              ? t('collection.buyDealLabel', { name, price, regular: entry.regular_price })
+              : t('collection.buyLabel', { name, price })
+          }
         >
           <Coins value={price} />
         </Button>
@@ -121,6 +178,7 @@ export function CollectionPage() {
   const catalog = useCatalog(orgId);
   if (!org.data || !catalog.data) return <p role="status">{t('common:shell.loading')}</p>;
   const me = org.data.my_membership;
+  const deal = catalog.data.find((entry) => entry.discount_pct != null);
 
   return (
     <div className={styles.page}>
@@ -132,6 +190,7 @@ export function CollectionPage() {
         </span>
       </div>
       <p className={styles.hint}>{t('collection.hint')}</p>
+      {deal && <Deal entry={deal} avatar={me.avatar} />}
       {KINDS.map((kind) => {
         const entries = catalog.data.filter((entry) => entry.item.kind === kind);
         return (

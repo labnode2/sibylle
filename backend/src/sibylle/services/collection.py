@@ -21,7 +21,7 @@ from sibylle.db.models import (
 )
 from sibylle.domain.coins import CoinKind
 from sibylle.domain.leaderboard import Metric, Period
-from sibylle.services import coins, leaderboard, ledger
+from sibylle.services import coins, deals, leaderboard, ledger, streaks
 from sibylle.services.security import token_hash
 
 _KIND_ORDER = {"color": 0, "frame": 1, "ball": 2}
@@ -82,16 +82,26 @@ async def owned_frame(session: AsyncSession, member: Membership, item_id: uuid.U
 
 
 async def buy(
-    session: AsyncSession, member: Membership, item_id: uuid.UUID
+    session: AsyncSession,
+    member: Membership,
+    item_id: uuid.UUID,
+    *,
+    shown_price: int | None = None,
 ) -> tuple[OwnedItem, CatalogItem, int]:
-    """Pays the price in coins (laurels and score stay) and adds the item to the collection."""
+    """Pays this week's price in coins (laurels and score stay) and adds the item to the
+    collection. `shown_price`, the price the screen showed, must still be this week's."""
     item = await session.scalar(
         select(CatalogItem).where(
             CatalogItem.id == item_id, CatalogItem.active, CatalogItem.price.is_not(None)
         )
     )
-    if item is None or item.price is None:
+    if item is None:
         raise AppError("not_found")
+    price = deals.price_of(item, await deals.this_week(session, member.org_id))
+    if price is None:
+        raise AppError("not_found")
+    if shown_price is not None and shown_price != price:
+        raise AppError("price_changed")
     member = await ledger.lock_member(session, member.id)
     already = await session.scalar(
         select(OwnedItem.id).where(
@@ -100,9 +110,9 @@ async def buy(
     )
     if already is not None:
         raise AppError("invalid_state")
-    if member.coins < item.price:
+    if member.coins < price:
         raise AppError("insufficient_coins")
-    await coins.append(session, member.id, CoinKind.PURCHASE, -item.price, item_key=item.key)
+    await coins.append(session, member.id, CoinKind.PURCHASE, -price, item_key=item.key)
     owned = OwnedItem(membership_id=member.id, item_id=item.id, source="purchase")
     session.add(owned)
     await session.flush()
@@ -167,12 +177,15 @@ async def _stats(session: AsyncSession, member: Membership) -> dict[str, Any]:
         )
     ).one()
     laurels = await leaderboard.values(session, member.org_id, Metric.LAURELS, Period.ALL_TIME)
+    chain = await streaks.of_member(session, member)
     return {
         "laurels": laurels.get(member.id, 0),
         "pronos_played": int(played),
         "settled": int(settled),
         "wins": int(wins),
         "success_rate": round(100 * wins / settled) if settled else None,
+        "streak": chain.current,
+        "best_streak": chain.best,
     }
 
 

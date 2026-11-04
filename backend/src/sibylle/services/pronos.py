@@ -19,6 +19,7 @@ from sibylle.db.models import (
     Bet,
     LedgerEntry,
     Membership,
+    Message,
     Organisation,
     Prono,
     PronoEvent,
@@ -470,6 +471,14 @@ async def summaries(session: AsyncSession, pronos: list[Prono]) -> list[dict[str
             )
         ).all()
     }
+    messages: dict[uuid.UUID, int] = {
+        prono_id: int(count)
+        for prono_id, count in await session.execute(
+            select(Message.prono_id, func.count())
+            .where(Message.prono_id.in_([p.id for p in pronos]))
+            .group_by(Message.prono_id)
+        )
+    }
     return [
         {
             "id": p.id,
@@ -489,6 +498,7 @@ async def summaries(session: AsyncSession, pronos: list[Prono]) -> list[dict[str
             "bet_count": p.bet_count,
             "pot": p.pot,
             "relaunch_count": p.relaunch_count,
+            "message_count": messages.get(p.id, 0),
             "created_by": public_member(authors[p.created_by]),
         }
         for p in pronos

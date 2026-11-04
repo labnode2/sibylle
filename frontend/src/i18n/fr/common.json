@@ -14,6 +14,8 @@
   "coins_one": "{{count}} pièce",
   "coins_other": "{{count}} pièces",
   "coinsWord": "pièces",
+  "streak_one": "{{count}} prono gagné d'affilée",
+  "streak_other": "{{count}} pronos gagnés d'affilée",
   "wallet": {
     "green": "À MISER",
     "gold": "EN OR",
@@ -42,6 +44,7 @@
     "offline": "Tu es hors ligne : tu peux relire la dernière édition, mais parier demande une connexion.",
     "notFound": "Cette page n'existe pas.",
     "backHome": "Retour à la une",
+    "settings": "Mes réglages",
     "error": "Une erreur est survenue. Réessaie dans un instant."
   },
   "fields": {
@@ -51,9 +54,17 @@
     "string_pattern_mismatch": "Format invalide.",
     "missing": "Champ obligatoire.",
     "out_of_range": "Valeur hors limites.",
-    "unknown": "Valeur inconnue."
+    "unknown": "Valeur inconnue.",
+    "empty": "Écris quelque chose d'abord.",
+    "too_long": "Trop long."
   },
   "tip": {
     "more": "En savoir plus"
+  },
+  "logout": {
+    "title": "Te déconnecter ?",
+    "body": "Tu pourras revenir quand tu veux avec ton e-mail et ton mot de passe.",
+    "cancel": "Annuler",
+    "confirm": "Me déconnecter"
   }
 }

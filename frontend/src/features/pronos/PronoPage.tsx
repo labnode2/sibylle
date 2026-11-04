@@ -1,6 +1,7 @@
 // A prono's page (canvas B-Prono, B-Web-Prono): the question, the countdown, the ballot with who
-// played what, the stake and the rules. Bets of the others arrive live through `prono:<id>`.
-// Once settled, the special edition (canvas G-Résultat) heads the page.
+// played what, the stake and the reactions; beside them, the players, the rules and, under the
+// rules, the discussion. Bets and messages of the others arrive live through `prono:<id>`. Once
+// settled, the special edition (canvas G-Résultat) heads the page.
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useParams } from 'react-router';
@@ -26,6 +27,7 @@ import { MyReports } from '../results/MyReports';
 import { ReportForm } from '../results/ReportForm';
 import { SpecialEdition, SpecialEditionHead } from '../results/SpecialEdition';
 import { usePlaceBet, useProno, type Bet, type PronoDetail } from './api';
+import { Discussion } from './Discussion';
 import { ProposalDecision } from './ProposalsPanel';
 import { ReactionBar } from './ReactionBar';
 import styles from './pronos.module.css';
@@ -501,6 +503,9 @@ export function PronoPage() {
         <div className={styles.page}>
           <People orgId={orgId} bets={prono.bets} />
           <Rules prono={prono} />
+          {prono.state !== 'proposed' && prono.state !== 'rejected' && (
+            <Discussion orgId={orgId} pronoId={prono.id} count={prono.message_count} me={me.id} />
+          )}
           <MyReports reports={prono.my_reports ?? []} />
           {!prono.special_edition && (
             <ReportForm orgId={orgId} pronoId={prono.id} initialKind="content" />

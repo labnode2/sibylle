@@ -54,3 +54,66 @@ export function resize(pixels: Uint8Array, from: Size, to: Size): Uint8Array {
   }
   return result;
 }
+
+export type Cell = [number, number];
+
+/** Every cell from `from` to `to`, both included, each touching the one before (Bresenham): a
+ *  stroke has no gap, however fast the pointer went. */
+export function line(from: Cell, to: Cell): Cell[] {
+  let [x, y] = from;
+  const [x1, y1] = to;
+  const dx = Math.abs(x1 - x);
+  const dy = -Math.abs(y1 - y);
+  const sx = x < x1 ? 1 : -1;
+  const sy = y < y1 ? 1 : -1;
+  let error = dx + dy;
+  const cells: Cell[] = [[x, y]];
+  while (x !== x1 || y !== y1) {
+    const twice = 2 * error;
+    if (twice >= dy) {
+      error += dy;
+      x += sx;
+    }
+    if (twice <= dx) {
+      error += dx;
+      y += sy;
+    }
+    cells.push([x, y]);
+  }
+  return cells;
+}
+
+/** The cell across the vertical axis of the drawing. */
+export const mirrored = ([x, y]: Cell, size: Size): Cell => [size - 1 - x, y];
+
+/** A stroke from `from` to `to` in `color` (0 rubs out), and its reflection with `mirror`. */
+export function stroke(
+  pixels: Uint8Array,
+  size: Size,
+  from: Cell,
+  to: Cell,
+  color: number,
+  mirror: boolean,
+): Uint8Array {
+  const cells = line(from, to);
+  const all = mirror ? [...cells, ...cells.map((cell) => mirrored(cell, size))] : cells;
+  if (all.every(([x, y]) => pixels[y * size + x] === color)) return pixels;
+  const result = pixels.slice();
+  for (const [x, y] of all) result[y * size + x] = color;
+  return result;
+}
+
+/** A fill from (x, y), and from its reflection with `mirror`. */
+export function fill(
+  pixels: Uint8Array,
+  size: Size,
+  x: number,
+  y: number,
+  color: number,
+  mirror: boolean,
+): Uint8Array {
+  const once = floodFill(pixels, size, x, y, color);
+  if (!mirror) return once;
+  const [mx, my] = mirrored([x, y], size);
+  return floodFill(once, size, mx, my, color);
+}

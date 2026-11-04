@@ -16,6 +16,7 @@ from sibylle.db.models import (
     EmailToken,
     Invitation,
     Membership,
+    Message,
     Notification,
     NotificationPref,
     PushSubscription,
@@ -212,6 +213,8 @@ ANONYMOUS_PSEUDO = "Ancien membre"
 async def delete_account(session: AsyncSession, account: Account) -> None:
     """Deletes an account (research.md R20): what identifies the person goes, their bets and
     ledger entries stay under « Ancien membre », so that past pots stay right for the others.
+    Their messages go too, with their likes, since what they wrote may say who they are; their
+    own likes stay, under « Ancien membre » (research.md J9).
 
     The newsroom's last editor names another first (`last_editor`, with its `org_id`); a
     newsroom whose only member this was goes with it.
@@ -231,6 +234,9 @@ async def delete_account(session: AsyncSession, account: Account) -> None:
         await orgs.lock_editors(session, member.org_id)
     others_stay = {member.id: await orgs.may_go(session, member) for member in active}
 
+    await session.execute(
+        delete(Message).where(Message.membership_id.in_([member.id for member in memberships]))
+    )
     for member in memberships:
         member.pseudo = ANONYMOUS_PSEUDO
         member.avatar = DEFAULT_AVATAR

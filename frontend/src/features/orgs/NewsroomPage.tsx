@@ -1,15 +1,20 @@
 // « La rédaction », a tab of the newsroom (FR-097): the newsroom's card with its members and
 // editors, and for the editor the invitations, the access code and the settings; then every
-// member with their role, the editors first, each line opening their press card. The newsroom's
-// small card, in the navigation on a computer and on la une on a phone, opens the newsroom list.
+// member with their role and their chain of wins, the editors first, each line opening their
+// press card. The newsroom's small card, in the navigation on a computer and on la une on a
+// phone, opens a menu where it is: the account's newsrooms, then « Rejoindre ou créer une
+// rédaction ».
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
 import type { Org } from '../../api/types';
 import { Chip, Icon } from '../../ui/components';
+import { Streak } from '../../ui/Flame';
 import { FramedAvatar } from '../../ui/FramedAvatar';
 import { PixelImage } from '../../ui/PixelImage';
 import { useMembers, type Role } from '../admin/api';
+import { useMe } from '../auth/api';
 import { useOrg } from './api';
 import styles from './newsroom.module.css';
 
@@ -17,7 +22,7 @@ const ORDER: Record<Role, number> = { editor: 0, journalist: 1, reader: 2 };
 const CHIP = { editor: 'ink', journalist: 'grey', reader: 'outline' } as const;
 
 /** The newsroom's logo; until the editor gives it one, its initial in the masthead's letters. */
-function OrgLogo({ org, size }: { org: Org; size: 24 | 64 }) {
+export function OrgLogo({ org, size }: { org: Pick<Org, 'logo' | 'title'>; size: 24 | 64 }) {
   if (org.logo) return <PixelImage image={org.logo} size={size} avatar={false} />;
   return (
     <span className={`${styles.initial} ${size === 64 ? styles.initialLarge : ''}`}>
@@ -26,24 +31,91 @@ function OrgLogo({ org, size }: { org: Org; size: 24 | 64 }) {
   );
 }
 
-/** The newsroom's small card: its band and logo, its name and members; it opens the newsroom
- *  list, to change newsroom. */
-export function NewsroomCardLink({ org }: { org: Org }) {
+/** The newsroom's small card: its band and logo, its name and members. It opens a menu below
+ *  it: the account's newsrooms, the current one marked, then « Rejoindre ou créer une
+ *  rédaction ». Escape, a click elsewhere or a choice closes it. `align` is the side the menu
+ *  keeps: the card's right edge in the navigation, its left edge on la une of a phone. */
+export function NewsroomSwitcher({ org, align = 'end' }: { org: Org; align?: 'start' | 'end' }) {
   const { t } = useTranslation('orgs');
+  const me = useMe();
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const menuId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    const outside = (event: Event) => {
+      if (!box.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setOpen(false);
+      button.current?.focus();
+    };
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('focusin', outside);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('pointerdown', outside);
+      document.removeEventListener('focusin', outside);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [open]);
+
+  const close = () => setOpen(false);
   return (
-    <Link to="/redactions" className={styles.cardLink}>
-      <span className={`${styles.cardLinkBand} bg-${org.background_key}`} aria-hidden="true">
-        <OrgLogo org={org} size={24} />
-      </span>
-      <span className={styles.cardLinkText}>
-        <span className={styles.cardLinkName}>{org.title}</span>
-        <span className={styles.label}>{t('newsroom.count', { count: org.member_count })}</span>
-      </span>
-      <span className={styles.cardLinkMore}>
-        <Icon name="chevronDown" />
-        <span className="visually-hidden">{t('une.switch')}</span>
-      </span>
-    </Link>
+    <div ref={box} className={styles.switcher}>
+      <button
+        ref={button}
+        type="button"
+        className={styles.cardLink}
+        aria-expanded={open}
+        aria-controls={menuId}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span className={`${styles.cardLinkBand} bg-${org.background_key}`} aria-hidden="true">
+          <OrgLogo org={org} size={24} />
+        </span>
+        <span className={styles.cardLinkText}>
+          <span className={styles.cardLinkName}>{org.title}</span>
+          <span className={styles.label}>{t('newsroom.count', { count: org.member_count })}</span>
+        </span>
+        <span className={styles.cardLinkMore}>
+          <Icon name="chevronDown" />
+          <span className="visually-hidden">{t('une.switch')}</span>
+        </span>
+      </button>
+      {open && (
+        <div id={menuId} className={`${styles.menu} ${align === 'start' ? styles.menuStart : ''}`}>
+          <ul className={styles.menuList} aria-label={t('switcher.title')}>
+            {me.data?.memberships.map(({ org: other }) => (
+              <li key={other.id}>
+                <Link
+                  to={`/o/${other.id}`}
+                  className={styles.menuItem}
+                  aria-current={other.id === org.id ? 'true' : undefined}
+                  onClick={close}
+                >
+                  <span
+                    className={`${styles.menuBand} bg-${other.background_key}`}
+                    aria-hidden="true"
+                  >
+                    <OrgLogo org={other} size={24} />
+                  </span>
+                  <span className={styles.menuName}>{other.title}</span>
+                  {other.id === org.id && <Icon name="check" />}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <Link to="/bienvenue" className={styles.menuMore} onClick={close}>
+            <Icon name="plus" />
+            {t('switcher.more')}
+          </Link>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -131,7 +203,10 @@ export function NewsroomPage() {
               <Link to={`/o/${orgId}/membres/${member.id}`} className={styles.member}>
                 {member.id === me ? t('newsroom.you', { pseudo: member.pseudo }) : member.pseudo}
               </Link>
-              <Chip variant={CHIP[member.role]}>{t(`profile:roles.${member.role}`)}</Chip>
+              <Streak value={member.streak} />
+              <span className={styles.role}>
+                <Chip variant={CHIP[member.role]}>{t(`profile:roles.${member.role}`)}</Chip>
+              </span>
             </li>
           ))}
         </ul>

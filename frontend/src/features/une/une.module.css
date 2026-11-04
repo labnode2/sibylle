@@ -29,7 +29,7 @@
   color: var(--ink);
 }
 
-/* The newsroom's small card under the title, on a phone: it opens the newsroom list. */
+/* The newsroom's small card under the title, on a phone: it opens the menu of the newsrooms. */
 .editionBar {
   display: flex;
   padding: 4px 0 14px;
@@ -274,7 +274,7 @@
 }
 
 .topName {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
   color: var(--ink);
   text-decoration: none;
@@ -284,6 +284,11 @@
 /* The whole line opens the member's press card. */
 .top li {
   position: relative;
+}
+
+/* The laurels at the right end, the chain of wins right after the pseudo. */
+.topValue {
+  margin-left: auto;
 }
 
 .topName::after {

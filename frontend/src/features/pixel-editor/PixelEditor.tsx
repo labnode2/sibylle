@@ -1,7 +1,9 @@
 // The pixel art editor (canvas G-Pixel): « Annuler · MON PIXEL ART · Enregistrer » on top, the
 // size, a 16 × 16 or 32 × 32 grid, pencil, eraser, fill and eyedropper with the colour in use,
-// the base palette and the member's unlocked colours, undo, and the preview at a whole scale.
-// It works with a pointer or the keyboard (arrows to move, Space to draw, Ctrl+Z to undo).
+// the mirror that draws both halves of a face at once, the grid lines, undo, redo and clear, the
+// base palette and the member's unlocked colours, and the preview at a whole scale. Strokes have
+// no gap however fast the pointer goes; a right click (or Alt + click) takes a pixel's colour.
+// It works with the keyboard too: arrows to move, Space to draw, letters for the tools.
 // Avatars, the newsroom's logo and Pixel mystère drawings all use it; `screen` fills a page.
 // Without `onSave` it has no bar: the page around it saves, and `onChange` follows the drawing.
 import {
@@ -16,13 +18,17 @@ import { useTranslation } from 'react-i18next';
 import { Button, Segmented } from '../../ui/components';
 import { BASE_INDICES, PALETTE } from '../../ui/palette';
 import { decodePixels, encodePixels, PixelImage, type PixelImageData } from '../../ui/PixelImage';
-import { floodFill, paint, resize, type Size } from './grid';
+import { fill, resize, stroke, type Cell, type Size } from './grid';
+import { EDITOR_ICONS, type EditorIcon } from './icons';
 import styles from './pixel-editor.module.css';
 
 type Tool = 'pencil' | 'eraser' | 'fill' | 'picker';
 const TOOLS: Tool[] = ['pencil', 'eraser', 'fill', 'picker'];
-// The grid is drawn at 320 px, whatever its size.
-const GRID_PX = 320;
+// Letters that pick a tool from the grid (C, G, R, P: their French names).
+const TOOL_KEYS: Record<string, Tool> = { c: 'pencil', g: 'eraser', r: 'fill', p: 'picker' };
+// The canvas is drawn at 640 px and shown smaller, so that its lines stay crisp.
+const GRID_PX = 640;
+const HISTORY = 50;
 // The preview, at the largest whole scale under 64 px: 48 px for 16 × 16, 64 px for 32 × 32.
 const previewScale = (size: Size) => Math.floor(64 / size);
 
@@ -50,6 +56,15 @@ function blank(size: Size): Uint8Array {
   return new Uint8Array(size * size);
 }
 
+/** A 12 × 12 pixel icon in the text colour. */
+function Glyph({ name }: { name: EditorIcon }) {
+  return (
+    <svg width={24} height={24} viewBox="0 0 12 12" shapeRendering="crispEdges" aria-hidden="true">
+      <path fill="currentColor" d={EDITOR_ICONS[name]} />
+    </svg>
+  );
+}
+
 export function PixelEditor({
   initial,
   sizes = [16, 32],
@@ -66,12 +81,19 @@ export function PixelEditor({
   const { t } = useTranslation('pixel');
   const [size, setSize] = useState<Size>(initial?.size ?? sizes[0]!);
   const [pixels, setPixels] = useState(() => (initial ? decodePixels(initial) : blank(size)));
-  const [history, setHistory] = useState<Uint8Array[]>([]);
+  // Drawings before (undo) and after (redo) the one on screen.
+  const [past, setPast] = useState<Uint8Array[]>([]);
+  const [future, setFuture] = useState<Uint8Array[]>([]);
   const [color, setColor] = useState(1);
   const [tool, setTool] = useState<Tool>('pencil');
+  const [mirror, setMirror] = useState(false);
+  const [lines, setLines] = useState(true);
   const [cursor, setCursor] = useState({ x: 0, y: 0 });
+  // The cell a screen reader hears of: the keyboard's moves only, not the mouse's hovering.
+  const [spoken, setSpoken] = useState({ x: 0, y: 0 });
   const canvas = useRef<HTMLCanvasElement>(null);
-  const drawing = useRef(false);
+  // The last cell of the stroke under way, to join it to the next one.
+  const last = useRef<Cell | null>(null);
   const colors = [...BASE_INDICES, ...unlocked.filter((i) => !BASE_INDICES.includes(i))];
   const cell = GRID_PX / size;
 
@@ -85,73 +107,132 @@ export function PixelEditor({
       context.fillStyle = hex;
       context.fillRect((i % size) * cell, Math.floor(i / size) * cell, cell, cell);
     });
-    context.strokeStyle = 'rgba(128, 128, 160, 0.35)';
-    context.lineWidth = 1;
-    for (let k = 1; k < size; k += 1) {
+    if (lines) {
+      context.strokeStyle = 'rgba(128, 128, 160, 0.35)';
+      context.lineWidth = 2;
+      for (let k = 1; k < size; k += 1) {
+        context.beginPath();
+        context.moveTo(k * cell, 0);
+        context.lineTo(k * cell, GRID_PX);
+        context.moveTo(0, k * cell);
+        context.lineTo(GRID_PX, k * cell);
+        context.stroke();
+      }
+    }
+    if (mirror) {
+      context.save();
+      context.strokeStyle = '#4a50d0';
+      context.lineWidth = 3;
+      context.setLineDash([12, 8]);
       context.beginPath();
-      context.moveTo(k * cell + 0.5, 0);
-      context.lineTo(k * cell + 0.5, GRID_PX);
-      context.moveTo(0, k * cell + 0.5);
-      context.lineTo(GRID_PX, k * cell + 0.5);
+      context.moveTo(GRID_PX / 2, 0);
+      context.lineTo(GRID_PX / 2, GRID_PX);
       context.stroke();
+      context.restore();
     }
     context.strokeStyle = '#4a50d0';
-    context.lineWidth = 2;
-    context.strokeRect(cursor.x * cell + 1, cursor.y * cell + 1, cell - 2, cell - 2);
-  }, [pixels, size, cell, cursor]);
+    context.lineWidth = 4;
+    context.strokeRect(cursor.x * cell + 2, cursor.y * cell + 2, cell - 4, cell - 4);
+  }, [pixels, size, cell, cursor, lines, mirror]);
 
   useEffect(() => {
     onChange?.({ size, palette: 'base-v1', pixels: encodePixels(pixels) });
   }, [onChange, pixels, size]);
 
-  const remember = () => setHistory((past) => [...past.slice(-49), pixels]);
+  /** Keeps the drawing on screen for undo, before it changes. */
+  const remember = () => {
+    setPast((before) => [...before.slice(1 - HISTORY), pixels]);
+    setFuture([]);
+  };
 
-  const apply = (x: number, y: number, current: Uint8Array) => {
-    if (tool === 'fill') return floodFill(current, size, x, y, color);
-    return paint(current, size, x, y, tool === 'eraser' ? 0 : color);
+  const restore = (drawing: Uint8Array) => {
+    setSize(Math.sqrt(drawing.length) as Size);
+    setPixels(drawing);
+  };
+
+  const undo = () => {
+    const previous = past.at(-1);
+    if (!previous) return;
+    setPast(past.slice(0, -1));
+    setFuture([pixels, ...future]);
+    restore(previous);
+  };
+
+  const redo = () => {
+    const next = future[0];
+    if (!next) return;
+    setFuture(future.slice(1));
+    setPast([...past, pixels]);
+    restore(next);
+  };
+
+  const clear = () => {
+    if (pixels.every((index) => index === 0)) return;
+    remember();
+    setPixels(blank(size));
+  };
+
+  /** Takes the colour of a pixel; a transparent one is no colour to take. */
+  const take = (x: number, y: number) => {
+    const index = pixels[y * size + x] ?? 0;
+    if (index) setColor(index);
   };
 
   // The eyedropper takes the colour under it, then hands back the pencil.
   const pick = (x: number, y: number) => {
-    const index = pixels[y * size + x] ?? 0;
-    if (index) setColor(index);
+    take(x, y);
     setTool('pencil');
   };
 
-  const undo = () => {
-    const previous = history.at(-1);
-    if (!previous) return;
-    setHistory(history.slice(0, -1));
-    setSize(Math.sqrt(previous.length) as Size);
-    setPixels(previous);
-  };
-
-  const cellAt = (event: ReactPointerEvent<HTMLCanvasElement>) => {
-    const box = event.currentTarget.getBoundingClientRect();
-    const x = Math.floor(((event.clientX - box.left) / box.width) * size);
-    const y = Math.floor(((event.clientY - box.top) / box.height) * size);
-    return { x: Math.min(size - 1, Math.max(0, x)), y: Math.min(size - 1, Math.max(0, y)) };
-  };
-
-  const onPointerDown = (event: ReactPointerEvent<HTMLCanvasElement>) => {
-    event.currentTarget.setPointerCapture(event.pointerId);
-    const { x, y } = cellAt(event);
+  /** A press on (x, y): the start of a stroke, a fill, or a colour taken. */
+  const press = (x: number, y: number) => {
     if (tool === 'picker') {
-      setCursor({ x, y });
       pick(x, y);
       return;
     }
     remember();
-    drawing.current = tool !== 'fill';
+    if (tool === 'fill') {
+      setPixels((current) => fill(current, size, x, y, color, mirror));
+      return;
+    }
+    const ink = tool === 'eraser' ? 0 : color;
+    setPixels((current) => stroke(current, size, [x, y], [x, y], ink, mirror));
+  };
+
+  const cellAt = (event: ReactPointerEvent<HTMLCanvasElement>): Cell => {
+    const box = event.currentTarget.getBoundingClientRect();
+    const x = Math.floor(((event.clientX - box.left) / box.width) * size);
+    const y = Math.floor(((event.clientY - box.top) / box.height) * size);
+    return [Math.min(size - 1, Math.max(0, x)), Math.min(size - 1, Math.max(0, y))];
+  };
+
+  const onPointerDown = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    const [x, y] = cellAt(event);
     setCursor({ x, y });
-    setPixels((current) => apply(x, y, current));
+    // A right click or Alt + click takes the colour, whatever the tool.
+    if (event.button === 2 || event.altKey) {
+      take(x, y);
+      if (tool === 'eraser' || tool === 'picker') setTool('pencil');
+      return;
+    }
+    if (event.button !== 0) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    press(x, y);
+    last.current = tool === 'pencil' || tool === 'eraser' ? [x, y] : null;
   };
 
   const onPointerMove = (event: ReactPointerEvent<HTMLCanvasElement>) => {
-    if (!drawing.current) return;
-    const { x, y } = cellAt(event);
-    setCursor({ x, y });
-    setPixels((current) => apply(x, y, current));
+    const [x, y] = cellAt(event);
+    setCursor((current) => (current.x === x && current.y === y ? current : { x, y }));
+    const from = last.current;
+    if (!from || (from[0] === x && from[1] === y)) return;
+    const ink = tool === 'eraser' ? 0 : color;
+    setPixels((current) => stroke(current, size, from, [x, y], ink, mirror));
+    last.current = [x, y];
+  };
+
+  const endStroke = () => {
+    last.current = null;
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLCanvasElement>) => {
@@ -162,23 +243,29 @@ export function PixelEditor({
       ArrowDown: [0, 1],
     };
     const move = moves[event.key];
+    const command = event.ctrlKey || event.metaKey;
+    const key = event.key.toLowerCase();
     if (move) {
       event.preventDefault();
-      setCursor(({ x, y }) => ({
-        x: Math.min(size - 1, Math.max(0, x + move[0])),
-        y: Math.min(size - 1, Math.max(0, y + move[1])),
-      }));
+      const next = {
+        x: Math.min(size - 1, Math.max(0, cursor.x + move[0])),
+        y: Math.min(size - 1, Math.max(0, cursor.y + move[1])),
+      };
+      setCursor(next);
+      setSpoken(next);
     } else if (event.key === ' ' || event.key === 'Enter') {
       event.preventDefault();
-      if (tool === 'picker') {
-        pick(cursor.x, cursor.y);
-        return;
-      }
-      remember();
-      setPixels((current) => apply(cursor.x, cursor.y, current));
-    } else if (event.key === 'z' && (event.ctrlKey || event.metaKey)) {
+      press(cursor.x, cursor.y);
+    } else if (command && (key === 'y' || (key === 'z' && event.shiftKey))) {
+      event.preventDefault();
+      redo();
+    } else if (command && key === 'z') {
       event.preventDefault();
       undo();
+    } else if (!command && !event.altKey && TOOL_KEYS[key]) {
+      setTool(TOOL_KEYS[key]);
+    } else if (!command && !event.altKey && key === 'm') {
+      setMirror((on) => !on);
     }
   };
 
@@ -187,6 +274,7 @@ export function PixelEditor({
     remember();
     setPixels((current) => resize(current, size, next));
     setCursor({ x: 0, y: 0 });
+    setSpoken({ x: 0, y: 0 });
     setSize(next);
   };
 
@@ -194,6 +282,7 @@ export function PixelEditor({
   const colorName = (index: number) =>
     t(`colors.${index}`, { defaultValue: t('color', { index }) });
   const scale = previewScale(size);
+  const empty = pixels.every((index) => index === 0);
 
   return (
     <section
@@ -239,25 +328,79 @@ export function PixelEditor({
           aria-describedby="pixel-editor-help"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
-          onPointerUp={() => (drawing.current = false)}
-          onPointerCancel={() => (drawing.current = false)}
+          onPointerUp={endStroke}
+          onPointerCancel={endStroke}
+          onLostPointerCapture={endStroke}
+          onContextMenu={(event) => event.preventDefault()}
           onKeyDown={onKeyDown}
         />
         <div className={styles.side}>
           <div className={styles.toolRow}>
-            <Segmented
-              label={t('tools')}
-              mode="radio"
-              options={TOOLS.map((value) => ({ value, label: t(`tool.${value}`) }))}
-              value={tool}
-              onChange={setTool}
-            />
+            <div className={styles.tools} role="radiogroup" aria-label={t('tools')}>
+              {TOOLS.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={tool === value}
+                  className={styles.tool}
+                  title={t(`toolHint.${value}`)}
+                  onClick={() => setTool(value)}
+                >
+                  <Glyph name={value} />
+                  <span>{t(`tool.${value}`)}</span>
+                </button>
+              ))}
+            </div>
             <span
               className={styles.current}
               role="img"
               aria-label={t('current', { name: colorName(color) })}
               style={{ background: PALETTE[color] ?? 'transparent' }}
             />
+          </div>
+          <div className={styles.actions} role="group" aria-label={t('actions')}>
+            <button
+              type="button"
+              className={styles.tool}
+              aria-pressed={mirror}
+              title={t('mirrorHint')}
+              onClick={() => setMirror((on) => !on)}
+            >
+              <Glyph name="mirror" />
+              <span>{t('mirror')}</span>
+            </button>
+            <button
+              type="button"
+              className={styles.tool}
+              aria-pressed={lines}
+              onClick={() => setLines((on) => !on)}
+            >
+              <Glyph name="lines" />
+              <span>{t('lines')}</span>
+            </button>
+            <button
+              type="button"
+              className={styles.tool}
+              disabled={past.length === 0}
+              onClick={undo}
+            >
+              <Glyph name="undo" />
+              <span>{t('undo')}</span>
+            </button>
+            <button
+              type="button"
+              className={styles.tool}
+              disabled={future.length === 0}
+              onClick={redo}
+            >
+              <Glyph name="redo" />
+              <span>{t('redo')}</span>
+            </button>
+            <button type="button" className={styles.tool} disabled={empty} onClick={clear}>
+              <Glyph name="clear" />
+              <span>{t('clear')}</span>
+            </button>
           </div>
           <div className={styles.palette} role="radiogroup" aria-label={t('palette')}>
             {colors.map((index) => (
@@ -284,9 +427,6 @@ export function PixelEditor({
               <span className={styles.previewTitle}>{t('previewTitle')}</span>
               <span className={styles.help}>{t('previewHint', { px: size * scale })}</span>
             </div>
-            <Button variant="secondary" onClick={undo} disabled={history.length === 0}>
-              {t('undo')}
-            </Button>
           </div>
         </div>
       </div>
@@ -294,7 +434,7 @@ export function PixelEditor({
         {t('help')}
       </p>
       <p className="visually-hidden" aria-live="polite">
-        {t('cursor', { x: cursor.x + 1, y: cursor.y + 1 })}
+        {t('cursor', { x: spoken.x + 1, y: spoken.y + 1 })}
       </p>
       {error && (
         <p role="alert" className={styles.alert}>

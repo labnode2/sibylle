@@ -6,6 +6,7 @@ import { Link, useParams } from 'react-router';
 
 import { formatDate, formatNumber } from '../../i18n';
 import { Card, Laurel } from '../../ui/components';
+import { Streak } from '../../ui/Flame';
 import { PixelImage } from '../../ui/PixelImage';
 import { useCurrentSeason, useLeaderboard, type Metric, type Period } from './api';
 import styles from './leaderboard.module.css';
@@ -120,6 +121,7 @@ export function LeaderboardPage() {
                     <Link to={`/o/${orgId}/membres/${row.member.id}`} className={styles.memberLink}>
                       {row.member.pseudo}
                     </Link>
+                    <Streak value={row.streak} />
                     {row.is_me && <span className={styles.you}>{t('you')}</span>}
                   </th>
                   <td className={styles.value}>

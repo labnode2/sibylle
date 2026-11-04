@@ -2,7 +2,7 @@
 
 from sibylle.db.base import Base
 from sibylle.db.models.accounts import Account, AuthSession, EmailToken
-from sibylle.db.models.coins import CoinEntry
+from sibylle.db.models.coins import CoinEntry, WeeklyDeal
 from sibylle.db.models.collection import (
     CatalogItem,
     OwnedItem,
@@ -23,6 +23,8 @@ from sibylle.db.models.notifications import Notification, NotificationPref, Push
 from sibylle.db.models.orgs import Invitation, Membership, Organisation
 from sibylle.db.models.pronos import (
     Bet,
+    Message,
+    MessageLike,
     Prono,
     PronoEvent,
     PronoOption,
@@ -50,6 +52,8 @@ __all__ = [
     "Invitation",
     "LedgerEntry",
     "Membership",
+    "Message",
+    "MessageLike",
     "MinigamePayout",
     "Notification",
     "NotificationPref",
@@ -70,4 +74,5 @@ __all__ = [
     "Settlement",
     "Trophy",
     "Upload",
+    "WeeklyDeal",
 ]

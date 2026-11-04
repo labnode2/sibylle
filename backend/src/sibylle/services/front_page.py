@@ -10,7 +10,7 @@ from sibylle.db.models import Bet, Membership, Organisation, Prono, PronoOption
 from sibylle.domain.leaderboard import Metric, Period
 from sibylle.domain.lifecycle import State
 from sibylle.domain.permissions import Action, can
-from sibylle.services import leaderboard, pronos
+from sibylle.services import leaderboard, pronos, streaks
 from sibylle.services.orgs import public_member
 
 OPEN_LIMIT = 12
@@ -68,12 +68,14 @@ async def _leaderboard_top(
     lines = board.lines[:TOP]
     if all(line.member.id != member.id for line in lines):
         lines += [line for line in board.lines[TOP:] if line.member.id == member.id]
+    chains = await streaks.current(session, member.org_id)
     return board.period_label, [
         {
             "rank": line.rank,
             "member": public_member(line.member),
             "value": line.value,
             "is_me": line.member.id == member.id,
+            "streak": chains.get(line.member.id, 0),
         }
         for line in lines
     ]

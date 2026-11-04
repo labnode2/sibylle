@@ -1,6 +1,8 @@
 {
   "title": "Mes réglages",
   "back": "Retour à ma rédaction",
+  "backProfile": "Retour à mon profil",
+  "backStart": "Retour à l'accueil",
   "display": {
     "title": "AFFICHAGE",
     "theme": "Thème",

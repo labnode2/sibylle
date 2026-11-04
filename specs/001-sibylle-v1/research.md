@@ -175,6 +175,20 @@ Retirer un jeu de la semaine en cours annule sa semaine. La course n'ouvre ni ne
 
 Un jeu remis dans la semaine en cours reprend : la course avec les essais déjà joués (5 en tout), Pixel mystère avec le dessin suivant. Une partie commencée le dimanche soir compte pour sa semaine, même si la suivante n'a pas la course. Hors programme, `GET …/games` rend `runner: null` et, pour Pixel mystère, seulement le dernier dessin terminé : le mot d'un dessin arrêté reste lisible sur sa page.
 
+### J10. Promotion de la semaine
+
+Choix par défaut du 4 novembre 2026, à la demande d'Emile. Chaque rédaction a, chaque semaine (du lundi 00:00 au dimanche 23:59, heure de Paris), une promotion : un objet à vendre (une couleur ou un cadre, jamais une boule) et un pourcentage parmi 20, 30, 40 et 50 %, tirés au hasard. Le tirage est gardé dans `weekly_deals` dès la première lecture de la collection ou le premier achat de la semaine (`INSERT … ON CONFLICT DO NOTHING`, donc un seul tirage même à plusieurs) : la promotion ne bouge plus de la semaine, même si le catalogue change, et le `worker` n'a rien à faire. Le prix réduit est arrondi à la pièce inférieure (`prix × (100 − %) ÷ 100`, au moins 1). L'achat envoie le prix affiché ; s'il ne correspond plus (la semaine a changé entre-temps), le serveur répond `409 price_changed` et l'écran recharge la collection.
+
+### J8. Chaîne de victoires
+
+Choix par défaut du 4 novembre 2026, à la demande d'Emile. La chaîne se calcule à la demande, sans colonne à tenir à jour : on prend les paris actifs (`superseded_at IS NULL`) du membre dont l'issue est `won` ou `lost`, rangés selon le premier règlement de leur prono (`settlements` de `seq = 1`, dont l'identifiant UUIDv7 suit l'ordre de création, même quand deux règlements tombent au même instant de l'horloge simulée). La chaîne en cours compte les `won` qui suivent le dernier `lost` ; le record est la plus longue suite de `won`. Un remboursement (`refunded`) n'est ni une victoire ni une défaite. Une correction change l'issue des paris sans déplacer le prono dans l'ordre, puisque le premier règlement reste le même. Pour les listes (classement, une, membres), une seule requête par rédaction calcule la chaîne en cours de chacun avec `row_number()` ; la carte de presse lit les issues d'un seul membre et calcule aussi son record.
+
+La flamme s'allume à partir de 2 victoires d'affilée : une victoire seule n'est pas une chaîne. C'est un dessin de 8 × 10 pixels en trois images, que l'interface fait défiler en CSS (`steps`), immobile sous `.reduce-motion` comme toutes les animations.
+
+### J9. Discussion d'un prono
+
+Choix par défaut du 4 novembre 2026, à la demande d'Emile. Une discussion par prono, sans fils de réponses : des messages de 1 à 500 caractères, du plus ancien au plus récent, servis par pages de 20 à partir du plus récent (`before` = l'identifiant du plus ancien message déjà affiché ; les UUIDv7 suivent l'ordre d'écriture). Aimer est une bascule, comme les réactions (`message_likes`, une ligne par membre et par message ; aimer son propre message est permis). Un message supprimé l'est pour de bon, avec ses « J'aime » : par son auteur·rice, ou par la rédaction en chef qui modère selon la charte (`MODERATE_MESSAGES`). Les écrans suivent la discussion par le sujet `prono:<id>` : les événements `message.*` portent des identifiants, et chaque écran recharge la discussion, puisque `liked` et `can_delete` dépendent de qui regarde. La suppression d'un compte efface ses messages (le texte peut dire qui l'a écrit) et garde ses « J'aime », comptés sous « Ancien membre ».
+
 ## Contenus à produire pendant l'implémentation
 
 Ils ne bloquent pas la conception : la charte par défaut, les textes des e-mails, le jeu de réactions rapides (une poignée d'icônes en pixel art), le catalogue de la collection et ses prix (couleurs, cadres ; les boules se gagnent), les codes secrets, les modèles d'avatars et les fonds de carte d'organisation.

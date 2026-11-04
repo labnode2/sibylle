@@ -10,7 +10,7 @@ import { weeklyCoinsKey } from '../features/coins/api';
 import { WeeklyCoinsDialog } from '../features/coins/WeeklyCoinsDialog';
 import { orgKey, useOrg } from '../features/orgs/api';
 import { pronoKey } from '../features/pronos/api';
-import { NewsroomCardLink } from '../features/orgs/NewsroomPage';
+import { NewsroomSwitcher } from '../features/orgs/NewsroomPage';
 import { Wallet } from '../ui/components';
 import { PixelImage } from '../ui/PixelImage';
 import { AppShell } from './AppShell';
@@ -54,7 +54,7 @@ export function OrgLayout() {
           </>
         }
         issue={org.data.edition_number}
-        newsroom={<NewsroomCardLink org={org.data} />}
+        newsroom={<NewsroomSwitcher org={org.data} />}
       />
       <WeeklyCoinsDialog orgId={orgId} coins={me.coins} />
     </>

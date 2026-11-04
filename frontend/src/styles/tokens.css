@@ -16,6 +16,8 @@
   /* Gold is reserved for the logo, the laurels and one thin underline per screen. */
   --gold: #f2c230;
   --gold-line: #c99a18;
+  /* Red for what cannot be taken back, such as signing out. */
+  --danger: #c62f1a;
 
   --font-title: 'Jacquard 12', 'Times New Roman', serif;
   --font-text:
@@ -40,6 +42,7 @@
   --mist: #5b60d6;
   --on-ink: #10111e;
   --shadow: #05060d;
+  --danger: #ff6b57;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -55,5 +58,6 @@
     --mist: #5b60d6;
     --on-ink: #10111e;
     --shadow: #05060d;
+    --danger: #ff6b57;
   }
 }

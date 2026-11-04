@@ -38,8 +38,13 @@ test('export, the last editor, then deleting an account', async ({ browser }, te
 
   // 1. Her data, as a file: account, newsroom, bet.
   await cami.getByRole('link', { name: 'PROFIL' }).first().click();
-  await cami.getByRole('link', { name: 'Préférences' }).click();
+  await cami.getByRole('link', { name: 'Réglages', exact: true }).click();
   await expect(cami.getByRole('heading', { name: 'Mes réglages' })).toBeVisible();
+  // The settings lead back to the profile they were opened from.
+  await expect(cami.getByRole('link', { name: 'Retour à mon profil' })).toHaveAttribute(
+    'href',
+    `/o/${orgId}/profil`,
+  );
   const download = cami.waitForEvent('download');
   await cami.getByRole('button', { name: 'Télécharger mes données' }).click();
   const file = await download;

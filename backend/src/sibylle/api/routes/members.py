@@ -10,6 +10,7 @@ from sibylle.api.schemas import (
     AdjustmentIn,
     LedgerEntryOut,
     LedgerPage,
+    MemberListed,
     MemberPatch,
     MemberPublic,
     MemberSelf,
@@ -19,7 +20,7 @@ from sibylle.api.schemas import (
 )
 from sibylle.db.models import LedgerEntry, Membership
 from sibylle.domain.permissions import Action
-from sibylle.services import coins, ledger, orgs
+from sibylle.services import coins, ledger, orgs, streaks
 
 router = APIRouter(prefix="/orgs/{org_id}/members", tags=["members"])
 
@@ -42,8 +43,12 @@ def entry_out(entry: LedgerEntry, question: str | None) -> LedgerEntryOut:
 
 
 @router.get("")
-async def list_members(org_id: uuid.UUID, member: CurrentMember, session: Db) -> list[MemberPublic]:
-    return [MemberPublic.of(m) for m in await orgs.active_members(session, org_id)]
+async def list_members(org_id: uuid.UUID, member: CurrentMember, session: Db) -> list[MemberListed]:
+    chains = await streaks.current(session, org_id)
+    return [
+        MemberListed.model_validate({**orgs.public_member(m), "streak": chains.get(m.id, 0)})
+        for m in await orgs.active_members(session, org_id)
+    ]
 
 
 @router.patch("/me")

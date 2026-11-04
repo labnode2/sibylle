@@ -21,10 +21,11 @@ import {
   SectionHead,
   Wallet,
 } from '../../ui/components';
+import { Streak } from '../../ui/Flame';
 import { PixelImage } from '../../ui/PixelImage';
 import { useGames } from '../games/api';
 import { WeeklyGames } from '../games/WeeklyGames';
-import { NewsroomCardLink } from '../orgs/NewsroomPage';
+import { NewsroomSwitcher } from '../orgs/NewsroomPage';
 import { useOrg } from '../orgs/api';
 import type { PronoSummary } from '../pronos/api';
 import { ProposalsPanel } from '../pronos/ProposalsPanel';
@@ -57,7 +58,7 @@ function shares(prono: FrontProno): { label: string; pct: number }[] {
   return rows;
 }
 
-/** "CLÔTURE {day time} · {n} PRONOS · CAGNOTTE {pot}" */
+/** "CLÔTURE {day time} · {n} PRONOS · CAGNOTTE {pot} · {n} MESSAGES" (messages once there are). */
 function PronoLine({ prono, gain = false }: { prono: PronoSummary; gain?: boolean }) {
   const { t } = useTranslation('une');
   return (
@@ -66,7 +67,10 @@ function PronoLine({ prono, gain = false }: { prono: PronoSummary; gain?: boolea
         prono.closes_at ? t('closes', { date: closing(prono.closes_at) }) : t('openEnded'),
         t('bets', { count: prono.bet_count }),
         t('pot', { pot: formatNumber(prono.pot) }),
-      ].join(' · ')}
+        prono.message_count > 0 && t('messages', { count: prono.message_count }),
+      ]
+        .filter(Boolean)
+        .join(' · ')}
       {gain && <span className="only-desktop">{` · ${t('gain', { gain: prono.base_gain })}`}</span>}
     </p>
   );
@@ -218,7 +222,10 @@ function Ranking({ orgId, front }: { orgId: string; front: FrontPage }) {
             <Link to={`/o/${orgId}/membres/${row.member.id}`} className={styles.topName}>
               {row.is_me ? t('you', { pseudo: row.member.pseudo }) : row.member.pseudo}
             </Link>
-            <Laurel value={row.value} />
+            <Streak value={row.streak} />
+            <span className={styles.topValue}>
+              <Laurel value={row.value} />
+            </span>
           </li>
         ))}
       </ol>
@@ -271,7 +278,7 @@ export function UnePage() {
         <Masthead size="compact" />
       </div>
       <div className={`only-mobile ${styles.editionBar}`}>
-        <NewsroomCardLink org={org.data} />
+        <NewsroomSwitcher org={org.data} align="start" />
       </div>
 
       {!front ? (

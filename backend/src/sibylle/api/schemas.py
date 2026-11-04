@@ -73,6 +73,12 @@ class MemberPublic(BaseModel):
         return cls.model_validate(member, from_attributes=True)
 
 
+class MemberListed(MemberPublic):
+    """A member in the newsroom's list, with their chain of wins under way (US13)."""
+
+    streak: int
+
+
 class MemberSelf(MemberPublic):
     # Green laurels: what the member can stake.
     balance: int
@@ -351,6 +357,8 @@ class PronoSummary(BaseModel):
     bet_count: int
     pot: int
     relaunch_count: int
+    # The messages of its discussion (US14).
+    message_count: int
     created_by: MemberPublic
 
 
@@ -434,6 +442,33 @@ class PronoDetail(PronoSummary):
 class PronoList(BaseModel):
     items: list[PronoSummary]
     next_cursor: str | None
+
+
+# The discussion of a prono (US14)
+
+
+class MessageIn(BaseModel):
+    # 1 to 500 characters once the spaces around are gone; the service says which is wrong.
+    body: Annotated[str, StringConstraints(max_length=2000)]
+
+
+class MessageOut(BaseModel):
+    id: uuid.UUID
+    author: MemberPublic
+    body: str
+    created_at: datetime
+    likes: int
+    # Whether the member reading likes it, and the pseudos of who does, in the order they did.
+    liked: bool
+    likers: list[str]
+    # For its author and the editor.
+    can_delete: bool
+
+
+class MessagePage(BaseModel):
+    # Oldest first; `has_more` when older ones are left.
+    items: list[MessageOut]
+    has_more: bool
 
 
 class PronoIn(BaseModel):
@@ -561,6 +596,8 @@ class LeaderboardRow(BaseModel):
     member: MemberPublic
     value: int
     is_me: bool
+    # The member's chain of wins under way, whatever the period (US13).
+    streak: int
 
 
 class Leaderboard(BaseModel):
@@ -698,8 +735,19 @@ class CatalogItemOut(BaseModel):
 
 class CatalogEntry(BaseModel):
     item: CatalogItemOut
+    # This week's price: the deal's for the object on sale, else its usual price.
     price: int | None
+    # Only for the deal of the week (research.md J10): its usual price, the share off, and next
+    # Monday 00:00 in Paris, when it ends.
+    regular_price: int | None = None
+    discount_pct: int | None = None
+    discount_until: datetime | None = None
     owned: bool
+
+
+class PurchaseIn(BaseModel):
+    # The price the screen showed: refused with price_changed if it is no longer this week's.
+    price: int | None = None
 
 
 class OwnedItemOut(BaseModel):
@@ -756,6 +804,9 @@ class PressStats(BaseModel):
     wins: int
     # Won out of settled, in percent; None before a first result.
     success_rate: int | None
+    # Pronos won in a row up to the latest result, and the longest such chain (US13).
+    streak: int
+    best_streak: int
 
 
 class ShowcaseOut(BaseModel):

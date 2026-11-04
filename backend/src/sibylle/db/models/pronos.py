@@ -218,3 +218,32 @@ class Reaction(Base):
     membership_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("memberships.id"), primary_key=True)
     kind: Mapped[str] = mapped_column(Text, primary_key=True)
     created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
+
+
+class Message(Base):
+    """A member's message in the discussion of a prono (US14). Never edited: its author or the
+    editor deletes it for good, with its likes. Its UUIDv7 keeps the order of writing."""
+
+    __tablename__ = "messages"
+    __table_args__ = (
+        CheckConstraint("char_length(body) BETWEEN 1 AND 500", name="body_length"),
+        Index("ix_messages_prono_id_id", "prono_id", "id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    prono_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("pronos.id"))
+    membership_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("memberships.id"), index=True)
+    body: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
+
+
+class MessageLike(Base):
+    """A member's « J'aime » on a message: one each at most, gone with the message."""
+
+    __tablename__ = "message_likes"
+
+    message_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("messages.id", ondelete="CASCADE"), primary_key=True
+    )
+    membership_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("memberships.id"), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())

@@ -1,16 +1,18 @@
 // The account's settings (US11): display, notifications (US8), newsrooms to leave, the export of
-// one's data and the deletion of the account. Reached from the newsroom list and the press card;
-// notification e-mails link to `#notifications`.
+// one's data and the deletion of the account. Reached from the gear of the pages outside a
+// newsroom and from the press card, it leads back where one came from; notification e-mails
+// link to `#notifications`.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 
 import { ApiError } from '../../api/client';
 import type { Me } from '../../api/types';
 import { usePreferences, type Theme } from '../../app/preferences';
 import { Button, ButtonLink, Card, Icon, Switch } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
-import { useLogout, useMe } from '../auth/api';
+import { useMe } from '../auth/api';
+import { useLogoutConfirm } from '../auth/LogoutDialog';
 import { NotificationPrefs } from '../notifications/NotificationPrefs';
 import { downloadMyData, useDeleteAccount, useLeaveNewsroom, useUpdateAccount } from './api';
 import styles from './settings.module.css';
@@ -242,18 +244,29 @@ function DeleteAccount({ me }: { me: Me }) {
   );
 }
 
+/** Back to the page that opened the settings (`state.from`), else to the first newsroom. */
+function useWayBack(): { to: string; label: string } {
+  const { t } = useTranslation('settings');
+  const { state } = useLocation();
+  const from = (state as { from?: unknown } | null)?.from;
+  if (typeof from !== 'string' || !from.startsWith('/')) return { to: '/', label: t('back') };
+  if (from === '/bienvenue') return { to: from, label: t('backStart') };
+  if (/^\/o\/[^/]+\/profil$/.test(from)) return { to: from, label: t('backProfile') };
+  return { to: from, label: t('back') };
+}
+
 export function SettingsPage() {
   const { t } = useTranslation('settings');
   const me = useMe();
-  const logout = useLogout();
-  const navigate = useNavigate();
+  const logout = useLogoutConfirm();
+  const back = useWayBack();
   if (!me.data) return <p role="status">{t('common:shell.loading')}</p>;
   return (
     <div className={styles.page}>
-      {me.data.memberships.length > 0 && (
-        <Link to="/" className={styles.back}>
+      {(me.data.memberships.length > 0 || back.to !== '/') && (
+        <Link to={back.to} className={styles.back}>
           <Icon name="chevronLeft" size={12} />
-          {t('back')}
+          {back.label}
         </Link>
       )}
       <h1 className={styles.title}>{t('title')}</h1>
@@ -262,13 +275,10 @@ export function SettingsPage() {
       <Newsrooms me={me.data} />
       <MyData />
       <DeleteAccount me={me.data} />
-      <Button
-        variant="link"
-        disabled={logout.isPending}
-        onClick={() => logout.mutate(undefined, { onSuccess: () => navigate('/connexion') })}
-      >
+      <Button variant="link" onClick={logout.ask}>
         {t('logout')}
       </Button>
+      {logout.element}
     </div>
   );
 }

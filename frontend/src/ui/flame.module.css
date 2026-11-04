@@ -1,0 +1,49 @@
+/* The flame of a chain of wins: three frames take turns, 0.2 s each. Without animations
+   (.reduce-motion, prefers-reduced-motion), only the first one shows, standing still. */
+.flame {
+  display: block;
+  flex: none;
+  image-rendering: pixelated;
+}
+
+.frame {
+  opacity: 0;
+  animation: flicker 0.6s steps(1, end) infinite;
+}
+
+.frame:first-child {
+  opacity: 1;
+}
+
+.frame:nth-child(2) {
+  animation-delay: -0.4s;
+}
+
+.frame:nth-child(3) {
+  animation-delay: -0.2s;
+}
+
+@keyframes flicker {
+  0% {
+    opacity: 1;
+  }
+
+  33.333% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The flame and its number, beside a pseudo. */
+.streak {
+  display: inline-flex;
+  flex: none;
+  align-items: flex-end;
+  gap: 3px;
+  color: var(--ink);
+  font: 700 12px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

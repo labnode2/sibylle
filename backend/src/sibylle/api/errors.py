@@ -18,6 +18,7 @@ STATUS: dict[str, int] = {
     "already_bet": 409,
     "insufficient_balance": 409,
     "insufficient_coins": 409,
+    "price_changed": 409,
     "pseudo_taken": 409,
     "email_taken": 409,
     "invitation_invalid": 409,

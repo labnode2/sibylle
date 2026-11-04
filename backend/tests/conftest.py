@@ -5,7 +5,7 @@ Unit tests use none of the database fixtures, so they run without Docker.
 
 import asyncio
 import os
-from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -22,11 +22,19 @@ from sibylle import clock
 from sibylle.config import get_settings
 from sibylle.db.base import new_id
 from sibylle.db.migrate import upgrade
-from sibylle.db.models import Account, AuthSession, Base, Membership, Organisation, Section
+from sibylle.db.models import (
+    Account,
+    AuthSession,
+    Base,
+    CatalogItem,
+    Membership,
+    Organisation,
+    Section,
+)
 from sibylle.db.session import dispose_engine, transaction
 from sibylle.domain.content import AVATAR_TEMPLATES
 from sibylle.domain.ledger import starting_balance
-from sibylle.services import ledger
+from sibylle.services import deals, ledger
 from sibylle.services.security import hash_password, new_token, token_hash
 
 PARIS = ZoneInfo("Europe/Paris")
@@ -43,6 +51,17 @@ def fake_clock(tmp_path: Path) -> Iterator[clock.FakeClock]:
     clock.set_clock(fake)
     yield fake
     clock.set_clock(None)
+
+
+@pytest.fixture(autouse=True)
+def _known_deal(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The deal of the week falls on the indigo frame at 20 %, which the other tests never buy:
+    their purchases keep the usual prices (research.md J10)."""
+
+    def indigo_frame(items: Sequence[CatalogItem]) -> tuple[CatalogItem, int]:
+        return next(item for item in items if item.key == "frame-indigo"), 20
+
+    monkeypatch.setattr(deals, "pick", indigo_frame)
 
 
 @pytest.fixture(scope="session")

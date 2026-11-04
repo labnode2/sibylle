@@ -739,3 +739,143 @@
   justify-content: flex-end;
   gap: 8px;
 }
+
+/* « La discussion » (US14): the messages, oldest first, then where to write one. */
+.discussion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.older {
+  align-self: flex-start;
+}
+
+.messages {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--ink);
+}
+
+.message {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 0 4px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.messageMain {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.messageHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+}
+
+.messageAuthor {
+  color: var(--ink);
+  font: 700 14px/1.2 var(--font-text);
+  text-decoration: none;
+}
+
+.messageAuthor:hover {
+  text-decoration: underline;
+}
+
+.messageText {
+  font: 400 15px/1.45 var(--font-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.messageActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 10px;
+}
+
+/* « J'aime »: a pixel heart, red once liked, and the count. */
+.like {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  margin-left: -10px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font: 700 12px/1 var(--font-mono);
+  cursor: pointer;
+}
+
+.like[aria-pressed='true'] {
+  color: var(--ink);
+}
+
+.like[aria-pressed='true'] svg {
+  color: #e8452c;
+}
+
+.likers {
+  font: 500 11px/1.4 var(--font-mono);
+  color: var(--ink-2);
+}
+
+.messageDelete {
+  margin-left: auto;
+}
+
+.confirmDelete {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--ink);
+  background: var(--surface);
+}
+
+.confirmActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.composerInput {
+  width: 100%;
+  min-height: 76px;
+  padding: 10px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font: 400 15px/1.45 var(--font-text);
+  resize: vertical;
+}
+
+.composerFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}

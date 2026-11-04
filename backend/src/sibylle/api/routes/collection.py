@@ -10,28 +10,46 @@ from sibylle.api.schemas import (
     CatalogEntry,
     CatalogItemOut,
     OwnedItemOut,
+    PurchaseIn,
     PurchaseOut,
     RedeemIn,
     RedeemOut,
 )
-from sibylle.services import collection
+from sibylle.services import collection, deals
 
 router = APIRouter(prefix="/orgs/{org_id}", tags=["collection"])
 
 
 @router.get("/catalog")
 async def get_catalog(org_id: uuid.UUID, member: CurrentMember, session: Db) -> list[CatalogEntry]:
-    return [
-        CatalogEntry(item=CatalogItemOut.model_validate(item), price=item.price, owned=owned)
-        for item, owned in await collection.catalog(session, member)
-    ]
+    deal = await deals.this_week(session, member.org_id)
+    entries = []
+    for item, owned in await collection.catalog(session, member):
+        sale = deal if deals.on_sale(item, deal) else None
+        entries.append(
+            CatalogEntry(
+                item=CatalogItemOut.model_validate(item),
+                price=deals.price_of(item, deal),
+                regular_price=item.price if sale else None,
+                discount_pct=sale.discount_pct if sale else None,
+                discount_until=deals.ends_at() if sale else None,
+                owned=owned,
+            )
+        )
+    return entries
 
 
 @router.post("/catalog/{item_id}/purchase", status_code=201)
 async def purchase(
-    org_id: uuid.UUID, item_id: uuid.UUID, member: CurrentMember, session: Db
+    org_id: uuid.UUID,
+    item_id: uuid.UUID,
+    member: CurrentMember,
+    session: Db,
+    body: PurchaseIn | None = None,
 ) -> PurchaseOut:
-    owned, item, coins = await collection.buy(session, member, item_id)
+    owned, item, coins = await collection.buy(
+        session, member, item_id, shown_price=body.price if body else None
+    )
     return PurchaseOut(
         owned_item=OwnedItemOut(
             item=CatalogItemOut.model_validate(item),

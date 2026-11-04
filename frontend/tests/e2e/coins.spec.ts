@@ -12,6 +12,7 @@ import {
   publishProno,
   resetClock,
   sibylle,
+  type Json,
 } from './helpers';
 
 test.beforeEach(resetClock);
@@ -66,8 +67,24 @@ test('Monday turns gold laurels into coins, and says so once', async ({ browser 
   await hers.getByRole('link', { name: 'Voir la collection' }).click();
   await expect(hers).toBeHidden();
   await expect(ines.getByRole('heading', { name: 'La collection' })).toBeVisible();
+  // 400 coins, or less if the deal of the week fell on it: too dear for her anyway.
   await expect(
-    ines.getByRole('button', { name: 'Acheter Couleur Rouge vif pour 400 pièces' }),
+    ines.getByRole('button', { name: /^Acheter Couleur Rouge vif pour \d+ pièces/ }),
   ).toBeDisabled();
+
+  // The deal of the week: one object drawn at random, its share off, the usual price struck.
+  const catalog = await call(ines, 'GET', `/orgs/${orgId}/catalog`);
+  const deals = catalog.body.filter((entry: Json) => entry.discount_pct !== null);
+  expect(deals).toHaveLength(1);
+  const [deal] = deals;
+  const box = ines.getByRole('region', { name: 'La promo de la semaine' });
+  await expect(box).toContainText(`−${deal.discount_pct} %`);
+  await expect(box).toContainText(`${deal.regular_price}`);
+  await expect(box).toContainText(`${deal.price}`);
+  await expect(
+    ines.getByRole('button', {
+      name: new RegExp(`pour ${deal.price} pièces au lieu de ${deal.regular_price}$`),
+    }),
+  ).toBeVisible();
   expect((await call(ines, 'GET', `/orgs/${orgId}/coins/weekly`)).body).toBeNull();
 });

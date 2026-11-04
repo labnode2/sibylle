@@ -1,18 +1,21 @@
 // The press card (canvas B-Profil on a phone, B-Web-Profil on a computer), as every member of
-// the newsroom sees it: the ink band and number, the avatar in its frame beside the pseudo, role
-// and arrival, the three things the member chose to show; three statistics in green laurels; the
-// balls collected (an engraved ball per season played, the others from secret codes). On one's
-// own card: « Personnaliser ma carte », the collection, preferences and account; then the other
-// objects and the statement. The newsroom has a tab of its own, « La rédaction ».
+// the newsroom sees it: the ink band and number, the avatar in its frame beside the pseudo and
+// its chain of wins, the role, arrival and record of wins, the three things the member chose to
+// show; three statistics in green laurels; the balls collected (an engraved ball per season
+// played, the others from secret codes). On one's own card: « Personnaliser ma carte », the
+// collection, preferences and account; then the other objects and the statement. The newsroom
+// has a tab of its own, « La rédaction ».
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router';
+import { Link, useLocation, useParams } from 'react-router';
 
 import type { Org } from '../../api/types';
 import { formatDate, formatNumber } from '../../i18n';
 import { Card, Icon, Laurel, TopBar } from '../../ui/components';
 import { CrystalBall } from '../../ui/CrystalBall';
+import { Streak, STREAK_SHOWN_FROM } from '../../ui/Flame';
 import { FramedAvatar } from '../../ui/FramedAvatar';
 import type { Variant } from '../../vendor/crystal-ball/crystal-ball.js';
+import { useLogoutConfirm } from '../auth/LogoutDialog';
 import { ItemPreview } from '../collection/ItemPreview';
 import { useOrg } from '../orgs/api';
 import { usePressCard, type PressCard } from './api';
@@ -109,11 +112,20 @@ export function Identity({
           <FramedAvatar image={card.avatar} frame={card.frame} size={128} />
         </span>
         <div className={styles.identityText}>
-          <h2 className={styles.pseudo}>{card.pseudo}</h2>
+          <div className={styles.pseudoLine}>
+            <h2 className={styles.pseudo}>{card.pseudo}</h2>
+            <Streak value={card.stats.streak} size={16} className={styles.pseudoStreak} />
+          </div>
           <p className={styles.meta}>
             <span className={styles.role}>{t(`roles.${card.role}`)}</span> {org.title.toUpperCase()}
             <br />
             {t('since', { date: since })}
+            {card.stats.best_streak >= STREAK_SHOWN_FROM && (
+              <>
+                <br />
+                {t('record', { count: card.stats.best_streak })}
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -189,22 +201,26 @@ function Balls({ card, mine }: { card: PressCard; mine: boolean }) {
 }
 
 /** The lines under my card: the collection, the preferences and the account. */
+/** « Ma collection », « Réglages » (which lead back here), then « Déconnexion », which asks
+ *  first. */
 function Lines({ orgId }: { orgId: string }) {
   const { t } = useTranslation('profile');
+  const { pathname } = useLocation();
+  const logout = useLogoutConfirm();
   return (
     <nav className={styles.lines} aria-label={t('lines.label')}>
       <Link to={`/o/${orgId}/collection`} className={styles.line}>
         <span className={styles.lineText}>{t('collectionLink')}</span>
         <Icon name="chevronRight" size={24} />
       </Link>
-      <Link to="/compte" className={styles.line}>
-        <span className={styles.lineText}>{t('lines.preferences')}</span>
+      <Link to="/compte" state={{ from: pathname }} className={styles.line}>
+        <span className={styles.lineText}>{t('lines.settings')}</span>
         <Icon name="chevronRight" size={24} />
       </Link>
-      <Link to="/compte#settings-data" className={styles.line}>
-        <span className={styles.lineText}>{t('lines.account')}</span>
-        <Icon name="chevronRight" size={24} />
-      </Link>
+      <button type="button" className={`${styles.line} ${styles.lineButton}`} onClick={logout.ask}>
+        <span className={styles.lineText}>{t('lines.logout')}</span>
+      </button>
+      {logout.element}
     </nav>
   );
 }
@@ -212,6 +228,7 @@ function Lines({ orgId }: { orgId: string }) {
 export function PressCardPage() {
   const { t } = useTranslation('profile');
   const { orgId = '', memberId } = useParams();
+  const { pathname } = useLocation();
   const org = useOrg(orgId);
   const me = org.data?.my_membership;
   const id = memberId ?? me?.id;
@@ -228,6 +245,7 @@ export function PressCardPage() {
           <h1 className={styles.headerTitle}>{t('profile')}</h1>
           <Link
             to="/compte"
+            state={{ from: pathname }}
             className={`only-mobile ${styles.gear}`}
             aria-label={t('settingsLink')}
           >

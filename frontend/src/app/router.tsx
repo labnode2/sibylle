@@ -2,7 +2,15 @@
 // newsroom's pages under /o/:orgId. Each user story adds its screens here.
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createBrowserRouter, isRouteErrorResponse, Outlet, useRouteError } from 'react-router';
+import {
+  createBrowserRouter,
+  isRouteErrorResponse,
+  Link,
+  Navigate,
+  Outlet,
+  useLocation,
+  useRouteError,
+} from 'react-router';
 
 import {
   ForgotPasswordPage,
@@ -21,7 +29,6 @@ import { OrgSettingsPage } from '../features/admin/OrgSettingsPage';
 import { ReportsPage } from '../features/admin/ReportsPage';
 import { CollectionPage } from '../features/collection/CollectionPage';
 import { LeaderboardPage } from '../features/leaderboard/LeaderboardPage';
-import { OrgSwitcherPage } from '../features/orgs/OrgSwitcher';
 import { CreatePronoPage } from '../features/pronos/CreatePronoPage';
 import { PronoListPage } from '../features/pronos/PronoListPage';
 import { PronoPage } from '../features/pronos/PronoPage';
@@ -31,15 +38,32 @@ import { CardEditorPage } from '../features/profile/CardEditorPage';
 import { PressCardPage } from '../features/profile/PressCardPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { UnePage } from '../features/une/UnePage';
-import { ButtonLink, Masthead } from '../ui/components';
+import { ButtonLink, Icon, Masthead } from '../ui/components';
 import { OfflineBanner } from './AppShell';
 import { OrgLayout } from './OrgLayout';
 import styles from './shell.module.css';
 
-function PublicPage({ children }: { children?: ReactNode }) {
+/** The pages outside a newsroom, under the masthead. Signed in, a gear at the top right opens the
+ *  account's settings, which lead back here. */
+function PublicPage({ children, signedIn = false }: { children?: ReactNode; signedIn?: boolean }) {
+  const { t } = useTranslation();
+  const { pathname } = useLocation();
   return (
     <div className={styles.page}>
-      <Masthead size="compact" />
+      <div className={styles.publicHead}>
+        <Masthead size="compact" />
+        {signedIn && pathname !== '/compte' && (
+          <Link
+            to="/compte"
+            state={{ from: pathname }}
+            className={styles.publicSettings}
+            aria-label={t('shell.settings')}
+            title={t('shell.settings')}
+          >
+            <Icon name="gear" size={24} />
+          </Link>
+        )}
+      </div>
       <OfflineBanner />
       <main className={styles.main}>{children ?? <Outlet />}</main>
     </div>
@@ -92,13 +116,14 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: <HomeRedirect /> },
       {
-        element: <PublicPage />,
+        element: <PublicPage signedIn />,
         children: [
           { path: '/bienvenue', element: <StartPage /> },
           { path: '/creer', element: <CreateOrgPage /> },
           { path: '/rejoindre', element: <JoinPage /> },
           { path: '/rejoindre/:token', element: <JoinPage /> },
-          { path: '/redactions', element: <OrgSwitcherPage /> },
+          // The former list of newsrooms: they are on the welcome page now.
+          { path: '/redactions', element: <Navigate to="/bienvenue" replace /> },
           { path: '/compte', element: <SettingsPage /> },
         ],
       },

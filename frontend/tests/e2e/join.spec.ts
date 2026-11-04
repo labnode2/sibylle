@@ -66,3 +66,63 @@ test('invite with a link and join a newsroom', async ({ browser }, testInfo) => 
 
   expect(leaks).toEqual([]);
 });
+
+test('the newsroom card opens a menu to change newsroom or join another, and the welcome page lists them', async ({
+  browser,
+}, testInfo) => {
+  const ines = await newPerson(browser, testInfo, 'Inès');
+  await createNewsroom(ines, 'Sophia Office', 'Inès');
+  // The card is in the navigation on a computer, on la une on a phone: the one on screen.
+  const card = (title: string) =>
+    ines.getByRole('button', { name: new RegExp(`^${title}.*Changer de rédaction$`) }).filter({
+      visible: true,
+    });
+  const menu = ines.getByRole('list', { name: 'Mes rédactions' });
+
+  // It opens where it is; its last option joins or creates another newsroom.
+  await card('Sophia Office').click();
+  await expect(card('Sophia Office')).toHaveAttribute('aria-expanded', 'true');
+  await expect(menu.getByRole('link')).toHaveCount(1);
+  await expect(menu.getByRole('link')).toHaveAccessibleName('Sophia Office');
+  await ines.getByRole('link', { name: 'Rejoindre ou créer une rédaction' }).click();
+
+  // The welcome page lists her newsrooms under « Créer une rédaction », and its gear opens the
+  // settings, which lead back to it.
+  const mine = ines.getByRole('navigation', { name: 'Mes rédactions' });
+  await expect(mine.getByRole('link')).toHaveCount(1);
+  await expect(mine.getByRole('link')).toHaveAccessibleName('Sophia Office');
+  await ines.getByRole('link', { name: 'Mes réglages' }).click();
+  await expect(ines.getByRole('heading', { name: 'Mes réglages' })).toBeVisible();
+  await ines.getByRole('link', { name: "Retour à l'accueil" }).click();
+  await createNewsroom(ines, 'Le Petit Écho', 'Inès');
+
+  // Both newsrooms, the current one marked; Escape closes the menu.
+  await card('Le Petit Écho').click();
+  await expect(menu.getByRole('link')).toHaveCount(2);
+  await expect(menu.getByRole('link').first()).toHaveAccessibleName('Sophia Office');
+  await expect(menu.getByRole('link').last()).toHaveAccessibleName('Le Petit Écho');
+  await expect(menu.getByRole('link', { name: 'Le Petit Écho' })).toHaveAttribute(
+    'aria-current',
+    'true',
+  );
+  await ines.keyboard.press('Escape');
+  await expect(menu).toBeHidden();
+  await expect(card('Le Petit Écho')).toBeFocused();
+
+  // Back to the first one.
+  await card('Le Petit Écho').click();
+  await menu.getByRole('link', { name: 'Sophia Office' }).click();
+  await expect(ines.getByRole('heading', { name: 'La une de Sophia Office' })).toBeVisible();
+  await expect(menu).toBeHidden();
+
+  // Her profile ends with « Déconnexion », which asks first.
+  await ines.getByRole('link', { name: /^(MON )?PROFIL$/ }).click();
+  await ines.getByRole('button', { name: 'Déconnexion' }).click();
+  const leaving = ines.getByRole('dialog', { name: 'Te déconnecter ?' });
+  await leaving.getByRole('button', { name: 'Annuler' }).click();
+  await expect(leaving).toBeHidden();
+  await expect(ines).toHaveURL(/\/profil$/);
+  await ines.getByRole('button', { name: 'Déconnexion' }).click();
+  await leaving.getByRole('button', { name: 'Me déconnecter' }).click();
+  await expect(ines).toHaveURL(/\/connexion$/);
+});

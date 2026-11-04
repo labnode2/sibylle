@@ -42,6 +42,8 @@ Enveloppe commune : `{"type": "event", "topic": "<sujet>", "event": "<nom>", "at
 | `report.created` | `me` (rédaction en chef) | `{report_id, prono_id, kind}` |
 | `report.handled` | `me` (auteur·rice du signalement) | `{report_id, prono_id, state}` ; le client recharge le prono, où `my_reports` donne la note de la rédaction en chef |
 | `reaction.changed` | `prono` | `{prono_id, reactions: {kind: count}}` |
+| `message.posted`, `message.deleted` | `prono` | `{prono_id, message_id, message_count}` ; le client recharge la discussion |
+| `message.liked` | `prono` | `{prono_id, message_id, likes}` ; le client recharge la discussion (`liked` dépend de qui regarde) |
 | `leaderboard.changed` | `org` | `{}` ; le client recharge le classement affiché |
 | `member.updated` | `org` | `{member: MemberPublic}` (pseudo, avatar, rôle) |
 | `member.joined`, `member.left` | `org` | `{member: MemberPublic}` |

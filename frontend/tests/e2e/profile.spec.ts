@@ -75,7 +75,8 @@ test('a press card, an avatar drawn by hand and a collection', async ({ browser 
   const news = cami.getByRole('dialog', { name: 'Tes lauriers en or deviennent des pièces' });
   await news.getByRole('button', { name: 'Fermer' }).click();
   await cami.getByRole('link', { name: 'Ma collection' }).click();
-  await cami.getByRole('button', { name: 'Acheter Couleur Rouge vif pour 400 pièces' }).click();
+  // 400 coins, or less if the deal of the week fell on it.
+  await cami.getByRole('button', { name: /^Acheter Couleur Rouge vif pour \d+ pièces/ }).click();
   await cami.getByRole('button', { name: 'Acheter', exact: true }).click();
   await expect(cami.getByRole('listitem', { name: 'Couleur Rouge vif' })).toContainText('À TOI');
   expect(await laurels(cami, orgId)).toEqual([500, 0]);

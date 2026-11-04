@@ -16,13 +16,13 @@ description: "Liste des tâches pour implémenter Sibylle v1"
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: parallélisable (fichiers différents, aucune dépendance sur une tâche non terminée)
-- **[Story]**: histoire de spec.md (US1 à US12)
+- **[Story]**: histoire de spec.md (US1 à US14)
 - Chaque tâche cite ses fichiers.
 
 ## Path Conventions
 
 - Serveur : `backend/src/sibylle/`, tests dans `backend/tests/` ; interface : `frontend/src/`, tests dans `frontend/tests/` ; hébergement : `deploy/`.
-- Références : routes et schémas dans `contracts/rest-api.md`, événements dans `contracts/realtime.md`, notifications dans `contracts/notifications.md`, tables et contraintes dans `data-model.md`, choix R1 à R20 et règles J1 à J5 dans `research.md`, scénarios V1 à V10 dans `quickstart.md`.
+- Références : routes et schémas dans `contracts/rest-api.md`, événements dans `contracts/realtime.md`, notifications dans `contracts/notifications.md`, tables et contraintes dans `data-model.md`, choix R1 à R20 et règles J1 à J9 dans `research.md`, scénarios V1 à V10 dans `quickstart.md`.
 - Maquettes : canvas Gazette https://claude.ai/artifact/U1j9b9bbyqA7jMC71DLUCf, planches citées par leur nom (B-Accueil, B-Prono, B-Profil, B-Web-Accueil, B-Web-Prono, B-Web-Profil, G-Rejoindre, G-Creer, G-Designer, G-Resultat, G-Classement, G-Orga, G-Pixel, G-Style) et pages « Mobile » et « Ordinateur ».
 - Conventions : code et identifiants en anglais, textes d'interface en français par les catalogues ; tout instant métier vient de `clock.now()` ; chaque route sous `/orgs/{org}` passe par `current_member` et `require(...)` ; chaque écran existe en mobile (390 px) et en ordinateur (1 024 px et plus) ; après chaque changement de route serveur, régénérer `frontend/src/api/schema.d.ts` avec `npm run gen:api` ; une seule révision Alembic à la fois, pour garder une seule tête.
 
@@ -321,6 +321,14 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 - [x] T171 [US7] Dans `frontend/src/features/profile/CardEditorPage.tsx`, mettre « Annuler » et « Enregistrer » sous la carte « CE QUE VOIENT LES AUTRES », actifs seulement après une modification ; « Annuler » remet ce qui était enregistré (l'éditeur de pixel art repart du dessin enregistré), « Enregistrer » garde la page ouverte et le dit ; un retour « PROFIL » en haut et les onglets en bas.
 - [x] T172 [US7] Adapter `frontend/tests/e2e/profile.spec.ts` : boutons inactifs avant la première modification, enregistrement sans quitter la page, « Annuler » qui retire un objet mis en avant, titre « La rédaction ».
 
+- [x] T189 [US7] Faire de la petite carte de la rédaction un menu déroulant, sans quitter la page (`NewsroomSwitcher` de `frontend/src/features/orgs/NewsroomPage.tsx`, dans `frontend/src/app/OrgLayout.tsx` et `frontend/src/features/une/UnePage.tsx`) : les rédactions du compte (`GET /me`), celle en cours marquée, puis en dernier « Rejoindre ou créer une rédaction » ; fermé par Échap, un clic ailleurs ou un choix ; parcours dans `frontend/tests/e2e/join.spec.ts` (spec FR-097).
+
+- [x] T190 [US7] Lister les rédactions du compte sous « Créer une rédaction » dans `StartPage` (`frontend/src/features/orgs/OrgPages.tsx`) et placer une roue crantée vers `/compte` en haut à droite des pages hors rédaction (`PublicPage` de `frontend/src/app/router.tsx`) ; `/redactions` mène désormais à `/bienvenue` et `frontend/src/features/orgs/OrgSwitcher.tsx` disparaît ; sur la carte de presse (`frontend/src/features/profile/PressCardPage.tsx`), « Préférences » et « Compte » deviennent « Réglages », suivi de « Déconnexion » ; `frontend/src/features/settings/SettingsPage.tsx` ramène à la page d'où on l'a ouverte (`state.from`) ; parcours dans `frontend/tests/e2e/join.spec.ts` et `frontend/tests/e2e/data-rights.spec.ts` (spec FR-099).
+
+- [x] T194 [US7] Améliorer `frontend/src/features/pixel-editor/PixelEditor.tsx` : outils en icônes de pixel art (`frontend/src/features/pixel-editor/icons.ts`), miroir avec son axe, grille à masquer, refaire et tout effacer à côté de défaire, traits continus (`line`, `stroke` et `fill` de `frontend/src/features/pixel-editor/grid.ts`, testés dans `frontend/tests/unit/pixel-editor.test.ts`), curseur qui suit la souris, pipette au clic droit ou Alt + clic, lettres C, G, R, P et M, Ctrl+Y, grille de 400 px dessinée en 640 px (spec FR-091).
+
+- [x] T195 [US7] Mettre « Déconnexion » en rouge (jeton `--danger` de `frontend/src/styles/tokens.css`, clair et sombre) et demander confirmation avant de déconnecter, depuis la carte de presse comme depuis les réglages (`frontend/src/features/auth/LogoutDialog.tsx`) ; parcours dans `frontend/tests/e2e/join.spec.ts` (spec FR-099).
+
 **Checkpoint**: lauriers verts expliqués partout, classement en tableau, onglet « Rédaction », cartes personnalisées sous les yeux ; les boules se gagnent sans s'acheter.
 
 ---
@@ -340,6 +348,51 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 - [x] T179 [US12] Étendre `frontend/tests/e2e/games.spec.ts` : Inès retire la course de la semaine en cours, Cami ne la voit plus sur la une et sa partie est refusée ; une semaine sans jeu fait disparaître l'encadré ; Pixel mystère retiré en plein dessin donne son mot.
 
 **Checkpoint**: chaque rédaction dose ses jeux semaine par semaine ; les membres ne voient et ne jouent que ceux de la semaine.
+
+---
+
+## Phase 9e: User Story 13 - Enchaîner les victoires (Priority: P3)
+
+**Goal**: la chaîne de victoires de chaque membre, calculée depuis ses paris réglés, et une flamme en pixel art animée à partir de 2 victoires d'affilée, dans le classement, sur la une, dans la liste des membres et sur la carte de presse avec le record (spec FR-074, FR-075, research.md J8).
+
+**Independent Test**: régler trois pronos gagnés par un membre, vérifier la flamme et le chiffre 3 dans le classement et sur sa carte ; lui faire perdre un prono et vérifier que la flamme s'éteint et que le record reste à 3 ; vérifier qu'un prono annulé ou qu'il n'a pas joué ne casse pas la chaîne, et qu'une correction la recalcule.
+
+- [x] T180 [P] [US13] Écrire `backend/tests/unit/test_streaks.py` (chaîne en cours et record d'une suite d'issues : aucune, que des victoires, une défaite qui remet à zéro, le record gardé) et `backend/tests/contract/test_streaks.py` (`streak` dans `GET …/leaderboard`, `leaderboard_top` de la une et `GET …/members` ; `streak` et `best_streak` dans la carte de presse ; un prono annulé ou pas joué ne casse rien ; une correction recalcule la chaîne sans déplacer le prono ; un pari remplacé ne compte pas ; deux rédactions séparées).
+- [x] T181 [US13] Implémenter `backend/src/sibylle/domain/streaks.py` (pour faire passer T180) et `backend/src/sibylle/services/streaks.py` (chaîne en cours de chaque membre d'une rédaction en une requête, issues d'un membre pour sa carte) ; ajouter `streak` aux lignes de `backend/src/sibylle/api/routes/leaderboard.py` et de `backend/src/sibylle/services/front_page.py`, à `GET …/members` (`backend/src/sibylle/api/routes/members.py`), et `streak`, `best_streak` aux statistiques de `backend/src/sibylle/services/collection.py` ; régénérer `frontend/src/api/schema.d.ts`.
+- [x] T182 [P] [US13] Écrire `frontend/src/ui/Flame.tsx` (flamme de 8 × 10 pixels en trois images, défilées en CSS `steps`, immobile sous `.reduce-motion`) et sa chaîne `Streak` (flamme et chiffre, nom accessible « N pronos gagnés d'affilée », rien sous 2) ; la montrer dans `frontend/src/features/leaderboard/LeaderboardPage.tsx`, le haut du classement de `frontend/src/features/une/UnePage.tsx`, `frontend/src/features/orgs/NewsroomPage.tsx`, et sur la carte de `frontend/src/features/profile/PressCardPage.tsx`, à côté du pseudo, avec le record ; libellés dans `frontend/src/i18n/fr/common.json` et `frontend/src/i18n/fr/profile.json`.
+- [x] T183 [US13] Écrire `frontend/tests/e2e/streak.spec.ts` : deux pronos gagnés (des dates « sans fin » réglées pendant qu'elles sont ouvertes) allument la flamme « 2 » dans le classement et sur la carte de presse ; un prono perdu l'éteint et le record reste à 2.
+
+**Checkpoint**: chacun voit qui enchaîne les victoires, sans que rien ne bouge quand les animations sont coupées.
+
+---
+
+## Phase 9f: User Story 14 - Discuter d'un prono (Priority: P3)
+
+**Goal**: une discussion sous chaque prono publié, en direct, avec des « J'aime » ; chacun supprime ses messages et la rédaction en chef modère ; la une et la liste comptent les messages (spec FR-081, FR-140 à FR-143, research.md J9).
+
+**Independent Test**: depuis deux navigateurs, écrire un message sous un prono et vérifier que l'autre le voit sans recharger ; l'aimer puis retirer son « J'aime » ; supprimer son propre message ; retirer le message d'un autre avec la rédaction en chef ; vérifier qu'un·e lecteur·rice ne peut pas supprimer le message d'un autre et qu'un membre d'une autre rédaction ne voit rien.
+
+- [x] T184 [P] [US14] Écrire `backend/tests/contract/test_discussion.py` (écrire, lire du plus ancien au plus récent, pages de 20 avec `before` et `has_more` ; `422` pour un message vide ou trop long ; `409 invalid_state` pour un prono proposé ou refusé ; aimer deux fois, ne plus aimer, `likers` ; supprimer le sien ; la rédaction en chef retire celui d'un autre, `403` pour un·e journaliste ou un·e lecteur·rice ; `404` hors de la rédaction ; `message_count` dans les listes et sur la une ; événements `message.*` sur `prono:<id>` ; export ; suppression du compte qui efface les messages et garde les « J'aime ») ; ajouter `DISCUSS` et `MODERATE_MESSAGES` à `backend/tests/unit/test_permissions.py`.
+- [x] T185 [US14] Ajouter `Message` (`body` de 1 à 500 caractères) et `MessageLike` (PK `message_id`, `membership_id`, supprimé avec son message) à `backend/src/sibylle/db/models/pronos.py`, avec la révision Alembic `backend/src/sibylle/db/migrations/versions/0018_discussion.py`.
+- [x] T186 [US14] Implémenter `backend/src/sibylle/services/discussion.py` (lire par pages, écrire, supprimer, aimer, événements `message.posted`, `message.deleted`, `message.liked`), les actions `DISCUSS` et `MODERATE_MESSAGES` de `backend/src/sibylle/domain/permissions.py`, les routes de `backend/src/sibylle/api/routes/discussion.py` et leurs schémas ; `message_count` dans `summaries` de `backend/src/sibylle/services/pronos.py` ; les messages dans `backend/src/sibylle/services/export.py` et leur effacement dans `backend/src/sibylle/services/accounts.py` ; régénérer `frontend/src/api/schema.d.ts`.
+- [x] T187 [P] [US14] Écrire `frontend/src/features/pronos/Discussion.tsx` sous « Le règlement » de `frontend/src/features/pronos/PronoPage.tsx` : les messages avec avatar, pseudo et heure, « Messages précédents », « J'aime » avec qui a aimé, « Supprimer » ou « Retirer » après confirmation, la zone d'écriture (500 caractères) ; les requêtes de `frontend/src/features/pronos/api.ts`, rechargées par les événements `message.*` (que `useProno` laisse de côté) ; le nombre de messages dans `frontend/src/features/une/UnePage.tsx` et `frontend/src/features/pronos/PronoListPage.tsx` ; libellés dans `frontend/src/i18n/fr/pronos.json` et `frontend/src/i18n/fr/une.json`.
+- [x] T188 [US14] Écrire `frontend/tests/e2e/discussion.spec.ts` : Cami écrit sous un prono et Hugo voit le message arriver sans recharger, l'aime, et Cami voit le compteur passer à 1 ; Cami supprime un message ; Inès, rédaction en chef, retire celui d'Hugo ; la une compte les messages.
+
+**Checkpoint**: chaque prono a sa discussion, vivante, modérée par la rédaction en chef.
+
+---
+
+## Phase 9g: Évolution de US7 - Promotion de la semaine
+
+**Goal**: chaque semaine, un objet à vendre de la collection, tiré au hasard pour chaque rédaction, est en promotion d'un pourcentage tiré au hasard, du lundi au dimanche (spec FR-095, research.md J10).
+
+**Independent Test**: ouvrir la collection, trouver la promotion (ancien prix barré, nouveau prix, fin dimanche soir), l'acheter et vérifier les pièces débitées au prix réduit ; passer au lundi suivant et vérifier qu'une nouvelle promotion la remplace.
+
+- [x] T191 [P] [US7] Écrire `backend/tests/unit/test_deals.py` (prix réduit arrondi à la pièce inférieure, au moins 1) et `backend/tests/contract/test_weekly_deal.py` (une seule promotion par rédaction et par semaine, la même pour tous ses membres et à chaque lecture, jamais une boule ; `price`, `regular_price`, `discount_pct`, `discount_until` ; achat au prix réduit dans l'écriture de pièces ; `409 price_changed` pour un prix périmé ; nouvelle promotion la semaine suivante).
+- [x] T192 [US7] Ajouter `weekly_deals` à `backend/src/sibylle/db/models/coins.py` avec la révision Alembic `backend/src/sibylle/db/migrations/versions/0019_weekly_deals.py`, puis `backend/src/sibylle/domain/deals.py` et `backend/src/sibylle/services/deals.py` (tirage gardé, prix de la semaine) ; prix de la semaine dans `GET …/catalog` et l'achat de `backend/src/sibylle/services/collection.py`, erreur `price_changed` ; régénérer `frontend/src/api/schema.d.ts`.
+- [x] T193 [US7] Montrer la promotion dans `frontend/src/features/collection/CollectionPage.tsx` : un encadré « Promo de la semaine » en tête, l'ancien prix barré et le pourcentage sur l'objet ; l'achat envoie le prix affiché et recharge la collection sur `price_changed` ; libellés dans `frontend/src/i18n/fr/collection.json` ; parcours dans `frontend/tests/e2e/coins.spec.ts`.
+
+**Checkpoint**: chaque semaine, une bonne affaire différente attend dans la collection.
 
 ---
 
@@ -471,6 +524,8 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 - **US11 (P3)** : après US1 ; le réglage des notifications suppose US8.
 - **US10 (P4)** : après US7 (éditeur pixel art) et US9 (encadré « Jeux de la semaine »).
 - **US12 (P3)** : après US9 et US10 (les deux jeux qu'elle programme) ; son onglet rejoint les réglages de US6.
+- **US13 (P3)** : après US3 et US4 (les règlements et le classement) ; sa flamme rejoint la carte de presse de US7.
+- **US14 (P3)** : après US2 et US5 (l'écran du prono, la une et ses réactions) ; la modération revient à la rédaction en chef de US6.
 
 ### Within Each User Story
 

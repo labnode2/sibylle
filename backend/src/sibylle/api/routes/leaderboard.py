@@ -9,7 +9,7 @@ from sibylle.api.deps import CurrentMember, Db
 from sibylle.api.schemas import Leaderboard, LeaderboardRow, MemberPublic, SeasonOut
 from sibylle.domain.leaderboard import Metric, Period
 from sibylle.domain.seasons import season_bounds, season_of
-from sibylle.services import leaderboard
+from sibylle.services import leaderboard, streaks
 
 router = APIRouter(prefix="/orgs/{org_id}", tags=["leaderboard"])
 
@@ -23,6 +23,7 @@ async def get_leaderboard(
     period: Period = Period.SEASON,
 ) -> Leaderboard:
     board = await leaderboard.board(session, org_id, metric, period)
+    chains = await streaks.current(session, org_id)
     return Leaderboard(
         period_label=board.period_label,
         rows=[
@@ -31,6 +32,7 @@ async def get_leaderboard(
                 member=MemberPublic.of(line.member),
                 value=line.value,
                 is_me=line.member.id == member.id,
+                streak=chains.get(line.member.id, 0),
             )
             for line in board.lines
         ],

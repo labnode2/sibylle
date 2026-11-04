@@ -30,6 +30,8 @@ class Action(StrEnum):
     ADJUST_LAURELS = "adjust_laurels"
     HANDLE_REPORTS = "handle_reports"
     SCHEDULE_GAMES = "schedule_games"
+    DISCUSS = "discuss"
+    MODERATE_MESSAGES = "moderate_messages"
 
 
 _EVERYONE = frozenset(Role)
@@ -58,6 +60,9 @@ _ALLOWED: dict[Action, frozenset[Role]] = {
     Action.ADJUST_LAURELS: _EDITOR,
     Action.HANDLE_REPORTS: _EDITOR,
     Action.SCHEDULE_GAMES: _EDITOR,
+    Action.DISCUSS: _EVERYONE,
+    # The editor moderates the newsroom (the charter); anyone deletes their own messages.
+    Action.MODERATE_MESSAGES: _EDITOR,
 }
 
 

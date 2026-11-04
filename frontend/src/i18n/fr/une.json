@@ -7,6 +7,8 @@
   "bets_one": "{{count}} PRONO",
   "bets_other": "{{count}} PRONOS",
   "pot": "CAGNOTTE {{pot}}",
+  "messages_one": "{{count}} MESSAGE",
+  "messages_other": "{{count}} MESSAGES",
   "gain": "+{{gain}} DE BASE SI JUSTE",
   "poll": "Répartition des pronos : {{split}}",
   "deckClose": "Clôture {{date}}.",
