@@ -40,7 +40,7 @@ test('the editor runs the newsroom', async ({ browser }, testInfo) => {
   await expect(ines.getByText('Réglages enregistrés.')).toBeVisible();
 
   // Hugo becomes a journalist and publishes at once, under the new ceiling.
-  await ines.getByRole('link', { name: 'MEMBRES' }).click();
+  await ines.getByRole('link', { name: 'MEMBRES', exact: true }).click();
   await ines.getByLabel('Rôle de Hugo').selectOption('journalist');
   await expect(ines.getByLabel('Rôle de Hugo')).toHaveValue('journalist');
   await hugo.goto(`/o/${orgId}/pronos/nouveau`);
@@ -91,8 +91,8 @@ test('the editor runs the newsroom', async ({ browser }, testInfo) => {
 
   // The settings stay closed to the journalist and the reader.
   for (const page of [hugo, cami]) {
-    await page.goto(`/o/${orgId}/profil`);
-    await expect(page.getByRole('heading', { name: 'Profil' })).toBeAttached();
+    await page.goto(`/o/${orgId}/redaction`);
+    await expect(page.getByRole('heading', { name: 'La rédaction' })).toBeAttached();
     await expect(page.getByRole('link', { name: /Réglages de la rédaction/ })).toHaveCount(0);
     await page.goto(`/o/${orgId}/reglages`);
     await expect(

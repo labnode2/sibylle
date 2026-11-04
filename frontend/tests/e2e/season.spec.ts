@@ -23,18 +23,17 @@ function option(prono: { options: { id: string; label: string }[] }, label: stri
   return prono.options.find((o) => o.label === label)!.id;
 }
 
-/** The ranking as shown, podium first: "rank pseudo value", "(toi)" on the member's own line. */
+/** The ranking as shown: "rank pseudo value", with "(toi)" on the member's own line. */
 async function board(page: Page): Promise<string[]> {
   return page
-    .getByRole('region', { name: /^(LAURIERS GAGNÉS|PRONOS GAGNÉS) · / })
-    .getByRole('listitem')
-    .evaluateAll((items) =>
-      items.map((item) => {
-        const part = (name: string) => item.querySelector(`[data-part="${name}"]`)!;
-        const value = part('value');
-        // A laurels amount is its figure, then the sprite and a hidden label.
-        const shown = value.querySelector(':scope > span > span:first-child') ?? value;
-        return `${part('rank').textContent} ${part('name').textContent} ${shown.textContent}`;
+    .getByRole('table')
+    .locator('tbody tr')
+    .evaluateAll((rows) =>
+      rows.map((row) => {
+        const [rank, member, value] = Array.from(row.children) as HTMLElement[];
+        const shown = value!.querySelector('span > span') ?? value!;
+        const me = row.getAttribute('aria-current') === 'true' ? ' (toi)' : '';
+        return `${rank!.textContent} ${member!.querySelector('a')!.textContent}${me} ${shown.textContent}`;
       }),
     );
 }
@@ -80,7 +79,7 @@ test('rankings, a live refresh and the end of the season', async ({ browser }, t
   // The leaderboard opens from la une's ranking.
   await cami.goto(`/o/${orgId}`);
   await cami.getByRole('link', { name: /Voir tout le classement/ }).click();
-  await expect(cami.getByRole('heading', { name: 'Le classement', level: 1 })).toBeVisible();
+  await expect(cami.getByRole('heading', { name: 'Classement', level: 1 })).toBeVisible();
   await expect(cami.getByText(/^SAISON D'AUTOMNE 2026 · JUSQU'AU 20 DÉCEMBRE$/)).toBeVisible();
   await expect.poll(() => board(cami)).toEqual(['1 Cami (toi) 34', '2 Inès 0', '3 Léo -10']);
 
@@ -89,21 +88,16 @@ test('rankings, a live refresh and the end of the season', async ({ browser }, t
   await metric.getByRole('button', { name: 'PRONOS GAGNÉS' }).click();
   await expect
     .poll(() => board(cami))
-    .toEqual(['1 Cami (toi) 1 JUSTE', '2 Inès 0 JUSTE', '2 Léo 0 JUSTE']);
-  // The month (named, and chosen at first), all time, then the season.
-  for (const button of [
-    period.getByRole('button').first(),
-    period.getByRole('button', { name: 'DEPUIS TOUJOURS' }),
-    period.getByRole('button', { name: 'SAISON' }),
-  ]) {
-    await button.click();
-    await expect(button).toHaveAttribute('aria-pressed', 'true');
+    .toEqual(['1 Cami (toi) 1 prono', '2 Inès 0 prono', '2 Léo 0 prono']);
+  for (const name of ['MOIS', 'DEPUIS TOUJOURS', 'SAISON']) {
+    await period.getByRole('button', { name }).click();
+    await expect(period.getByRole('button', { name })).toHaveAttribute('aria-pressed', 'true');
     await expect
       .poll(() => board(cami))
-      .toEqual(['1 Cami (toi) 1 JUSTE', '2 Inès 0 JUSTE', '2 Léo 0 JUSTE']);
+      .toEqual(['1 Cami (toi) 1 prono', '2 Inès 0 prono', '2 Léo 0 prono']);
   }
   await expect(
-    cami.getByRole('region', { name: /PRONOS GAGNÉS · SAISON D'AUTOMNE 2026/ }),
+    cami.getByRole('table', { name: /PRONOS GAGNÉS · SAISON D'AUTOMNE 2026/ }),
   ).toBeVisible();
   await metric.getByRole('button', { name: 'LAURIERS' }).click();
 

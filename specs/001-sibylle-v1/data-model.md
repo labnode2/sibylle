@@ -73,6 +73,7 @@ PK (`account_id`, `type`, `channel`) ; `type` ∈ `new_prono`, `closing_soon`, `
 | pseudo | text | 2 à 24 caractères ; unique par organisation (insensible à la casse) parmi les statuts `active` et `left` |
 | avatar | PixelImage | choisi parmi les modèles à l'arrivée |
 | avatar_frame_item_id | uuid | → catalog_items (cadre), facultatif |
+| showcase | jsonb | objets mis en avant sur la carte, dans l'ordre choisi : `[{kind: "item" \| "trophy", id}]`, 3 au plus, sans doublon, chacun possédé par le membre ; défaut `[]` ; vidé à l'anonymisation |
 | balance | integer | cache du solde (somme du registre depuis la dernière remise au solde) |
 | season_score | integer | cache du score de la saison en cours |
 | coins | integer | cache des pièces (somme de `coin_entries`), ≥ 0, défaut 0 |
@@ -226,7 +227,7 @@ PK (`org_id`, `season_id`), `closed_at`. Écrite dans la même transaction que l
 
 ### catalog_items (objet du catalogue)
 
-`id`, `kind` (`ball`, `color`, `frame`), `key` (unique), `name_key` (clé de traduction), `price` (en pièces ; `NULL` si non achetable : objet de code secret), `season` (pour les boules saisonnières), `data` (jsonb : couleur, sprite), `active`.
+`id`, `kind` (`ball`, `color`, `frame`), `key` (unique), `name_key` (clé de traduction), `price` (en pièces ; `NULL` si non achetable : les boules, et tout objet de code secret), `season` (pour les boules saisonnières), `data` (jsonb : couleur, sprite), `active`.
 
 ### owned_items
 

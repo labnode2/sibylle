@@ -1503,6 +1503,8 @@ export interface components {
             avatar?: components["schemas"]["PixelImage"] | null;
             /** Avatar Frame Item Id */
             avatar_frame_item_id?: string | null;
+            /** Showcase */
+            showcase?: components["schemas"]["ShowcaseRef"][] | null;
         };
         /** MemberPublic */
         MemberPublic: {
@@ -1859,6 +1861,8 @@ export interface components {
             trophies: components["schemas"]["TrophyOut"][];
             /** Collection */
             collection: components["schemas"]["OwnedItemOut"][];
+            /** Showcase */
+            showcase: components["schemas"]["ShowcaseOut"][];
         };
         /** PressStats */
         PressStats: {
@@ -2359,6 +2363,32 @@ export interface components {
             /** Position */
             position?: number | null;
         };
+        /** ShowcaseOut */
+        ShowcaseOut: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "item" | "trophy";
+            item?: components["schemas"]["CatalogItemOut"] | null;
+            trophy?: components["schemas"]["TrophyOut"] | null;
+        };
+        /**
+         * ShowcaseRef
+         * @description An object of the member's collection, or one of their engraved trophies.
+         */
+        ShowcaseRef: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "item" | "trophy";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
         /** SignupIn */
         SignupIn: {
             /** Email */
@@ -2412,6 +2442,11 @@ export interface components {
         };
         /** TrophyOut */
         TrophyOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
             season: components["schemas"]["SeasonRef"];
             /** Score */
             score: number;

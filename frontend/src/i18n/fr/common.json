@@ -22,15 +22,17 @@
     "greenLabel_other": "{{count}} lauriers verts à miser",
     "goldLabel_one": "{{count}} laurier en or",
     "goldLabel_other": "{{count}} lauriers en or",
-    "greenHint": "Lauriers verts : ce que tu peux miser.",
-    "goldHint": "Lauriers en or : tes lauriers verts plus tes mises en jeu. Chaque lundi, ils te rapportent autant de pièces.",
-    "coinsHint": "Pièces : pour acheter dans la collection."
+    "greenHint": "Lauriers verts : ce que tu peux miser. Tes mises en sortent, tes gains y reviennent, et ton classement les compte.",
+    "goldHint": "Lauriers en or : tes lauriers verts plus tes mises encore en jeu. Chaque lundi, ils te rapportent autant de pièces.",
+    "coinsHint": "Pièces : pour acheter des couleurs et des cadres dans la collection. Les dépenser ne touche ni tes lauriers ni ton classement."
   },
   "tabs": {
     "label": "Navigation principale",
     "une": "LA UNE",
     "pronos": "PRONOS",
     "pronosLong": "LES PRONOS",
+    "newsroom": "RÉDACTION",
+    "newsroomLong": "LA RÉDACTION",
     "profile": "PROFIL",
     "profileLong": "MON PROFIL"
   },
@@ -50,5 +52,8 @@
     "missing": "Champ obligatoire.",
     "out_of_range": "Valeur hors limites.",
     "unknown": "Valeur inconnue."
+  },
+  "tip": {
+    "more": "En savoir plus"
   }
 }

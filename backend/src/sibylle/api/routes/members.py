@@ -54,7 +54,12 @@ async def update_my_profile(
         body.avatar_frame_item_id if "avatar_frame_item_id" in body.model_fields_set else orgs.KEEP
     )
     await orgs.update_profile(
-        session, member, pseudo=body.pseudo, avatar=drawing(body.avatar), frame_item_id=frame
+        session,
+        member,
+        pseudo=body.pseudo,
+        avatar=drawing(body.avatar),
+        frame_item_id=frame,
+        showcase=None if body.showcase is None else [(r.kind, r.id) for r in body.showcase],
     )
     return MemberSelf.build(
         member,

@@ -260,7 +260,31 @@
 }
 
 .personName {
+  color: var(--ink);
+  text-decoration: none;
   font: 600 15px/1.2 var(--font-text);
+}
+
+/* The whole line opens the member's press card. */
+.person {
+  position: relative;
+}
+
+.personName::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.person:hover .personName {
+  text-decoration: underline;
+}
+
+.stakeLabel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 6px;
 }
 
 .personAnswer {

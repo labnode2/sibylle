@@ -1,159 +1,129 @@
-/* The ranking (canvas G-Classement): a podium for the first three, the others in lines. */
 .page {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
   max-width: 720px;
 }
 
-.title {
-  font: 800 34px/1 var(--font-text);
-  letter-spacing: -0.03em;
-}
-
-.controls {
+.header {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-/* The podium: second, first, third from left to right; the first on an ink step. */
-.podium {
+.kicker {
+  font: 600 12px/1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--indigo);
+}
+
+.title {
+  font: 800 30px/1.05 var(--font-text);
+  letter-spacing: -0.03em;
+}
+
+.controls {
   display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  flex-wrap: wrap;
+  gap: 12px 24px;
 }
 
-.step {
-  position: relative;
+/* Two joined segments: the chosen one in ink. */
+.toggle {
   display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
 }
 
-.step:nth-child(1) {
-  order: 2;
-}
-
-.step:nth-child(2) {
-  order: 1;
-}
-
-.step:nth-child(3) {
-  order: 3;
-}
-
-.stepAvatar {
-  display: block;
-  line-height: 0;
-  outline: 2px solid var(--ink);
-}
-
-.stepName {
+.toggleButton {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--ink);
+  background: transparent;
   color: var(--ink);
-  text-decoration: none;
-  font: 700 15px/1.1 var(--font-text);
-  text-align: center;
-  overflow-wrap: anywhere;
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  cursor: pointer;
 }
 
-/* The whole step opens the member's press card. */
-.stepName::after {
-  content: '';
-  position: absolute;
-  inset: 0;
+.toggleButton + .toggleButton {
+  border-left: 0;
 }
 
-.step:hover .stepName {
-  text-decoration: underline;
-}
-
-.stepValue {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font: 700 13px/1 var(--font-mono);
-}
-
-.block {
-  display: flex;
-  align-self: stretch;
-  justify-content: center;
-  padding-top: 8px;
-  border: 2px solid var(--ink);
-  background: var(--surface);
-  color: var(--ink);
-  font: 800 28px/1 var(--font-text);
-}
-
-.first .block {
+.toggleButton[aria-pressed='true'] {
   background: var(--ink);
   color: var(--on-ink);
 }
 
-/* From the fourth on: one line each, mine on light grey. */
-.rest {
-  margin: 14px 0 0;
+.board {
   padding: 0;
-  list-style: none;
-  border-top: 2px solid var(--ink);
 }
 
-.line {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 46px;
-  padding: 0 6px;
-  border-bottom: 1px solid var(--rule);
+.table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
+.caption {
+  padding: 12px 14px;
+  border-bottom: 2px solid var(--ink);
+  text-align: left;
+  font: 600 11px/1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+
+.table tr + tr {
+  border-top: 1px solid var(--rule);
+}
+
+.table td,
+.table th {
+  padding: 8px 14px;
+  vertical-align: middle;
+}
+
+/* The member's own line, on light grey. */
 .me {
   background: var(--grey);
 }
 
 .rank {
-  width: 22px;
+  width: 3ch;
   font: 800 20px/1 var(--font-text);
   font-variant-numeric: tabular-nums;
 }
 
-.lineName {
-  flex: 1;
-  min-width: 0;
-  color: var(--ink);
-  text-decoration: none;
-  font: 600 15px/1.2 var(--font-text);
+.member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  font: 700 15px/1.2 var(--font-text);
+  text-align: left;
 }
 
-.lineName::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-}
-
-.line:hover .lineName {
-  text-decoration: underline;
+.you {
+  font: 700 10px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--indigo);
 }
 
 .value {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  text-align: right;
   white-space: nowrap;
-  font: 700 14px/1 var(--font-mono);
+  font: 700 15px/1 var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
 .note {
-  font: 500 11px/1.4 var(--font-mono);
-  letter-spacing: 0.02em;
+  font: 500 12px/1.4 var(--font-mono);
   color: var(--ink-2);
+}
+
+.memberLink {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.memberLink:hover {
+  text-decoration: underline;
 }

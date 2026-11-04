@@ -1,6 +1,5 @@
 // A newsroom's frame: loads it, then fills the shell's desktop slots (laurels and coins, pseudo,
-// edition, main action), and shows the good news of Monday's coins.
-import { useTranslation } from 'react-i18next';
+// the newsroom's small card), and shows the good news of Monday's coins.
 import { useQueryClient } from '@tanstack/react-query';
 import { Navigate, useParams } from 'react-router';
 
@@ -11,14 +10,12 @@ import { weeklyCoinsKey } from '../features/coins/api';
 import { WeeklyCoinsDialog } from '../features/coins/WeeklyCoinsDialog';
 import { orgKey, useOrg } from '../features/orgs/api';
 import { pronoKey } from '../features/pronos/api';
-import { EditionLink } from '../features/orgs/OrgSwitcher';
-import { ButtonLink, Icon, Wallet } from '../ui/components';
+import { NewsroomCardLink } from '../features/orgs/NewsroomPage';
+import { Wallet } from '../ui/components';
 import { PixelImage } from '../ui/PixelImage';
 import { AppShell } from './AppShell';
-import styles from './shell.module.css';
 
 export function OrgLayout() {
-  const { t } = useTranslation('pronos');
   const { orgId = '' } = useParams();
   const org = useOrg(orgId);
   const client = useQueryClient();
@@ -56,13 +53,8 @@ export function OrgLayout() {
             <span>{me.pseudo.toUpperCase()}</span>
           </>
         }
-        edition={<EditionLink org={org.data} />}
         issue={org.data.edition_number}
-        action={
-          <ButtonLink to={`/o/${orgId}/pronos/nouveau`} className={styles.action}>
-            <Icon name="plus" size={12} /> {t('list.proposeLong')}
-          </ButtonLink>
-        }
+        newsroom={<NewsroomCardLink org={org.data} />}
       />
       <WeeklyCoinsDialog orgId={orgId} coins={me.coins} />
     </>

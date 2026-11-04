@@ -47,9 +47,9 @@ export function pot(page: Page, laurels: number): Locator {
   return page.getByText(new RegExp(`^(Cagnotte : )?${laurels} lauriers`)).filter({ visible: true });
 }
 
-/** The newsroom's settings: the editor reaches them from the press card. */
+/** The newsroom's settings: the editor reaches them from « La rédaction ». */
 export async function openSettings(page: Page): Promise<void> {
-  await page.getByRole('link', { name: /^(MON )?PROFIL$/ }).click();
+  await page.getByRole('link', { name: /^(LA )?RÉDACTION$/ }).click();
   await page.getByRole('link', { name: 'Réglages de la rédaction', exact: true }).click();
 }
 

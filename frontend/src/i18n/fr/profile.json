@@ -14,15 +14,10 @@
     "rate": "RÉUSSITE"
   },
   "editor": {
-    "open": "Modifier mon pixel art",
-    "sizes": "16×16 · 32×32",
-    "title": "MON PIXEL ART",
-    "save": "Enregistrer",
-    "saved": "Avatar enregistré."
+    "title": "MON PIXEL ART"
   },
   "collectionLink": "Ma collection",
   "frame": {
-    "label": "CADRE DE L'AVATAR",
     "none": "Sans cadre"
   },
   "seasons": {
@@ -32,8 +27,6 @@
     "winter": "HIVER"
   },
   "trophies": {
-    "title": "Les trophées",
-    "none": "Pas encore de trophée : chaque saison jouée en grave un.",
     "season": "{{season}} {{year}}",
     "score": "{{score}} LAURIERS · {{rank}}E"
   },
@@ -53,7 +46,8 @@
     "yes": "Acheter",
     "no": "Annuler",
     "backToCard": "Retour à ma carte de presse",
-    "back": "PROFIL"
+    "back": "PROFIL",
+    "noBall": "Les boules ne s'achètent pas : chaque saison jouée en grave une, et d'autres se cachent derrière des codes secrets."
   },
   "secret": {
     "title": "Un code secret ?",
@@ -129,13 +123,10 @@
   "settingsLink": "Mes réglages",
   "profile": "Profil",
   "titleOf": "Carte de presse de {{pseudo}}",
-  "backRanking": "CLASSEMENT",
   "balls": {
     "title": "Boules collectionnées",
-    "count": "{{owned}} / {{total}}",
-    "none": "Pas encore de boule.",
-    "locked": "{{name}} (à débloquer)",
-    "more": "Voir la collection →"
+    "none": "Pas encore de boule : chaque saison jouée en grave une, et d'autres se cachent derrière des codes secrets.",
+    "how": "Une boule gravée à chaque saison jouée ; d'autres se cachent derrière des codes secrets."
   },
   "ballShort": {
     "ball-spring": "PRINTEMPS",
@@ -156,23 +147,32 @@
     "ball-new-year": "NOUVEL AN"
   },
   "lines": {
-    "label": "Ma rédaction et mes réglages",
-    "members_one": "{{count}} MEMBRE",
-    "members_other": "{{count}} MEMBRES",
-    "newsroomSettings": "Réglages de la rédaction",
+    "label": "Ma collection et mes réglages",
     "preferences": "Préférences",
     "account": "Compte"
   },
-  "newsroom": {
-    "title": "Mon organisation",
-    "editors": "RÉDACTION EN CHEF : {{names}}",
-    "invite": "Inviter",
-    "inviteHint": "UN LIEN D'INVITATION OU UN E-MAIL",
-    "inviteOpen": "Inviter",
-    "code": "Code d'accès",
-    "codeHint": "POUR REJOINDRE SANS LE LIEN"
-  },
   "objects": {
     "title": "Couleurs et cadres"
-  }
+  },
+  "backNewsroom": "LA RÉDACTION",
+  "showcase": {
+    "title": "MIS EN AVANT"
+  },
+  "customize": {
+    "open": "Personnaliser ma carte",
+    "title": "Ma carte de presse",
+    "preview": "CE QUE VOIENT LES AUTRES",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "saved": "Carte enregistrée : les autres la voient ainsi.",
+    "pseudo": "TON PSEUDO DANS CETTE RÉDACTION",
+    "frame": "LE CADRE",
+    "noFrame": "Pas encore de cadre : ils s'achètent avec des pièces.",
+    "collection": "Voir la collection →",
+    "showcase_one": "MIS EN AVANT · {{count}} / {{max}}",
+    "showcase_other": "MIS EN AVANT · {{count}} / {{max}}",
+    "showcaseHint": "Trois objets ou trophées au plus, montrés sur ta carte dans l'ordre où tu les choisis.",
+    "nothing": "Rien à mettre en avant pour l'instant : chaque saison jouée grave une boule, et la collection vend des couleurs et des cadres."
+  },
+  "backProfile": "PROFIL"
 }

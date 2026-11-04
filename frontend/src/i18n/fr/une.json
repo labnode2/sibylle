@@ -20,8 +20,6 @@
   "noOpen": "Aucun prono ouvert pour l'instant.",
   "publish": "Publier un prono",
   "propose": "Proposer un prono",
-  "readers_one": "{{count}} LECTEUR",
-  "readers_other": "{{count}} LECTEURS",
   "toDesignate": "À désigner",
   "resultKicker": "RÉSULTAT · {{section}}",
   "result": "RÉSULTAT : {{result}}",

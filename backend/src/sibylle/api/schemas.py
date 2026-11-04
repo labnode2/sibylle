@@ -266,11 +266,20 @@ class OrgIn(BaseModel):
     avatar: PixelImage
 
 
+class ShowcaseRef(BaseModel):
+    """An object of the member's collection, or one of their engraved trophies."""
+
+    kind: Literal["item", "trophy"]
+    id: uuid.UUID
+
+
 class MemberPatch(BaseModel):
     pseudo: Pseudo | None = None
     avatar: PixelImage | None = None
     # A frame of the member's collection; null takes the frame off.
     avatar_frame_item_id: uuid.UUID | None = None
+    # What the press card shows, in order: three at most; an empty list shows nothing.
+    showcase: list[ShowcaseRef] | None = Field(default=None, max_length=3)
 
 
 class LinkInvitationIn(BaseModel):
@@ -731,6 +740,7 @@ class SeasonRef(BaseModel):
 
 
 class TrophyOut(BaseModel):
+    id: uuid.UUID
     season: SeasonRef
     score: int
     rank: int
@@ -747,6 +757,12 @@ class PressStats(BaseModel):
     success_rate: int | None
 
 
+class ShowcaseOut(BaseModel):
+    kind: Literal["item", "trophy"]
+    item: CatalogItemOut | None = None
+    trophy: TrophyOut | None = None
+
+
 class PressCard(MemberPublic):
     """A member's press card, as every member of the newsroom sees it."""
 
@@ -754,6 +770,8 @@ class PressCard(MemberPublic):
     stats: PressStats
     trophies: list[TrophyOut]
     collection: list[OwnedItemOut]
+    # Up to three objects or trophies the member chose to show.
+    showcase: list[ShowcaseOut]
 
 
 # Notifications (US8)

@@ -11,7 +11,7 @@ from tests.contract.test_pronos import place, publish
 from tests.contract.test_results import option, url
 
 from sibylle import clock
-from sibylle.db.models import Membership, SecretCode
+from sibylle.db.models import CatalogItem, Membership, Season, SecretCode, Trophy
 from sibylle.db.session import transaction
 from sibylle.domain.pixels import decode, encode
 from sibylle.services.collection import add_secret_code
@@ -127,15 +127,11 @@ async def test_the_catalog_and_purchases(make_org: MakeOrg, person: MakePerson) 
     cami = await person(org, "reader", "Cami")
     items = await catalog(cami.client, org.id)
     assert (items["color-33"]["price"], items["color-33"]["owned"]) == (400, False)
-    assert (items["frame-ink"]["price"], items["ball-winter"]["price"]) == (600, 800)
-    assert {k for k in items if k.startswith("ball-")} == {
-        "ball-spring",
-        "ball-summer",
-        "ball-autumn",
-        "ball-winter",
-    }
-    # Surprises of the secret codes are not on sale.
-    assert "color-49" not in items and "ball-halloween" not in items
+    assert items["frame-ink"]["price"] == 600
+    # The balls are not sold: a season's engraved ball and the secret codes bring them.
+    assert not any(k.startswith("ball-") for k in items)
+    # Surprises of the secret codes are not on sale either.
+    assert "color-49" not in items
 
     poor = await buy(cami.client, org.id, "color-33")
     assert poor.status_code == 409 and poor.json()["error"]["code"] == "insufficient_coins"
@@ -162,10 +158,15 @@ async def test_the_catalog_and_purchases(make_org: MakeOrg, person: MakePerson) 
 
     again = await buy(cami.client, org.id, "color-33")
     assert again.status_code == 409 and again.json()["error"]["code"] == "invalid_state"
-    too_dear = await buy(cami.client, org.id, "ball-winter")
+    assert (await buy(cami.client, org.id, "color-34")).status_code == 201
+    too_dear = await buy(cami.client, org.id, "frame-ink")
     assert too_dear.status_code == 409
     assert too_dear.json()["error"]["code"] == "insufficient_coins"
-    assert (await me(cami.client, org.id))["coins"] == 600
+    assert (await me(cami.client, org.id))["coins"] == 200
+    async with transaction() as session:
+        ball = await session.scalar(select(CatalogItem.id).where(CatalogItem.key == "ball-winter"))
+    not_sold = await cami.client.post(org_url(org.id, f"/catalog/{ball}/purchase"))
+    assert not_sold.status_code == 404
 
 
 async def test_avatars_use_unlocked_colours_and_owned_frames(
@@ -231,3 +232,74 @@ async def test_secret_codes(make_org: MakeOrg, person: MakePerson) -> None:
         assert wrong.status_code == 422, wrong.text
     blocked = await manon.client.post(redeem, json={"code": "BOUH-2026"})
     assert blocked.status_code == 429 and blocked.json()["error"]["code"] == "rate_limited"
+
+
+async def test_the_showcase_shows_three_things_of_my_own(
+    make_org: MakeOrg, person: MakePerson
+) -> None:
+    """The press card shows up to three objects of the collection or engraved trophies, in the
+    order chosen; only one's own, and every member of the newsroom sees them."""
+    org = await make_org()
+    cami = await person(org, "reader", "Cami")
+    leo = await person(org, "reader", "Léo")
+    profile = org_url(org.id, "/members/me")
+    await give_coins(cami.member, 1400)
+    for key in ("color-33", "color-34", "frame-ink"):
+        assert (await buy(cami.client, org.id, key)).status_code == 201
+    async with transaction() as session:
+        await add_secret_code(session, "BOUH-2027", "ball-halloween")
+        autumn = await session.scalar(
+            select(Season.id).where(Season.year == 2026, Season.name == "autumn")
+        )
+        assert autumn is not None
+        trophy = Trophy(
+            membership_id=cami.member.id, season_id=autumn, score=42, rank=1, podium=True
+        )
+        leos = Trophy(membership_id=leo.member.id, season_id=autumn, score=3, rank=2, podium=True)
+        session.add_all([trophy, leos])
+        await session.flush()
+        trophy_id, leos_id = str(trophy.id), str(leos.id)
+    redeemed = await cami.client.post(
+        org_url(org.id, "/secret-codes/redeem"), json={"code": "BOUH-2027"}
+    )
+    assert redeemed.status_code == 201
+    items = await catalog(cami.client, org.id)
+    ball = items["ball-halloween"]["item"]["id"]
+    frame = items["frame-ink"]["item"]["id"]
+    color = items["color-33"]["item"]["id"]
+
+    chosen = [
+        {"kind": "trophy", "id": trophy_id},
+        {"kind": "item", "id": ball},
+        {"kind": "item", "id": frame},
+    ]
+    saved = await cami.client.patch(profile, json={"showcase": chosen})
+    assert saved.status_code == 200, saved.text
+    card = (await leo.client.get(org_url(org.id, f"/members/{cami.member.id}"))).json()
+    shown = [(s["kind"], (s["item"] or {}).get("key"), s["trophy"]) for s in card["showcase"]]
+    assert [kind for kind, _, _ in shown] == ["trophy", "item", "item"]
+    assert shown[0][2]["id"] == trophy_id and shown[0][2]["podium"] is True
+    assert [key for _, key, _ in shown[1:]] == ["ball-halloween", "frame-ink"]
+    assert trophy_id in [t["id"] for t in card["trophies"]]
+
+    # Four is one too many; twice the same thing, someone else's trophy or an object not owned
+    # are refused; the choice stays as it was.
+    four = [*chosen, {"kind": "item", "id": color}]
+    assert (await cami.client.patch(profile, json={"showcase": four})).status_code == 422
+    twice = [chosen[1], chosen[1]]
+    assert (await cami.client.patch(profile, json={"showcase": twice})).status_code == 422
+    theirs = [{"kind": "trophy", "id": leos_id}]
+    assert (await cami.client.patch(profile, json={"showcase": theirs})).status_code == 422
+    unowned = items["frame-indigo"]["item"]["id"]
+    refused = await cami.client.patch(profile, json={"showcase": [{"kind": "item", "id": unowned}]})
+    assert refused.status_code == 422 and "showcase" in refused.json()["error"]["fields"]
+    card = (await cami.client.get(org_url(org.id, f"/members/{cami.member.id}"))).json()
+    assert len(card["showcase"]) == 3
+
+    # Another change of the profile leaves it alone; an empty list clears it.
+    assert (await cami.client.patch(profile, json={"pseudo": "Camille"})).status_code == 200
+    card = (await cami.client.get(org_url(org.id, f"/members/{cami.member.id}"))).json()
+    assert len(card["showcase"]) == 3
+    assert (await cami.client.patch(profile, json={"showcase": []})).status_code == 200
+    card = (await cami.client.get(org_url(org.id, f"/members/{cami.member.id}"))).json()
+    assert card["showcase"] == []

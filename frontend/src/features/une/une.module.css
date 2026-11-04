@@ -29,17 +29,11 @@
   color: var(--ink);
 }
 
-/* « ÉDITION SOPHIA OFFICE ▾ · 24 LECTEURS » under the title, on a phone. */
+/* The newsroom's small card under the title, on a phone: it opens the newsroom list. */
 .editionBar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: var(--tap);
+  padding: 4px 0 14px;
   border-bottom: 1px solid var(--ink);
-  font: 500 11px/1 var(--font-mono);
-  letter-spacing: 0.04em;
-  color: var(--ink-2);
 }
 
 .columns,
@@ -276,7 +270,24 @@
 .topName {
   flex: 1;
   min-width: 0;
+  color: var(--ink);
+  text-decoration: none;
   font: 600 15px/1.2 var(--font-text);
+}
+
+/* The whole line opens the member's press card. */
+.top li {
+  position: relative;
+}
+
+.topName::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.top li:hover .topName {
+  text-decoration: underline;
 }
 
 .more {

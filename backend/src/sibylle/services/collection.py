@@ -189,6 +189,88 @@ async def _card_number(session: AsyncSession, member: Membership) -> str:
     return f"{int(before or 0) + 1:04d}"
 
 
+# The press card shows at most three things the member chose: objects of the collection
+# (bought or unlocked) and engraved trophies.
+SHOWCASE_MAX = 3
+
+
+def _trophy_view(trophy: Trophy, season: Season) -> dict[str, Any]:
+    return {
+        "id": trophy.id,
+        "season": {"year": season.year, "name": season.name},
+        "score": trophy.score,
+        "rank": trophy.rank,
+        "podium": trophy.podium,
+    }
+
+
+async def checked_showcase(
+    session: AsyncSession, member: Membership, refs: list[tuple[str, uuid.UUID]]
+) -> list[dict[str, str]]:
+    """The member's choice, kept only if every object is theirs and every trophy theirs too."""
+    if len(refs) > SHOWCASE_MAX:
+        raise AppError("validation_error", {"showcase": "too_many"})
+    if len(set(refs)) != len(refs):
+        raise AppError("validation_error", {"showcase": "duplicate"})
+    items = {ref for kind, ref in refs if kind == "item"}
+    trophies = {ref for kind, ref in refs if kind == "trophy"}
+    owned = set(
+        (
+            await session.scalars(
+                select(OwnedItem.item_id).where(
+                    OwnedItem.membership_id == member.id, OwnedItem.item_id.in_(items)
+                )
+            )
+        ).all()
+    )
+    won = set(
+        (
+            await session.scalars(
+                select(Trophy.id).where(Trophy.membership_id == member.id, Trophy.id.in_(trophies))
+            )
+        ).all()
+    )
+    if items - owned or trophies - won:
+        raise AppError("validation_error", {"showcase": "not_owned"})
+    return [{"kind": kind, "id": str(ref)} for kind, ref in refs]
+
+
+async def _showcase(session: AsyncSession, member: Membership) -> list[dict[str, Any]]:
+    """The chosen things, in their order; one that is no longer the member's is left out."""
+    refs = [(entry["kind"], uuid.UUID(entry["id"])) for entry in member.showcase or []]
+    items = {
+        item.id: item
+        for item in (
+            await session.scalars(
+                select(CatalogItem)
+                .join(OwnedItem, OwnedItem.item_id == CatalogItem.id)
+                .where(
+                    OwnedItem.membership_id == member.id,
+                    CatalogItem.id.in_([ref for kind, ref in refs if kind == "item"]),
+                )
+            )
+        ).all()
+    }
+    trophies = {
+        trophy.id: _trophy_view(trophy, season)
+        for trophy, season in await session.execute(
+            select(Trophy, Season)
+            .join(Season, Season.id == Trophy.season_id)
+            .where(
+                Trophy.membership_id == member.id,
+                Trophy.id.in_([ref for kind, ref in refs if kind == "trophy"]),
+            )
+        )
+    }
+    shown: list[dict[str, Any]] = []
+    for kind, ref in refs:
+        if kind == "item" and ref in items:
+            shown.append({"kind": "item", "item": items[ref]})
+        elif kind == "trophy" and ref in trophies:
+            shown.append({"kind": "trophy", "trophy": trophies[ref]})
+    return shown
+
+
 async def press_card(session: AsyncSession, member: Membership) -> dict[str, Any]:
     trophies = await session.execute(
         select(Trophy, Season)
@@ -200,14 +282,7 @@ async def press_card(session: AsyncSession, member: Membership) -> dict[str, Any
         "member": member,
         "card_number": await _card_number(session, member),
         "stats": await _stats(session, member),
-        "trophies": [
-            {
-                "season": {"year": season.year, "name": season.name},
-                "score": trophy.score,
-                "rank": trophy.rank,
-                "podium": trophy.podium,
-            }
-            for trophy, season in trophies
-        ],
+        "trophies": [_trophy_view(trophy, season) for trophy, season in trophies],
         "collection": await _owned(session, member),
+        "showcase": await _showcase(session, member),
     }

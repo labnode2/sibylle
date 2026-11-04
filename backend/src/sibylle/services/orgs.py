@@ -158,6 +158,7 @@ async def update_profile(
     pseudo: str | None = None,
     avatar: dict[str, Any] | None = None,
     frame_item_id: uuid.UUID | None = KEEP,
+    showcase: list[tuple[str, uuid.UUID]] | None = None,
 ) -> Membership:
     if pseudo is not None and pseudo != member.pseudo:
         if await pseudo_taken(session, member.org_id, pseudo, except_member=member.id):
@@ -169,6 +170,8 @@ async def update_profile(
         member.avatar_frame = (
             await collection.owned_frame(session, member, frame_item_id) if frame_item_id else None
         )
+    if showcase is not None:
+        member.showcase = await collection.checked_showcase(session, member, showcase)
     await session.flush()
     await bus.publish(
         session,

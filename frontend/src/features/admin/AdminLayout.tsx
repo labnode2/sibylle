@@ -1,5 +1,6 @@
-// The editor's settings, under /o/:orgId/reglages: the card and the laurels, the members, the
-// reports. Other roles get a short notice (the server refuses them anyway).
+// The editor's settings, under /o/:orgId/reglages, reached from « La rédaction »: the card and
+// the laurels, the members, the reports. Other roles get a short notice (the server refuses them
+// anyway).
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useParams } from 'react-router';
 
@@ -29,7 +30,7 @@ export function AdminLayout() {
   return (
     <div className={styles.page}>
       <TopBar
-        back={`/o/${orgId}/profil`}
+        back={`/o/${orgId}/redaction`}
         backLabel={t('back')}
         aside={<Chip variant="ink">{t('roles.editor').toUpperCase()}</Chip>}
       />

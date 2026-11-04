@@ -23,7 +23,7 @@ import {
 } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
 import { WeeklyGames } from '../games/WeeklyGames';
-import { EditionLink } from '../orgs/OrgSwitcher';
+import { NewsroomCardLink } from '../orgs/NewsroomPage';
 import { useOrg } from '../orgs/api';
 import type { PronoSummary } from '../pronos/api';
 import { ProposalsPanel } from '../pronos/ProposalsPanel';
@@ -214,9 +214,9 @@ function Ranking({ orgId, front }: { orgId: string; front: FrontPage }) {
           >
             <span className={styles.rank}>{row.rank}</span>
             <PixelImage image={row.member.avatar} size={28} />
-            <span className={styles.topName}>
+            <Link to={`/o/${orgId}/membres/${row.member.id}`} className={styles.topName}>
               {row.is_me ? t('you', { pseudo: row.member.pseudo }) : row.member.pseudo}
-            </span>
+            </Link>
             <Laurel value={row.value} />
           </li>
         ))}
@@ -229,7 +229,7 @@ function Ranking({ orgId, front }: { orgId: string; front: FrontPage }) {
 }
 
 /** « N° 305 · DIM. 1 NOV. 2026 », then my laurels: the phone's top line. */
-function Dateline({ orgId, org }: { orgId: string; org: Org }) {
+function Dateline({ org }: { org: Org }) {
   const { t } = useTranslation('une');
   const me = org.my_membership;
   const today = formatDate(new Date(), {
@@ -241,9 +241,9 @@ function Dateline({ orgId, org }: { orgId: string; org: Org }) {
   return (
     <div className={`only-mobile ${styles.dateline}`}>
       <span>{t('common:shell.dateline', { number: org.edition_number, date: today })}</span>
-      <Link to={`/o/${orgId}/profil`} className={styles.mine}>
+      <span className={styles.mine}>
         <Wallet balance={me.balance} gold={me.gold} coins={me.coins} />
-      </Link>
+      </span>
     </div>
   );
 }
@@ -262,13 +262,12 @@ export function UnePage() {
   return (
     <div className={styles.une}>
       <h1 className="visually-hidden">{t('title', { org: org.data.title })}</h1>
-      <Dateline orgId={orgId} org={org.data} />
+      <Dateline org={org.data} />
       <div className="only-mobile">
         <Masthead size="compact" />
       </div>
       <div className={`only-mobile ${styles.editionBar}`}>
-        <EditionLink org={org.data} />
-        <span>{t('readers', { count: org.data.member_count })}</span>
+        <NewsroomCardLink org={org.data} />
       </div>
 
       {!front ? (

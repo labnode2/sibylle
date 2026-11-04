@@ -46,9 +46,22 @@
   "switcher": {
     "title": "Mes rédactions",
     "more": "Rejoindre ou créer une rédaction",
-    "edition": "ÉDITION {{title}}",
     "logout": "Se déconnecter",
     "settings": "Mes réglages"
+  },
+  "newsroom": {
+    "title": "La rédaction",
+    "members": "Les membres",
+    "count_one": "{{count}} MEMBRE",
+    "count_other": "{{count}} MEMBRES",
+    "editors": "RÉDACTION EN CHEF : {{names}}",
+    "invite": "Inviter",
+    "inviteHint": "UN LIEN D'INVITATION OU UN E-MAIL",
+    "inviteOpen": "Inviter",
+    "code": "Code d'accès",
+    "codeHint": "POUR REJOINDRE SANS LE LIEN",
+    "settings": "Réglages de la rédaction",
+    "you": "{{pseudo}} (toi)"
   },
   "une": {
     "edition": "ÉDITION {{title}}",

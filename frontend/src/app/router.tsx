@@ -12,6 +12,7 @@ import {
   VerifyEmailPage,
 } from '../features/auth/AuthPages';
 import { RequireAuth } from '../features/auth/RequireAuth';
+import { NewsroomPage } from '../features/orgs/NewsroomPage';
 import { CreateOrgPage, HomeRedirect, JoinPage, StartPage } from '../features/orgs/OrgPages';
 import { AdminLayout } from '../features/admin/AdminLayout';
 import { MembersPage } from '../features/admin/MembersPage';
@@ -25,7 +26,7 @@ import { PronoListPage } from '../features/pronos/PronoListPage';
 import { PronoPage } from '../features/pronos/PronoPage';
 import { PixelMysterePage } from '../features/games/pixel-mystere/PixelMysterePage';
 import { RunnerPage } from '../features/games/runner/RunnerPage';
-import { AvatarEditorPage } from '../features/profile/AvatarEditorPage';
+import { CardEditorPage } from '../features/profile/CardEditorPage';
 import { PressCardPage } from '../features/profile/PressCardPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { UnePage } from '../features/une/UnePage';
@@ -110,7 +111,8 @@ export const router = createBrowserRouter([
           { path: 'pronos/:pronoId', element: <PronoPage /> },
           { path: 'classement', element: <LeaderboardPage /> },
           { path: 'profil', element: <PressCardPage /> },
-          { path: 'profil/avatar', element: <AvatarEditorPage />, handle: { bare: true } },
+          { path: 'profil/carte', element: <CardEditorPage /> },
+          { path: 'redaction', element: <NewsroomPage /> },
           { path: 'membres/:memberId', element: <PressCardPage /> },
           { path: 'collection', element: <CollectionPage /> },
           { path: 'jeux/course', element: <RunnerPage /> },

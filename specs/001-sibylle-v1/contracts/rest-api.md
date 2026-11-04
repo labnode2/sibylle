@@ -64,8 +64,8 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | POST | `/orgs/{org}/invitations` | Réd. chef | `{kind: "link", max_uses, expires_at}` → `201 {invitation, url}` (l'URL n'est montrée qu'une fois) ; `{kind: "email", email}` → `201 {invitation}` et envoi |
 | DELETE | `/orgs/{org}/invitations/{id}` | Réd. chef | → `204` (révoque) |
 | GET | `/orgs/{org}/members` | Membre | → `[MemberPublic]` |
-| GET | `/orgs/{org}/members/{member}` | Membre | → `PressCard` (carte de presse : pseudo, avatar, cadre, rôle, arrivée, statistiques, trophées, collection) |
-| PATCH | `/orgs/{org}/members/me` | Membre | `{pseudo?, avatar?, avatar_frame_item_id?}` → `MemberSelf` |
+| GET | `/orgs/{org}/members/{member}` | Membre | → `PressCard` (carte de presse : pseudo, avatar, cadre, rôle, arrivée, statistiques, trophées `{id, season, score, rank, podium}`, collection, `showcase`) ; tout membre de la rédaction peut la lire |
+| PATCH | `/orgs/{org}/members/me` | Membre | `{pseudo?, avatar?, avatar_frame_item_id?, showcase?: [{kind: "item" \| "trophy", id}]}` → `MemberSelf` ; `showcase` remplace toute la sélection : 3 au plus (`fields.showcase` : `too_many`, `duplicate`, `not_owned`) |
 | DELETE | `/orgs/{org}/members/me` | Membre | → `204` (quitter ; la dernière personne qui part ferme la rédaction) ; `409 last_editor` avec `fields.org_id` |
 | PATCH | `/orgs/{org}/members/{member}/role` | Réd. chef | `{role}` → `MemberPublic` ; `409 last_editor` si on retire la dernière |
 | DELETE | `/orgs/{org}/members/{member}` | Réd. chef | → `204` (retire un membre) |
@@ -75,6 +75,8 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | POST | `/orgs/{org}/sections` | Réd. chef | `{name}` → `201 Section` |
 | PATCH | `/orgs/{org}/sections/{id}` | Réd. chef | `{name?, position?}` → `Section` |
 | DELETE | `/orgs/{org}/sections/{id}` | Réd. chef | → `204` (archive si utilisée) |
+
+`PressCard.showcase` = `[{kind: "item", item} | {kind: "trophy", trophy}]`, dans l'ordre choisi ; un objet qui n'appartient plus au membre n'y figure pas.
 
 `MemberPublic` = `{id, pseudo, avatar, frame, role, joined_at}`, jamais de nom, prénom ni e-mail. `MemberSelf` ajoute `balance` (lauriers verts), `gold` (lauriers en or : solde plus mises en jeu), `season_score`, `coins`, `unlocked_colors`.
 
@@ -114,7 +116,7 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | GET | `/orgs/{org}/seasons/current` | Membre | → `{year, name, starts_at, ends_at}` |
 | GET | `/orgs/{org}/reports` | Réd. chef | `?state=open` → `[Report]` |
 | POST | `/orgs/{org}/reports/{id}/handle` | Réd. chef | `{state: "resolved" \| "dismissed", note?}` → `Report` |
-| GET | `/orgs/{org}/catalog` | Membre | → `[{item, price, owned}]` |
+| GET | `/orgs/{org}/catalog` | Membre | → `[{item, price, owned}]` : ce qui est à vendre (couleurs, cadres), plus les objets sans prix que le membre a débloqués ; les boules ne sont jamais à vendre |
 | POST | `/orgs/{org}/catalog/{item}/purchase` | Membre | → `201 {owned_item, coins}` ; payé en pièces ; `insufficient_coins` |
 | GET | `/orgs/{org}/coins/weekly` | Membre | → `WeeklyCoins` ou `null` : la dernière conversion pas encore annoncée (montant > 0) |
 | POST | `/orgs/{org}/coins/weekly/seen` | Membre | `{week_start}` → `204` ; la fenêtre ne revient plus pour cette semaine ni les précédentes |

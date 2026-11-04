@@ -513,3 +513,50 @@
 .switch[aria-checked='true'] .switchKnob {
   background: var(--surface);
 }
+
+/* A word of explanation: a white box framed in ink with the hard shadow, under its trigger. */
+.tip {
+  position: relative;
+  display: inline-flex;
+}
+
+.tipTrigger {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: help;
+}
+
+.tipBubble {
+  position: absolute;
+  top: calc(100% - 4px);
+  right: 0;
+  z-index: 30;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 16px));
+  padding: 10px 12px;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  box-shadow: 4px 4px 0 var(--shadow);
+  color: var(--ink);
+  font: 500 13px/1.4 var(--font-text);
+  letter-spacing: normal;
+  text-align: left;
+  text-transform: none;
+  white-space: normal;
+}
+
+.tipBubble[hidden] {
+  display: none;
+}
+
+.tipStart {
+  right: auto;
+  left: 0;
+}

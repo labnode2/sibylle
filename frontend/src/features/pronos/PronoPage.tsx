@@ -3,7 +3,7 @@
 // Once settled, the special edition (canvas G-Résultat) heads the page.
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useParams } from 'react-router';
+import { Link, useLocation, useParams } from 'react-router';
 
 import { formatDate, formatNumber, parisDay, parseDecimal } from '../../i18n';
 import {
@@ -14,6 +14,7 @@ import {
   KeyPhrase,
   SectionHead,
   Stepper,
+  Tip,
   TopBar,
 } from '../../ui/components';
 import { AvatarStack, PixelImage } from '../../ui/PixelImage';
@@ -185,7 +186,7 @@ function Distribution({ prono }: { prono: PronoDetail }) {
 
 /** « Les pronostiqueurs »: who played what and staked how much, the first six, then the rest
  *  on demand. Everyone's choice and stake are seen by the whole newsroom. */
-function People({ bets }: { bets: Bet[] }) {
+function People({ orgId, bets }: { orgId: string; bets: Bet[] }) {
   const { t } = useTranslation('pronos');
   const [all, setAll] = useState(false);
   const players = new Set(bets.filter((bet) => !bet.superseded).map((bet) => bet.member.id)).size;
@@ -199,7 +200,9 @@ function People({ bets }: { bets: Bet[] }) {
         {shown.map((bet) => (
           <li key={bet.id} className={styles.person}>
             <PixelImage image={bet.member.avatar} size={28} />
-            <span className={styles.personName}>{bet.member.pseudo}</span>
+            <Link to={`/o/${orgId}/membres/${bet.member.id}`} className={styles.personName}>
+              {bet.member.pseudo}
+            </Link>
             <span className={`${styles.personAnswer} ${bet.superseded ? styles.replaced : ''}`}>
               {bet.answer.toUpperCase()}
               {bet.superseded && <span className="visually-hidden"> ({t('detail.replaced')})</span>}
@@ -426,8 +429,19 @@ export function PronoPage() {
             <>
               <div className={styles.stake}>
                 <div className={styles.stakeText}>
-                  <span className={styles.label}>
-                    {t('detail.stake', { balance: formatNumber(me.balance) })}
+                  <span className={styles.stakeLabel}>
+                    <span className={styles.label}>
+                      {t('detail.stake', { balance: formatNumber(me.balance) })}
+                    </span>
+                    <Tip
+                      label={t('detail.stakeHelpLabel')}
+                      tip={t('detail.stakeHelp')}
+                      align="start"
+                    >
+                      <span className="tip-mark" aria-hidden="true">
+                        ?
+                      </span>
+                    </Tip>
                   </span>
                   <span className={`only-mobile ${styles.pot}`}>
                     {t('detail.pot', {
@@ -485,7 +499,7 @@ export function PronoPage() {
         </div>
 
         <div className={styles.page}>
-          <People bets={prono.bets} />
+          <People orgId={orgId} bets={prono.bets} />
           <Rules prono={prono} />
           <MyReports reports={prono.my_reports ?? []} />
           {!prono.special_edition && (

@@ -298,6 +298,33 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 
 ---
 
+## Phase 9c: Évolution de US7 - Lauriers verts, rédaction et carte personnalisée
+
+**Goal**: on mise et on gagne des lauriers verts, montrés en vert partout et expliqués au survol, le classement gardant son tableau ; un onglet « Rédaction » montre la rédaction, ses membres et leur carte ; chacun personnalise sa carte sur un seul écran qui la montre telle que les autres la verront (pixel art, pseudo, cadre, trois objets ou trophées mis en avant) ; les boules ne se vendent plus (spec FR-092, FR-096 à FR-098).
+
+**Independent Test**: dans « Personnaliser ma carte », dessiner et changer de pseudo en regardant la carte suivre ; débloquer une couleur et une boule par code secret, les mettre en avant, vérifier l'ordre sur la carte, puis ouvrir l'onglet « Rédaction » depuis un autre compte et y retrouver la carte, sans le relevé ; vérifier qu'aucune boule n'est à vendre.
+
+- [x] T158 [US7] Compléter `backend/tests/contract/test_profile_collection.py` : catalogue sans boule à vendre, achat d'une boule refusé (404), `PATCH …/members/me` avec `showcase` (ordre gardé, objet ou trophée d'un autre refusé `not_owned`, doublon `duplicate`, plus de trois `too_many`), `PressCard.showcase` et `trophies[].id`.
+- [x] T159 [US7] Ajouter `memberships.showcase` (jsonb, défaut `[]`) dans `backend/src/sibylle/db/models/orgs.py` avec la révision `backend/src/sibylle/db/migrations/versions/0016_showcase.py`, qui retire aussi le prix des boules ; vérifier la sélection dans `backend/src/sibylle/services/collection.py` (`checked_showcase`, `_showcase`), la passer par `backend/src/sibylle/services/orgs.py`, `api/schemas.py` et `api/routes/members.py`, la vider à l'anonymisation (`services/accounts.py`) et l'exporter (`services/export.py`) ; régénérer `frontend/src/api/schema.d.ts`.
+- [x] T160 [P] [US7] Passer `Laurel` en vert par défaut et ajouter `Tip` (bulle au survol, au focus ou au toucher, fermée par Échap, tenue dans l'écran) à `frontend/src/ui/components.tsx` ; expliquer chaque compteur de `Wallet` et la mise de `frontend/src/features/pronos/PronoPage.tsx`.
+- [x] T161 [P] [US7] Écrire `frontend/src/features/profile/NewsroomPage.tsx`, déplacé par T166, (« La rédaction » : rédaction en chef, journalistes puis lecteur·rices, chaque ligne vers la carte) et relier les pseudos de la une et des paris d'un prono aux cartes de presse.
+- [x] T162 [US7] Écrire `frontend/src/features/profile/CardSettingsPage.tsx`, fondu dans l'écran de T167, (« Ma carte de presse » : pseudo, avatar, cadre, trois objets ou trophées au plus, dans l'ordre choisi) ; dans `frontend/src/features/profile/PressCardPage.tsx`, afficher « MIS EN AVANT », les boules gagnées et la ligne « Personnaliser ma carte » ; dans `frontend/src/features/collection/CollectionPage.tsx`, ne montrer que les boules débloquées.
+- [x] T163 [US7] Étendre `frontend/tests/e2e/profile.spec.ts` : aucune boule à vendre, mise en avant d'une boule et d'une couleur dans l'ordre choisi, puis « La rédaction » et la carte de Cami vues par Inès, sans le relevé.
+- [x] T164 [P] [US7] Rendre au classement son tableau d'avant les maquettes (`frontend/src/features/leaderboard/LeaderboardPage.tsx`, `leaderboard.module.css`, `frontend/src/i18n/fr/leaderboard.json`) : rang, avatar, pseudo et valeur sur une ligne, la sienne en gris, seuls les lauriers passent en vert ; `frontend/tests/e2e/season.spec.ts` relit le tableau.
+- [x] T165 [US7] Ajouter l'onglet « Rédaction » (icône `people` de `frontend/src/ui/icons.ts`) à `frontend/src/app/AppShell.tsx`, et sur ordinateur la carte de la rédaction à la place de « Proposer un prono » à droite de la navigation (`frontend/src/app/OrgLayout.tsx`).
+- [x] T166 [US7] Écrire `frontend/src/features/orgs/NewsroomPage.tsx` (onglet « Rédaction ») : « Mon organisation », retirée du profil (bandeau, membres, rédaction en chef ; pour elle, inviter, code d'accès, « Réglages de la rédaction »), puis les membres avec leur rôle ; `frontend/src/features/admin/AdminLayout.tsx` y ramène.
+- [x] T167 [US7] Fondre l'éditeur de pixel art et la personnalisation dans `frontend/src/features/profile/CardEditorPage.tsx` (« Personnaliser ma carte », sans onglets : la carte telle que la verront les autres, redessinée à chaque changement, à droite sur ordinateur ; pseudo, pixel art, cadre, mis en avant ; un seul « Enregistrer ») ; `PixelEditor` gagne `onChange` et partage sa barre (`EditorBar`) ; la carte de presse garde « Personnaliser ma carte », la collection, les préférences et le compte.
+- [x] T168 [US7] Adapter `frontend/tests/e2e/profile.spec.ts`, `admin.spec.ts`, `join.spec.ts` et `helpers.ts` : la carte suit le dessin et le pseudo avant l'enregistrement, les objets mis en avant s'y rangent dans l'ordre, les réglages s'ouvrent depuis l'onglet « Rédaction », l'onglet « MEMBRES » des réglages se distingue de la carte de la rédaction.
+
+- [x] T169 [US7] Dans `frontend/src/features/orgs/NewsroomPage.tsx`, donner un logo à la carte de la rédaction (`OrgLogo` : le logo dessiné, sinon l'initiale de la rédaction) et faire de la petite carte le seul chemin vers la liste des rédactions (`/redactions`, avec un chevron) : `EditionLink` (« ÉDITION … ») disparaît de `frontend/src/features/orgs/OrgSwitcher.tsx`, de la navigation sur ordinateur (`frontend/src/app/AppShell.tsx`, navigation centrée) et de la une sur téléphone (`frontend/src/features/une/UnePage.tsx`, où la petite carte prend sa place).
+- [x] T170 [US7] Titrer la page de l'onglet « La rédaction » (au lieu de « Mon organisation »).
+- [x] T171 [US7] Dans `frontend/src/features/profile/CardEditorPage.tsx`, mettre « Annuler » et « Enregistrer » sous la carte « CE QUE VOIENT LES AUTRES », actifs seulement après une modification ; « Annuler » remet ce qui était enregistré (l'éditeur de pixel art repart du dessin enregistré), « Enregistrer » garde la page ouverte et le dit ; un retour « PROFIL » en haut et les onglets en bas.
+- [x] T172 [US7] Adapter `frontend/tests/e2e/profile.spec.ts` : boutons inactifs avant la première modification, enregistrement sans quitter la page, « Annuler » qui retire un objet mis en avant, titre « La rédaction ».
+
+**Checkpoint**: lauriers verts expliqués partout, classement en tableau, onglet « Rédaction », cartes personnalisées sous les yeux ; les boules se gagnent sans s'acheter.
+
+---
+
 ## Phase 10: User Story 8 - Être prévenu (Priority: P3)
 
 **Goal**: notifications push (appli installée) et e-mails pour quatre événements, réglables type par type et canal par canal.

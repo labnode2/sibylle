@@ -31,7 +31,7 @@ test('invite with a link and join a newsroom', async ({ browser }, testInfo) => 
   await createNewsroom(ines, 'Sophia Office', 'Inès');
   // The invitations live with the members, in the newsroom's settings.
   await openSettings(ines);
-  await ines.getByRole('link', { name: 'MEMBRES' }).click();
+  await ines.getByRole('link', { name: 'MEMBRES', exact: true }).click();
 
   // The settings pages have several steppers: this one is the link's number of places.
   const places = ines.getByRole('group', { name: 'Nombre de places' });

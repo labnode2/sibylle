@@ -3,6 +3,7 @@ from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import CheckConstraint, ForeignKey, Index, Text, UniqueConstraint, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from sibylle import clock
@@ -68,6 +69,10 @@ class Membership(Base):
     pseudo: Mapped[str] = mapped_column(Text)
     avatar: Mapped[dict[str, Any]]
     avatar_frame_item_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("catalog_items.id"))
+    # Up to three things shown on the press card, in order: {"kind": "item" | "trophy", "id"}.
+    showcase: Mapped[list[dict[str, str]]] = mapped_column(
+        JSONB, default=list, server_default=text("'[]'::jsonb")
+    )
     # Loaded with the member, so that every screen can show the frame.
     avatar_frame: Mapped[CatalogItem | None] = relationship(lazy="selectin")
     # Caches of the ledger, updated in the same transaction as each entry.

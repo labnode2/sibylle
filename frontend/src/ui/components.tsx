@@ -1,6 +1,10 @@
 // The Gazette's base components (canvas G-Style). Layout-specific pieces live with their feature.
 import {
+  useEffect,
   useId,
+  useLayoutEffect,
+  useRef,
+  useState,
   type AnchorHTMLAttributes,
   type ButtonHTMLAttributes,
   type InputHTMLAttributes,
@@ -375,12 +379,13 @@ export function TabBar({ tabs, label }: { tabs: Tab[]; label: string }) {
   );
 }
 
-/** Laurels: gold for amounts and for the gold total (balance plus stakes in play), green for
- *  the balance, what can be staked. `label` names the amount for screen readers. */
+/** Laurels: green for what is staked, won and scored (the balance, a stake, a gain, a pot, a
+ *  ranking); gold only for the gold total, the balance plus the stakes in play, that Monday
+ *  turns into coins. `label` names the amount for screen readers. */
 export function Laurel({
   value,
   size = 16,
-  tone = 'gold',
+  tone = 'green',
   label,
 }: {
   value?: number;
@@ -420,8 +425,88 @@ export function Coins({ value, size = 16 }: { value?: number; size?: 16 | 32 }) 
   );
 }
 
+/** A word of explanation beside its trigger: on hover, on focus, or pinned by a tap. It stays
+ *  while the pointer is over it and Escape closes it (WCAG 1.4.13). */
+export function Tip({
+  children,
+  tip,
+  label,
+  align = 'end',
+}: {
+  children: ReactNode;
+  tip: ReactNode;
+  /** The trigger's name when its content does not say it (a « ? »). */
+  label?: string;
+  /** Which edge of the trigger the bubble lines up with. */
+  align?: 'start' | 'end';
+}) {
+  const id = useId();
+  const bubble = useRef<HTMLSpanElement>(null);
+  const [hovered, setHovered] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const open = hovered || pinned;
+  // The bubble stays on the screen: shifted back inside when it would cross an edge.
+  useLayoutEffect(() => {
+    const element = bubble.current;
+    if (!open || !element) return;
+    element.style.transform = '';
+    const box = element.getBoundingClientRect();
+    const margin = 8;
+    const shift =
+      box.left < margin
+        ? margin - box.left
+        : box.right > window.innerWidth - margin
+          ? window.innerWidth - margin - box.right
+          : 0;
+    element.style.transform = shift ? `translateX(${Math.round(shift)}px)` : '';
+  }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setHovered(false);
+        setPinned(false);
+      }
+    };
+    document.addEventListener('keydown', close);
+    return () => document.removeEventListener('keydown', close);
+  }, [open]);
+  return (
+    <span
+      className={styles.tip}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <button
+        type="button"
+        className={styles.tipTrigger}
+        aria-label={label}
+        aria-describedby={id}
+        aria-expanded={open}
+        onFocus={() => setHovered(true)}
+        onBlur={() => {
+          setHovered(false);
+          setPinned(false);
+        }}
+        onClick={() => setPinned((value) => !value)}
+      >
+        {children}
+      </button>
+      <span
+        ref={bubble}
+        role="tooltip"
+        id={id}
+        className={cx(styles.tipBubble, align === 'start' && styles.tipStart)}
+        hidden={!open}
+      >
+        {tip}
+      </span>
+    </span>
+  );
+}
+
 /** A member's three counters: green laurels to stake, gold laurels in all, coins to spend.
- *  `captions` writes what each one is, for the places with room to explain. */
+ *  Each one explains itself on hover, focus or tap; `captions` also writes what each one is. */
 export function Wallet({
   balance,
   gold,
@@ -437,27 +522,27 @@ export function Wallet({
   const counters = [
     {
       key: 'green',
-      node: (
-        <Laurel value={balance} tone="green" label={t('wallet.greenLabel', { count: balance })} />
-      ),
+      node: <Laurel value={balance} label={t('wallet.greenLabel', { count: balance })} />,
     },
     {
       key: 'gold',
-      node: <Laurel value={gold} label={t('wallet.goldLabel', { count: gold })} />,
+      node: <Laurel value={gold} tone="gold" label={t('wallet.goldLabel', { count: gold })} />,
     },
     { key: 'coins', node: <Coins value={coins} /> },
   ];
   return (
     <span className={cx(styles.wallet, captions && styles.walletCaptions)}>
       {counters.map(({ key, node }) => (
-        <span key={key} className={styles.counter} title={t(`wallet.${key}Hint`)}>
-          {node}
-          {captions && (
-            <span className={styles.caption} aria-hidden="true">
-              {t(`wallet.${key}`)}
-            </span>
-          )}
-        </span>
+        <Tip key={key} tip={t(`wallet.${key}Hint`)}>
+          <span className={styles.counter}>
+            {node}
+            {captions && (
+              <span className={styles.caption} aria-hidden="true">
+                {t(`wallet.${key}`)}
+              </span>
+            )}
+          </span>
+        </Tip>
       ))}
     </span>
   );

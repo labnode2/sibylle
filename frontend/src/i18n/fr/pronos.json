@@ -16,8 +16,7 @@
     "closesAt": "CLÔTURE LE {{date}}",
     "closedAt": "CLOS LE {{date}}",
     "opensAt": "OUVRE LE {{date}}",
-    "propose": "Proposer",
-    "proposeLong": "Proposer un prono"
+    "propose": "Proposer"
   },
   "state": {
     "proposed": "PROPOSÉ",
@@ -103,7 +102,9 @@
     "deckOpenEnded": "Pas de date de clôture : on joue une date, et on peut rejouer si elle passe. Un·e journaliste désigne le résultat.",
     "potValue_one": "{{pot}} laurier",
     "potValue_other": "{{pot}} lauriers",
-    "potShared": "DANS LA CAGNOTTE, PARTAGÉE ENTRE LES GAGNANTS AU PRORATA DE LEUR MISE"
+    "potShared": "DANS LA CAGNOTTE, PARTAGÉE ENTRE LES GAGNANTS AU PRORATA DE LEUR MISE",
+    "stakeHelpLabel": "Comment marchent les mises ?",
+    "stakeHelp": "Tu mises des lauriers verts, que tu perds si tu te trompes. Si tu vois juste, tu gagnes le gain fixe et ta part de la cagnotte, en lauriers verts aussi. Tant que le prono est en jeu, ta mise compte encore dans tes lauriers en or."
   },
   "create": {
     "title": "Nouveau prono",

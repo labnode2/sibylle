@@ -76,6 +76,17 @@ p {
   }
 }
 
+/* The « ? » that opens a word of explanation (ui/components.tsx, Tip). */
+.tip-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid currentColor;
+  font: 700 11px/1 var(--font-mono);
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

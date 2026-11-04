@@ -71,6 +71,7 @@ async def _newsroom(session: AsyncSession, org: Organisation, member: Membership
             "role": member.role,
             "status": member.status,
             "avatar": member.avatar,
+            "showcase": member.showcase,
             "joined_at": member.joined_at,
             "left_at": member.left_at,
             "balance": member.balance,

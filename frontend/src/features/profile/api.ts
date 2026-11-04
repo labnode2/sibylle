@@ -56,6 +56,7 @@ export function useUpdateProfile(orgId: string) {
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: orgKey(orgId) });
       void client.invalidateQueries({ queryKey: ['press-card', orgId] });
+      void client.invalidateQueries({ queryKey: ['members', orgId] });
     },
   });
 }

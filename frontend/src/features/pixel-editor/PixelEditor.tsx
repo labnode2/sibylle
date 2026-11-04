@@ -3,6 +3,7 @@
 // the base palette and the member's unlocked colours, undo, and the preview at a whole scale.
 // It works with a pointer or the keyboard (arrows to move, Space to draw, Ctrl+Z to undo).
 // Avatars, the newsroom's logo and Pixel mystère drawings all use it; `screen` fills a page.
+// Without `onSave` it has no bar: the page around it saves, and `onChange` follows the drawing.
 import {
   useEffect,
   useRef,
@@ -34,8 +35,10 @@ export type PixelEditorProps = {
   /** Colours beyond the base palette the member may use. */
   unlocked?: number[];
   title: string;
-  saveLabel: string;
-  onSave: (image: Drawing) => void;
+  saveLabel?: string;
+  onSave?: (image: Drawing) => void;
+  /** Each change of the drawing, for a page that shows it as it goes. */
+  onChange?: (image: Drawing) => void;
   onCancel?: () => void;
   busy?: boolean;
   error?: string | null;
@@ -52,8 +55,9 @@ export function PixelEditor({
   sizes = [16, 32],
   unlocked = [],
   title,
-  saveLabel,
+  saveLabel = '',
   onSave,
+  onChange,
   onCancel,
   busy,
   error,
@@ -95,6 +99,10 @@ export function PixelEditor({
     context.lineWidth = 2;
     context.strokeRect(cursor.x * cell + 1, cursor.y * cell + 1, cell - 2, cell - 2);
   }, [pixels, size, cell, cursor]);
+
+  useEffect(() => {
+    onChange?.({ size, palette: 'base-v1', pixels: encodePixels(pixels) });
+  }, [onChange, pixels, size]);
 
   const remember = () => setHistory((past) => [...past.slice(-49), pixels]);
 
@@ -192,19 +200,21 @@ export function PixelEditor({
       className={`${styles.editor} ${layout === 'screen' ? styles.screen : ''}`}
       aria-label={title}
     >
-      <header className={styles.bar}>
-        {onCancel ? (
-          <button type="button" className={styles.cancel} onClick={onCancel} disabled={busy}>
-            {t('cancel')}
-          </button>
-        ) : (
-          <span />
-        )}
-        <h2 className={styles.title}>{title}</h2>
-        <Button className={styles.save} onClick={() => onSave(image)} disabled={busy}>
-          {saveLabel}
-        </Button>
-      </header>
+      {onSave && (
+        <header className={styles.bar}>
+          {onCancel ? (
+            <button type="button" className={styles.cancel} onClick={onCancel} disabled={busy}>
+              {t('cancel')}
+            </button>
+          ) : (
+            <span />
+          )}
+          <h2 className={styles.title}>{title}</h2>
+          <Button className={styles.save} onClick={() => onSave(image)} disabled={busy}>
+            {saveLabel}
+          </Button>
+        </header>
+      )}
       {sizes.length > 1 && (
         <Segmented
           label={t('size')}

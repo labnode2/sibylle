@@ -1,30 +1,31 @@
-// The press card (canvas B-Profil on a phone, B-Web-Profil on a computer). The card itself, its
-// ink band and number, the avatar in its frame beside the pseudo, role and arrival; three
-// statistics; the balls collected. On one's own card: « Modifier mon pixel art », the newsroom,
-// the preferences, the account and the collection; on a computer « Mon organisation » beside
-// them. Then the engraved trophies, the other objects and the statement.
+// The press card (canvas B-Profil on a phone, B-Web-Profil on a computer), as every member of
+// the newsroom sees it: the ink band and number, the avatar in its frame beside the pseudo, role
+// and arrival, the three things the member chose to show; three statistics in green laurels; the
+// balls collected (an engraved ball per season played, the others from secret codes). On one's
+// own card: « Personnaliser ma carte », the collection, preferences and account; then the other
+// objects and the statement. The newsroom has a tab of its own, « La rédaction ».
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
 import type { Org } from '../../api/types';
 import { formatDate, formatNumber } from '../../i18n';
-import { Card, Icon, TopBar } from '../../ui/components';
+import { Card, Icon, Laurel, TopBar } from '../../ui/components';
 import { CrystalBall } from '../../ui/CrystalBall';
 import { FramedAvatar } from '../../ui/FramedAvatar';
-import { PixelImage } from '../../ui/PixelImage';
 import type { Variant } from '../../vendor/crystal-ball/crystal-ball.js';
-import { useMembers } from '../admin/api';
 import { ItemPreview } from '../collection/ItemPreview';
 import { useOrg } from '../orgs/api';
-import {
-  useCatalog,
-  usePressCard,
-  useUpdateProfile,
-  type CatalogItem,
-  type PressCard,
-} from './api';
+import { usePressCard, type PressCard } from './api';
 import { LedgerList } from './LedgerList';
 import styles from './profile.module.css';
+
+type Trophy = PressCard['trophies'][number];
+
+function useTrophyName() {
+  const { t } = useTranslation('profile');
+  return (trophy: Trophy) =>
+    t('trophies.season', { season: t(`seasons.${trophy.season.name}`), year: trophy.season.year });
+}
 
 function Stats({ card }: { card: PressCard }) {
   const { t } = useTranslation('profile');
@@ -33,7 +34,9 @@ function Stats({ card }: { card: PressCard }) {
     <dl className={styles.stats} aria-label={t('stats.label')}>
       <div>
         <dt>{t('stats.laurels')}</dt>
-        <dd>{formatNumber(stats.laurels)}</dd>
+        <dd className={styles.statLaurels}>
+          {formatNumber(stats.laurels)} <Laurel size={32} />
+        </dd>
       </div>
       <div>
         <dt>{t('stats.played')}</dt>
@@ -47,7 +50,39 @@ function Stats({ card }: { card: PressCard }) {
   );
 }
 
-function Identity({
+/** « Mis en avant »: up to three objects or engraved trophies, chosen by the member. */
+function Showcase({ card }: { card: PressCard }) {
+  const { t } = useTranslation('profile');
+  const trophyName = useTrophyName();
+  if (card.showcase.length === 0) return null;
+  return (
+    <div className={styles.showcase}>
+      <span className={styles.label}>{t('showcase.title')}</span>
+      <ul className={styles.showcaseList} aria-label={t('showcase.title')}>
+        {card.showcase.map((entry, index) => (
+          <li
+            key={entry.trophy?.id ?? entry.item?.id ?? index}
+            className={`${styles.showcaseItem} ${entry.trophy?.podium ? styles.podium : ''}`}
+          >
+            {entry.trophy ? (
+              <CrystalBall variant={entry.trophy.season.name as Variant} size={48} loops={0} />
+            ) : (
+              entry.item && <ItemPreview item={entry.item} avatar={card.avatar} size={48} />
+            )}
+            <span className={styles.showcaseName}>
+              {entry.trophy
+                ? trophyName(entry.trophy)
+                : entry.item && t(`catalog.${entry.item.key}`)}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** The card itself; « Personnaliser ma carte » shows it as it goes, with `mine` off. */
+export function Identity({
   orgId,
   org,
   card,
@@ -82,91 +117,82 @@ function Identity({
           </p>
         </div>
       </div>
+      <Showcase card={card} />
       {mine && (
         <div className={styles.cardFoot}>
-          <Link to={`/o/${orgId}/profil/avatar`} className={styles.editLink}>
-            {t('editor.open')}
+          <Link to={`/o/${orgId}/profil/carte`} className={styles.editLink}>
+            {t('customize.open')}
           </Link>
-          <span className={styles.meta}>{t('editor.sizes')}</span>
         </div>
       )}
     </Card>
   );
 }
 
-const ballVariant = (item: CatalogItem) => String(item.data.variant) as Variant;
-
-/** « Boules collectionnées 6 / 21 »: mine in colour, the others greyed until they are mine. */
-function Balls({ orgId, card, mine }: { orgId: string; card: PressCard; mine: boolean }) {
+/** « Boules collectionnées »: an engraved ball for each season played (the podium's framed in
+ *  gold), then the balls of the secret codes. They are not sold. */
+function Balls({ card, mine }: { card: PressCard; mine: boolean }) {
   const { t } = useTranslation('profile');
-  const catalog = useCatalog(orgId);
-  const owned = card.collection.filter((o) => o.item.kind === 'ball').map((o) => o.item);
-  const ownedIds = new Set(owned.map((item) => item.id));
-  const all = (catalog.data ?? []).filter((entry) => entry.item.kind === 'ball').map((e) => e.item);
-  // Mine first, then the others, on my own card; on someone else's, only theirs.
-  const shown = mine ? [...owned, ...all.filter((item) => !ownedIds.has(item.id))] : owned;
-  const total = all.length || owned.length;
+  const trophyName = useTrophyName();
+  const balls = [
+    ...card.trophies.map((trophy) => ({
+      key: trophy.id,
+      variant: trophy.season.name as Variant,
+      short: trophyName(trophy),
+      name: `${trophyName(trophy)} · ${t('trophies.score', {
+        score: formatNumber(trophy.score),
+        rank: trophy.rank,
+      })}`,
+      podium: trophy.podium,
+    })),
+    ...card.collection
+      .filter((owned) => owned.item.kind === 'ball')
+      .map((owned) => ({
+        key: owned.item.id,
+        variant: String(owned.item.data.variant) as Variant,
+        short: t(`ballShort.${owned.item.key}`),
+        name: t(`catalog.${owned.item.key}`),
+        podium: false,
+      })),
+  ];
   return (
     <section className={`${styles.section} ${styles.ballsSection}`} aria-labelledby="card-balls">
       <div className={styles.sectionHead}>
         <h2 id="card-balls" className={styles.intertitle}>
           {t('balls.title')}
         </h2>
-        <span className={styles.label}>{t('balls.count', { owned: owned.length, total })}</span>
+        <span className={styles.label}>{formatNumber(balls.length)}</span>
       </div>
-      {shown.length === 0 ? (
+      {balls.length === 0 ? (
         <p className={styles.meta}>{t('balls.none')}</p>
       ) : (
         <ul className={styles.balls}>
-          {shown.map((item) => {
-            const has = ownedIds.has(item.id);
-            const name = t(`catalog.${item.key}`);
-            return (
-              <li key={item.id} className={`${styles.ball} ${has ? '' : styles.locked}`}>
-                <span className="only-mobile">
-                  <CrystalBall variant={ballVariant(item)} size={32} loops={0} />
-                </span>
-                <span className="only-desktop">
-                  <CrystalBall variant={ballVariant(item)} size={48} loops={0} />
-                </span>
-                <span className={styles.ballName}>{t(`ballShort.${item.key}`)}</span>
-                <span className="visually-hidden">{has ? name : t('balls.locked', { name })}</span>
-              </li>
-            );
-          })}
+          {balls.map((ball) => (
+            <li key={ball.key} className={`${styles.ball} ${ball.podium ? styles.podium : ''}`}>
+              <span className="only-mobile">
+                <CrystalBall variant={ball.variant} size={32} loops={0} />
+              </span>
+              <span className="only-desktop">
+                <CrystalBall variant={ball.variant} size={48} loops={0} />
+              </span>
+              <span className={styles.ballName} aria-hidden="true">
+                {ball.short}
+              </span>
+              <span className="visually-hidden">{ball.name}</span>
+            </li>
+          ))}
         </ul>
       )}
-      {mine && (
-        <Link to={`/o/${orgId}/collection`} className={styles.more}>
-          {t('balls.more')}
-        </Link>
-      )}
+      {mine && balls.length > 0 && <p className={styles.meta}>{t('balls.how')}</p>}
     </section>
   );
 }
 
-/** The lines under my card: the newsroom, its settings for the editor, preferences, account. */
-function Lines({ orgId, org }: { orgId: string; org: Org }) {
+/** The lines under my card: the collection, the preferences and the account. */
+function Lines({ orgId }: { orgId: string }) {
   const { t } = useTranslation('profile');
-  const editor = org.my_membership.role === 'editor';
   return (
     <nav className={styles.lines} aria-label={t('lines.label')}>
-      <Link to="/redactions" className={styles.line}>
-        {org.logo ? (
-          <PixelImage image={org.logo} size={28} avatar={false} />
-        ) : (
-          <span className={styles.lineLogo} aria-hidden="true" />
-        )}
-        <span className={styles.lineText}>{org.title}</span>
-        <span className={styles.label}>{t('lines.members', { count: org.member_count })}</span>
-        <Icon name="chevronRight" size={24} />
-      </Link>
-      {editor && (
-        <Link to={`/o/${orgId}/reglages`} className={styles.line}>
-          <span className={styles.lineText}>{t('lines.newsroomSettings')}</span>
-          <Icon name="chevronRight" size={24} />
-        </Link>
-      )}
       <Link to={`/o/${orgId}/collection`} className={styles.line}>
         <span className={styles.lineText}>{t('collectionLink')}</span>
         <Icon name="chevronRight" size={24} />
@@ -183,89 +209,6 @@ function Lines({ orgId, org }: { orgId: string; org: Org }) {
   );
 }
 
-/** « Mon organisation » on a computer: the newsroom's card, its editors, and for the editor the
- *  way to its settings and its access code. */
-function MyNewsroom({ orgId, org }: { orgId: string; org: Org }) {
-  const { t } = useTranslation('profile');
-  const members = useMembers(orgId);
-  const editors = (members.data ?? []).filter((m) => m.role === 'editor').map((m) => m.pseudo);
-  const editor = org.my_membership.role === 'editor';
-  return (
-    <section className={`only-desktop ${styles.section}`} aria-labelledby="card-newsroom">
-      <h2 id="card-newsroom" className={styles.intertitle}>
-        {t('newsroom.title')}
-      </h2>
-      <div className={styles.newsroom}>
-        <div className={`${styles.newsroomBand} bg-${org.background_key}`} aria-hidden="true">
-          {org.logo && (
-            <span className={styles.newsroomLogo}>
-              <PixelImage image={org.logo} size={64} avatar={false} />
-            </span>
-          )}
-        </div>
-        <div className={styles.newsroomBody}>
-          <p className={styles.newsroomName}>{org.title}</p>
-          <p className={styles.label}>
-            {t('lines.members', { count: org.member_count })}
-            {editors.length > 0 &&
-              ` · ${t('newsroom.editors', { names: editors.join(', ').toUpperCase() })}`}
-          </p>
-        </div>
-        {editor && (
-          <>
-            <div className={styles.newsroomRow}>
-              <span className={styles.newsroomRowText}>
-                <span className={styles.newsroomRowTitle}>{t('newsroom.invite')}</span>
-                <span className={styles.label}>{t('newsroom.inviteHint')}</span>
-              </span>
-              <Link to={`/o/${orgId}/reglages/membres`} className={styles.newsroomButton}>
-                {t('newsroom.inviteOpen')}
-              </Link>
-            </div>
-            {org.access_code && (
-              <div className={styles.newsroomRow}>
-                <span className={styles.newsroomRowText}>
-                  <span className={styles.newsroomRowTitle}>{t('newsroom.code')}</span>
-                  <span className={styles.label}>{t('newsroom.codeHint')}</span>
-                </span>
-                <span className={styles.code}>{org.access_code}</span>
-              </div>
-            )}
-            <Link to={`/o/${orgId}/reglages`} className={styles.newsroomSettings}>
-              {t('lines.newsroomSettings')} →
-            </Link>
-          </>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function FrameChoice({ orgId, card }: { orgId: string; card: PressCard }) {
-  const { t } = useTranslation('profile');
-  const update = useUpdateProfile(orgId);
-  const frames = card.collection.filter((owned) => owned.item.kind === 'frame');
-  if (frames.length === 0) return null;
-  const current = frames.find((owned) => owned.item.key === card.frame)?.item.id ?? '';
-  return (
-    <label className={styles.frameChoice}>
-      <span className={styles.label}>{t('frame.label')}</span>
-      <select
-        value={current}
-        disabled={update.isPending}
-        onChange={(event) => update.mutate({ avatar_frame_item_id: event.target.value || null })}
-      >
-        <option value="">{t('frame.none')}</option>
-        {frames.map((owned) => (
-          <option key={owned.item.id} value={owned.item.id}>
-            {t(`catalog.${owned.item.key}`)}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
 export function PressCardPage() {
   const { t } = useTranslation('profile');
   const { orgId = '', memberId } = useParams();
@@ -276,7 +219,7 @@ export function PressCardPage() {
   if (!card.data || !org.data) return <p role="status">{t('common:shell.loading')}</p>;
   const data = card.data;
   const mine = data.id === me?.id;
-  const others = data.collection.filter((owned) => owned.item.kind !== 'ball');
+  const objects = data.collection.filter((owned) => owned.item.kind !== 'ball');
 
   return (
     <div className={styles.page}>
@@ -293,7 +236,7 @@ export function PressCardPage() {
         </header>
       ) : (
         <>
-          <TopBar back={`/o/${orgId}/classement`} backLabel={t('backRanking')} />
+          <TopBar back={`/o/${orgId}/redaction`} backLabel={t('backNewsroom')} />
           <h1 className="visually-hidden">{t('titleOf', { pseudo: data.pseudo })}</h1>
         </>
       )}
@@ -302,54 +245,20 @@ export function PressCardPage() {
         <div className={styles.left}>
           <Identity orgId={orgId} org={org.data} card={data} mine={mine} />
           <Stats card={data} />
-          {mine && <Lines orgId={orgId} org={org.data} />}
-          {mine && <FrameChoice orgId={orgId} card={data} />}
+          {mine && <Lines orgId={orgId} />}
         </div>
 
         <div className={styles.right}>
-          <Balls orgId={orgId} card={data} mine={mine} />
-          {mine && <MyNewsroom orgId={orgId} org={org.data} />}
+          <Balls card={data} mine={mine} />
 
           <div className={styles.tail}>
-            <section className={styles.section} aria-labelledby="card-trophies">
-              <h2 id="card-trophies" className={styles.intertitle}>
-                {t('trophies.title')}
-              </h2>
-              {data.trophies.length === 0 ? (
-                <p className={styles.meta}>{t('trophies.none')}</p>
-              ) : (
-                <ul className={styles.items}>
-                  {data.trophies.map((trophy) => (
-                    <li
-                      key={`${trophy.season.year}-${trophy.season.name}`}
-                      className={`${styles.trophy} ${trophy.podium ? styles.podium : ''}`}
-                    >
-                      <CrystalBall variant={trophy.season.name as Variant} size={48} />
-                      <span className={styles.engraved}>
-                        {t('trophies.season', {
-                          season: t(`seasons.${trophy.season.name}`),
-                          year: trophy.season.year,
-                        })}
-                      </span>
-                      <span className={styles.meta}>
-                        {t('trophies.score', {
-                          score: formatNumber(trophy.score),
-                          rank: trophy.rank,
-                        })}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            {others.length > 0 && (
+            {objects.length > 0 && (
               <section className={styles.section} aria-labelledby="card-collection">
                 <h2 id="card-collection" className={styles.intertitle}>
                   {t('objects.title')}
                 </h2>
                 <ul className={styles.items}>
-                  {others.map((owned) => (
+                  {objects.map((owned) => (
                     <li key={owned.item.id} className={styles.item}>
                       <ItemPreview item={owned.item} avatar={data.avatar} />
                       <span className={styles.meta}>{t(`catalog.${owned.item.key}`)}</span>
@@ -358,7 +267,6 @@ export function PressCardPage() {
                 </ul>
               </section>
             )}
-
             {mine && <LedgerList orgId={orgId} />}
           </div>
         </div>

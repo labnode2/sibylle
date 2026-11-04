@@ -132,24 +132,29 @@ export function CollectionPage() {
         </span>
       </div>
       <p className={styles.hint}>{t('collection.hint')}</p>
-      {KINDS.map((kind) => (
-        <Card key={kind} className={styles.panel} aria-label={t(`collection.kinds.${kind}`)}>
-          <h2 className={styles.heading}>{t(`collection.kinds.${kind}`)}</h2>
-          <ul className={styles.items}>
-            {catalog.data
-              .filter((entry) => entry.item.kind === kind)
-              .map((entry) => (
-                <Item
-                  key={entry.item.id}
-                  orgId={orgId}
-                  entry={entry}
-                  coins={me.coins}
-                  avatar={me.avatar}
-                />
-              ))}
-          </ul>
-        </Card>
-      ))}
+      {KINDS.map((kind) => {
+        const entries = catalog.data.filter((entry) => entry.item.kind === kind);
+        return (
+          <Card key={kind} className={styles.panel} aria-label={t(`collection.kinds.${kind}`)}>
+            <h2 className={styles.heading}>{t(`collection.kinds.${kind}`)}</h2>
+            {/* The balls are not sold: only the ones won with a secret code show here. */}
+            {kind === 'ball' && <p className={styles.hint}>{t('collection.noBall')}</p>}
+            {entries.length > 0 && (
+              <ul className={styles.items}>
+                {entries.map((entry) => (
+                  <Item
+                    key={entry.item.id}
+                    orgId={orgId}
+                    entry={entry}
+                    coins={me.coins}
+                    avatar={me.avatar}
+                  />
+                ))}
+              </ul>
+            )}
+          </Card>
+        );
+      })}
       <SecretCode orgId={orgId} />
       <Link to={`/o/${orgId}/profil`} className={styles.back}>
         {t('collection.backToCard')}

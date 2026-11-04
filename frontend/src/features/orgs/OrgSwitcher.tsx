@@ -2,7 +2,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 
-import type { OrgCard } from '../../api/types';
 import { Button, ButtonLink, Icon } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
 import { useLogout, useMe } from '../auth/api';
@@ -46,17 +45,5 @@ export function OrgSwitcherPage() {
         {t('switcher.logout')}
       </Button>
     </section>
-  );
-}
-
-/** « ÉDITION SOPHIA OFFICE » in the desktop navigation: opens the newsroom list. */
-export function EditionLink({ org }: { org: OrgCard }) {
-  const { t } = useTranslation('orgs');
-  return (
-    <Link to="/redactions" className={styles.edition}>
-      {org.logo && <PixelImage image={org.logo} size={16} avatar={false} />}
-      <span>{t('switcher.edition', { title: org.title.toUpperCase() })}</span>
-      <Icon name="chevronDown" />
-    </Link>
   );
 }

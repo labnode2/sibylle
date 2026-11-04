@@ -173,14 +173,3 @@
 .switcherItem[aria-current='page'] {
   background: var(--grey);
 }
-
-.edition {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: var(--tap);
-  font: 700 12px/1 var(--font-mono);
-  letter-spacing: 0.04em;
-  color: var(--ink);
-  text-decoration: none;
-}

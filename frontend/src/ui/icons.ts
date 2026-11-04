@@ -3,6 +3,8 @@ export const ICONS = {
   home: 'M5 0h2v1h-2zM4 1h4v1h-4zM3 2h2v1h-2zM7 2h2v1h-2zM2 3h2v1h-2zM8 3h2v1h-2zM1 4h2v1h-2zM9 4h2v1h-2zM0 5h2v1h-2zM10 5h2v1h-2zM1 6h1v1h-1zM10 6h1v1h-1zM1 7h1v1h-1zM4 7h4v1h-4zM10 7h1v1h-1zM1 8h1v1h-1zM4 8h1v1h-1zM7 8h1v1h-1zM10 8h1v1h-1zM1 9h1v1h-1zM4 9h1v1h-1zM7 9h1v1h-1zM10 9h1v1h-1zM1 10h1v1h-1zM4 10h1v1h-1zM7 10h1v1h-1zM10 10h1v1h-1zM1 11h4v1h-4zM7 11h4v1h-4z',
   ball: 'M3 0h6v1h-6zM2 1h1v1h-1zM9 1h1v1h-1zM1 2h1v1h-1zM4 2h2v1h-2zM10 2h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM10 3h1v1h-1zM1 4h1v1h-1zM10 4h1v1h-1zM1 5h1v1h-1zM10 5h1v1h-1zM2 6h1v1h-1zM9 6h1v1h-1zM3 7h6v1h-6zM4 8h4v1h-4zM5 9h2v1h-2zM3 10h6v1h-6zM2 11h8v1h-8z',
   user: 'M4 0h4v1h-4zM3 1h1v1h-1zM8 1h1v1h-1zM3 2h1v1h-1zM8 2h1v1h-1zM3 3h1v1h-1zM8 3h1v1h-1zM4 4h4v1h-4zM2 6h8v1h-8zM1 7h1v1h-1zM10 7h1v1h-1zM0 8h1v1h-1zM11 8h1v1h-1zM0 9h1v1h-1zM11 9h1v1h-1zM0 10h1v1h-1zM11 10h1v1h-1zM0 11h12v1h-12z',
+  people:
+    'M2 1h2v1h-2zM8 1h2v1h-2zM1 2h1v1h-1zM4 2h1v1h-1zM7 2h1v1h-1zM10 2h1v1h-1zM1 3h1v1h-1zM4 3h1v1h-1zM7 3h1v1h-1zM10 3h1v1h-1zM2 4h2v1h-2zM8 4h2v1h-2zM1 6h4v1h-4zM7 6h4v1h-4zM0 7h1v1h-1zM5 7h2v1h-2zM11 7h1v1h-1zM0 8h1v1h-1zM5 8h2v1h-2zM11 8h1v1h-1zM0 9h1v1h-1zM5 9h2v1h-2zM11 9h1v1h-1zM0 10h1v1h-1zM5 10h2v1h-2zM11 10h1v1h-1zM0 11h12v1h-12z',
   trophy:
     'M2 0h8v1h-8zM0 1h3v1h-3zM9 1h3v1h-3zM0 2h1v1h-1zM2 2h1v1h-1zM9 2h1v1h-1zM11 2h1v1h-1zM0 3h1v1h-1zM2 3h1v1h-1zM9 3h1v1h-1zM11 3h1v1h-1zM1 4h2v1h-2zM9 4h2v1h-2zM2 5h1v1h-1zM9 5h1v1h-1zM3 6h1v1h-1zM8 6h1v1h-1zM4 7h4v1h-4zM5 8h2v1h-2zM5 9h2v1h-2zM3 10h6v1h-6zM2 11h8v1h-8z',
   chevronLeft:
