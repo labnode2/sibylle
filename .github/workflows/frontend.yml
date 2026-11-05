@@ -1,0 +1,89 @@
+# Interface : à chaque push sur main et à chaque pull request, les vérifications de
+# `make check-frontend`, puis la construction de l'appli. L'interface construite (frontend/dist)
+# reste téléchargeable 14 jours depuis la page du run. Le serveur compte aussi : les types de
+# l'interface viennent de son OpenAPI.
+name: Interface
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - "backend/**"
+      - ".github/workflows/frontend.yml"
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "backend/**"
+      - ".github/workflows/frontend.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Un nouveau push sur une pull request remplace son run en cours ; sur main, chaque commit garde
+# le sien.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  build:
+    name: Vérifier et construire
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Installer les dépendances
+        run: npm ci
+      - name: Formatage (Prettier)
+        run: npm run format:check
+      - name: Analyse (ESLint)
+        run: npm run lint
+      - name: Types (TypeScript)
+        run: npm run typecheck
+      - name: Tests (Vitest)
+        run: npm test
+      - name: Construire l'appli (Vite)
+        run: npm run build
+      - name: Garder l'interface construite
+        uses: actions/upload-artifact@v7
+        with:
+          name: interface
+          path: frontend/dist
+          if-no-files-found: error
+          retention-days: 14
+
+  api:
+    name: Contrat d'API
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      # `npm run check:api` lit l'OpenAPI du serveur avec `uv run … sibylle openapi`. setup-uv ne
+      # publie plus de tag majeur (`v10` n'existe pas) : la version est figée par son commit.
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.14"
+      - name: Installer les dépendances
+        run: npm ci
+      - name: Comparer schema.d.ts à l'OpenAPI du serveur
+        run: npm run check:api

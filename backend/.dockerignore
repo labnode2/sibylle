@@ -1,0 +1,7 @@
+# Seuls pyproject.toml, uv.lock et src/ entrent dans l'image : ni .venv, ni les caches, ni les
+# tests, ni data/ (les images envoyées en développement).
+*
+!pyproject.toml
+!uv.lock
+!src/
+**/__pycache__

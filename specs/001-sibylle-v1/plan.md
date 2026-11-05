@@ -69,8 +69,13 @@ specs/001-sibylle-v1/
 ### Source Code (repository root)
 
 ```text
+.github/workflows/
+├── frontend.yml                 # CI de l'interface : vérifications, construction, contrat d'API
+└── backend.yml                  # CI du serveur : vérifications, image envoyée au registre
+
 backend/
 ├── pyproject.toml               # géré par uv
+├── Dockerfile                   # image de l'API et du worker (`sibylle serve`, `sibylle worker`)
 ├── alembic.ini
 ├── src/sibylle/
 │   ├── main.py                  # fabrique de l'app FastAPI

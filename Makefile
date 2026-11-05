@@ -81,6 +81,7 @@ check-backend:
 	cd backend && uv run pytest
 
 check-frontend:
+	cd frontend && npm run format:check
 	cd frontend && npm run lint
 	cd frontend && npm run typecheck
 	cd frontend && npm run test
