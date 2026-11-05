@@ -65,6 +65,7 @@ async def update_my_profile(
         avatar=drawing(body.avatar),
         frame_item_id=frame,
         showcase=None if body.showcase is None else [(r.kind, r.id) for r in body.showcase],
+        card_public=body.card_public,
     )
     return MemberSelf.build(
         member,

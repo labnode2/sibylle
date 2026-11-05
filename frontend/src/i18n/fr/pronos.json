@@ -189,5 +189,17 @@
     "reason": "MOTIF (FACULTATIF, LU PAR SON AUTEUR·RICE)",
     "confirmReject": "Confirmer le refus",
     "back": "Retour"
+  },
+  "toast": {
+    "published": "Prono publié : la rédaction peut parier.",
+    "proposed": "Proposition envoyée à la rédaction en chef.",
+    "bet": "Pari enregistré.",
+    "betStake_one": "Pari enregistré : {{stake}} laurier misé.",
+    "betStake_other": "Pari enregistré : {{stake}} lauriers misés.",
+    "validated": "Proposition validée : le prono est publié.",
+    "rejected": "Proposition refusée.",
+    "messagePosted": "Message publié.",
+    "messageRemoved": "Message supprimé.",
+    "messageWithdrawn": "Message retiré de la discussion."
   }
 }

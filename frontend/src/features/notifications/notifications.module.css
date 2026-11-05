@@ -32,14 +32,6 @@
   color: var(--ink-2);
 }
 
-.alert {
-  margin: 0;
-  padding: 10px 12px;
-  border: 2px solid var(--ink);
-  background: var(--grey);
-  font-weight: 600;
-}
-
 /* This device: what it receives and the button that changes it. */
 .device {
   display: flex;

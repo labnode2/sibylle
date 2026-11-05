@@ -120,6 +120,8 @@ export function useUpload(orgId: string) {
         }),
       );
     },
+    // The image's field says what went wrong.
+    meta: { quiet: true },
   });
 }
 
@@ -141,6 +143,7 @@ export function useProposalDecision(orgId: string, pronoId: string) {
           }),
         ),
       onSuccess: settled,
+      meta: { success: 'pronos:toast.validated' },
     }),
     reject: useMutation({
       mutationFn: (reason: string) =>
@@ -151,6 +154,7 @@ export function useProposalDecision(orgId: string, pronoId: string) {
           }),
         ),
       onSuccess: settled,
+      meta: { success: 'pronos:toast.rejected' },
     }),
   };
 }

@@ -13,6 +13,7 @@ import { Button, Field, TopBar } from '../../ui/components';
 import { CrystalBall } from '../../ui/CrystalBall';
 import { FramedAvatar } from '../../ui/FramedAvatar';
 import { decodePixels, encodePixels } from '../../ui/PixelImage';
+import { toast } from '../../ui/Toaster';
 import type { Variant } from '../../vendor/crystal-ball/crystal-ball.js';
 import { ItemPreview } from '../collection/ItemPreview';
 import { useFormErrors } from '../forms';
@@ -68,7 +69,6 @@ function CardEditor({ orgId, org, card }: { orgId: string; org: Org; card: Press
   const [draft, setDraft] = useState(saved);
   // « Annuler » starts the pixel editor again from the saved drawing.
   const [round, setRound] = useState(0);
-  const [done, setDone] = useState(false);
   const setAvatar = useCallback((avatar: Drawing) => setDraft((d) => ({ ...d, avatar })), []);
   const dirty = !unchanged(draft, saved);
   const frames = card.collection.filter((owned) => owned.item.kind === 'frame');
@@ -139,7 +139,7 @@ function CardEditor({ orgId, org, card }: { orgId: string; org: Org; card: Press
         onSuccess: () => {
           setSaved(next);
           setDraft(next);
-          setDone(true);
+          toast.success(t('customize.saved'));
         },
       },
     );
@@ -151,9 +151,6 @@ function CardEditor({ orgId, org, card }: { orgId: string; org: Org; card: Press
     update.reset();
   };
 
-  const problem =
-    errors.message ?? errors.field('showcase') ?? errors.field('avatar_frame_item_id');
-
   return (
     <form className={styles.editorPage} onSubmit={submit} noValidate>
       <TopBar back={`/o/${orgId}/profil`} backLabel={t('backProfile')} />
@@ -164,7 +161,7 @@ function CardEditor({ orgId, org, card }: { orgId: string; org: Org; card: Press
           <h2 id="card-preview" className={styles.label}>
             {t('customize.preview')}
           </h2>
-          <Identity orgId={orgId} org={org} card={preview} mine={false} />
+          <Identity card={preview} orgTitle={org.title} />
           <div className={styles.actions}>
             <Button variant="secondary" disabled={!dirty || update.isPending} onClick={cancel}>
               {t('customize.cancel')}
@@ -173,16 +170,6 @@ function CardEditor({ orgId, org, card }: { orgId: string; org: Org; card: Press
               {t('customize.save')}
             </Button>
           </div>
-          {problem && (
-            <p role="alert" className={styles.alert}>
-              {problem}
-            </p>
-          )}
-          {done && !dirty && (
-            <p role="status" className={styles.meta}>
-              {t('customize.saved')}
-            </p>
-          )}
         </section>
 
         <div className={styles.controls}>

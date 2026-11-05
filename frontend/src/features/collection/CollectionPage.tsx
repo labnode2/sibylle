@@ -6,6 +6,7 @@ import { Link, useParams } from 'react-router';
 
 import { formatDate, formatNumber } from '../../i18n';
 import { Button, Card, Chip, Coins, Field, TopBar } from '../../ui/components';
+import { toast } from '../../ui/Toaster';
 import { useFormErrors } from '../forms';
 import { useOrg } from '../orgs/api';
 import { useCatalog, useCollectionActions, type CatalogEntry } from '../profile/api';
@@ -73,7 +74,6 @@ function Item({
 }) {
   const { t } = useTranslation('profile');
   const { buy } = useCollectionActions(orgId);
-  const errors = useFormErrors(buy.error);
   const [confirming, setConfirming] = useState(false);
   const name = t(`catalog.${entry.item.key}`);
   const price = entry.price ?? 0;
@@ -96,7 +96,12 @@ function Item({
             onClick={() =>
               buy.mutate(
                 { itemId: entry.item.id, price },
-                { onSuccess: () => setConfirming(false) },
+                {
+                  onSuccess: () => {
+                    setConfirming(false);
+                    toast.success(t('collection.bought', { name }));
+                  },
+                },
               )
             }
             disabled={buy.isPending}
@@ -118,11 +123,6 @@ function Item({
           <Coins value={price} />
         </Button>
       )}
-      {errors.message && (
-        <p role="alert" className={styles.alert}>
-          {errors.message}
-        </p>
-      )}
     </li>
   );
 }
@@ -132,14 +132,12 @@ function SecretCode({ orgId }: { orgId: string }) {
   const { redeem } = useCollectionActions(orgId);
   const errors = useFormErrors(redeem.error);
   const [code, setCode] = useState('');
-  const [unlocked, setUnlocked] = useState<string | null>(null);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    setUnlocked(null);
     redeem.mutate(code.trim(), {
       onSuccess: ({ item }) => {
-        setUnlocked(t(`catalog.${item.key}`));
+        toast.success(t('secret.unlocked', { name: t(`catalog.${item.key}`) }));
         setCode('');
       },
     });
@@ -161,12 +159,6 @@ function SecretCode({ orgId }: { orgId: string }) {
           {t('secret.submit')}
         </Button>
       </form>
-      {unlocked && <p role="status">{t('secret.unlocked', { name: unlocked })}</p>}
-      {errors.message && !errors.field('code') && (
-        <p role="alert" className={styles.alert}>
-          {errors.message}
-        </p>
-      )}
     </Card>
   );
 }

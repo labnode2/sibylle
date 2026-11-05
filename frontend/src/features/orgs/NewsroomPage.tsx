@@ -21,14 +21,9 @@ import styles from './newsroom.module.css';
 const ORDER: Record<Role, number> = { editor: 0, journalist: 1, reader: 2 };
 const CHIP = { editor: 'ink', journalist: 'grey', reader: 'outline' } as const;
 
-/** The newsroom's logo; until the editor gives it one, its initial in the masthead's letters. */
-export function OrgLogo({ org, size }: { org: Pick<Org, 'logo' | 'title'>; size: 24 | 64 }) {
-  if (org.logo) return <PixelImage image={org.logo} size={size} avatar={false} />;
-  return (
-    <span className={`${styles.initial} ${size === 64 ? styles.initialLarge : ''}`}>
-      {org.title.trim().charAt(0).toUpperCase()}
-    </span>
-  );
+/** The newsroom's logo: the default one until the editor chooses or draws another. */
+export function OrgLogo({ org, size }: { org: Pick<Org, 'logo'>; size: 24 | 64 }) {
+  return <PixelImage image={org.logo} size={size} avatar={false} />;
 }
 
 /** The newsroom's small card: its band and logo, its name and members. It opens a menu below

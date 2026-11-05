@@ -28,6 +28,8 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 );
 
-if (import.meta.env.PROD) {
+// A public press card, often inside another site's iframe, has nothing to keep offline: no
+// service worker, which would otherwise download the whole app into that site's storage.
+if (import.meta.env.PROD && !window.location.pathname.startsWith('/carte/')) {
   void import('virtual:pwa-register').then(({ registerSW }) => registerSW({ immediate: true }));
 }

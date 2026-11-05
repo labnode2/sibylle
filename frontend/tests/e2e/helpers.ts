@@ -50,6 +50,11 @@ export function pot(page: Page, laurels: number): Locator {
   return page.getByText(new RegExp(`^(Cagnotte : )?${laurels} lauriers`)).filter({ visible: true });
 }
 
+/** The notes at the top right that say how an action went (ui/Toaster). */
+export function notes(page: Page): Locator {
+  return page.getByRole('region', { name: 'Infos', exact: true });
+}
+
 /** The newsroom's settings: the editor reaches them from « La rédaction ». */
 export async function openSettings(page: Page): Promise<void> {
   await page.getByRole('link', { name: /^(LA )?RÉDACTION$/ }).click();

@@ -2,7 +2,9 @@
 // subscription goes to the server, and an iPhone is told what it needs first (iOS 16.4 or later
 // and the app added to the home screen).
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { toast } from '../../ui/Toaster';
 import { forgetSubscription, sendSubscription, useVapidKey } from './api';
 
 export type PushStatus =
@@ -70,6 +72,7 @@ async function registration(): Promise<ServiceWorkerRegistration | undefined> {
 }
 
 export function usePush() {
+  const { t } = useTranslation('notifications');
   const key = useVapidKey();
   const [worker, setWorker] = useState<ServiceWorkerRegistration | null | undefined>(undefined);
   const [subscribed, setSubscribed] = useState<boolean | undefined>(undefined);
@@ -77,7 +80,6 @@ export function usePush() {
     hasPush() ? Notification.permission : 'default',
   );
   const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
 
   // What this device has now; a subscription found is attached again to whoever is signed in.
   useEffect(() => {
@@ -107,7 +109,6 @@ export function usePush() {
   const enable = useCallback(async () => {
     if (!worker || !key.data) return;
     setBusy(true);
-    setFailed(false);
     try {
       const answer = await Notification.requestPermission();
       setPermission(answer);
@@ -118,17 +119,17 @@ export function usePush() {
       });
       await sendSubscription(subscription);
       setSubscribed(true);
+      toast.success(t('device.enabled'));
     } catch {
-      setFailed(true);
+      toast.error(t('device.failed'));
     } finally {
       setBusy(false);
     }
-  }, [worker, key.data]);
+  }, [worker, key.data, t]);
 
   const disable = useCallback(async () => {
     if (!worker) return;
     setBusy(true);
-    setFailed(false);
     try {
       const subscription = await worker.pushManager.getSubscription();
       if (subscription) {
@@ -136,12 +137,13 @@ export function usePush() {
         await subscription.unsubscribe();
       }
       setSubscribed(false);
+      toast.success(t('device.disabled'));
     } catch {
-      setFailed(true);
+      toast.error(t('device.disableFailed'));
     } finally {
       setBusy(false);
     }
-  }, [worker]);
+  }, [worker, t]);
 
-  return { status, busy, failed, enable, disable };
+  return { status, busy, enable, disable };
 }

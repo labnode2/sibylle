@@ -18,6 +18,7 @@ from tests.contract.helpers import (
 from sibylle import clock
 from sibylle.db.models import Invitation, LedgerEntry, Membership, Organisation
 from sibylle.db.session import transaction
+from sibylle.domain.content import DEFAULT_LOGO
 
 pytestmark = pytest.mark.contract
 
@@ -53,6 +54,8 @@ async def test_creating_a_newsroom_makes_you_its_editor(
     created = await create_org(ines)
     org, membership = created["org"], created["membership"]
     assert org["title"] == "Sophia Office"
+    # No logo chosen: the default one, never an initial.
+    assert org["logo"] == DEFAULT_LOGO
     assert ACCESS_CODE.match(org["access_code"]) and org["access_code"].startswith("SOPHIA-")
     assert (membership["role"], membership["pseudo"], membership["balance"]) == (
         "editor",

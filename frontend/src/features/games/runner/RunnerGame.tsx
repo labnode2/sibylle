@@ -5,7 +5,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ApiError } from '../../../api/client';
 import { formatNumber } from '../../../i18n';
 import { Button } from '../../../ui/components';
 import {
@@ -226,11 +225,9 @@ export function RunnerGame({ orgId, attemptsLeft }: { orgId: string; attemptsLef
               ) : result.rank ? (
                 <p>{t('runner.best', { best: formatNumber(result.my_best), rank: result.rank })}</p>
               ) : null)}
-            {finish.isError && <p className={styles.alert}>{t('runner.failed')}</p>}
           </>
         )}
         {start.isPending && <p>{t('runner.starting')}</p>}
-        {start.error instanceof ApiError && <p className={styles.alert}>{start.error.message}</p>}
       </div>
       {canStart && (
         <Button onClick={play} disabled={start.isPending}>

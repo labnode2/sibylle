@@ -86,5 +86,11 @@
     "open": "en attente de la rédaction en chef",
     "resolved": "réglé",
     "dismissed": "rejeté"
+  },
+  "toast": {
+    "resolved": "Résultat publié : les gains sont versés.",
+    "corrected": "Résultat corrigé : les lauriers sont recalculés.",
+    "relaunched": "Prono relancé.",
+    "cancelled": "Prono annulé : les mises sont rendues."
   }
 }

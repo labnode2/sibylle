@@ -8,6 +8,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 
 import { fromParisInput, parisDayAt } from '../../i18n';
 import { Button, Chip, Field, Icon, Segmented, Stepper, SwitchRow } from '../../ui/components';
+import { toast } from '../../ui/Toaster';
 import { useFormErrors } from '../forms';
 import { useOrg } from '../orgs/api';
 import { useCreateProno, useSections, useUpload, type PronoIn } from './api';
@@ -74,7 +75,10 @@ export function CreatePronoPage() {
       number_unit: kind === 'number' ? unit.trim() || null : null,
     };
     create.mutate(body, {
-      onSuccess: (prono) => void navigate(`/o/${orgId}/pronos/${prono.id}`),
+      onSuccess: (prono) => {
+        toast.success(t(proposing ? 'toast.proposed' : 'toast.published'));
+        void navigate(`/o/${orgId}/pronos/${prono.id}`);
+      },
     });
   };
 
@@ -282,9 +286,9 @@ export function CreatePronoPage() {
         )}
       </div>
 
-      {(errors.message || errors.field('base_gain') || errors.field('section_id')) && (
+      {(errors.field('base_gain') || errors.field('section_id')) && (
         <p role="alert" className={styles.alert}>
-          {errors.message ?? errors.field('base_gain') ?? errors.field('section_id')}
+          {errors.field('base_gain') ?? errors.field('section_id')}
         </p>
       )}
       <footer className={styles.formFoot}>

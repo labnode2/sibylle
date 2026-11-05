@@ -9,6 +9,7 @@ import { Link } from 'react-router';
 import { formatDate, parisDay } from '../../i18n';
 import { Button, SectionHead } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
+import { toast } from '../../ui/Toaster';
 import { useFormErrors } from '../forms';
 import { useDiscussion, useMessages, type Message } from './api';
 import styles from './pronos.module.css';
@@ -73,7 +74,6 @@ function MessageItem({
   const likedBy = useLikedBy();
   const { like, remove } = useDiscussion(orgId, pronoId);
   const [confirming, setConfirming] = useState(false);
-  const errors = useFormErrors(remove.error ?? like.error);
 
   return (
     <li className={styles.message}>
@@ -128,16 +128,19 @@ function MessageItem({
               <Button variant="secondary" onClick={() => setConfirming(false)}>
                 {t('discussion.keep')}
               </Button>
-              <Button disabled={remove.isPending} onClick={() => remove.mutate(message.id)}>
+              <Button
+                disabled={remove.isPending}
+                onClick={() =>
+                  remove.mutate(message.id, {
+                    onSuccess: () =>
+                      toast.success(t(mine ? 'toast.messageRemoved' : 'toast.messageWithdrawn')),
+                  })
+                }
+              >
                 {mine ? t('discussion.delete') : t('discussion.remove')}
               </Button>
             </div>
           </div>
-        )}
-        {errors.message && (
-          <p role="alert" className={styles.alert}>
-            {errors.message}
-          </p>
         )}
       </div>
     </li>
@@ -154,13 +157,17 @@ function Composer({ orgId, pronoId }: { orgId: string; pronoId: string }) {
   const submit = (event?: FormEvent) => {
     event?.preventDefault();
     if (empty || write.isPending) return;
-    write.mutate(body, { onSuccess: () => setBody('') });
+    write.mutate(body, {
+      onSuccess: () => {
+        setBody('');
+        toast.success(t('toast.messagePosted'));
+      },
+    });
   };
   // Ctrl or ⌘ + Entrée sends; Entrée alone goes to the line.
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) submit();
   };
-  const problem = errors.message ?? errors.field('body');
 
   return (
     <form className={styles.composer} onSubmit={submit} noValidate>
@@ -185,9 +192,9 @@ function Composer({ orgId, pronoId }: { orgId: string; pronoId: string }) {
           {t('discussion.send')}
         </Button>
       </div>
-      {problem && (
+      {errors.field('body') && (
         <p role="alert" className={styles.alert}>
-          {problem}
+          {errors.field('body')}
         </p>
       )}
     </form>

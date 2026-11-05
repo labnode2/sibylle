@@ -9,6 +9,7 @@ import { Link, useParams } from 'react-router';
 import { formatNumber } from '../../../i18n';
 import { Button, Field, Icon } from '../../../ui/components';
 import { PixelImage } from '../../../ui/PixelImage';
+import { toast } from '../../../ui/Toaster';
 import { useFormErrors } from '../../forms';
 import { useOrg } from '../../orgs/api';
 import { PixelEditor } from '../../pixel-editor/PixelEditor';
@@ -20,14 +21,21 @@ function GuessForm({ guess, status }: { guess: ReturnType<typeof useGuess>; stat
   const { t } = useTranslation('games');
   const errors = useFormErrors(guess.error);
   const [word, setWord] = useState('');
-  const [tried, setTried] = useState('');
   const left = status.guesses_left_today;
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!word.trim()) return;
-    setTried(word.trim());
-    guess.mutate(word, { onSuccess: () => setWord('') });
+    const tried = word.trim();
+    if (!tried) return;
+    guess.mutate(word, {
+      onSuccess: (answer) => {
+        setWord('');
+        if (!answer.correct) toast.error(t('pixel.wrong', { word: tried }));
+        else if (answer.rank === 1)
+          toast.success(t('pixel.rightFirst', { laurels: answer.laurels }));
+        else toast.success(t('pixel.right', { rank: answer.rank, laurels: answer.laurels }));
+      },
+    });
   };
 
   return (
@@ -40,15 +48,14 @@ function GuessForm({ guess, status }: { guess: ReturnType<typeof useGuess>; stat
             maxLength={60}
             autoComplete="off"
             onChange={(event) => setWord(event.target.value)}
-            error={errors.field('word') ?? errors.message ?? undefined}
+            error={errors.field('word')}
           />
           <Button type="submit" disabled={guess.isPending}>
             {t('pixel.submit')}
           </Button>
         </>
       )}
-      <p role="status" className={styles.text}>
-        {guess.data && !guess.data.correct && `${t('pixel.wrong', { word: tried })} `}
+      <p className={styles.text}>
         {left > 0 ? t('pixel.left', { count: left }) : t('pixel.noneLeft')}
       </p>
     </form>
@@ -86,13 +93,6 @@ function Puzzle({ orgId, status, on }: { orgId: string; status: PixelStatus; on:
           })}
         </p>
         {status.word && <p className={styles.word}>{t('pixel.word', { word: status.word })}</p>}
-        {guess.data?.correct && (
-          <p role="status" className={styles.text}>
-            {guess.data.rank === 1
-              ? t('pixel.rightFirst', { laurels: guess.data.laurels })
-              : t('pixel.right', { rank: guess.data.rank, laurels: guess.data.laurels })}
-          </p>
-        )}
         {message && <p className={styles.text}>{message}</p>}
         {status.state === 'active' && !status.mine && !status.found_by_me && (
           <GuessForm guess={guess} status={status} />
@@ -134,15 +134,6 @@ function PostPuzzle({ orgId, unlocked, on }: { orgId: string; unlocked: number[]
         {t('pixel.post.title')}
       </h2>
       <p className={styles.text}>{t('pixel.post.text')}</p>
-      {post.data && !open && (
-        <p role="status" className={styles.text}>
-          {post.data.state === 'active'
-            ? t('pixel.post.started')
-            : on
-              ? t('pixel.post.queued')
-              : t('pixel.post.queuedOff')}
-        </p>
-      )}
       {open ? (
         <>
           <Field
@@ -160,15 +151,24 @@ function PostPuzzle({ orgId, unlocked, on }: { orgId: string; unlocked: number[]
             title={t('pixel.post.editor')}
             saveLabel={t('pixel.post.save')}
             busy={post.isPending}
-            error={errors.field('drawing') ?? errors.message}
+            error={errors.field('drawing')}
             onCancel={() => setOpen(false)}
             onSave={(drawing) =>
               post.mutate(
                 { drawing, word },
                 {
-                  onSuccess: () => {
+                  onSuccess: (posted) => {
                     setOpen(false);
                     setWord('');
+                    toast.success(
+                      t(
+                        posted.state === 'active'
+                          ? 'pixel.post.started'
+                          : on
+                            ? 'pixel.post.queued'
+                            : 'pixel.post.queuedOff',
+                      ),
+                    );
                   },
                 },
               )

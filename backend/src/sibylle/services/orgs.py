@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sibylle import clock
 from sibylle.api.errors import AppError
 from sibylle.db.models import Account, LedgerEntry, Membership, Organisation, Prono, Section
-from sibylle.domain.content import BACKGROUND_KEYS, DEFAULT_CHARTER
+from sibylle.domain.content import BACKGROUND_KEYS, DEFAULT_CHARTER, DEFAULT_LOGO
 from sibylle.domain.ledger import adjustment, starting_balance
 from sibylle.domain.pixels import PixelImageError, validate_pixel_image
 from sibylle.realtime import bus
@@ -115,7 +115,7 @@ async def create_org(
     org = Organisation(
         title=title,
         background_key=background_key,
-        logo=checked_drawing("logo", logo) if logo else None,
+        logo=checked_drawing("logo", logo) if logo else dict(DEFAULT_LOGO),
         charter=DEFAULT_CHARTER,
         access_code=await new_access_code(session, title),
     )
@@ -159,6 +159,7 @@ async def update_profile(
     avatar: dict[str, Any] | None = None,
     frame_item_id: uuid.UUID | None = KEEP,
     showcase: list[tuple[str, uuid.UUID]] | None = None,
+    card_public: bool | None = None,
 ) -> Membership:
     if pseudo is not None and pseudo != member.pseudo:
         if await pseudo_taken(session, member.org_id, pseudo, except_member=member.id):
@@ -172,6 +173,10 @@ async def update_profile(
         )
     if showcase is not None:
         member.showcase = await collection.checked_showcase(session, member, showcase)
+    if card_public is not None:
+        member.card_public = card_public
+        if card_public and member.card_token is None:
+            member.card_token = secrets.token_urlsafe(12)
     await session.flush()
     await bus.publish(
         session,
@@ -210,7 +215,10 @@ async def update_settings(
             raise AppError("validation_error", {"background_key": "unknown"})
         org.background_key = changes["background_key"]
     if "logo" in changes:
-        org.logo = checked_drawing("logo", changes["logo"]) if changes["logo"] else None
+        # No logo at all would leave an initial: taking it off brings the default one back.
+        org.logo = (
+            checked_drawing("logo", changes["logo"]) if changes["logo"] else dict(DEFAULT_LOGO)
+        )
     for name in _SETTINGS:
         if name in changes:
             setattr(org, name, changes[name])
@@ -315,10 +323,12 @@ async def change_role(
 
 async def depart(session: AsyncSession, member: Membership, status: str = "left") -> None:
     """The member is out of the newsroom: their bets and stakes stay, their screens stop at
-    once. Someone who left finds their profile again on coming back, as a reader."""
+    once. Someone who left finds their profile again on coming back, as a reader, with their
+    card private."""
     member.status = status
     member.left_at = member.left_at or clock.now()
     member.role = "reader"
+    member.card_public = False
     await session.flush()
     await bus.publish(
         session,

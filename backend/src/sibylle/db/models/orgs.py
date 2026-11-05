@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sibylle import clock
 from sibylle.db.base import Base, new_id
 from sibylle.db.models.collection import CatalogItem
+from sibylle.domain.content import DEFAULT_LOGO
 
 
 class Organisation(Base):
@@ -17,6 +18,8 @@ class Organisation(Base):
     __tablename__ = "organisations"
     __table_args__ = (
         CheckConstraint("char_length(title) BETWEEN 1 AND 40", name="title_length"),
+        # Never JSON null either: a newsroom always shows a drawing.
+        CheckConstraint("jsonb_typeof(logo) = 'object'", name="logo"),
         CheckConstraint("starting_balance >= 0", name="starting_balance"),
         CheckConstraint("max_base_gain >= 0", name="max_base_gain"),
         CheckConstraint("early_bird_pct BETWEEN 0 AND 100", name="early_bird_pct"),
@@ -25,7 +28,8 @@ class Organisation(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
     title: Mapped[str] = mapped_column(Text)
-    logo: Mapped[dict[str, Any] | None]
+    # Never empty: the default logo until the editor chooses or draws another.
+    logo: Mapped[dict[str, Any]] = mapped_column(default=lambda: dict(DEFAULT_LOGO))
     background_key: Mapped[str] = mapped_column(Text)
     # NULL when the access code is turned off.
     access_code: Mapped[str | None] = mapped_column(Text, unique=True)
@@ -75,6 +79,11 @@ class Membership(Base):
     )
     # Loaded with the member, so that every screen can show the frame.
     avatar_frame: Mapped[CatalogItem | None] = relationship(lazy="selectin")
+    # The press card seen from outside, without an account (US15): private until the member
+    # makes it public. Its address is drawn the first time and kept, so that a link or an iframe
+    # shows the card again when it goes public again.
+    card_public: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
+    card_token: Mapped[str | None] = mapped_column(Text, unique=True)
     # Caches of the ledger, updated in the same transaction as each entry.
     balance: Mapped[int] = mapped_column(default=0, server_default="0")
     season_score: Mapped[int] = mapped_column(default=0, server_default="0")

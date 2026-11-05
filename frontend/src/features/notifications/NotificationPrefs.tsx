@@ -28,11 +28,6 @@ function PushDevice() {
           {t('device.disable')}
         </Button>
       )}
-      {push.failed && (
-        <p role="alert" className={styles.alert}>
-          {t('device.failed')}
-        </p>
-      )}
     </div>
   );
 }
@@ -99,11 +94,6 @@ export function NotificationPrefs({ emailVerified }: { emailVerified: boolean })
             ))}
           </tbody>
         </table>
-      )}
-      {setPref.isError && (
-        <p role="alert" className={styles.alert}>
-          {t('failed')}
-        </p>
       )}
     </section>
   );

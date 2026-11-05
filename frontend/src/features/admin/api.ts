@@ -22,6 +22,7 @@ export function useUpdateOrg(orgId: string) {
     mutationFn: (body: OrgPatch) =>
       unwrap(api.PATCH('/api/orgs/{org_id}', { params: { path: { org_id: orgId } }, body })),
     onSuccess: (org) => client.setQueryData(orgKey(orgId), org),
+    meta: { success: 'admin:saved' },
   });
 }
 
@@ -33,10 +34,12 @@ export function useAccessCode(orgId: string) {
     renew: useMutation({
       mutationFn: () => unwrap(api.POST('/api/orgs/{org_id}/access-code', { params })),
       onSuccess: refresh,
+      meta: { success: 'admin:toasts.codeRenewed' },
     }),
     disable: useMutation({
       mutationFn: () => unwrap(api.DELETE('/api/orgs/{org_id}/access-code', { params })),
       onSuccess: refresh,
+      meta: { success: 'admin:toasts.codeDisabled' },
     }),
   };
 }
@@ -59,6 +62,7 @@ export function useRevokeInvitation(orgId: string) {
         }),
       ),
     onSuccess: () => client.invalidateQueries({ queryKey: invitationsKey(orgId) }),
+    meta: { success: 'admin:toasts.invitationRevoked' },
   });
 }
 
@@ -128,6 +132,7 @@ export function useSectionActions(orgId: string) {
           }),
         ),
       onSuccess: refresh,
+      meta: { success: 'admin:toasts.sectionAdded' },
     }),
     update: useMutation({
       mutationFn: ({
@@ -145,11 +150,13 @@ export function useSectionActions(orgId: string) {
           }),
         ),
       onSuccess: refresh,
+      meta: { success: 'admin:toasts.sectionChanged' },
     }),
     remove: useMutation({
       mutationFn: (sectionId: string) =>
         unwrap(api.DELETE('/api/orgs/{org_id}/sections/{section_id}', { params: path(sectionId) })),
       onSuccess: refresh,
+      meta: { success: 'admin:toasts.sectionRemoved' },
     }),
   };
 }
@@ -185,5 +192,6 @@ export function useHandleReport(orgId: string) {
         }),
       ),
     onSuccess: () => client.invalidateQueries({ queryKey: reportsKey(orgId) }),
+    meta: { success: 'admin:toasts.reportHandled' },
   });
 }

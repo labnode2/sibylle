@@ -14,7 +14,7 @@
     "autoHint": "Automatique suit le réglage de ton appareil.",
     "reduceMotion": "Couper les animations",
     "reduceMotionHint": "La boule de cristal et les transitions restent immobiles.",
-    "failed": "Ce réglage n'a pas été enregistré sur ton compte. Réessaie dans un instant."
+    "saved": "Affichage enregistré sur ton compte."
   },
   "newsrooms": {
     "title": "MES RÉDACTIONS",
@@ -38,7 +38,8 @@
     "title": "MES DONNÉES",
     "text": "Télécharge un fichier avec ton compte, tes rédactions, tes paris, tes relevés de lauriers et de pièces et ta collection.",
     "export": "Télécharger mes données",
-    "failed": "Le téléchargement n'a pas marché. Réessaie dans un instant."
+    "failed": "Le téléchargement n'a pas marché. Réessaie dans un instant.",
+    "done": "Tes données sont téléchargées."
   },
   "delete": {
     "title": "SUPPRIMER MON COMPTE",

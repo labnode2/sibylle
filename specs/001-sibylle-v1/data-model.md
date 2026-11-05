@@ -50,7 +50,7 @@ PK (`account_id`, `type`, `channel`) ; `type` ∈ `new_prono`, `closing_soon`, `
 |---|---|---|
 | id | uuid | PK |
 | title | text | 1 à 40 caractères |
-| logo | PixelImage | facultatif |
+| logo | PixelImage | obligatoire : le logo par défaut (premier modèle de `/content`) à la création et quand on le retire |
 | background_key | text | une clé de la liste de fonds de la plateforme |
 | access_code | text | unique, `NULL` si désactivé ; régénérable |
 | starting_balance | integer | ≥ 0, défaut 100 |
@@ -78,6 +78,8 @@ PK (`account_id`, `type`, `channel`) ; `type` ∈ `new_prono`, `closing_soon`, `
 | season_score | integer | cache du score de la saison en cours |
 | coins | integer | cache des pièces (somme de `coin_entries`), ≥ 0, défaut 0 |
 | coins_seen_week | date | dernier lundi dont la conversion a été annoncée, facultatif |
+| card_public | boolean | carte de presse lisible sans compte à son adresse (US15) ; défaut faux ; remis à faux au départ de la rédaction |
+| card_token | text | jeton de l'adresse publique `/carte/<card_token>`, unique, tiré à la première mise en public puis gardé ; facultatif |
 | joined_at, charter_accepted_at, left_at | timestamptz | |
 
 Règles : au moins un `editor` actif par organisation qui a des membres actifs ; un retour après départ réactive la même ligne (`status = active`) ; l'anonymisation remplace le pseudo par « Ancien membre » et l'avatar par le modèle par défaut.

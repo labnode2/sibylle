@@ -13,7 +13,6 @@ from sibylle.api.schemas import (
     OwnedItemOut,
     PressCard,
     ShowcaseOut,
-    TrophyOut,
 )
 from sibylle.db.models import Membership
 from sibylle.services import collection
@@ -48,12 +47,5 @@ async def get_press_card(
             )
             for owned, item in card["collection"]
         ],
-        showcase=[
-            ShowcaseOut(
-                kind=entry["kind"],
-                item=CatalogItemOut.model_validate(entry["item"]) if "item" in entry else None,
-                trophy=TrophyOut.model_validate(entry["trophy"]) if "trophy" in entry else None,
-            )
-            for entry in card["showcase"]
-        ],
+        showcase=[ShowcaseOut.of(entry) for entry in card["showcase"]],
     )

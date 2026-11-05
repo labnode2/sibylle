@@ -15,9 +15,13 @@ declare const self: ServiceWorkerGlobalScope & {
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 
-// Every page of the app is the same index.html; the API is never served from the cache.
+// Every page of the app is the same index.html; the API is never served from the cache. A public
+// press card always comes from the server, with the headers that let other sites frame it (the
+// cached index.html forbids it).
 registerRoute(
-  new NavigationRoute(createHandlerBoundToURL('/index.html'), { denylist: [/^\/api\//] }),
+  new NavigationRoute(createHandlerBoundToURL('/index.html'), {
+    denylist: [/^\/api\//, /^\/carte\//],
+  }),
 );
 
 self.addEventListener('install', () => {

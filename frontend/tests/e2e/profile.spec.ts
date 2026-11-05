@@ -10,6 +10,7 @@ import {
   joinWith,
   laurels,
   newPerson,
+  notes,
   orgIdOf,
   resetClock,
   sibylle,
@@ -57,8 +58,8 @@ test('a press card, an avatar drawn by hand and a collection', async ({ browser 
   await expect(preview.getByRole('heading', { name: 'Cami la Bulle' })).toBeVisible();
   await cami.getByLabel('TON PSEUDO DANS CETTE RÉDACTION').fill('Cami');
   await save.click();
-  // The page stays open, with nothing left to save.
-  await expect(preview.getByRole('status')).toContainText('Carte enregistrée');
+  // The page stays open, with nothing left to save; a note says it is done.
+  await expect(notes(cami)).toContainText('Carte enregistrée');
   await expect(save).toBeDisabled();
   await expect(cancel).toBeDisabled();
   // Everyone sees it.
@@ -90,10 +91,10 @@ test('a press card, an avatar drawn by hand and a collection', async ({ browser 
   const secret = cami.getByRole('region', { name: 'Un code secret ?' });
   await secret.getByLabel('TON CODE').fill(code.toLowerCase());
   await secret.getByRole('button', { name: 'Débloquer' }).click();
-  await expect(secret).toContainText("Débloqué : Boule d'Halloween !");
+  await expect(notes(cami)).toContainText("Débloqué : Boule d'Halloween !");
   await secret.getByLabel('TON CODE').fill(code);
   await secret.getByRole('button', { name: 'Débloquer' }).click();
-  await expect(secret.getByRole('alert')).toBeVisible();
+  await expect(notes(cami).getByRole('alert')).toBeVisible();
 
   // Back on the card: the colour is in the palette; the laurels statement has no purchase.
   await cami.getByRole('link', { name: 'Retour à ma carte de presse' }).click();

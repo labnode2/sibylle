@@ -1118,6 +1118,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/public/cards/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Public Card */
+        get: operations["get_public_card_api_public_cards__token__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/orgs/{org_id}/uploads": {
         parameters: {
             query?: never;
@@ -1685,6 +1702,8 @@ export interface components {
             avatar_frame_item_id?: string | null;
             /** Showcase */
             showcase?: components["schemas"]["ShowcaseRef"][] | null;
+            /** Card Public */
+            card_public?: boolean | null;
         };
         /** MemberPublic */
         MemberPublic: {
@@ -1744,6 +1763,13 @@ export interface components {
              * @default []
              */
             unlocked_colors: number[];
+            /**
+             * Card Public
+             * @default false
+             */
+            card_public: boolean;
+            /** Card Token */
+            card_token?: string | null;
         };
         /** MembershipEntry */
         MembershipEntry: {
@@ -1833,7 +1859,7 @@ export interface components {
             id: string;
             /** Title */
             title: string;
-            logo: components["schemas"]["PixelImage"] | null;
+            logo: components["schemas"]["PixelImage"];
             /** Background Key */
             background_key: string;
             /** Starting Balance */
@@ -1865,7 +1891,7 @@ export interface components {
             id: string;
             /** Title */
             title: string;
-            logo: components["schemas"]["PixelImage"] | null;
+            logo: components["schemas"]["PixelImage"];
             /** Background Key */
             background_key: string;
         };
@@ -2313,6 +2339,40 @@ export interface components {
             /** Message Count */
             message_count: number;
             created_by: components["schemas"]["MemberPublic"];
+        };
+        /**
+         * PublicCard
+         * @description A press card its member made public (US15), for anyone, without an account: the card
+         *     itself and its figures. Neither the member's id, nor their statement, bets or messages.
+         */
+        PublicCard: {
+            newsroom: components["schemas"]["PublicNewsroom"];
+            /** Pseudo */
+            pseudo: string;
+            avatar: components["schemas"]["PixelImage"];
+            /** Frame */
+            frame: string | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "reader" | "journalist" | "editor";
+            /**
+             * Joined At
+             * Format: date-time
+             */
+            joined_at: string;
+            /** Card Number */
+            card_number: string;
+            stats: components["schemas"]["PressStats"];
+            /** Showcase */
+            showcase: components["schemas"]["ShowcaseOut"][];
+        };
+        /** PublicNewsroom */
+        PublicNewsroom: {
+            /** Title */
+            title: string;
+            logo: components["schemas"]["PixelImage"];
         };
         /** PurchaseIn */
         PurchaseIn: {
@@ -5331,6 +5391,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GameSchedule"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_public_card_api_public_cards__token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicCard"];
                 };
             };
             /** @description Validation Error */

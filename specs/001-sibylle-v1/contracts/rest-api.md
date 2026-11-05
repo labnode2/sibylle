@@ -53,9 +53,9 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 
 | Méthode | Route | Qui | Corps → Réponse |
 |---|---|---|---|
-| POST | `/orgs` | Compte | `{title, background_key, logo?, pseudo, avatar}` → `201 {org: Org, membership: MemberSelf}` ; le créateur est `editor` |
+| POST | `/orgs` | Compte | `{title, background_key, logo?, pseudo, avatar}` → `201 {org: Org, membership: MemberSelf}` ; le créateur est `editor` ; sans `logo`, la rédaction prend le logo par défaut |
 | GET | `/orgs/{org}` | Membre | → `Org` (carte, réglages de lauriers, charte, mot de la rédaction en chef, `member_count`, `edition_number` : le jour de la rédaction, « N° 305 », `my_membership`) |
-| PATCH | `/orgs/{org}` | Réd. chef | `{title?, logo?, background_key?, starting_balance?, max_base_gain?, early_bird_pct?, early_bird_count?, editor_note?, charter?}` → `Org` |
+| PATCH | `/orgs/{org}` | Réd. chef | `{title?, logo?, background_key?, starting_balance?, max_base_gain?, early_bird_pct?, early_bird_count?, editor_note?, charter?}` → `Org` ; `logo: null` remet le logo par défaut (`OrgCard.logo` n'est jamais `null`) |
 | POST | `/orgs/{org}/access-code` | Réd. chef | → `{access_code}` (nouveau code ; l'ancien ne marche plus) |
 | DELETE | `/orgs/{org}/access-code` | Réd. chef | → `204` (désactive) |
 | POST | `/join/preview` | Compte | `{token}` ou `{code}` → `{org: OrgCard, member_count, places_left, invited_by_pseudo, charter}` ou `409 invitation_invalid` |
@@ -65,7 +65,7 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | DELETE | `/orgs/{org}/invitations/{id}` | Réd. chef | → `204` (révoque) |
 | GET | `/orgs/{org}/members` | Membre | → `[MemberPublic + {streak}]` : `streak`, la chaîne de victoires en cours (research.md J8) |
 | GET | `/orgs/{org}/members/{member}` | Membre | → `PressCard` (carte de presse : pseudo, avatar, cadre, rôle, arrivée, statistiques `{laurels, pronos_played, settled, wins, success_rate, streak, best_streak}`, trophées `{id, season, score, rank, podium}`, collection, `showcase`) ; tout membre de la rédaction peut la lire |
-| PATCH | `/orgs/{org}/members/me` | Membre | `{pseudo?, avatar?, avatar_frame_item_id?, showcase?: [{kind: "item" \| "trophy", id}]}` → `MemberSelf` ; `showcase` remplace toute la sélection : 3 au plus (`fields.showcase` : `too_many`, `duplicate`, `not_owned`) |
+| PATCH | `/orgs/{org}/members/me` | Membre | `{pseudo?, avatar?, avatar_frame_item_id?, showcase?: [{kind: "item" \| "trophy", id}], card_public?}` → `MemberSelf` ; `showcase` remplace toute la sélection : 3 au plus (`fields.showcase` : `too_many`, `duplicate`, `not_owned`) ; `card_public` rend la carte publique ou privée (US15), et la première mise en public tire `card_token` |
 | DELETE | `/orgs/{org}/members/me` | Membre | → `204` (quitter ; la dernière personne qui part ferme la rédaction) ; `409 last_editor` avec `fields.org_id` |
 | PATCH | `/orgs/{org}/members/{member}/role` | Réd. chef | `{role}` → `MemberPublic` ; `409 last_editor` si on retire la dernière |
 | DELETE | `/orgs/{org}/members/{member}` | Réd. chef | → `204` (retire un membre) |
@@ -78,7 +78,7 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 
 `PressCard.showcase` = `[{kind: "item", item} | {kind: "trophy", trophy}]`, dans l'ordre choisi ; un objet qui n'appartient plus au membre n'y figure pas.
 
-`MemberPublic` = `{id, pseudo, avatar, frame, role, joined_at}`, jamais de nom, prénom ni e-mail. `MemberSelf` ajoute `balance` (lauriers verts), `gold` (lauriers en or : solde plus mises en jeu), `season_score`, `coins`, `unlocked_colors`.
+`MemberPublic` = `{id, pseudo, avatar, frame, role, joined_at}`, jamais de nom, prénom ni e-mail. `MemberSelf` ajoute `balance` (lauriers verts), `gold` (lauriers en or : solde plus mises en jeu), `season_score`, `coins`, `unlocked_colors`, `card_public` et `card_token` (l'adresse de la carte publique est `/carte/<card_token>` ; `null` tant que la carte n'a jamais été publique).
 
 ## Pronos et paris
 
@@ -156,6 +156,9 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 | GET | `/health` | Public | `{status: "ok", db: "ok"}` |
 | GET | `/content` | Public | `{avatars: [{key, name, image}], logos: [...], backgrounds: [clé], charter}` : modèles d'avatars et de logo, fonds de carte, charte par défaut |
 | GET | `/ws` | Compte | passage en WebSocket, voir [realtime.md](realtime.md) |
+| GET | `/public/cards/{token}` | Public | → `PublicCard` (US15) ; `404 not_found` si la carte est privée, si son membre a quitté la rédaction ou supprimé son compte, ou si le jeton est inconnu ; `429 rate_limited` au-delà de 600 lectures par IP en 10 minutes |
+
+`PublicCard` = `{newsroom: {title, logo}, pseudo, avatar, frame, role, joined_at, card_number, stats, showcase}` : la carte seule, sans l'identifiant du membre, ses trophées ni sa collection hors des objets mis en avant.
 
 ## Tests de contrat attendus
 

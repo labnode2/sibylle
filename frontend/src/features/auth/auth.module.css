@@ -28,13 +28,6 @@
   gap: 12px;
 }
 
-.alert {
-  padding: 10px 12px;
-  border: 2px solid var(--ink);
-  background: var(--grey);
-  font-weight: 600;
-}
-
 .note {
   font: 500 11px/1.4 var(--font-mono);
   letter-spacing: 0.02em;

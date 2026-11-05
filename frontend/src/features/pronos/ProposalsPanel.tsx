@@ -48,9 +48,9 @@ export function ProposalDecision({ orgId, prono }: { orgId: string; prono: Prono
           />
         </label>
       )}
-      {(errors.message || errors.field('base_gain') || errors.field('closes_at')) && (
+      {(errors.field('base_gain') || errors.field('closes_at')) && (
         <p role="alert" className={styles.alert}>
-          {errors.message ?? errors.field('base_gain') ?? errors.field('closes_at')}
+          {errors.field('base_gain') ?? errors.field('closes_at')}
         </p>
       )}
       <div className={styles.actions}>

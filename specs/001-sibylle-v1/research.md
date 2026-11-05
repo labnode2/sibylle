@@ -100,7 +100,7 @@ Le contexte technique du plan ne contient aucun « NEEDS CLARIFICATION » : les 
 
 ### R15. En-têtes de sécurité
 
-- **Decision**: nginx envoie `Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; connect-src 'self' wss://<domaine>; style-src 'self'; font-src 'self'; frame-ancestors 'none'`, HSTS, `Referrer-Policy: no-referrer`, et une `Permissions-Policy` restrictive. Ces en-têtes sont posés avec `add_header … always` dans chaque bloc `location` : dès qu'un bloc déclare son propre `add_header` (le `Cache-Control` des fichiers, par exemple), nginx n'hérite plus de ceux du bloc parent.
+- **Decision**: nginx envoie `Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; connect-src 'self' wss://<domaine>; style-src 'self'; font-src 'self'; frame-ancestors 'none'`, HSTS, `Referrer-Policy: no-referrer`, et une `Permissions-Policy` restrictive. Ces en-têtes sont posés avec `add_header … always` dans chaque bloc `location` : dès qu'un bloc déclare son propre `add_header` (le `Cache-Control` des fichiers, par exemple), nginx n'hérite plus de ceux du bloc parent. Seule exception : `/carte/`, la carte de presse publique, qu'un autre site peut afficher dans une iframe (J11).
 - **Rationale**: la CSP rend impossible l'ajout involontaire d'une ressource tierce (SC-005).
 
 ### R16. Polices et ressources graphiques
@@ -188,6 +188,22 @@ La flamme s'allume à partir de 2 victoires d'affilée : une victoire seule n'es
 ### J9. Discussion d'un prono
 
 Choix par défaut du 4 novembre 2026, à la demande d'Emile. Une discussion par prono, sans fils de réponses : des messages de 1 à 500 caractères, du plus ancien au plus récent, servis par pages de 20 à partir du plus récent (`before` = l'identifiant du plus ancien message déjà affiché ; les UUIDv7 suivent l'ordre d'écriture). Aimer est une bascule, comme les réactions (`message_likes`, une ligne par membre et par message ; aimer son propre message est permis). Un message supprimé l'est pour de bon, avec ses « J'aime » : par son auteur·rice, ou par la rédaction en chef qui modère selon la charte (`MODERATE_MESSAGES`). Les écrans suivent la discussion par le sujet `prono:<id>` : les événements `message.*` portent des identifiants, et chaque écran recharge la discussion, puisque `liked` et `can_delete` dépendent de qui regarde. La suppression d'un compte efface ses messages (le texte peut dire qui l'a écrit) et garde ses « J'aime », comptés sous « Ancien membre ».
+
+### J11. Carte de presse publique
+
+Choix par défaut du 5 novembre 2026, à la demande d'Emile. Une carte se rend publique rédaction par rédaction (`memberships.card_public`, faux par défaut). Son adresse est `/carte/<jeton>`, un jeton aléatoire de 16 caractères (`secrets.token_urlsafe(12)`, 96 bits) tiré à la première mise en public puis gardé : un lien partagé ou une iframe remarche quand la carte redevient publique. Le jeton n'est pas un secret, l'interrupteur seul décide. Quitter la rédaction remet la carte en privé ; un compte supprimé rend ses appartenances `anonymized`, donc sans carte. `GET /api/public/cards/{token}` répond sans session, et `404 not_found` pour une carte privée comme pour un jeton inconnu. Il est limité à 600 lectures par IP en 10 minutes, assez pour un bureau entier qui ouvre une page en montrant plusieurs. La réponse ne contient que la carte elle-même : ni l'identifiant du membre, ni ses trophées et sa collection en dehors des objets mis en avant.
+
+La page publique est une route de l'application monopage, hors de la session et du cadre de l'appli : elle ne lit pas `/api/me`, n'ouvre pas de WebSocket et n'enregistre pas de service worker (dans l'iframe d'un autre site, il téléchargerait toute l'appli dans le stockage de ce site). Le service worker de l'appli laisse `/carte/` aller au serveur au lieu de servir l'`index.html` en cache, dont les en-têtes interdisent l'affichage dans un cadre. nginx sert `/carte/` avec les en-têtes de R15, sauf `frame-ancestors *` au lieu de `'none'`, plus `X-Robots-Tag: noindex` ; la page pose aussi `<meta name="robots" content="noindex">`. Le code d'intégration proposé est une iframe de 400 × 470 pixels, assez pour la carte et trois objets mis en avant à la largeur d'un téléphone.
+
+### J12. Notifications après une action
+
+Choix par défaut du 5 novembre 2026, à la demande d'Emile. Une action dit son résultat dans une notification en haut à droite (`frontend/src/ui/Toaster.tsx`), pas dans la page. Le cache des mutations de TanStack Query (`frontend/src/app/queryClient.ts`) en est le point unique : chaque mutation dit son succès par `meta.success` (une clé de traduction), ou l'écran le dit lui-même avec `toast` quand les mots dépendent de l'action (« Rôle de Hugo : journaliste ») ; toute erreur devient une notification d'erreur avec le message traduit du serveur, sauf les codes que l'écran explique lui-même (`meta.shown`, comme `last_editor`, avec son lien) et les appels que personne n'a demandés (`meta.quiet`). Les erreurs d'un champ restent sous ce champ ; une erreur `validation_error` dit seulement « Vérifie les champs signalés ».
+
+La pile est une région `aria-live="polite"` nommée « Infos » (« Notifications » est déjà le nom des réglages des notifications) ; une réussite est un `status`, une erreur une `alert`. Trois notes au plus, la même jamais deux fois. Un minuteur décide du départ (4 s, 6,5 s pour une erreur), pas l'animation de la barre : sous « couper les animations », la barre reste immobile et la note part quand même. Elle attend tant que sa croix a le focus. Les notes laissent passer les clics vers la page (`pointer-events: none`), sauf leur croix : une note ne cache jamais un bouton, ni pour une personne ni pour les tests.
+
+### J13. Logo par défaut
+
+Choix par défaut du 5 novembre 2026, à la demande d'Emile. `organisations.logo` devient obligatoire : une rédaction créée sans logo prend le premier modèle (`DEFAULT_LOGO` de `backend/src/sibylle/domain/content.py`, l'île de Sophia Office), la révision 0021 le donne aux rédactions qui n'en avaient pas, et retirer un logo le remet. L'initiale qui en tenait lieu disparaît de l'interface. Dans les réglages, le bouton s'appelle « Modifier le logo » : on part du logo en place.
 
 ## Contenus à produire pendant l'implémentation
 

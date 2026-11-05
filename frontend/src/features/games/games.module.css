@@ -43,14 +43,6 @@
   color: var(--ink-2);
 }
 
-.alert {
-  margin: 0;
-  padding: 10px 12px;
-  border: 2px solid var(--ink);
-  background: var(--grey);
-  font-weight: 600;
-}
-
 /* The track: the canvas keeps its 3 : 1 shape at any width, and takes the touches. */
 .game {
   display: flex;

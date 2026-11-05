@@ -43,11 +43,6 @@ export function PushPrompt() {
           {t('prompt.later')}
         </Button>
       </div>
-      {push.failed && (
-        <p role="alert" className={styles.alert}>
-          {t('device.failed')}
-        </p>
-      )}
     </Card>
   );
 }

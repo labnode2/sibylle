@@ -13,6 +13,7 @@ from sibylle.db.models import (
     Bet,
     CatalogItem,
     Membership,
+    Organisation,
     OwnedItem,
     Season,
     SecretCode,
@@ -284,6 +285,15 @@ async def _showcase(session: AsyncSession, member: Membership) -> list[dict[str,
     return shown
 
 
+async def card_face(session: AsyncSession, member: Membership) -> dict[str, Any]:
+    """What the card itself shows: its number, the figures and the things put forward."""
+    return {
+        "card_number": await _card_number(session, member),
+        "stats": await _stats(session, member),
+        "showcase": await _showcase(session, member),
+    }
+
+
 async def press_card(session: AsyncSession, member: Membership) -> dict[str, Any]:
     trophies = await session.execute(
         select(Trophy, Season)
@@ -293,9 +303,28 @@ async def press_card(session: AsyncSession, member: Membership) -> dict[str, Any
     )
     return {
         "member": member,
-        "card_number": await _card_number(session, member),
-        "stats": await _stats(session, member),
+        **await card_face(session, member),
         "trophies": [_trophy_view(trophy, season) for trophy, season in trophies],
         "collection": await _owned(session, member),
-        "showcase": await _showcase(session, member),
     }
+
+
+async def public_card(session: AsyncSession, token: str) -> tuple[Organisation, Membership]:
+    """The card behind a public link (US15), while its member keeps it public and stays in a
+    newsroom that still exists; otherwise not_found, as for a link that never existed."""
+    found = (
+        await session.execute(
+            select(Organisation, Membership)
+            .join(Membership, Membership.org_id == Organisation.id)
+            .where(
+                Membership.card_token == token,
+                Membership.card_public.is_(True),
+                Membership.status == "active",
+                Organisation.deleted_at.is_(None),
+            )
+        )
+    ).one_or_none()
+    if found is None:
+        raise AppError("not_found")
+    org, member = found
+    return org, member

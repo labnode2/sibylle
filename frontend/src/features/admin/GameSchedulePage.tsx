@@ -7,7 +7,6 @@ import { useParams } from 'react-router';
 
 import { formatDate } from '../../i18n';
 import { Button } from '../../ui/components';
-import { useFormErrors } from '../forms';
 import {
   GAMES,
   useGameSchedule,
@@ -40,15 +39,12 @@ export function GameSchedulePage() {
   const ordinary = useSetOrdinaryWeek(orgId);
   const plan = usePlanWeek(orgId);
   const unplan = useUnplanWeek(orgId);
-  const errors = useFormErrors(ordinary.error ?? plan.error ?? unplan.error);
   // The game the editor is taking out of the week in play, until they confirm.
   const [removing, setRemoving] = useState<Game | null>(null);
-  const [saved, setSaved] = useState(false);
   if (!schedule.data) return <p role="status">{t('common:shell.loading')}</p>;
 
   const { default: usual, weeks } = schedule.data;
   const busy = ordinary.isPending || plan.isPending || unplan.isPending;
-  const done = { onSuccess: () => setSaved(true) };
   // A new change forgets what an earlier one failed on.
   const fresh = () => {
     ordinary.reset();
@@ -66,19 +62,14 @@ export function GameSchedulePage() {
       return;
     }
     fresh();
-    plan.mutate({ week: week.week_start, games: switched(week.games, game, on) }, done);
+    plan.mutate({ week: week.week_start, games: switched(week.games, game, on) });
   };
 
   const remove = (week: Week, game: Game) => {
     fresh();
     plan.mutate(
       { week: week.week_start, games: switched(week.games, game, false) },
-      {
-        onSuccess: () => {
-          setRemoving(null);
-          setSaved(true);
-        },
-      },
+      { onSuccess: () => setRemoving(null) },
     );
   };
 
@@ -97,7 +88,7 @@ export function GameSchedulePage() {
                   disabled={busy}
                   onChange={(event) => {
                     fresh();
-                    ordinary.mutate(switched(usual, game, event.target.checked), done);
+                    ordinary.mutate(switched(usual, game, event.target.checked));
                   }}
                 />
                 {t(`games.names.${game}`)}
@@ -153,7 +144,7 @@ export function GameSchedulePage() {
                           disabled={busy}
                           onClick={() => {
                             fresh();
-                            unplan.mutate(week.week_start, done);
+                            unplan.mutate(week.week_start);
                           }}
                         >
                           {t('games.weeks.reset')}
@@ -203,17 +194,6 @@ export function GameSchedulePage() {
           </tbody>
         </table>
       </section>
-
-      {errors.message && (
-        <p role="alert" className={styles.alert}>
-          {errors.message}
-        </p>
-      )}
-      {saved && !busy && !errors.message && (
-        <p role="status" className={styles.hint}>
-          {t('games.saved')}
-        </p>
-      )}
     </>
   );
 }

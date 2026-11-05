@@ -27,6 +27,7 @@ from sibylle.api.routes import (
     orgs,
     profile,
     pronos,
+    public,
     reports,
     results,
     uploads,
@@ -103,6 +104,7 @@ def create_app() -> FastAPI:
         coins,
         minigames,
         profile,
+        public,
         uploads,
     ):
         app.include_router(module.router, prefix="/api")

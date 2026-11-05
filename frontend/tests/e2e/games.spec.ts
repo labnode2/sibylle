@@ -11,6 +11,7 @@ import {
   joinWith,
   laurels,
   newPerson,
+  notes,
   openSettings,
   orgIdOf,
   resetClock,
@@ -87,7 +88,7 @@ test('Pixel mystère: drawn, guessed in order, ended both ways', async ({ browse
   await editor.getByRole('radio', { name: 'Rouge', exact: true }).click();
   await editor.getByRole('application').click({ position: { x: 40, y: 40 } });
   await editor.getByRole('button', { name: 'Déposer' }).click();
-  await expect(ines.getByText('Ton dessin est lancé')).toBeVisible();
+  await expect(notes(ines)).toContainText('Ton dessin est lancé');
   await expect(ines.getByText('LE MOT : Café')).toBeVisible();
 
   // Cami, from la une: a wrong guess, then the word without its accent.
@@ -99,15 +100,14 @@ test('Pixel mystère: drawn, guessed in order, ended both ways', async ({ browse
   await expect(camiPage.getByRole('img', { name: /37 pixels dévoilés sur 256/ })).toBeVisible();
   await camiPage.getByLabel('TA PROPOSITION').fill('thé');
   await camiPage.getByRole('button', { name: 'Proposer' }).click();
-  await expect(
-    camiPage.getByText("« thé » : ce n'est pas ça. Il te reste 2 essais aujourd'hui."),
-  ).toBeVisible();
+  await expect(notes(camiPage)).toContainText("« thé » : ce n'est pas ça.");
+  await expect(camiPage.getByText("Il te reste 2 essais aujourd'hui.")).toBeVisible();
   const [balance] = await laurels(camiPage, orgId);
   await camiPage.getByLabel('TA PROPOSITION').fill('cafe');
   await camiPage.getByRole('button', { name: 'Proposer' }).click();
-  await expect(
-    camiPage.getByText('Bravo ! Tu trouves en premier et gagnes 10 lauriers.'),
-  ).toBeVisible();
+  await expect(notes(camiPage)).toContainText(
+    'Bravo ! Tu trouves en premier et gagnes 10 lauriers.',
+  );
   await expect(camiPage.getByText('LE MOT : Café')).toBeVisible();
   expect((await laurels(camiPage, orgId))[0]).toBe(balance + 10);
 

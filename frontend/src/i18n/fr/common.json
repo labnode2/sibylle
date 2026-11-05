@@ -8,6 +8,14 @@
     "less": "Moins",
     "more": "Plus"
   },
+  "toasts": {
+    "label": "Infos",
+    "close": "Fermer ce message",
+    "fields": "Vérifie les champs signalés.",
+    "offline": "Pas de connexion : réessaie une fois en ligne.",
+    "copied": "Copié dans le presse-papiers.",
+    "copyFailed": "La copie n'a pas marché : sélectionne le texte et copie-le."
+  },
   "laurels_one": "{{count}} laurier",
   "laurels_other": "{{count}} lauriers",
   "laurelsWord": "lauriers",
@@ -65,6 +73,7 @@
     "title": "Te déconnecter ?",
     "body": "Tu pourras revenir quand tu veux avec ton e-mail et ton mot de passe.",
     "cancel": "Annuler",
-    "confirm": "Me déconnecter"
+    "confirm": "Me déconnecter",
+    "done": "Tu es déconnecté·e. À bientôt !"
   }
 }

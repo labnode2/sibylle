@@ -160,24 +160,6 @@
   text-decoration: underline;
 }
 
-/* The logo the editor has not drawn yet: the newsroom's initial in the masthead's letters. */
-.initial {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  background: var(--surface);
-  color: var(--ink);
-  font: 400 24px/1 var(--font-title);
-}
-
-.initialLarge {
-  width: 64px;
-  height: 64px;
-  font-size: 48px;
-}
-
 /* The small card: at the right of the navigation on a computer, on la une on a phone. It opens
    the menu of the account's newsrooms below it. */
 .switcher {

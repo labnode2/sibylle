@@ -29,13 +29,6 @@ export function ReportForm({
   const [kind, setKind] = useState(initialKind);
   const [message, setMessage] = useState('');
 
-  if (report.isSuccess) {
-    return (
-      <p role="status" className={styles.notice}>
-        {t('report.sent')}
-      </p>
-    );
-  }
   if (!open) {
     return (
       <Button variant="link" className={styles.linkButton} onClick={() => setOpen(true)}>
@@ -49,7 +42,15 @@ export function ReportForm({
         className={styles.panel}
         onSubmit={(event) => {
           event.preventDefault();
-          report.mutate({ kind, message: message.trim() || null });
+          report.mutate(
+            { kind, message: message.trim() || null },
+            {
+              onSuccess: () => {
+                setOpen(false);
+                setMessage('');
+              },
+            },
+          );
         }}
       >
         <fieldset className={styles.reportKinds}>
@@ -80,9 +81,9 @@ export function ReportForm({
         <span id={`${id}-count`} className={pronoStyles.counter}>
           {t('report.counter', { count: message.length })}
         </span>
-        {(errors.message || errors.field('message')) && (
+        {errors.field('message') && (
           <p role="alert" className={pronoStyles.alert}>
-            {errors.message ?? errors.field('message')}
+            {errors.field('message')}
           </p>
         )}
         <div className={styles.actions}>

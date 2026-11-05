@@ -9,7 +9,7 @@ from tests.contract.test_pronos import publish, section_id
 from tests.contract.test_results import url
 
 from sibylle import clock
-from sibylle.domain.content import LOGO_TEMPLATES
+from sibylle.domain.content import DEFAULT_LOGO, LOGO_TEMPLATES
 
 pytestmark = pytest.mark.contract
 
@@ -47,6 +47,13 @@ async def test_the_card_and_the_laurels(
     assert response.status_code == 200, response.text
     updated = response.json()
     assert {k: updated[k] for k in changes} == changes
+
+    # A logo of her own, then none: the default logo comes back.
+    drawn = await ines.client.patch(org_url(org.id), json={"logo": AVATAR})
+    assert drawn.json()["logo"] == AVATAR
+    removed = await ines.client.patch(org_url(org.id), json={"logo": None})
+    assert removed.status_code == 200, removed.text
+    assert removed.json()["logo"] == DEFAULT_LOGO
 
     for field, value in [
         ("title", ""),

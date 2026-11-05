@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, unwrap } from '../../api/client';
 import { useTopic } from '../../api/realtime';
 import type { components } from '../../api/schema';
+import i18n from '../../i18n';
+import { toast } from '../../ui/Toaster';
 import { orgKey } from '../orgs/api';
 
 export type Games = components['schemas']['Games'];
@@ -79,6 +81,8 @@ export function useFinishRun(orgId: string) {
       void client.invalidateQueries({ queryKey: gamesKey(orgId) });
       void client.invalidateQueries({ queryKey: orgKey(orgId) });
     },
+    meta: { quiet: true },
+    onError: () => toast.error(i18n.t('games:runner.failed')),
   });
 }
 
@@ -146,6 +150,7 @@ function useScheduleChange<T>(orgId: string, change: (input: T) => Promise<GameS
       client.setQueryData(scheduleKey(orgId), schedule);
       void client.invalidateQueries({ queryKey: gamesKey(orgId) });
     },
+    meta: { success: 'admin:games.saved' },
   });
 }
 

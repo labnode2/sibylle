@@ -36,6 +36,7 @@ import { PixelMysterePage } from '../features/games/pixel-mystere/PixelMysterePa
 import { RunnerPage } from '../features/games/runner/RunnerPage';
 import { CardEditorPage } from '../features/profile/CardEditorPage';
 import { PressCardPage } from '../features/profile/PressCardPage';
+import { PublicCardPage } from '../features/profile/PublicCardPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { UnePage } from '../features/une/UnePage';
 import { ButtonLink, Icon, Masthead } from '../ui/components';
@@ -110,6 +111,9 @@ export const router = createBrowserRouter([
       { path: '/verifier-email', element: <VerifyEmailPage /> },
     ],
   },
+  // A press card its member made public (US15): without an account and without the app's
+  // frame, so that another site can show it in an iframe.
+  { path: '/carte/:token', element: <PublicCardPage />, errorElement: <RouteError /> },
   {
     element: <RequireAuth />,
     errorElement: <RouteError />,

@@ -16,6 +16,7 @@ type Path = { params: { path: { org_id: string; prono_id: string } } };
 function useResultAction<Body>(
   orgId: string,
   pronoId: string,
+  success: string,
   send: (path: Path, body: Body) => Promise<PronoDetail>,
 ) {
   const client = useQueryClient();
@@ -27,30 +28,35 @@ function useResultAction<Body>(
       void client.invalidateQueries({ queryKey: pronoListKey(orgId) });
       void client.invalidateQueries({ queryKey: orgKey(orgId) });
     },
+    meta: { success },
   });
 }
 
 export function useResolve(orgId: string, pronoId: string) {
-  return useResultAction(orgId, pronoId, (path, body: ResultIn) =>
+  return useResultAction(orgId, pronoId, 'results:toast.resolved', (path, body: ResultIn) =>
     unwrap(api.POST('/api/orgs/{org_id}/pronos/{prono_id}/resolve', { ...path, body })),
   );
 }
 
 export function useCorrect(orgId: string, pronoId: string) {
-  return useResultAction(orgId, pronoId, (path, body: ResultIn) =>
+  return useResultAction(orgId, pronoId, 'results:toast.corrected', (path, body: ResultIn) =>
     unwrap(api.POST('/api/orgs/{org_id}/pronos/{prono_id}/correct', { ...path, body })),
   );
 }
 
 export function useRelaunch(orgId: string, pronoId: string) {
-  return useResultAction(orgId, pronoId, (path, body: RelaunchIn) =>
+  return useResultAction(orgId, pronoId, 'results:toast.relaunched', (path, body: RelaunchIn) =>
     unwrap(api.POST('/api/orgs/{org_id}/pronos/{prono_id}/relaunch', { ...path, body })),
   );
 }
 
 export function useCancel(orgId: string, pronoId: string) {
-  return useResultAction(orgId, pronoId, (path, body: { reason?: string | null }) =>
-    unwrap(api.POST('/api/orgs/{org_id}/pronos/{prono_id}/cancel', { ...path, body })),
+  return useResultAction(
+    orgId,
+    pronoId,
+    'results:toast.cancelled',
+    (path, body: { reason?: string | null }) =>
+      unwrap(api.POST('/api/orgs/{org_id}/pronos/{prono_id}/cancel', { ...path, body })),
   );
 }
 
@@ -63,5 +69,6 @@ export function useReport(orgId: string, pronoId: string) {
           body,
         }),
       ),
+    meta: { success: 'results:report.sent' },
   });
 }

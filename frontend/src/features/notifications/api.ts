@@ -43,6 +43,7 @@ export function useSetNotificationPref() {
     },
     onError: (_error, _pref, context) => client.setQueryData(prefsKey, context?.before),
     onSuccess: (prefs) => client.setQueryData(prefsKey, prefs),
+    meta: { success: 'notifications:saved' },
   });
 }
 

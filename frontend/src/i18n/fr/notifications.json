@@ -26,7 +26,7 @@
   },
   "switch": "{{kind}} par {{channel}}",
   "unverified": "Ton adresse n'est pas encore confirmée : aucun e-mail de notification ne part avant.",
-  "failed": "Le réglage n'a pas été enregistré. Réessaie dans un instant.",
+  "saved": "Préférence de notification enregistrée.",
   "device": {
     "label": "SUR CET APPAREIL",
     "loading": "Vérification de cet appareil…",
@@ -38,7 +38,10 @@
     "unsupported": "Ce navigateur ne reçoit pas les notifications push. Les e-mails arrivent quand même.",
     "unavailable": "Les notifications push ne sont pas encore en place sur ce serveur. Les e-mails arrivent quand même.",
     "ios-install": "Sur iPhone et iPad (iOS 16.4 ou plus), ajoute d'abord Sibylle à l'écran d'accueil : bouton Partager, puis « Sur l'écran d'accueil ». Ouvre ensuite l'appli depuis son icône pour activer les notifications.",
-    "failed": "L'activation n'a pas marché. Réessaie dans un instant."
+    "failed": "L'activation n'a pas marché. Réessaie dans un instant.",
+    "disableFailed": "Les notifications n'ont pas pu être coupées. Réessaie dans un instant.",
+    "enabled": "Notifications activées sur cet appareil.",
+    "disabled": "Notifications coupées sur cet appareil."
   },
   "prompt": {
     "kicker": "SOIS PRÉVENU·E",

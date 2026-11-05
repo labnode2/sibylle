@@ -50,7 +50,7 @@ class PixelImage(BaseModel):
 class OrgCard(BaseModel):
     id: uuid.UUID
     title: str
-    logo: PixelImage | None
+    logo: PixelImage
     background_key: str
 
     @classmethod
@@ -87,6 +87,10 @@ class MemberSelf(MemberPublic):
     season_score: int
     coins: int
     unlocked_colors: list[int] = []
+    # The press card seen without an account (US15), and the token of its address
+    # (/carte/<token>), drawn the first time it goes public and kept afterwards.
+    card_public: bool = False
+    card_token: str | None = None
 
     @classmethod
     def build(cls, member: Membership, *, in_play: int, unlocked: Iterable[int] = ()) -> Self:
@@ -97,6 +101,8 @@ class MemberSelf(MemberPublic):
             season_score=member.season_score,
             coins=member.coins,
             unlocked_colors=sorted(unlocked),
+            card_public=member.card_public,
+            card_token=member.card_token,
         )
 
 
@@ -268,6 +274,7 @@ class ResetConfirm(BaseModel):
 class OrgIn(BaseModel):
     title: Title
     background_key: str
+    # Without one, the newsroom takes the default logo.
     logo: PixelImage | None = None
     pseudo: Pseudo
     avatar: PixelImage
@@ -287,6 +294,8 @@ class MemberPatch(BaseModel):
     avatar_frame_item_id: uuid.UUID | None = None
     # What the press card shows, in order: three at most; an empty list shows nothing.
     showcase: list[ShowcaseRef] | None = Field(default=None, max_length=3)
+    # The press card seen by anyone with its link, without an account (US15).
+    card_public: bool | None = None
 
 
 class LinkInvitationIn(BaseModel):
@@ -664,7 +673,8 @@ class OrgPatch(BaseModel):
 
     @model_validator(mode="after")
     def _no_null_settings(self) -> Self:
-        """Only the logo and the note can be removed; the other settings always have a value."""
+        """Only the logo and the note can be removed (a removed logo gives way to the default
+        one); the other settings always have a value."""
         for name in self.model_fields_set - {"logo", "editor_note"}:
             if getattr(self, name) is None:
                 raise ValueError(f"{name} cannot be null")
@@ -814,6 +824,14 @@ class ShowcaseOut(BaseModel):
     item: CatalogItemOut | None = None
     trophy: TrophyOut | None = None
 
+    @classmethod
+    def of(cls, entry: dict[str, Any]) -> Self:
+        return cls(
+            kind=entry["kind"],
+            item=CatalogItemOut.model_validate(entry["item"]) if "item" in entry else None,
+            trophy=TrophyOut.model_validate(entry["trophy"]) if "trophy" in entry else None,
+        )
+
 
 class PressCard(MemberPublic):
     """A member's press card, as every member of the newsroom sees it."""
@@ -823,6 +841,26 @@ class PressCard(MemberPublic):
     trophies: list[TrophyOut]
     collection: list[OwnedItemOut]
     # Up to three objects or trophies the member chose to show.
+    showcase: list[ShowcaseOut]
+
+
+class PublicNewsroom(BaseModel):
+    title: str
+    logo: PixelImage
+
+
+class PublicCard(BaseModel):
+    """A press card its member made public (US15), for anyone, without an account: the card
+    itself and its figures. Neither the member's id, nor their statement, bets or messages."""
+
+    newsroom: PublicNewsroom
+    pseudo: str
+    avatar: PixelImage
+    frame: str | None
+    role: Role
+    joined_at: datetime
+    card_number: str
+    stats: PressStats
     showcase: list[ShowcaseOut]
 
 

@@ -74,5 +74,7 @@ export function useVerifyEmail() {
   return useMutation({
     mutationFn: (token: string) => unwrap(api.POST('/api/auth/verify-email', { body: { token } })),
     onSuccess: () => client.invalidateQueries({ queryKey: meKey }),
+    // The page itself says how it went: it is all it is for.
+    meta: { quiet: true },
   });
 }

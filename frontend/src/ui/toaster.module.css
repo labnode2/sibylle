@@ -1,0 +1,107 @@
+/* The notes after an action: a pile at the top right, the newest at the bottom; on a phone,
+   across the top. Each one is a small card with a hard shadow, its mark, its words, a cross,
+   and a bar along its bottom that runs out. Clicks go through a note to the page, except on its
+   cross. */
+.toaster {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  width: min(360px, calc(100vw - 24px));
+  pointer-events: none;
+}
+
+.note {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 10px 16px 12px;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+  animation: arrive 160ms ease-out;
+}
+
+.mark {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.error .mark {
+  background: var(--danger);
+}
+
+.message {
+  flex: 1;
+  min-width: 0;
+  margin: 2px 0 0;
+  font: 600 14px/1.35 var(--font-text);
+  overflow-wrap: anywhere;
+}
+
+.close {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: -3px -2px 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.close:hover,
+.close:focus-visible {
+  color: var(--ink);
+}
+
+/* The time left: a 4 px bar that empties from right to left. */
+.bar {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: var(--indigo);
+  transform-origin: left;
+  animation: drain var(--note-duration) linear forwards;
+}
+
+.error .bar {
+  background: var(--danger);
+}
+
+.barPaused {
+  animation-play-state: paused;
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+@keyframes drain {
+  to {
+    transform: scaleX(0);
+  }
+}

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
 import { Button } from '../../ui/components';
+import { toast } from '../../ui/Toaster';
 import { useLogout } from './api';
 import styles from './logout.module.css';
 
@@ -26,7 +27,14 @@ function LogoutDialog({ dialog }: { dialog: RefObject<HTMLDialogElement | null> 
         <Button
           className={styles.confirm}
           disabled={logout.isPending}
-          onClick={() => logout.mutate(undefined, { onSuccess: () => navigate('/connexion') })}
+          onClick={() =>
+            logout.mutate(undefined, {
+              onSuccess: () => {
+                toast.success(t('logout.done'));
+                void navigate('/connexion');
+              },
+            })
+          }
         >
           {t('logout.confirm')}
         </Button>

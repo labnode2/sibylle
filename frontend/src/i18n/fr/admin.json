@@ -13,7 +13,7 @@
     "name": "NOM DE LA RÉDACTION",
     "logo": "LOGO",
     "background": "FOND DE LA CARTE",
-    "drawLogo": "Dessiner le logo",
+    "drawLogo": "Modifier le logo",
     "takeLogo": "Prendre",
     "currentLogo": "Le logo actuel",
     "preview": "{{count}} MEMBRES · APERÇU DE LA CARTE"
@@ -36,6 +36,15 @@
   },
   "save": "Enregistrer les réglages",
   "saved": "Réglages enregistrés.",
+  "toasts": {
+    "codeRenewed": "Nouveau code d'accès : l'ancien ne marche plus.",
+    "codeDisabled": "Code d'accès désactivé.",
+    "invitationRevoked": "Invitation révoquée.",
+    "sectionAdded": "Rubrique ajoutée.",
+    "sectionChanged": "Rubrique modifiée.",
+    "sectionRemoved": "Rubrique supprimée.",
+    "reportHandled": "Signalement traité."
+  },
   "sections": {
     "title": "Les rubriques",
     "hint": "Une rubrique déjà utilisée est archivée : ses pronos la gardent.",
@@ -66,6 +75,8 @@
     "reason": "MOTIF (VISIBLE DANS SON RELEVÉ)",
     "adjustSubmit": "Ajuster les lauriers de {{pseudo}}",
     "adjusted": "Lauriers ajustés : {{amount}}.",
+    "roleChanged": "Rôle de {{pseudo}} : {{role}}.",
+    "removed": "{{pseudo}} ne fait plus partie de la rédaction.",
     "remove": "Retirer de la rédaction",
     "removeConfirm": "Retirer {{pseudo}} ? Ses paris restent.",
     "removeYes": "Retirer",

@@ -3,12 +3,13 @@
 // went back. The mockup's « SÉRIE » line is left out: the spec has no streaks.
 // The head (« Édition spéciale », when and by whom) opens the prono's page; the rest follows the
 // question, then « Voir le classement » and « Partager ».
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { formatDate, formatNumber } from '../../i18n';
 import { Button, ButtonLink, Card, Icon, Laurel, Rule } from '../../ui/components';
 import { AvatarStack, PixelImage } from '../../ui/PixelImage';
+import { copyText } from '../../ui/CopyButton';
+import { toast } from '../../ui/Toaster';
 import type { PronoDetail } from '../pronos/api';
 import type { SpecialEdition as Edition } from './api';
 import { ReportForm } from './ReportForm';
@@ -122,31 +123,23 @@ export function SpecialEditionHead({ prono }: { prono: PronoDetail }) {
 /** « Partager »: the share sheet of the phone, or the link copied elsewhere. */
 function Share({ question }: { question: string }) {
   const { t } = useTranslation('results');
-  const [copied, setCopied] = useState(false);
   const share = async () => {
     const url = window.location.href;
-    try {
-      if (navigator.share) {
+    if (navigator.share) {
+      try {
         await navigator.share({ title: question, url });
-        return;
+      } catch {
+        // The sheet was closed: nothing to say.
       }
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-    } catch {
-      // The sheet was closed, or the clipboard refused: nothing to say.
+      return;
     }
+    if (await copyText(url)) toast.success(t('edition.copied'));
+    else toast.error(t('common:toasts.copyFailed'));
   };
   return (
-    <>
-      <Button variant="secondary" className={styles.share} onClick={() => void share()}>
-        {t('edition.share')}
-      </Button>
-      {copied && (
-        <span role="status" className={styles.small}>
-          {t('edition.copied')}
-        </span>
-      )}
-    </>
+    <Button variant="secondary" className={styles.share} onClick={() => void share()}>
+      {t('edition.share')}
+    </Button>
   );
 }
 

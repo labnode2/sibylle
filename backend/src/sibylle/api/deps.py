@@ -171,6 +171,11 @@ class Limits:
     join: RateLimiter = field(default_factory=lambda: RateLimiter(10, timedelta(hours=1)))
     join_ip: RateLimiter = field(default_factory=lambda: RateLimiter(300, timedelta(hours=1)))
     secret_code: RateLimiter = field(default_factory=lambda: RateLimiter(5, timedelta(hours=1)))
+    # Public press cards are read without an account, often from another site's iframe: loosely
+    # per IP, since a whole office may open a page that shows several of them.
+    public_card: RateLimiter = field(
+        default_factory=lambda: RateLimiter(600, timedelta(minutes=10))
+    )
 
 
 def limits(request: Request) -> Limits:

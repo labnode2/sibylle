@@ -7,14 +7,12 @@ import { Link, useParams } from 'react-router';
 import { formatDate } from '../../i18n';
 import { Button, Card, Kicker } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
-import { useFormErrors } from '../forms';
 import { useHandleReport, useReports, type ReportDetail } from './api';
 import styles from './admin.module.css';
 
 function ReportCard({ orgId, report }: { orgId: string; report: ReportDetail }) {
   const { t } = useTranslation('admin');
   const handle = useHandleReport(orgId);
-  const errors = useFormErrors(handle.error);
   const [note, setNote] = useState('');
   const close = (state: 'resolved' | 'dismissed') =>
     handle.mutate({ reportId: report.id, state, note });
@@ -48,11 +46,6 @@ function ReportCard({ orgId, report }: { orgId: string; report: ReportDetail }) 
           onChange={(event) => setNote(event.target.value)}
         />
       </label>
-      {errors.message && (
-        <p role="alert" className={styles.alert}>
-          {errors.message}
-        </p>
-      )}
       <div className={styles.actions}>
         <Button variant="secondary" onClick={() => close('dismissed')} disabled={handle.isPending}>
           {t('reports.dismiss')}

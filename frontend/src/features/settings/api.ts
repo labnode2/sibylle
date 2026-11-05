@@ -20,6 +20,7 @@ export function useUpdateAccount() {
     },
     onError: (_error, _body, context) => client.setQueryData(meKey, context?.before),
     onSuccess: (me) => client.setQueryData(meKey, me),
+    meta: { success: 'settings:display.saved' },
   });
 }
 
@@ -32,6 +33,8 @@ export function useLeaveNewsroom() {
       client.removeQueries({ predicate: (query) => query.queryKey.includes(orgId) });
       void client.invalidateQueries({ queryKey: meKey });
     },
+    // The screen names the newsroom and links to its members.
+    meta: { shown: ['last_editor'] },
   });
 }
 
@@ -43,6 +46,7 @@ export function useDeleteAccount() {
       realtime.close();
       client.clear();
     },
+    meta: { shown: ['last_editor'] },
   });
 }
 

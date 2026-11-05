@@ -8,7 +8,7 @@ import type { MemberPublic } from '../../api/types';
 import { formatDate } from '../../i18n';
 import { Button, Chip, Field, Kicker } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
-import { useFormErrors } from '../forms';
+import { toast } from '../../ui/Toaster';
 import { useOrg } from '../orgs/api';
 import {
   useAccessCode,
@@ -35,12 +35,10 @@ function MemberRow({
 }) {
   const { t } = useTranslation('admin');
   const { changeRole, remove, adjust } = useMemberActions(orgId);
-  const errors = useFormErrors(changeRole.error ?? remove.error ?? adjust.error);
   const [adjusting, setAdjusting] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
-  const [done, setDone] = useState<string | null>(null);
 
   const submitAdjustment = (event: FormEvent) => {
     event.preventDefault();
@@ -49,7 +47,7 @@ function MemberRow({
       { memberId: member.id, amount: value, reason: reason.trim() },
       {
         onSuccess: () => {
-          setDone(t('members.adjusted', { amount: value > 0 ? `+${value}` : value }));
+          toast.success(t('members.adjusted', { amount: value > 0 ? `+${value}` : value }));
           setAdjusting(false);
           setAmount('');
           setReason('');
@@ -71,9 +69,18 @@ function MemberRow({
           <select
             value={member.role}
             disabled={changeRole.isPending}
-            onChange={(event) =>
-              changeRole.mutate({ memberId: member.id, role: event.target.value as Role })
-            }
+            onChange={(event) => {
+              const role = event.target.value as Role;
+              changeRole.mutate(
+                { memberId: member.id, role },
+                {
+                  onSuccess: () =>
+                    toast.success(
+                      t('members.roleChanged', { pseudo: member.pseudo, role: t(`roles.${role}`) }),
+                    ),
+                },
+              );
+            }}
           >
             {ROLES.map((role) => (
               <option key={role} value={role}>
@@ -94,7 +101,14 @@ function MemberRow({
               <Button variant="secondary" onClick={() => setRemoving(false)}>
                 {t('members.keep')}
               </Button>
-              <Button onClick={() => remove.mutate(member.id)} disabled={remove.isPending}>
+              <Button
+                onClick={() =>
+                  remove.mutate(member.id, {
+                    onSuccess: () => toast.success(t('members.removed', { pseudo: member.pseudo })),
+                  })
+                }
+                disabled={remove.isPending}
+              >
                 {t('members.removeYes')}
               </Button>
             </>
@@ -125,12 +139,6 @@ function MemberRow({
             {t('members.adjustSubmit', { pseudo: member.pseudo })}
           </Button>
         </form>
-      )}
-      {done && <p role="status">{done}</p>}
-      {errors.message && (
-        <p role="alert" className={styles.alert}>
-          {errors.message}
-        </p>
       )}
     </li>
   );

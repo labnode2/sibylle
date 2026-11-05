@@ -13,6 +13,8 @@ _TEMPLATES = json.loads((Path(__file__).parent / "templates.json").read_text(enc
 AVATAR_TEMPLATES: list[dict[str, Any]] = _TEMPLATES["avatars"]
 # Starting point for a newsroom's logo.
 LOGO_TEMPLATES: list[dict[str, Any]] = _TEMPLATES["logos"]
+# The logo of a newsroom until its editor changes it: the first template, never an initial.
+DEFAULT_LOGO: dict[str, Any] = LOGO_TEMPLATES[0]["image"]
 
 
 def _silhouette() -> dict[str, Any]:

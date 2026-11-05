@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 
 import type { Org } from '../../api/types';
-import { Button, Field, Icon, Kicker, Stepper } from '../../ui/components';
+import { Button, Field, Icon, Kicker, Stepper, uiStyles } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
 import { useFormErrors } from '../forms';
 import { useContent, useOrg } from '../orgs/api';
@@ -41,26 +41,21 @@ function SettingsForm({ orgId, org }: { orgId: string; org: Org }) {
   const [earlyCount, setEarlyCount] = useState(org.early_bird_count);
   const [note, setNote] = useState(org.editor_note ?? '');
   const [charter, setCharter] = useState(org.charter);
-  const [saved, setSaved] = useState(false);
   const [drawingLogo, setDrawingLogo] = useState(false);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    setSaved(false);
-    update.mutate(
-      {
-        title: title.trim(),
-        background_key: background,
-        logo,
-        max_base_gain: maxGain,
-        starting_balance: starting,
-        early_bird_pct: earlyPct,
-        early_bird_count: earlyCount,
-        editor_note: note.trim() || null,
-        charter: charter.trim(),
-      },
-      { onSuccess: () => setSaved(true) },
-    );
+    update.mutate({
+      title: title.trim(),
+      background_key: background,
+      logo,
+      max_base_gain: maxGain,
+      starting_balance: starting,
+      early_bird_pct: earlyPct,
+      early_bird_count: earlyCount,
+      editor_note: note.trim() || null,
+      charter: charter.trim(),
+    });
   };
 
   return (
@@ -69,11 +64,9 @@ function SettingsForm({ orgId, org }: { orgId: string; org: Org }) {
         <h2 className={styles.heading}>{t('card.title')}</h2>
         <div className={styles.preview} aria-hidden="true">
           <div className={`${styles.previewBand} bg-${background}`}>
-            {logo && (
-              <span className={styles.previewLogo}>
-                <PixelImage image={logo} size={64} avatar={false} />
-              </span>
-            )}
+            <span className={styles.previewLogo}>
+              <PixelImage image={logo} size={64} avatar={false} />
+            </span>
           </div>
           <div className={styles.previewBody}>
             <span className={styles.previewName}>{title || org.title}</span>
@@ -103,10 +96,10 @@ function SettingsForm({ orgId, org }: { orgId: string; org: Org }) {
           />
         ) : (
           <div className={styles.inline}>
-            {logo && <PixelImage image={logo} size={64} label={t('card.currentLogo')} />}
+            <PixelImage image={logo} size={64} label={t('card.currentLogo')} />
             <AvatarPicker
               templates={content.data?.logos ?? []}
-              value={logo ?? null}
+              value={logo}
               onChange={setLogo}
               labelId="admin-logo"
             />
@@ -187,17 +180,17 @@ function SettingsForm({ orgId, org }: { orgId: string; org: Org }) {
             className={styles.textarea}
             rows={8}
             value={charter}
+            aria-invalid={errors.field('charter') ? true : undefined}
             onChange={(event) => setCharter(event.target.value)}
           />
+          {errors.field('charter') && (
+            <span role="alert" className={uiStyles.fieldError}>
+              {errors.field('charter')}
+            </span>
+          )}
         </label>
       </section>
 
-      {(errors.message || errors.field('charter')) && (
-        <p role="alert" className={styles.alert}>
-          {errors.message ?? errors.field('charter')}
-        </p>
-      )}
-      {saved && <p role="status">{t('saved')}</p>}
       <Button type="submit" disabled={update.isPending}>
         {t('save')}
       </Button>
@@ -298,9 +291,9 @@ function SectionsPanel({ orgId }: { orgId: string }) {
           {t('sections.add')}
         </Button>
       </form>
-      {(errors.field('name') || errors.message) && (
+      {errors.field('name') && (
         <p role="alert" className={styles.alert}>
-          {errors.field('name') ?? errors.message}
+          {errors.field('name')}
         </p>
       )}
     </section>

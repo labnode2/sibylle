@@ -10,6 +10,7 @@
     "name": "NOM DE LA RÉDACTION",
     "background": "FOND DE LA CARTE",
     "submit": "Créer la rédaction",
+    "done": "{{title}} est créée : à toi d'inviter la rédaction !",
     "editor": "TU EN PRENDS LA RÉDACTION EN CHEF"
   },
   "join": {
@@ -27,6 +28,7 @@
     "charterTitle": "Lire la charte de la rédaction",
     "accept": "J'accepte la charte de la rédaction",
     "submit": "Rejoindre la rédaction",
+    "done": "Bienvenue dans {{title}} !",
     "later": "TOUT SE CHANGE ENSUITE DANS TON PROFIL",
     "invalid": "Cette invitation n'est plus valable : elle a expiré, elle a été retirée ou il n'y a plus de place.",
     "back": "Retour",
@@ -79,7 +81,7 @@
     "url": "LIEN À PARTAGER",
     "once": "COPIE-LE MAINTENANT : IL NE SERA PLUS AFFICHÉ",
     "copy": "Copier",
-    "copied": "Copié",
+    "created": "Lien d'invitation créé : copie-le, il ne sera plus affiché.",
     "email": "INVITATION PAR E-MAIL",
     "address": "ADRESSE",
     "send": "Envoyer l'invitation",

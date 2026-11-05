@@ -4,26 +4,17 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import { Button, Field, Kicker } from '../../ui/components';
+import { toast } from '../../ui/Toaster';
 import { useFormErrors } from '../forms';
 import { useConfirmReset, useLogin, useRequestReset, useSignup, useVerifyEmail } from './api';
 import styles from './auth.module.css';
 import { nextPath } from './RequireAuth';
-
-function Alert({ children }: { children?: string }) {
-  if (!children) return null;
-  return (
-    <p className={styles.alert} role="alert">
-      {children}
-    </p>
-  );
-}
 
 export function LoginPage() {
   const { t } = useTranslation('auth');
   const [search] = useSearchParams();
   const navigate = useNavigate();
   const login = useLogin();
-  const errors = useFormErrors(login.error);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -35,9 +26,7 @@ export function LoginPage() {
   return (
     <section className={styles.page}>
       <h1 className={styles.title}>{t('login.title')}</h1>
-      {search.get('compte') === 'supprime' && <p role="status">{t('login.deleted')}</p>}
       <form className={styles.form} onSubmit={submit} noValidate>
-        <Alert>{errors.message}</Alert>
         <Field
           label={t('fields.email')}
           type="email"
@@ -78,7 +67,12 @@ export function SignupPage() {
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    signup.mutate(form, { onSuccess: () => navigate(nextPath(search)) });
+    signup.mutate(form, {
+      onSuccess: () => {
+        toast.success(t('signup.done'));
+        void navigate(nextPath(search));
+      },
+    });
   };
 
   return (
@@ -86,7 +80,6 @@ export function SignupPage() {
       <h1 className={styles.title}>{t('signup.title')}</h1>
       <p className={styles.lead}>{t('signup.lead')}</p>
       <form className={styles.form} onSubmit={submit} noValidate>
-        <Alert>{errors.message}</Alert>
         <div className={styles.row}>
           <Field
             label={t('fields.firstName')}
@@ -139,38 +132,37 @@ export function SignupPage() {
 export function ForgotPasswordPage() {
   const { t } = useTranslation('auth');
   const request = useRequestReset();
-  const errors = useFormErrors(request.error);
   const [email, setEmail] = useState('');
 
   return (
     <section className={styles.page}>
       <h1 className={styles.title}>{t('forgot.title')}</h1>
-      {request.isSuccess ? (
-        <p role="status">{t('forgot.sent')}</p>
-      ) : (
-        <form
-          className={styles.form}
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            request.mutate(email);
-          }}
-        >
-          <p className={styles.lead}>{t('forgot.lead')}</p>
-          <Alert>{errors.message}</Alert>
-          <Field
-            label={t('fields.email')}
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Button type="submit" block disabled={request.isPending}>
-            {t('forgot.submit')}
-          </Button>
-        </form>
-      )}
+      <form
+        className={styles.form}
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          request.mutate(email, {
+            onSuccess: () => {
+              toast.success(t('forgot.sent'));
+              setEmail('');
+            },
+          });
+        }}
+      >
+        <p className={styles.lead}>{t('forgot.lead')}</p>
+        <Field
+          label={t('fields.email')}
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <Button type="submit" block disabled={request.isPending}>
+          {t('forgot.submit')}
+        </Button>
+      </form>
       <Link to="/connexion">{t('backToLogin')}</Link>
     </section>
   );
@@ -179,6 +171,7 @@ export function ForgotPasswordPage() {
 export function ResetPasswordPage() {
   const { t } = useTranslation('auth');
   const [search] = useSearchParams();
+  const navigate = useNavigate();
   const confirm = useConfirmReset();
   const errors = useFormErrors(confirm.error);
   const [password, setPassword] = useState('');
@@ -187,33 +180,36 @@ export function ResetPasswordPage() {
   return (
     <section className={styles.page}>
       <h1 className={styles.title}>{t('reset.title')}</h1>
-      {confirm.isSuccess ? (
-        <p role="status">{t('reset.done')}</p>
-      ) : (
-        <form
-          className={styles.form}
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            confirm.mutate({ token, password });
-          }}
-        >
-          <Alert>{errors.message}</Alert>
-          <Field
-            label={t('fields.newPassword')}
-            type="password"
-            autoComplete="new-password"
-            hint={t('signup.passwordHint')}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={errors.field('password')}
-            required
-          />
-          <Button type="submit" block disabled={confirm.isPending || !token}>
-            {t('reset.submit')}
-          </Button>
-        </form>
-      )}
+      <form
+        className={styles.form}
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          confirm.mutate(
+            { token, password },
+            {
+              onSuccess: () => {
+                toast.success(t('reset.done'));
+                void navigate('/connexion');
+              },
+            },
+          );
+        }}
+      >
+        <Field
+          label={t('fields.newPassword')}
+          type="password"
+          autoComplete="new-password"
+          hint={t('signup.passwordHint')}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          error={errors.field('password')}
+          required
+        />
+        <Button type="submit" block disabled={confirm.isPending || !token}>
+          {t('reset.submit')}
+        </Button>
+      </form>
       <Link to="/connexion">{t('backToLogin')}</Link>
     </section>
   );

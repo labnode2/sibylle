@@ -2,7 +2,7 @@
 // join, and never see another member's private data.
 import { expect, test, type Page } from '@playwright/test';
 
-import { createNewsroom, joinWith, newPerson, openSettings } from './helpers';
+import { createNewsroom, joinWith, newPerson, notes, openSettings } from './helpers';
 
 const PRIVATE_KEYS = ['first_name', 'last_name', 'email', 'password_hash'];
 
@@ -50,7 +50,7 @@ test('invite with a link and join a newsroom', async ({ browser }, testInfo) => 
   await expect(cami.getByText("INVITATION D'INÈS")).toBeVisible();
   await expect(cami.getByText('1 MEMBRE · 2 PLACES RESTANTES')).toBeVisible();
   await joinWith(cami, 'inès');
-  await expect(cami.getByRole('alert')).toContainText('déjà pris');
+  await expect(notes(cami).getByRole('alert')).toContainText('déjà pris');
   await joinWith(cami, 'Cami');
   await expect(cami.getByRole('heading', { name: /^La une de / })).toBeVisible();
   // The starting balance, all of it to stake.

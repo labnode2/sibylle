@@ -11,6 +11,7 @@ import type { Me } from '../../api/types';
 import { usePreferences, type Theme } from '../../app/preferences';
 import { Button, ButtonLink, Card, Icon, Switch } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
+import { toast } from '../../ui/Toaster';
 import { useMe } from '../auth/api';
 import { useLogoutConfirm } from '../auth/LogoutDialog';
 import { NotificationPrefs } from '../notifications/NotificationPrefs';
@@ -74,11 +75,6 @@ function Display() {
           }}
         />
       </div>
-      {update.isError && (
-        <p role="alert" className={styles.alert}>
-          {t('display.failed')}
-        </p>
-      )}
     </section>
   );
 }
@@ -87,17 +83,11 @@ function Newsrooms({ me }: { me: Me }) {
   const { t } = useTranslation('settings');
   const leave = useLeaveNewsroom();
   const [asking, setAsking] = useState<string | null>(null);
-  const [left, setLeft] = useState<string | null>(null);
   return (
     <section className={styles.section} aria-labelledby="settings-newsrooms">
       <h2 id="settings-newsrooms" className={styles.sectionTitle}>
         {t('newsrooms.title')}
       </h2>
-      {left && (
-        <p role="status" className={styles.text}>
-          {t('newsrooms.left', { org: left })}
-        </p>
-      )}
       {me.memberships.length === 0 ? (
         <>
           <p className={styles.text}>{t('newsrooms.none')}</p>
@@ -143,7 +133,7 @@ function Newsrooms({ me }: { me: Me }) {
                         leave.mutate(org.id, {
                           onSuccess: () => {
                             setAsking(null);
-                            setLeft(org.title);
+                            toast.success(t('newsrooms.left', { org: org.title }));
                           },
                         })
                       }
@@ -167,14 +157,13 @@ function Newsrooms({ me }: { me: Me }) {
 function MyData() {
   const { t } = useTranslation('settings');
   const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
   const download = async () => {
     setBusy(true);
-    setFailed(false);
     try {
       await downloadMyData();
+      toast.success(t('data.done'));
     } catch {
-      setFailed(true);
+      toast.error(t('data.failed'));
     } finally {
       setBusy(false);
     }
@@ -189,11 +178,6 @@ function MyData() {
         <Icon name="download" />
         {t('data.export')}
       </Button>
-      {failed && (
-        <p role="alert" className={styles.alert}>
-          {t('data.failed')}
-        </p>
-      )}
     </section>
   );
 }
@@ -218,7 +202,10 @@ function DeleteAccount({ me }: { me: Me }) {
               disabled={remove.isPending}
               onClick={() =>
                 remove.mutate(undefined, {
-                  onSuccess: () => navigate('/connexion?compte=supprime', { replace: true }),
+                  onSuccess: () => {
+                    toast.success(t('auth:login.deleted'));
+                    void navigate('/connexion', { replace: true });
+                  },
                 })
               }
             >

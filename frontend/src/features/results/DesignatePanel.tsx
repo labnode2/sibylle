@@ -161,9 +161,9 @@ function ResultForm({
         </span>
       </Card>
 
-      {(errors.message || fieldError) && (
+      {fieldError && (
         <p role="alert" className={pronoStyles.alert}>
-          {errors.message ?? fieldError}
+          {fieldError}
         </p>
       )}
       {confirming ? (
@@ -240,11 +240,6 @@ function RelaunchForm({ orgId, prono }: { orgId: string; prono: PronoDetail }) {
         maxLength={200}
         onChange={(event) => setReason(event.target.value)}
       />
-      {errors.message && (
-        <p role="alert" className={pronoStyles.alert}>
-          {errors.message}
-        </p>
-      )}
       <div className={styles.actions}>
         <Button type="submit" disabled={relaunch.isPending}>
           {t('designate.relaunchSubmit')}
@@ -260,7 +255,6 @@ function RelaunchForm({ orgId, prono }: { orgId: string; prono: PronoDetail }) {
 function CancelForm({ orgId, prono }: { orgId: string; prono: PronoDetail }) {
   const { t } = useTranslation('results');
   const cancel = useCancel(orgId, prono.id);
-  const errors = useFormErrors(cancel.error);
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
 
@@ -286,11 +280,6 @@ function CancelForm({ orgId, prono }: { orgId: string; prono: PronoDetail }) {
         maxLength={200}
         onChange={(event) => setReason(event.target.value)}
       />
-      {errors.message && (
-        <p role="alert" className={pronoStyles.alert}>
-          {errors.message}
-        </p>
-      )}
       <div className={styles.actions}>
         <Button type="submit" disabled={cancel.isPending}>
           {t('designate.cancelSubmit')}

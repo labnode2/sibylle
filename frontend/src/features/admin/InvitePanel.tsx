@@ -3,28 +3,14 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button, Chip, Field, Icon, Kicker, Stepper } from '../../ui/components';
+import { Button, Chip, Field, Kicker, Stepper } from '../../ui/components';
+import { CopyButton } from '../../ui/CopyButton';
+import { toast } from '../../ui/Toaster';
 import { useFormErrors } from '../forms';
 import { useInvite } from '../orgs/api';
 import styles from './admin.module.css';
 
 const DURATIONS = [1, 7, 30];
-
-function CopyButton({ text }: { text: string }) {
-  const { t } = useTranslation('orgs');
-  const [copied, setCopied] = useState(false);
-  return (
-    <Button
-      variant="secondary"
-      onClick={() => {
-        void navigator.clipboard?.writeText(text).then(() => setCopied(true));
-      }}
-    >
-      <Icon name={copied ? 'check' : 'copy'} />
-      {copied ? t('invite.copied') : t('invite.copy')}
-    </Button>
-  );
-}
 
 export function InvitePanel({ orgId, accessCode }: { orgId: string; accessCode: string | null }) {
   const { t } = useTranslation('orgs');
@@ -34,13 +20,17 @@ export function InvitePanel({ orgId, accessCode }: { orgId: string; accessCode: 
   const [days, setDays] = useState(7);
   const [email, setEmail] = useState('');
   const [url, setUrl] = useState<string | null>(null);
-  const [sentTo, setSentTo] = useState<string | null>(null);
 
   const createLink = () => {
     const expires = new Date(Date.now() + days * 24 * 3600 * 1000).toISOString();
     invite.mutate(
       { kind: 'link', max_uses: places, expires_at: expires },
-      { onSuccess: (created) => setUrl(created.url ?? null) },
+      {
+        onSuccess: (created) => {
+          setUrl(created.url ?? null);
+          toast.success(t('invite.created'));
+        },
+      },
     );
   };
 
@@ -50,7 +40,7 @@ export function InvitePanel({ orgId, accessCode }: { orgId: string; accessCode: 
       { kind: 'email', email },
       {
         onSuccess: () => {
-          setSentTo(email);
+          toast.success(t('invite.sent', { email }));
           setEmail('');
         },
       },
@@ -60,11 +50,6 @@ export function InvitePanel({ orgId, accessCode }: { orgId: string; accessCode: 
   return (
     <section className={styles.panel} aria-label={t('invite.title')}>
       <h2 className={styles.heading}>{t('invite.title')}</h2>
-      {errors.message && (
-        <p className={styles.alert} role="alert">
-          {errors.message}
-        </p>
-      )}
 
       <div className={styles.block}>
         <Kicker tone="indigo">{t('invite.link')}</Kicker>
@@ -92,9 +77,9 @@ export function InvitePanel({ orgId, accessCode }: { orgId: string; accessCode: 
           {t('invite.create')}
         </Button>
         {url && (
-          <div className={styles.result} role="status">
+          <div className={styles.result}>
             <Field label={t('invite.url')} value={url} readOnly hint={t('invite.once')} />
-            <CopyButton text={url} />
+            <CopyButton text={url} label={t('invite.copy')} />
           </div>
         )}
       </div>
@@ -111,7 +96,6 @@ export function InvitePanel({ orgId, accessCode }: { orgId: string; accessCode: 
         <Button type="submit" variant="secondary" disabled={invite.isPending || !email}>
           {t('invite.send')}
         </Button>
-        {sentTo && <p role="status">{t('invite.sent', { email: sentTo })}</p>}
       </form>
 
       {accessCode && (
@@ -119,7 +103,7 @@ export function InvitePanel({ orgId, accessCode }: { orgId: string; accessCode: 
           <Kicker tone="indigo">{t('invite.code')}</Kicker>
           <div className={styles.inline}>
             <Chip variant="grey">{accessCode}</Chip>
-            <CopyButton text={accessCode} />
+            <CopyButton text={accessCode} label={t('invite.copy')} />
           </div>
         </div>
       )}

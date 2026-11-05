@@ -8,6 +8,7 @@ import {
   joinWith,
   laurels,
   newPerson,
+  notes,
   openSettings,
   orgIdOf,
   publishProno,
@@ -37,7 +38,7 @@ test('the editor runs the newsroom', async ({ browser }, testInfo) => {
   for (let i = 0; i < 4; i += 1) await ceiling.getByRole('button', { name: 'Moins' }).click();
   await expect(ceiling).toContainText('30');
   await ines.getByRole('button', { name: 'Enregistrer les réglages' }).click();
-  await expect(ines.getByText('Réglages enregistrés.')).toBeVisible();
+  await expect(notes(ines)).toContainText('Réglages enregistrés.');
 
   // Hugo becomes a journalist and publishes at once, under the new ceiling.
   await ines.getByRole('link', { name: 'MEMBRES', exact: true }).click();
@@ -61,7 +62,7 @@ test('the editor runs the newsroom', async ({ browser }, testInfo) => {
   await camiRow.getByLabel('LAURIERS À AJOUTER OU À RETIRER').fill('-15');
   await camiRow.getByLabel('MOTIF (VISIBLE DANS SON RELEVÉ)').fill('erreur de saisie');
   await camiRow.getByRole('button', { name: 'Ajuster les lauriers de Cami' }).click();
-  await expect(camiRow.getByText('Lauriers ajustés : -15.')).toBeVisible();
+  await expect(notes(ines)).toContainText('Lauriers ajustés : -15.');
   expect(await laurels(cami, orgId)).toEqual([85, 0]);
   const statement = await call(cami, 'GET', `/orgs/${orgId}/members/me/ledger`);
   expect(statement.body.items[0]).toMatchObject({ kind: 'adjustment', reason: 'erreur de saisie' });

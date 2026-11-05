@@ -7,6 +7,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-r
 import type { OrgCard, PixelImage } from '../../api/types';
 import { Button, ButtonLink, Card, Field, Icon, Rule } from '../../ui/components';
 import { PixelImage as Pixels } from '../../ui/PixelImage';
+import { toast } from '../../ui/Toaster';
 import { useMe } from '../auth/api';
 import { useFormErrors } from '../forms';
 import { useContent, useCreateOrg, useJoin, useJoinPreview, type JoinSource } from './api';
@@ -89,11 +90,9 @@ export function NewsroomCard({
   return (
     <Card className={styles.invitation} aria-label={org.title}>
       <div className={`${styles.band} bg-${org.background_key}`} aria-hidden="true">
-        {org.logo && (
-          <span className={styles.logo}>
-            <Pixels image={org.logo} size={48} avatar={false} />
-          </span>
-        )}
+        <span className={styles.logo}>
+          <Pixels image={org.logo} size={48} avatar={false} />
+        </span>
       </div>
       <div className={styles.cardBody}>
         {kicker && <span className={styles.cardKicker}>{kicker}</span>}
@@ -193,7 +192,12 @@ export function CreateOrgPage() {
     if (!chosenAvatar) return;
     create.mutate(
       { title, background_key: background, pseudo, avatar: chosenAvatar },
-      { onSuccess: (created) => navigate(`/o/${created.org.id}`) },
+      {
+        onSuccess: (created) => {
+          toast.success(t('create.done', { title: created.org.title }));
+          void navigate(`/o/${created.org.id}`);
+        },
+      },
     );
   };
 
@@ -201,11 +205,6 @@ export function CreateOrgPage() {
     <section className={styles.page}>
       <h1 className={styles.title}>{t('create.title')}</h1>
       <form className={styles.form} onSubmit={submit} noValidate>
-        {errors.message && (
-          <p className={styles.alert} role="alert">
-            {errors.message}
-          </p>
-        )}
         <Field
           label={t('create.name')}
           value={title}
@@ -230,7 +229,7 @@ export function CreateOrgPage() {
           setAvatar={setAvatar}
           pseudoError={errors.field('pseudo')}
         />
-        <Button type="submit" block disabled={create.isPending || !title.trim()}>
+        <Button type="submit" block disabled={create.isPending || !title.trim() || !chosenAvatar}>
           {t('create.submit')}
         </Button>
         <p className={styles.hint}>{t('create.editor')}</p>
@@ -291,7 +290,12 @@ export function JoinPage() {
     if (!chosenAvatar || !accepted) return;
     join.mutate(
       { ...source, pseudo, avatar: chosenAvatar, charter_accepted: true },
-      { onSuccess: (joined) => navigate(`/o/${joined.org.id}`) },
+      {
+        onSuccess: (joined) => {
+          toast.success(t('join.done', { title: joined.org.title }));
+          void navigate(`/o/${joined.org.id}`);
+        },
+      },
     );
   };
 
@@ -316,11 +320,6 @@ export function JoinPage() {
         </div>
       )}
       <form className={styles.form} onSubmit={submit} noValidate>
-        {errors.message && (
-          <p className={styles.alert} role="alert">
-            {errors.message}
-          </p>
-        )}
         <ProfileFields
           pseudo={pseudo}
           setPseudo={setPseudo}

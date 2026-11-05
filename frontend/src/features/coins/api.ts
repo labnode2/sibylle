@@ -27,5 +27,7 @@ export function useWeeklyCoinsSeen(orgId: string) {
         }),
       ),
     onSuccess: () => client.setQueryData(weeklyCoinsKey(orgId), null),
+    // Closing the good news: nothing to say if the server missed it, it will show again.
+    meta: { quiet: true },
   });
 }

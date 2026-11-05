@@ -282,6 +282,24 @@ Sous « Nice ou Monaco samedi ? », Hugo écrit : « Monaco n'a pas gagné à Ni
 
 ---
 
+### User Story 15 - Montrer sa carte de presse hors de la rédaction (Priority: P3)
+
+Cami veut montrer sa carte de presse sur son blog. Sous sa carte, elle active « Profil public » : l'appli lui explique ce que tout le monde verra, puis lui donne un lien et le code d'une iframe, qu'elle colle dans son blog. Ses lecteurs y voient sa carte sans compte Sibylle. Quand elle repasse en privé, le lien et l'iframe n'affichent plus sa carte ; si elle la rend publique de nouveau, ils la montrent encore.
+
+**Why this priority**: elle fait connaître le jeu et donne une vitrine à chacun, mais le jeu se joue sans.
+
+**Independent Test**: activer « Profil public » sur sa carte, ouvrir le lien dans un navigateur sans session puis dans l'iframe d'un autre site ; vérifier ce qui s'affiche et ce qui ne s'affiche pas ; repasser en privé et vérifier que le lien ne montre plus rien, puis public de nouveau à la même adresse.
+
+**Acceptance Scenarios**:
+
+1. **Given** sa carte de presse, **When** Cami l'ouvre, **Then** « Profil public » est désactivé et explique ce qu'une carte publique montre, et à qui.
+2. **Given** « Profil public » activé, **When** quelqu'un sans compte ouvre le lien, **Then** il voit la carte de Cami seule sur la page (pseudo, avatar et cadre, rôle, rédaction, arrivée, objets mis en avant, lauriers, pronos joués, réussite, chaîne de victoires), et rien d'autre : ni ses paris, ni ses messages, ni son relevé, ni son nom ou son e-mail.
+3. **Given** le code d'intégration collé dans le blog de Cami, **When** un lecteur ouvre le blog, **Then** la carte s'affiche dans l'iframe.
+4. **Given** une carte publique, **When** Cami la repasse en privé, **Then** le lien et l'iframe disent seulement que la carte n'est pas publique ; rendue publique de nouveau, elle reprend la même adresse.
+5. **Given** une carte publique, **When** Cami quitte la rédaction ou supprime son compte, **Then** le lien n'affiche plus sa carte ; si elle revient dans la rédaction, sa carte reste privée tant qu'elle ne la rend pas publique.
+
+---
+
 ### Edge Cases
 
 - Deux membres parient au même instant avec le même solde : chaque pari est traité à part et aucun solde ne devient négatif par une mise.
@@ -304,6 +322,9 @@ Sous « Nice ou Monaco samedi ? », Hugo écrit : « Monaco n'a pas gagné à Ni
 - Deux membres aiment le même message au même instant : chaque « J'aime » compte une fois ; aimer deux fois ne change rien.
 - Un message est supprimé pendant qu'un autre membre l'aime : le « J'aime » est refusé et le message disparaît de son écran.
 - Un membre quitte la rédaction : ses messages restent sous son pseudo. Un compte supprimé : ses messages sont effacés, ses « J'aime » restent comptés sous « Ancien membre ».
+- Un membre de plusieurs rédactions a une carte dans chacune : chaque carte se rend publique à part, avec son propre lien.
+- Un lien de carte inventé ou mal recopié répond comme celui d'une carte privée : rien ne dit si la carte existe.
+- Plusieurs actions de suite : trois notifications au plus à la fois, la plus ancienne laisse sa place ; la même deux fois de suite n'en montre qu'une.
 
 ## Requirements *(mandatory)*
 
@@ -323,7 +344,7 @@ Sous « Nice ou Monaco samedi ? », Hugo écrit : « Monaco n'a pas gagné à Ni
 - **FR-012**: En rejoignant, le membre DOIT choisir un pseudo unique dans l'organisation, un avatar parmi des modèles, et accepter la charte de l'organisation.
 - **FR-013**: Un compte DOIT pouvoir appartenir à plusieurs organisations ; pseudo, avatar, lauriers, statistiques et collection sont propres à chacune.
 - **FR-014**: Les organisations NE DOIVENT avoir aucune visibilité entre elles (pronos, membres, classements, notifications).
-- **FR-015**: La carte d'organisation (logo en pixel art, fond choisi dans une liste, titre) DOIT être modifiable par la rédaction en chef seulement.
+- **FR-015**: La carte d'organisation (logo en pixel art, fond choisi dans une liste, titre) DOIT être modifiable par la rédaction en chef seulement. Chaque rédaction a un logo dès sa création, sans avoir à le choisir : le logo par défaut, déjà sélectionné dans les réglages, tant que la rédaction en chef ne le change pas (« Modifier le logo ») ; retirer un logo ramène celui par défaut.
 - **FR-016**: Chaque organisation DOIT pouvoir créer, renommer, ordonner et supprimer ses rubriques.
 
 **Rôles**
@@ -391,7 +412,7 @@ Sous « Nice ou Monaco samedi ? », Hugo écrit : « Monaco n'a pas gagné à Ni
 - **FR-094**: Chaque lundi à 00:00 (heure de Paris), chaque membre actif arrivé avant ce moment DOIT recevoir autant de pièces que ses lauriers en or (solde plus mises des paris pas encore réglés ; rien s'ils sont à zéro ou négatifs). Ses lauriers ne changent pas. La conversion a lieu une seule fois par semaine et par membre, même si le `worker` redémarre.
 - **FR-095**: Les pièces DOIVENT être le seul moyen de payer dans la collection ; elles ne comptent dans aucun classement et ne repartent pas à zéro en fin de saison. Chaque semaine (du lundi 00:00 au dimanche 23:59, heure de Paris), un objet à vendre de la collection, tiré au hasard pour chaque rédaction, DOIT être en promotion d'un pourcentage lui aussi tiré au hasard (20, 30, 40 ou 50 %), pendant toute la semaine : la collection montre l'ancien prix barré et le nouveau, et l'achat se paie au prix réduit. Si la semaine change entre l'affichage et l'achat, l'achat est refusé et la collection montre le nouveau prix.
 - **FR-096**: L'appli DOIT montrer séparément les lauriers verts (le solde, ce qu'on peut miser), les lauriers en or (solde plus mises en jeu) et les pièces. On mise et on gagne des lauriers verts : les mises, les gains, la carte de presse et les classements les montrent en vert. Chaque compteur DOIT expliquer ce qu'il représente au survol, au focus ou au toucher. À la première ouverture après une conversion, une fenêtre DOIT annoncer les pièces reçues, une seule fois.
-- **FR-097**: Le menu principal DOIT avoir un onglet « Rédaction » : la carte de la rédaction (logo, nom, membres, rédaction en chef ; pour la rédaction en chef, les invitations, le code d'accès et les réglages), puis la liste des membres avec leur rôle (rédaction en chef, journalistes, puis lecteur·rices), chacun ouvrant sa carte de presse ; le relevé reste visible de son seul titulaire. Une petite carte de la rédaction (logo, nom, membres), à droite de la navigation sur ordinateur et sur la une sur téléphone, DOIT ouvrir sur place un menu déroulant : les rédactions du compte, celle en cours marquée, pour en changer, puis en dernier « Rejoindre ou créer une rédaction ». Tant que la rédaction n'a pas de logo, son initiale en tient lieu.
+- **FR-097**: Le menu principal DOIT avoir un onglet « Rédaction » : la carte de la rédaction (logo, nom, membres, rédaction en chef ; pour la rédaction en chef, les invitations, le code d'accès et les réglages), puis la liste des membres avec leur rôle (rédaction en chef, journalistes, puis lecteur·rices), chacun ouvrant sa carte de presse ; le relevé reste visible de son seul titulaire. Une petite carte de la rédaction (logo, nom, membres), à droite de la navigation sur ordinateur et sur la une sur téléphone, DOIT ouvrir sur place un menu déroulant : les rédactions du compte, celle en cours marquée, pour en changer, puis en dernier « Rejoindre ou créer une rédaction ». Partout, la rédaction se montre par son logo, jamais par une initiale.
 - **FR-098**: Chaque membre DOIT pouvoir personnaliser sa carte sur un seul écran : pseudo, avatar dessiné, cadre parmi ceux qu'il possède, et jusqu'à trois objets de sa collection ou trophées de saison mis en avant, montrés dans l'ordre choisi. L'écran DOIT montrer la carte telle que les autres membres la verront, mise à jour à chaque changement, avec dessous « Annuler » (qui remet ce qui était enregistré) et « Enregistrer » (qui garde tout d'un geste), actifs seulement après une modification ; l'écran reste ouvert après l'enregistrement. Un objet qui ne lui appartient plus disparaît de la carte.
 - **FR-099**: La page d'accueil « Bienvenue sur Sibylle » DOIT lister, sous « Créer une rédaction », les rédactions du compte pour y revenir. Hors d'une rédaction, une roue crantée en haut à droite DOIT ouvrir « Mes réglages ». Sur sa propre carte de presse, après « Ma collection », chaque membre DOIT trouver « Réglages » puis « Déconnexion », en rouge, qui demande confirmation avant de déconnecter (comme le bouton des réglages). Les réglages DOIVENT ramener là d'où l'on vient : le profil de la rédaction, ou la page d'accueil.
 
@@ -425,18 +446,25 @@ Sous « Nice ou Monaco samedi ? », Hugo écrit : « Monaco n'a pas gagné à Ni
 - **FR-142**: L'auteur·rice d'un message DOIT pouvoir le supprimer, et la rédaction en chef DOIT pouvoir retirer tout message ; un message supprimé disparaît pour tous, avec ses « J'aime ». Un message ne se modifie pas.
 - **FR-143**: La une et la liste des pronos DOIVENT indiquer le nombre de messages de chaque prono. L'export d'un compte DOIT contenir ses messages ; la suppression du compte les efface.
 
+**Carte de presse publique**
+
+- **FR-144**: Chaque membre DOIT pouvoir rendre publique sa carte de presse, rédaction par rédaction, depuis sa carte : un interrupteur « Profil public », désactivé par défaut, avec l'explication de ce que voit le public. Une carte publique DOIT montrer à son membre son lien et le code d'une iframe, chacun avec un bouton pour le copier.
+- **FR-145**: Une carte publique DOIT se lire sans compte, à son lien, seule sur la page, y compris dans l'iframe d'un autre site : pseudo, avatar et cadre, rôle, nom de la rédaction, numéro et date d'arrivée, objets mis en avant, lauriers, pronos joués, réussite, chaîne et record de victoires. Jamais les paris, les messages, le relevé, ni le nom, le prénom ou l'e-mail. Les moteurs de recherche sont priés de ne pas l'indexer.
+- **FR-146**: Le lien d'une carte DOIT rester le même quand elle repasse en privé puis redevient publique. Tant que la carte est privée, que son membre a quitté la rédaction (sa carte redevient alors privée) ou que son compte est supprimé, le lien répond comme un lien qui n'a jamais existé.
+
 **Préférences et plateforme**
 
 - **FR-130**: Chaque membre DOIT pouvoir choisir le thème clair, sombre ou automatique et couper les animations.
 - **FR-131**: L'appli DOIT être installable (mobile et ordinateur) et avoir une mise en page dédiée sur ordinateur.
 - **FR-132**: Tous les textes de l'interface et des e-mails DOIVENT passer par un catalogue de traduction ; seul le français est livré en v1.
 - **FR-133**: Le parrainage NE FAIT PAS partie de la v1.
+- **FR-134**: Après chaque action (enregistrer, parier, publier, inviter, acheter, copier un lien…), l'appli DOIT dire ce qui est fait, ou ce qui a échoué, dans une petite notification en haut à droite de l'écran (en haut sur téléphone), avec une barre qui se vide avant qu'elle disparaisse : 4 secondes, 6,5 pour une erreur. Une croix la ferme ; un clic ailleurs sur elle passe à la page. La page elle-même ne change pas pour le dire : seules les erreurs propres à un champ restent sous ce champ, et les états durables (hors ligne, partie terminée, lien d'invitation à copier) restent dans la page.
 
 ### Key Entities *(include if feature involves data)*
 
 - **Compte** : une personne ; e-mail, mot de passe, nom et prénom (privés), préférences.
 - **Organisation (rédaction)** : carte (logo, fond, titre), réglages de lauriers, charte, code d'accès, mot de la rédaction en chef.
-- **Membre** : le lien entre un compte et une organisation ; rôle, pseudo, avatar, cadre, solde, score de saison, pièces, collection, objets mis en avant.
+- **Membre** : le lien entre un compte et une organisation ; rôle, pseudo, avatar, cadre, solde, score de saison, pièces, collection, objets mis en avant, et l'adresse de sa carte publique, s'il l'a rendue publique.
 - **Invitation** : lien à places limitées et date d'expiration, ou invitation nominative par e-mail.
 - **Rubrique** : catégorie de pronos propre à une organisation.
 - **Prono** : question, type, choix, dates, gain de base, état, résultat, historique des relances.

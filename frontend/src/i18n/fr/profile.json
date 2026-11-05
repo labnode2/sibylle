@@ -52,6 +52,7 @@
       "until": "JUSQU'AU {{day}} AU SOIR · UN OBJET TIRÉ AU HASARD CHAQUE LUNDI"
     },
     "confirm": "Acheter pour {{price}} pièces ?",
+    "bought": "{{name}} est à toi !",
     "yes": "Acheter",
     "no": "Annuler",
     "backToCard": "Retour à ma carte de presse",
@@ -183,5 +184,24 @@
     "showcaseHint": "Trois objets ou trophées au plus, montrés sur ta carte dans l'ordre où tu les choisis.",
     "nothing": "Rien à mettre en avant pour l'instant : chaque saison jouée grave une boule, et la collection vend des couleurs et des cadres."
   },
-  "backProfile": "PROFIL"
+  "backProfile": "PROFIL",
+  "public": {
+    "title": "Profil public",
+    "intro": "Montre ta carte de presse hors de la rédaction, sans compte : avec un lien, ou dans un autre site grâce à une iframe. On y voit ton pseudo, ton avatar, ce que tu mets en avant et tes statistiques ; jamais tes paris, tes messages ni ton relevé.",
+    "off": "PRIVÉE · SEULS LES MEMBRES DE {{org}} LA VOIENT",
+    "on": "PUBLIQUE · TOUT LE MONDE LA VOIT AVEC LE LIEN",
+    "link": "LIEN PUBLIC",
+    "copyLink": "Copier le lien",
+    "embed": "CODE D'INTÉGRATION (IFRAME)",
+    "copyEmbed": "Copier le code",
+    "open": "Voir ma carte publique ↗",
+    "again": "Repasse en privé quand tu veux : le lien n'affichera plus ta carte, puis la montrera de nouveau si tu la rends publique.",
+    "madePublic": "Ta carte est publique : son lien et son code sont prêts.",
+    "madePrivate": "Ta carte est de nouveau privée.",
+    "linkCopied": "Lien de ta carte copié.",
+    "embedCopied": "Code de l'iframe copié.",
+    "frameTitle": "Carte de presse de {{pseudo}} sur Sibylle",
+    "missing": "Cette carte de presse n'est pas publique, ou n'existe plus.",
+    "error": "La carte n'a pas pu être chargée. Réessaie dans un moment."
+  }
 }

@@ -3,12 +3,11 @@
 // its chain of wins, the role, arrival and record of wins, the three things the member chose to
 // show; three statistics in green laurels; the balls collected (an engraved ball per season
 // played, the others from secret codes). On one's own card: « Personnaliser ma carte », the
-// collection, preferences and account; then the other objects and the statement. The newsroom
-// has a tab of its own, « La rédaction ».
+// public profile, the collection, settings and sign-out; then the other objects and the
+// statement. The newsroom has a tab of its own, « La rédaction ».
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useParams } from 'react-router';
 
-import type { Org } from '../../api/types';
 import { formatDate, formatNumber } from '../../i18n';
 import { Card, Icon, Laurel, TopBar } from '../../ui/components';
 import { CrystalBall } from '../../ui/CrystalBall';
@@ -18,9 +17,10 @@ import type { Variant } from '../../vendor/crystal-ball/crystal-ball.js';
 import { useLogoutConfirm } from '../auth/LogoutDialog';
 import { ItemPreview } from '../collection/ItemPreview';
 import { useOrg } from '../orgs/api';
-import { usePressCard, type PressCard } from './api';
+import { usePressCard, type CardFace, type PressCard } from './api';
 import { LedgerList } from './LedgerList';
 import styles from './profile.module.css';
+import { PublicCardSetting } from './PublicCardSetting';
 
 type Trophy = PressCard['trophies'][number];
 
@@ -30,9 +30,8 @@ function useTrophyName() {
     t('trophies.season', { season: t(`seasons.${trophy.season.name}`), year: trophy.season.year });
 }
 
-function Stats({ card }: { card: PressCard }) {
+export function Stats({ stats }: { stats: PressCard['stats'] }) {
   const { t } = useTranslation('profile');
-  const { stats } = card;
   return (
     <dl className={styles.stats} aria-label={t('stats.label')}>
       <div>
@@ -54,7 +53,7 @@ function Stats({ card }: { card: PressCard }) {
 }
 
 /** « Mis en avant »: up to three objects or engraved trophies, chosen by the member. */
-function Showcase({ card }: { card: PressCard }) {
+function Showcase({ card }: { card: CardFace }) {
   const { t } = useTranslation('profile');
   const trophyName = useTrophyName();
   if (card.showcase.length === 0) return null;
@@ -84,17 +83,16 @@ function Showcase({ card }: { card: PressCard }) {
   );
 }
 
-/** The card itself; « Personnaliser ma carte » shows it as it goes, with `mine` off. */
+/** The card itself; « Personnaliser ma carte » shows it as it goes, and the public card (US15)
+ *  as anyone sees it. Only one's own card has `editTo`, the way to customise it. */
 export function Identity({
-  orgId,
-  org,
   card,
-  mine,
+  orgTitle,
+  editTo,
 }: {
-  orgId: string;
-  org: Org;
-  card: PressCard;
-  mine: boolean;
+  card: CardFace;
+  orgTitle: string;
+  editTo?: string;
 }) {
   const { t } = useTranslation('profile');
   const since = formatDate(card.joined_at, { month: 'long', year: 'numeric' }).toUpperCase();
@@ -117,7 +115,7 @@ export function Identity({
             <Streak value={card.stats.streak} size={16} className={styles.pseudoStreak} />
           </div>
           <p className={styles.meta}>
-            <span className={styles.role}>{t(`roles.${card.role}`)}</span> {org.title.toUpperCase()}
+            <span className={styles.role}>{t(`roles.${card.role}`)}</span> {orgTitle.toUpperCase()}
             <br />
             {t('since', { date: since })}
             {card.stats.best_streak >= STREAK_SHOWN_FROM && (
@@ -130,9 +128,9 @@ export function Identity({
         </div>
       </div>
       <Showcase card={card} />
-      {mine && (
+      {editTo && (
         <div className={styles.cardFoot}>
-          <Link to={`/o/${orgId}/profil/carte`} className={styles.editLink}>
+          <Link to={editTo} className={styles.editLink}>
             {t('customize.open')}
           </Link>
         </div>
@@ -200,9 +198,8 @@ function Balls({ card, mine }: { card: PressCard; mine: boolean }) {
   );
 }
 
-/** The lines under my card: the collection, the preferences and the account. */
-/** « Ma collection », « Réglages » (which lead back here), then « Déconnexion », which asks
- *  first. */
+/** The lines under my card: « Ma collection », « Réglages » (which lead back here), then
+ *  « Déconnexion », which asks first. */
 function Lines({ orgId }: { orgId: string }) {
   const { t } = useTranslation('profile');
   const { pathname } = useLocation();
@@ -261,8 +258,13 @@ export function PressCardPage() {
 
       <div className={styles.columns}>
         <div className={styles.left}>
-          <Identity orgId={orgId} org={org.data} card={data} mine={mine} />
-          <Stats card={data} />
+          <Identity
+            card={data}
+            orgTitle={org.data.title}
+            editTo={mine ? `/o/${orgId}/profil/carte` : undefined}
+          />
+          <Stats stats={data.stats} />
+          {mine && me && <PublicCardSetting orgId={orgId} orgTitle={org.data.title} member={me} />}
           {mine && <Lines orgId={orgId} />}
         </div>
 

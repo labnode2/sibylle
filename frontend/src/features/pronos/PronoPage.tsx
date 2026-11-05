@@ -19,6 +19,7 @@ import {
   TopBar,
 } from '../../ui/components';
 import { AvatarStack, PixelImage } from '../../ui/PixelImage';
+import { toast } from '../../ui/Toaster';
 import { useFormErrors } from '../forms';
 import { PushPrompt } from '../notifications/PushPrompt';
 import { useOrg } from '../orgs/api';
@@ -274,7 +275,6 @@ export function PronoPage() {
   const [number, setNumber] = useState('');
   const [day, setDay] = useState('');
   const [stake, setStake] = useState(0);
-  const [missing, setMissing] = useState(false);
   // Once a bet is in, the result is worth hearing about: the app offers push notifications.
   const [justBet, setJustBet] = useState(false);
 
@@ -299,14 +299,18 @@ export function PronoPage() {
 
   const submit = () => {
     if (!answer) {
-      setMissing(true);
+      toast.error(t('detail.chooseFirst'));
       return;
     }
-    setMissing(false);
     placeBet.mutate(
       { ...answer, stake },
       {
         onSuccess: () => {
+          toast.success(
+            stake > 0
+              ? t('toast.betStake', { count: stake, stake: formatNumber(stake) })
+              : t('toast.bet'),
+          );
           setStake(0);
           setDay('');
           setJustBet(true);
@@ -471,9 +475,9 @@ export function PronoPage() {
                   <span className={styles.label}>{t('detail.potShared')}</span>
                 </div>
               </div>
-              {(missing || errors.message || fieldError) && (
+              {fieldError && (
                 <p role="alert" className={styles.alert}>
-                  {missing ? t('detail.chooseFirst') : (errors.message ?? fieldError)}
+                  {fieldError}
                 </p>
               )}
               <div className={styles.submitRow}>

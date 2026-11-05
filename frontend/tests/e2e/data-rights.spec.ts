@@ -10,6 +10,7 @@ import {
   invitationPath,
   joinWith,
   newPerson,
+  notes,
   orgIdOf,
   PASSWORD,
   pot,
@@ -77,12 +78,12 @@ test('export, the last editor, then deleting an account', async ({ browser }, te
   // 2. Cami deletes hers: signed out, and no way back in.
   await cami.getByRole('button', { name: 'Supprimer mon compte' }).click();
   await cami.getByRole('button', { name: 'Oui, supprimer mon compte' }).click();
-  await expect(cami).toHaveURL(/\/connexion\?compte=supprime$/);
-  await expect(cami.getByText('Ton compte est supprimé.')).toBeVisible();
+  await expect(cami).toHaveURL(/\/connexion$/);
+  await expect(notes(cami)).toContainText('Ton compte est supprimé.');
   await cami.getByLabel('E-MAIL').fill(email);
   await cami.getByLabel('MOT DE PASSE').fill(PASSWORD);
   await cami.getByRole('button', { name: 'Se connecter' }).click();
-  await expect(cami.getByText('E-mail ou mot de passe incorrect.')).toBeVisible();
+  await expect(notes(cami)).toContainText('E-mail ou mot de passe incorrect.');
 
   // Her bet still counts, under « Ancien membre ».
   await ines.goto(`/o/${orgId}/pronos/${prono.id}`);
