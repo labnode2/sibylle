@@ -1,0 +1,11 @@
+# Une sauvegarde chaque nuit vers 3 h 30 ; rattrapée au démarrage si la machine était éteinte.
+[Unit]
+Description=Sibylle : sauvegarde chaque nuit
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+RandomizedDelaySec=15min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

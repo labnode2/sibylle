@@ -44,7 +44,7 @@ Constitution 1.0.0 (`.specify/memory/constitution.md`).
 | II. Rédactions étanches | Toutes les routes de jeu sont sous `/api/orgs/{org_id}/…` ; une dépendance FastAPI charge le membre et son rôle et refuse sinon ; les sujets temps réel sont filtrés par appartenance ; une suite de tests d'accès parcourt toutes les routes (contracts/rest-api.md). | ✅ | ✅ |
 | III. Les lauriers sont un registre | Table `ledger_entries` en ajout seul ; solde et score mis en cache sur `memberships` dans la même transaction ; corrections par écritures inverses rattachées à un `settlement` ; vérification nocturne cache = somme. | ✅ | ✅ |
 | IV. Règles testées d'abord | Paquet `sibylle.domain` sans FastAPI ni SQLAlchemy ; tests unitaires et Hypothesis écrits avant le code ; tests de contrat et parcours Playwright pour rejoindre, parier, désigner, être payé. | ✅ | ✅ |
-| V. Simple à héberger | Services Compose : `nginx` (et `certbot` pour son certificat), `api`, `worker`, `db` (plus une tâche de sauvegarde) ; pas de Redis ni de file de messages : `LISTEN/NOTIFY` et une table de notifications suffisent. | ✅ | ✅ |
+| V. Simple à héberger | Services Compose : `nginx` (et `certbot` pour son certificat), `api`, `worker`, `db` (et une sauvegarde chaque nuit, par un timer systemd) ; pas de Redis ni de file de messages : `LISTEN/NOTIFY` et une table de notifications suffisent. | ✅ | ✅ |
 | VI. Français d'abord, accessible, Gazette | i18next côté interface, catalogue Jinja2 côté e-mails, `fr` seul livré ; fuseau `Europe/Paris` dans le domaine ; jetons de couleur et polices de la Gazette dans `tokens.css` ; axe-core en CI ; `prefers-reduced-motion` et réglage « couper les animations ». | ✅ | ✅ |
 
 Aucun écart : la section Complexity Tracking reste vide.
@@ -147,12 +147,17 @@ frontend/
     └── e2e/                     # Playwright + axe-core
 
 deploy/
-├── docker-compose.yml           # nginx, certbot, api, worker, db, backup ; profil dev : mailpit
+├── docker-compose.yml           # développement : db et mailpit (profil dev)
+├── compose.prod.yml             # production (projet sibylle-prod) : db, api, worker, nginx, certbot
+├── update.sh  lib.sh            # mise à jour : sauvegarde, redémarrage, santé, retour arrière
+├── webhook/hooks.yaml           # crochet de déploiement appelé par la CI
+├── systemd/                     # services du crochet et de la sauvegarde de nuit
 ├── nginx/                       # Dockerfile (interface construite par Node) et configuration :
 │                                # HTTPS, proxy protocol, CSP, fichiers statiques
 ├── frpc.toml.example            # tunnel 80/443 vers nginx
+├── README.md                    # mise en production pas à pas
 ├── .env.example
-└── backup/                      # pg_dump quotidien et restauration
+└── backup/                      # backup.sh et restore.sh
 
 crystal-ball-kit/                # existant : sprites et logo, copiés dans frontend/public
 ```

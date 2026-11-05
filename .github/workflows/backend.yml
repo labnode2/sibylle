@@ -1,9 +1,10 @@
 # Serveur : à chaque push sur main et à chaque pull request qui touche le serveur, les
 # vérifications de `make check-backend` (le PostgreSQL des tests vient de testcontainers, Docker
 # est sur le runner), puis l'image Docker du serveur (backend/Dockerfile). Sur main, une fois les
-# vérifications passées, l'image part dans le registre, taguée `main` et `sha-<commit>` ;
-# ailleurs, elle est seulement construite. Le registre attend les secrets REGISTRY_USERNAME et
-# REGISTRY_PASSWORD du dépôt.
+# vérifications passées, l'image part dans le registre, taguée `main` et `sha-<commit>`, puis la
+# machine de production est prévenue (deploy/webhook/hooks.yaml) ; ailleurs, l'image est
+# seulement construite. Secrets du dépôt : REGISTRY_USERNAME et REGISTRY_PASSWORD pour le
+# registre, DEPLOY_WEBHOOK_SECRET pour le crochet (deploy/README.md).
 name: Serveur
 
 on:
@@ -63,6 +64,8 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      pushed: ${{ steps.login.outcome == 'success' }}
     env:
       # Un secret ne se lit pas dans un `if:` : sa présence passe par l'environnement du job.
       HAS_REGISTRY: ${{ secrets.REGISTRY_USERNAME != '' }}
@@ -100,3 +103,46 @@ jobs:
         if: github.ref == 'refs/heads/main' && env.HAS_REGISTRY != 'true'
         run: echo "::warning::Image construite mais pas envoyée faute de secrets REGISTRY_USERNAME et REGISTRY_PASSWORD."
 
+  # La machine tire l'image qui vient de partir, sauvegarde, redémarre et contrôle la santé des
+  # services (deploy/update.sh) ; sa réponse est le journal de la mise à jour, et ce job échoue
+  # avec elle.
+  deploy:
+    name: Déployer
+    needs: image
+    if: needs.image.outputs.pushed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: https://sibylle.cc
+    steps:
+      - name: Prévenir la machine de production
+        env:
+          SECRET: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}
+          URL: ${{ vars.DEPLOY_WEBHOOK_URL || 'https://sibylle.cc/hooks/deploy' }}
+        run: |
+          if [ -z "$SECRET" ]; then
+            echo "::warning::Pas de déploiement : le secret DEPLOY_WEBHOOK_SECRET n'est pas posé."
+            exit 0
+          fi
+          body="{\"commit\":\"$GITHUB_SHA\"}"
+          signature=$(printf '%s' "$body" | python3 -c 'import hashlib, hmac, os, sys; print(hmac.new(os.environ["SECRET"].encode(), sys.stdin.buffer.read(), hashlib.sha256).hexdigest())')
+          code=$(curl --silent --show-error --max-time 900 --output response.txt --write-out '%{http_code}' \
+            --header "Content-Type: application/json" \
+            --header "X-Hub-Signature-256: sha256=$signature" \
+            --data-binary "$body" "$URL") ||
+            { echo "::error::Machine injoignable sur $URL : nginx doit relayer /hooks/deploy (deploy/README.md)."; exit 1; }
+          cat response.txt
+          case $code in
+            200) ;;
+            403) echo "::error::Requête refusée par la machine : signature absente ou commit invalide."; exit 1 ;;
+            500)
+              # webhook répond aussi 500 à une mauvaise signature, avant de lancer quoi que ce soit.
+              if grep -q "evaluating hook rules" response.txt; then
+                echo "::error::Signature refusée : DEPLOY_WEBHOOK_SECRET n'est pas le secret de la machine."
+              else
+                echo "::error::La mise à jour a échoué sur la machine (journal ci-dessus)."
+              fi
+              exit 1 ;;
+            *) echo "::error::Réponse inattendue de la machine : HTTP $code."; exit 1 ;;
+          esac

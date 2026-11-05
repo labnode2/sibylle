@@ -1,0 +1,24 @@
+# Le crochet de déploiement (deploy/webhook/hooks.yaml), servi par webhook sous l'utilisateur
+# sibylle, membre du groupe docker. Il écoute sur l'adresse du pont Docker (docker0), où seul
+# nginx, depuis son conteneur, le joint : jamais directement depuis Internet.
+# Le secret est dans /etc/sibylle/webhook.env (SIBYLLE_WEBHOOK_SECRET=…, 64 caractères de
+# `openssl rand -hex 32`), le même que le secret DEPLOY_WEBHOOK_SECRET de GitHub.
+# Installation : deploy/README.md.
+[Unit]
+Description=Sibylle : crochet de déploiement
+After=docker.service
+Requires=docker.service
+
+[Service]
+User=sibylle
+Group=sibylle
+Environment=SIBYLLE_DIR=/opt/sibylle
+EnvironmentFile=/etc/sibylle/webhook.env
+ExecStartPre=/bin/sh -c 'test "$${#SIBYLLE_WEBHOOK_SECRET}" -ge 32 || { echo "SIBYLLE_WEBHOOK_SECRET manque ou fait moins de 32 caractères" >&2; exit 1; }'
+ExecStart=/usr/bin/webhook -hooks ${SIBYLLE_DIR}/deploy/webhook/hooks.yaml -template -hotreload -ip 172.17.0.1 -port 9000 -nopanic
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

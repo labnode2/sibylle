@@ -1,0 +1,77 @@
+# Production, sur la machine à domicile, qui est aussi le PC de développement : un projet Compose
+# à part (`sibylle-prod`), avec ses propres volumes et aucun port publié, si bien que la base de
+# développement (projet `sibylle`, port 5432) n'est jamais touchée. deploy/update.sh le lance
+# depuis /opt/sibylle, avec les réglages de production de deploy/.env (deploy/README.md).
+# nginx et certbot s'y ajouteront avec leur configuration (T142, T207, T210).
+name: sibylle-prod
+
+x-logging: &logging
+  # Journaux tournants : le pilote `local` garde 5 fichiers de 20 Mo par conteneur.
+  driver: local
+
+x-backend: &backend
+  image: ${SIBYLLE_BACKEND_IMAGE:-registry.labnode.ovh/sibylle/backend}:${SIBYLLE_TAG:-main}
+  restart: unless-stopped
+  env_file: .env
+  volumes:
+    - uploads:/data/uploads
+  depends_on:
+    db:
+      condition: service_healthy
+  logging: *logging
+
+# La base est celle du service db, pas celle de deploy/.env (localhost en développement).
+x-backend-env: &backend-env
+  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-sibylle}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manque dans deploy/.env}@db:5432/${POSTGRES_DB:-sibylle}
+  UPLOAD_DIR: /data/uploads
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sibylle}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manque dans deploy/.env}
+      POSTGRES_DB: ${POSTGRES_DB:-sibylle}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    logging: *logging
+
+  api:
+    <<: *backend
+    command: ["serve"]
+    environment:
+      <<: *backend-env
+      # Seul nginx atteint l'API : l'adresse du visiteur vient de son X-Forwarded-For.
+      FORWARDED_ALLOW_IPS: "*"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+  worker:
+    <<: *backend
+    command: ["worker"]
+    environment:
+      <<: *backend-env
+    healthcheck:
+      test: ["CMD", "sibylle", "worker", "--check"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+volumes:
+  pgdata:
+  uploads:

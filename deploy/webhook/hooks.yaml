@@ -1,0 +1,31 @@
+# Le crochet de déploiement, servi par webhook (adnanh/webhook, paquet Debian `webhook`) : la CI
+# l'appelle après avoir envoyé une image, sur https://sibylle.cc/hooks/deploy, que nginx relaie.
+# Il lance deploy/update.sh avec le commit arrivé sur main et renvoie sa sortie, avec un code 500
+# si la mise à jour échoue. La requête doit être signée comme le fait GitHub : HMAC-SHA256 du
+# corps avec le secret partagé, dans l'en-tête X-Hub-Signature-256. Le fichier est lu avec
+# `-template` : chemins et secret viennent de l'environnement du service (sibylle-webhook.service),
+# jamais du dépôt.
+- id: deploy
+  execute-command: '{{ getenv "SIBYLLE_DIR" }}/deploy/update.sh'
+  command-working-directory: '{{ getenv "SIBYLLE_DIR" }}'
+  http-methods: [POST]
+  include-command-output-in-response: true
+  include-command-output-in-response-on-error: true
+  pass-arguments-to-command:
+    - source: payload
+      name: commit
+  trigger-rule-mismatch-http-response-code: 403
+  trigger-rule:
+    and:
+      - match:
+          type: payload-hmac-sha256
+          secret: '{{ getenv "SIBYLLE_WEBHOOK_SECRET" }}'
+          parameter:
+            source: header
+            name: X-Hub-Signature-256
+      - match:
+          type: regex
+          regex: '^[0-9a-f]{40}$'
+          parameter:
+            source: payload
+            name: commit
