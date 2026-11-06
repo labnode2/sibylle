@@ -25,6 +25,7 @@ export function LoginPage() {
 
   return (
     <section className={styles.page}>
+      <p className={styles.name}>{t('login.name')}</p>
       <h1 className={styles.title}>{t('login.title')}</h1>
       <form className={styles.form} onSubmit={submit} noValidate>
         <Field
