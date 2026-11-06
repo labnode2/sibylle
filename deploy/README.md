@@ -90,18 +90,47 @@ sudo -u sibylle -H docker run --rm registry.labnode.ovh/sibylle/backend:main gen
 sudo -u sibylle -e /opt/sibylle/deploy/.env
 ```
 
-In `.env`: `ENVIRONMENT=production`, `PUBLIC_ORIGIN=https://sibylle.cc`, the three secrets
-printed by `gen-secrets` (`POSTGRES_PASSWORD`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`), Brevo's
-e-mail settings (`SMTP_*`, `MAIL_FROM`) and `VAPID_SUBJECT`. `DATABASE_URL` and `UPLOAD_DIR` are
-set by the Compose file; nginx also takes the site's domain from `PUBLIC_ORIGIN`. The
-production-only settings (tags, data folder, backups, logs) are described at the end of
-`.env.example`.
+The lines to change in `.env`, the values in angle brackets to fill in:
+
+```ini
+ENVIRONMENT=production
+PUBLIC_ORIGIN=https://sibylle.cc
+POSTGRES_PASSWORD=<printed by gen-secrets>
+VAPID_PUBLIC_KEY=<printed by gen-secrets>
+VAPID_PRIVATE_KEY=<printed by gen-secrets>
+VAPID_SUBJECT=mailto:<a contact address>
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=<the SMTP login shown by Brevo>
+SMTP_PASSWORD=<an SMTP key created at Brevo>
+MAIL_FROM=Sibylle <ne-pas-repondre@sibylle.cc>
+DISCORD_WEBHOOK_URL=<the channel's webhook URL, below>
+```
+
+No comment at the end of a line: the scripts read `.env` with `sed` (`deploy/lib.sh`), and the
+comment would end up in the value. `MAIL_FROM` must be on a domain validated at Brevo (its
+records are still missing, see the end of this file). nginx also takes the site's domain from
+`PUBLIC_ORIGIN`.
+
+The other lines stay as they are: the Compose file sets `DATABASE_URL` and `UPLOAD_DIR` itself,
+`UI_HOST` and `SIBYLLE_FAKE_CLOCK_FILE` only serve development, and `SIBYLLE_CLOCK` must stay
+`system` (the server refuses `fake` in production). The production-only settings (tags, data
+folder, backups, logs) are described, commented out, at the end of `.env.example`; their
+defaults match section 1, so none is needed to start.
 
 For Discord to get every update, done or failed: in the chosen channel, *Edit Channel →
 Integrations → Webhooks → New Webhook*, copy its URL and put it in `.env` as
 `DISCORD_WEBHOOK_URL`. The URL is enough to write to the channel: it stays in `.env`, like a
 secret. A VM already up to date and healthy posts nothing; a failed post is logged without
 stopping the update.
+
+A check of `.env` before the first start: Compose prints nothing, or says which required value
+(`POSTGRES_PASSWORD`, `PUBLIC_ORIGIN`) is missing.
+
+```bash
+sudo -u sibylle -H docker compose --project-directory /opt/sibylle/deploy -f /opt/sibylle/deploy/compose.prod.yml config --quiet
+sudo -u sibylle grep -E '^(ENVIRONMENT|PUBLIC_ORIGIN|SMTP_HOST|SMTP_PORT|MAIL_FROM)=' /opt/sibylle/deploy/.env
+```
 
 ## 3. First start
 
