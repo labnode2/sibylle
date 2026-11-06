@@ -10,7 +10,7 @@
 # uploaded images), restart, then wait until every service is healthy; on failure, roll back to
 # the previous version (repository and images) and exit with an error, giving the command that
 # would bring back the previous database if a migration ran. One update at a time: when the
-# "Serveur" and "Interface" workflows both push an image, the second update brings whatever the
+# "Backend" and "Frontend" workflows both push an image, the second update brings whatever the
 # first did not find yet.
 # Every update, done or failed, is posted to Discord (DISCORD_WEBHOOK_URL in deploy/.env); a
 # machine already up to date and healthy says nothing.

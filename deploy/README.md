@@ -13,8 +13,8 @@ Cloudflare origin certificate, serves the interface, and relays `/api/` to the `
 
 ## How an update arrives
 
-1. A push to `main` starts the “Serveur” workflow when the server changed (ruff, mypy, pytest,
-   then the image `registry.labnode.ovh/sibylle/backend`), the “Interface” workflow when the
+1. A push to `main` starts the “Backend” workflow when the server changed (ruff, mypy, pytest,
+   then the image `registry.labnode.ovh/sibylle/backend`), the “Frontend” workflow when the
    interface or `deploy/nginx/` changed (Prettier, ESLint, TypeScript, Vitest, then the image
    `registry.labnode.ovh/sibylle/web`: the interface served by nginx), or both. Each image is
    tagged `main` and `sha-<commit>`.

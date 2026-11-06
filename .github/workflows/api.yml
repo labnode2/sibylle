@@ -1,8 +1,8 @@
-# Contrat d'API : les types de l'interface (frontend/src/api/schema.d.ts) doivent être ceux que
-# donne l'OpenAPI du serveur. À chaque push sur main et à chaque pull request qui touche le serveur
-# ou ces types. À part du workflow « Interface », pour qu'un changement du seul serveur ne
-# reconstruise ni ne redéploie l'image du site.
-name: Contrat d'API
+# API contract: the interface's types (frontend/src/api/schema.d.ts) must be the ones the
+# server's OpenAPI gives. On every push to main and every pull request that touches the server or
+# these types. Apart from the "Frontend" workflow, so that a change to the server alone neither
+# rebuilds nor redeploys the site's image.
+name: API contract
 
 on:
   push:
@@ -27,8 +27,7 @@ on:
 permissions:
   contents: read
 
-# Un nouveau push sur une pull request remplace son run en cours ; sur main, chaque commit garde
-# le sien.
+# A new push to a pull request replaces its running run; on main, each commit keeps its own.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -39,7 +38,7 @@ defaults:
 
 jobs:
   api:
-    name: Contrat d'API
+    name: API contract
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -51,12 +50,12 @@ jobs:
           node-version-file: frontend/.nvmrc
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      # `npm run check:api` lit l'OpenAPI du serveur avec `uv run … sibylle openapi`. setup-uv ne
-      # publie plus de tag majeur (`v10` n'existe pas) : la version est figée par son commit.
+      # `npm run check:api` reads the server's OpenAPI with `uv run … sibylle openapi`. setup-uv no
+      # longer publishes a major tag (`v10` does not exist): the version is pinned by its commit.
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: "3.14"
-      - name: Installer les dépendances
+      - name: Install dependencies
         run: npm ci
-      - name: Comparer schema.d.ts à l'OpenAPI du serveur
+      - name: Compare schema.d.ts with the server's OpenAPI
         run: npm run check:api

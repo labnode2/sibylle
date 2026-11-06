@@ -1,4 +1,4 @@
-# Deploy: called by the "Serveur" and "Interface" workflows once their image is in the registry,
+# Deploy: called by the "Backend" and "Frontend" workflows once their image is in the registry,
 # or run by hand (Run workflow) to redeploy main. The machine pulls the images, backs up, restarts
 # and checks the health of the services (deploy/update.sh). Cloudflare cuts a response that takes
 # more than 100 s: the `deploy` hook therefore answers at once and the update runs in the

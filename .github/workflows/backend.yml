@@ -1,11 +1,10 @@
-# Serveur : à chaque push sur main et à chaque pull request qui touche le serveur, les
-# vérifications de `make check-backend` (le PostgreSQL des tests vient de testcontainers, Docker
-# est sur le runner), puis l'image Docker du serveur (backend/Dockerfile). Sur main, une fois les
-# vérifications passées, l'image part dans le registre, taguée `main` et `sha-<commit>`, puis la
-# machine de production se met à jour (deploy.yml) ; ailleurs, l'image est
-# seulement construite. Secrets du dépôt : REGISTRY_USERNAME et REGISTRY_PASSWORD pour le
-# registre, DEPLOY_WEBHOOK_SECRET pour les crochets (deploy/README.md).
-name: Serveur
+# Backend: on every push to main and every pull request that touches the server, the checks of
+# `make check-backend` (the tests' PostgreSQL comes from testcontainers, Docker is on the runner),
+# then the server's Docker image (backend/Dockerfile). On main, once the checks pass, the image
+# goes to the registry, tagged `main` and `sha-<commit>`, then the production machine updates
+# itself (deploy.yml); elsewhere, the image is only built. Repository secrets: REGISTRY_USERNAME
+# and REGISTRY_PASSWORD for the registry, DEPLOY_WEBHOOK_SECRET for the hooks (deploy/README.md).
+name: Backend
 
 on:
   push:
@@ -22,8 +21,7 @@ on:
 permissions:
   contents: read
 
-# Un nouveau push sur une pull request remplace son run en cours ; sur main, chaque commit garde
-# le sien.
+# A new push to a pull request replaces its running run; on main, each commit keeps its own.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -34,7 +32,7 @@ env:
 
 jobs:
   check:
-    name: Vérifier
+    name: Check
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -44,15 +42,15 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      # setup-uv ne publie plus de tag majeur : la version est figée par son commit.
+      # setup-uv no longer publishes a major tag: the version is pinned by its commit.
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: "3.14"
-      - name: Installer les dépendances
+      - name: Install dependencies
         run: uv sync --locked
-      - name: Formatage (ruff format)
+      - name: Format (ruff format)
         run: uv run ruff format --check
-      - name: Analyse (ruff check)
+      - name: Lint (ruff check)
         run: uv run ruff check
       - name: Types (mypy)
         run: uv run mypy
@@ -67,18 +65,18 @@ jobs:
     outputs:
       pushed: ${{ steps.login.outcome == 'success' }}
     env:
-      # Un secret ne se lit pas dans un `if:` : sa présence passe par l'environnement du job.
+      # A secret cannot be read in an `if:`: its presence goes through the job's environment.
       HAS_REGISTRY: ${{ secrets.REGISTRY_USERNAME != '' }}
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Version courte du commit
+      - name: Short commit hash
         id: commit
         run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-      # Les actions qui voient le mot de passe du registre sont figées par leur commit.
+      # The actions that see the registry password are pinned by their commit.
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-      - name: Se connecter au registre
+      - name: Log in to the registry
         id: login
         if: github.ref == 'refs/heads/main' && env.HAS_REGISTRY == 'true'
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -86,7 +84,7 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
-      - name: Construire l'image (et l'envoyer depuis main)
+      - name: Build the image (and push it from main)
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: backend
@@ -99,9 +97,9 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Prévenir si l'image n'est pas partie
+      - name: Warn if the image was not pushed
         if: github.ref == 'refs/heads/main' && env.HAS_REGISTRY != 'true'
-        run: echo "::warning::Image construite mais pas envoyée faute de secrets REGISTRY_USERNAME et REGISTRY_PASSWORD."
+        run: echo "::warning::Image built but not pushed, for lack of the REGISTRY_USERNAME and REGISTRY_PASSWORD secrets."
 
   # The machine updates itself (deploy.yml).
   deploy:
