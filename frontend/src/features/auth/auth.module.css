@@ -7,12 +7,6 @@
   margin: 8px auto 0;
 }
 
-.name {
-  font: 800 clamp(48px, 19vw, 72px)/1 var(--font-text);
-  letter-spacing: -0.025em;
-  text-align: center;
-}
-
 .title {
   font: 800 28px/1.05 var(--font-text);
   letter-spacing: -0.025em;
