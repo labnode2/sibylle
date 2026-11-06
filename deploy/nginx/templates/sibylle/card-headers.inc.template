@@ -1,0 +1,8 @@
+# The headers of headers.inc for the public press card (research.md J11): any site may show it in
+# a frame, and search engines leave it out.
+add_header Content-Security-Policy "default-src 'self'; img-src 'self' data: blob:; connect-src 'self' wss://${SIBYLLE_DOMAIN}; style-src 'self'; font-src 'self'; frame-ancestors *" always;
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+add_header Referrer-Policy "no-referrer" always;
+add_header Permissions-Policy "accelerometer=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header X-Robots-Tag "noindex" always;

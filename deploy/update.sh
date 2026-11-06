@@ -2,21 +2,26 @@
 # Production update. The deploy hook (deploy/webhook/hooks.yaml) runs it with the commit that
 # just landed on main; it can also be run by hand:
 #   deploy/update.sh [commit]            moves the repository to main (the deploy/ configuration)
-#                                        and pulls the images
+#                                        and pulls the images (the server's, the web's)
 #   deploy/update.sh --no-pull [commit]  keeps the images already on the machine (after a change
 #                                        to deploy/.env, for instance)
 # Each service gets DEPLOY_WAIT_TIMEOUT seconds (300) to report healthy.
 # If nothing changed, it only makes sure everything is running. Otherwise: backup (database and
 # uploaded images), restart, then wait until every service is healthy; on failure, roll back to
 # the previous version (repository and images) and exit with an error, giving the command that
-# would bring back the previous database if a migration ran. One update at a time.
+# would bring back the previous database if a migration ran. One update at a time: when the
+# "Serveur" and "Interface" workflows both push an image, the second update brings whatever the
+# first did not find yet.
 # Every update, done or failed, is posted to Discord (DISCORD_WEBHOOK_URL in deploy/.env); a
 # machine already up to date and healthy says nothing.
 # Everything lives in functions called on the last line: the repository can change this file
 # while it runs without throwing it off (bash reads a script as it goes).
 set -euo pipefail
 
-# Old versions of the server image, and only those, are pruned after a success.
+# The services whose image the CI builds: pulled, kept as `previous` and rolled back together (the
+# worker runs the api's image).
+IMAGE_SERVICES=(api nginx)
+# Old versions of those images, and only those, are pruned after a success.
 IMAGE_SOURCE=https://github.com/labnode2/sibylle
 
 main() {
@@ -41,10 +46,13 @@ main() {
     flock --wait 900 9 || fail "the other update does not finish"
   fi
 
-  local old_rev old_ref old_image
+  local old_rev service
+  local -A old_ref=() old_image=()
   old_rev=$(git -C "$repo" rev-parse HEAD)
-  old_ref=$(api_image) || fail "cannot read deploy/compose.prod.yml or deploy/.env"
-  old_image=$(image_id "$old_ref")
+  for service in "${IMAGE_SERVICES[@]}"; do
+    old_ref[$service]=$(image_ref "$service") || fail "cannot read deploy/compose.prod.yml or deploy/.env"
+    old_image[$service]=$(running_image "$service")
+  done
 
   log "Repository: main from $(git -C "$repo" remote get-url origin)"
   git -C "$repo" fetch --quiet origin main || fail "cannot fetch main from GitHub"
@@ -53,18 +61,29 @@ main() {
   fi
   git -C "$repo" checkout --quiet --detach origin/main ||
     fail "the repository in $repo has local changes"
-  local new_rev new_ref new_image
+  local new_rev
+  local -A new_ref=() new_image=()
   new_rev=$(git -C "$repo" rev-parse HEAD)
-  new_ref=$(api_image) || fail "cannot read deploy/compose.prod.yml or deploy/.env"
+  for service in "${IMAGE_SERVICES[@]}"; do
+    new_ref[$service]=$(image_ref "$service") || fail "cannot read deploy/compose.prod.yml or deploy/.env"
+  done
   if ((pull)); then
-    log "Images: $new_ref"
-    compose pull --quiet api worker || fail "cannot pull $new_ref"
+    log "Images: ${new_ref[*]}"
+    compose pull --quiet "${IMAGE_SERVICES[@]}" || fail "cannot pull ${new_ref[*]}"
   fi
-  new_image=$(image_id "$new_ref")
-  [[ -n $new_image ]] || fail "image $new_ref is not on the machine"
+  # The images that change, for the log and for Discord.
+  local moves=() moves_md=()
+  for service in "${IMAGE_SERVICES[@]}"; do
+    new_image[$service]=$(image_id "${new_ref[$service]}")
+    [[ -n ${new_image[$service]} ]] || fail "image ${new_ref[$service]} is not on the machine"
+    if [[ ${new_image[$service]} != "${old_image[$service]}" ]]; then
+      moves+=("$service $(short "${old_image[$service]}") -> $(short "${new_image[$service]}")")
+      moves_md+=("$service \`$(short "${old_image[$service]}")\` → \`$(short "${new_image[$service]}")\`")
+    fi
+  done
 
-  if [[ $new_rev == "$old_rev" && $new_image == "$old_image" ]]; then
-    log "Already up to date ($(short "$new_rev"), image $(short "$new_image")): checking that everything runs."
+  if [[ $new_rev == "$old_rev" && ${#moves[@]} -eq 0 ]]; then
+    log "Already up to date ($(short "$new_rev"), same images): checking that everything runs."
     if ! compose up -d --remove-orphans --wait --wait-timeout "$WAIT_TIMEOUT"; then
       DETAILS=$'\n'$(services)
       fail "a service is not healthy"
@@ -78,18 +97,26 @@ main() {
   else
     log "The database is not running yet: no backup."
   fi
-  if [[ -n $old_image && $old_image != "$new_image" ]]; then
-    docker tag "$old_image" "${old_ref%:*}:previous"
-  fi
+  # The images to give back their name if the update fails, the one before kept as `previous`.
+  local retag=()
+  for service in "${IMAGE_SERVICES[@]}"; do
+    [[ -n ${old_image[$service]} ]] || continue
+    if [[ -z $(image_id "${old_image[$service]}") ]]; then
+      log "The image $service ran ($(short "${old_image[$service]}")) is no longer on the machine: no rollback for it."
+      continue
+    fi
+    retag+=("${old_image[$service]}" "${old_ref[$service]}")
+    if [[ ${old_image[$service]} != "${new_image[$service]}" ]]; then
+      docker tag "${old_image[$service]}" "${old_ref[$service]%:*}:previous"
+    fi
+  done
 
-  log "Restart: $(short "$old_rev") -> $(short "$new_rev"), image $(short "$old_image") -> $(short "$new_image")"
+  log "Restart: $(short "$old_rev") -> $(short "$new_rev"), images: $(join "${moves[@]:-unchanged}")"
   if compose up -d --remove-orphans --wait --wait-timeout "$WAIT_TIMEOUT"; then
     docker image prune --force --filter "label=org.opencontainers.image.source=$IMAGE_SOURCE" >/dev/null
     log "Deployed: $(short "$new_rev"), every service is healthy."
     SUMMARY="✅ Sibylle deployed: \`$(short "$old_rev")\` → \`$(short "$new_rev")\`"
-    if [[ $old_image != "$new_image" ]]; then
-      SUMMARY+=", image \`$(short "$old_image")\` → \`$(short "$new_image")\`"
-    fi
+    ((${#moves_md[@]} == 0)) || SUMMARY+=", images: $(join "${moves_md[@]}")"
     SUMMARY+=", every service is healthy."
     changes=$(git -C "$repo" log --max-count 10 --format='• `%h` %s' "$old_rev..$new_rev")
     [[ -z $changes ]] || SUMMARY+=$'\n'$changes
@@ -98,9 +125,9 @@ main() {
 
   log "A service is not healthy:"
   compose ps --all >&2
-  compose logs --no-color --tail 30 api worker >&2
+  compose logs --no-color --tail 30 api worker nginx >&2
   DETAILS=$'\n'$(services)
-  rollback "$repo" "$old_rev" "$old_ref" "$old_image"
+  rollback "$repo" "$old_rev" "${retag[@]}"
   if [[ -n $backup ]]; then
     log "If a migration ran, the previous database is in $backup:"
     log "  $DEPLOY_DIR/backup/restore.sh --yes $backup"
@@ -109,13 +136,17 @@ main() {
   fail "update to $(short "$new_rev") rolled back"
 }
 
+# rollback REPO REV [IMAGE REF]...: back to the commit REV, each IMAGE under the REF the previous
+# configuration asks for.
 rollback() {
-  local repo=$1 rev=$2 ref=$3 image=$4 outcome
+  local repo=$1 rev=$2 outcome
+  shift 2
   log "Rolling back to the previous version ($(short "$rev"))"
   git -C "$repo" checkout --quiet --detach "$rev"
-  if [[ -n $image ]]; then
-    docker tag "$image" "$ref"
-  fi
+  while (($#)); do
+    docker tag "$1" "$2" || log "Cannot give $2 back its previous image."
+    shift 2
+  done
   if compose up -d --remove-orphans --wait --wait-timeout "$WAIT_TIMEOUT"; then
     outcome="Previous version ($(short "$rev")) restored."
   else
@@ -140,14 +171,29 @@ report() {
   fi
 }
 
-# The image of the api service (`config --images api` would also give the database's, which it
-# depends on).
-api_image() {
-  compose config --format json | jq --exit-status --raw-output '.services.api.image'
+# The image a service runs, from the configuration as it stands: nothing for a service it does not
+# have yet. (`config --images nginx` would also give the images of the services it depends on.)
+image_ref() {
+  compose config --format json | jq --raw-output --arg service "$1" '.services[$service].image // empty'
+}
+
+# The arguments joined with ", ".
+join() {
+  local joined
+  joined=$(printf '%s, ' "$@")
+  printf '%s\n' "${joined%, }"
 }
 
 image_id() {
   docker image inspect --format '{{.Id}}' "$1" 2>/dev/null || true
+}
+
+# The image the container of a service runs, none before its first start. Not the tag's: a pull
+# may have moved it since (an update that failed after pulling, a pull by hand).
+running_image() {
+  local container
+  container=$(compose ps --all --format '{{.Service}} {{.ID}}' | awk -v service="$1" '$1 == service { print $2; exit }')
+  [[ -z $container ]] || docker inspect --format '{{.Image}}' "$container"
 }
 
 # The first 7 characters of a commit or an image (without "sha256:").

@@ -40,14 +40,14 @@ Constitution 1.0.0 (`.specify/memory/constitution.md`).
 
 | Principe | Comment le plan le respecte | Avant | Après conception |
 |---|---|---|---|
-| I. Vie privée d'abord | Polices, icônes et scripts servis par Sibylle ; CSP limitée à `self` ; seuls tiers : Brevo (UE) et les services push des navigateurs (contenu chiffré). Le pseudo est la seule identité visible ; export JSON et suppression avec anonymisation (data-model : `accounts.deleted_at`, `memberships.status = anonymized`). | ✅ | ✅ |
+| I. Vie privée d'abord | Polices, icônes et scripts servis par Sibylle ; CSP limitée à `self` ; seuls tiers : Brevo (UE) et les services push des navigateurs (contenu chiffré). Le pseudo est la seule identité visible ; export JSON et suppression avec anonymisation (data-model : `accounts.deleted_at`, `memberships.status = anonymized`). Écart accepté : le proxy de Cloudflare devant le site (Complexity Tracking). | ✅ | ⚠️ |
 | II. Rédactions étanches | Toutes les routes de jeu sont sous `/api/orgs/{org_id}/…` ; une dépendance FastAPI charge le membre et son rôle et refuse sinon ; les sujets temps réel sont filtrés par appartenance ; une suite de tests d'accès parcourt toutes les routes (contracts/rest-api.md). | ✅ | ✅ |
 | III. Les lauriers sont un registre | Table `ledger_entries` en ajout seul ; solde et score mis en cache sur `memberships` dans la même transaction ; corrections par écritures inverses rattachées à un `settlement` ; vérification nocturne cache = somme. | ✅ | ✅ |
 | IV. Règles testées d'abord | Paquet `sibylle.domain` sans FastAPI ni SQLAlchemy ; tests unitaires et Hypothesis écrits avant le code ; tests de contrat et parcours Playwright pour rejoindre, parier, désigner, être payé. | ✅ | ✅ |
-| V. Simple à héberger | Services Compose : `nginx` (et `certbot` pour son certificat), `api`, `worker`, `db` (et une sauvegarde chaque nuit, par un timer systemd) ; pas de Redis ni de file de messages : `LISTEN/NOTIFY` et une table de notifications suffisent. | ✅ | ✅ |
+| V. Simple à héberger | Services Compose : `nginx` (certificat d'origine de Cloudflare, sans certbot), `api`, `worker`, `db` (et une sauvegarde chaque nuit, par un timer systemd) ; pas de Redis ni de file de messages : `LISTEN/NOTIFY` et une table de notifications suffisent. | ✅ | ✅ |
 | VI. Français d'abord, accessible, Gazette | i18next côté interface, catalogue Jinja2 côté e-mails, `fr` seul livré ; fuseau `Europe/Paris` dans le domaine ; jetons de couleur et polices de la Gazette dans `tokens.css` ; axe-core en CI ; `prefers-reduced-motion` et réglage « couper les animations ». | ✅ | ✅ |
 
-Aucun écart : la section Complexity Tracking reste vide.
+Un écart, au principe I, accepté par Emile le 5 novembre 2026 : voir Complexity Tracking.
 
 ## Project Structure
 
@@ -70,8 +70,10 @@ specs/001-sibylle-v1/
 
 ```text
 .github/workflows/
-├── frontend.yml                 # CI de l'interface : vérifications, construction, contrat d'API
-└── backend.yml                  # CI du serveur : vérifications, image envoyée au registre
+├── frontend.yml                 # CI de l'interface : vérifications, construction, image du site
+├── backend.yml                  # CI du serveur : vérifications, image envoyée au registre
+├── api.yml                      # contrat d'API : schema.d.ts face à l'OpenAPI du serveur
+└── deploy.yml                   # mise à jour de la production, appelée par les deux images
 
 backend/
 ├── pyproject.toml               # géré par uv
@@ -148,13 +150,13 @@ frontend/
 
 deploy/
 ├── docker-compose.yml           # développement : db et mailpit (profil dev)
-├── compose.prod.yml             # production (projet sibylle-prod) : db, api, worker, nginx, certbot
+├── compose.prod.yml             # production (projet sibylle-prod) : db, api, worker, nginx
 ├── update.sh  lib.sh            # mise à jour : sauvegarde, redémarrage, santé, retour arrière
 ├── webhook/                     # crochets appelés par la CI (hooks.yaml), deploy.sh, status.sh
 ├── systemd/                     # services du crochet et de la sauvegarde de nuit
 ├── nginx/                       # Dockerfile (interface construite par Node) et configuration :
-│                                # HTTPS, proxy protocol, CSP, fichiers statiques
-├── frpc.toml.example            # tunnel 80/443 vers nginx
+│                                # HTTPS, proxy protocol, Cloudflare, CSP, fichiers statiques
+├── frpc.toml.example            # tunnel 443 vers nginx
 ├── README.md                    # mise en production pas à pas
 ├── .env.example
 └── backup/                      # backup.sh et restore.sh
@@ -183,4 +185,6 @@ Calqués sur le découpage du cahier des charges ; chaque semaine se termine par
 
 > **Fill ONLY if Constitution Check has violations that must be justified**
 
-Aucun écart à justifier.
+| Écart | Pourquoi | Alternative plus simple écartée |
+|---|---|---|
+| Principe I : le proxy de Cloudflare, tiers non européen, termine le TLS devant `sibylle.cc` et voit le trafic en clair | Choix d'Emile du 5 novembre 2026 (research.md R14) | Le DNS seul, sans proxy, avec un certificat Let's Encrypt (le premier choix de R14), écarté par Emile |

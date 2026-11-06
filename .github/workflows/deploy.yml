@@ -1,0 +1,108 @@
+# Deploy: called by the "Serveur" and "Interface" workflows once their image is in the registry,
+# or run by hand (Run workflow) to redeploy main. The machine pulls the images, backs up, restarts
+# and checks the health of the services (deploy/update.sh). Cloudflare cuts a response that takes
+# more than 100 s: the `deploy` hook therefore answers at once and the update runs in the
+# background. This job follows it through the `deploy-status` hook, shows its log as it goes and
+# fails with it. When both workflows push an image, the machine runs the two updates one after the
+# other.
+name: Deploy
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    # At worst: 15 min waiting for another update, 5 min for the services' health, then 5 more
+    # min to roll back.
+    timeout-minutes: 35
+    environment:
+      name: production
+      url: https://sibylle.cc
+    steps:
+      - name: Update the production machine
+        env:
+          SECRET: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}
+          HOOKS: ${{ vars.DEPLOY_HOOKS_URL || 'https://sibylle.cc/hooks' }}
+        run: |
+          if [ -z "$SECRET" ]; then
+            echo "::warning::No deploy: the DEPLOY_WEBHOOK_SECRET secret is not set."
+            exit 0
+          fi
+          # call HOOK BODY: the signed request; the HTTP code on the output, the response in
+          # response.txt.
+          call() {
+            signature=$(printf '%s' "$2" | python3 -c 'import hashlib, hmac, os, sys; print(hmac.new(os.environ["SECRET"].encode(), sys.stdin.buffer.read(), hashlib.sha256).hexdigest())')
+            curl --silent --show-error --max-time 30 --output response.txt --write-out '%{http_code}' \
+              --header "Content-Type: application/json" \
+              --header "X-Hub-Signature-256: sha256=$signature" \
+              --data-binary "$2" "$HOOKS/$1"
+          }
+          # The complete log lines (after the state line) not shown yet; with `all`, also a last
+          # line without a line ending, ended so that GitHub reads the `::error::` that follows.
+          shown=0
+          show() {
+            total=$(($(wc -l <response.txt) - 1))
+            if [ "$1" = all ]; then
+              tail -n +$((shown + 2)) response.txt | sed -e '$a\'
+            elif [ "$total" -gt "$shown" ]; then
+              tail -n +2 response.txt | head -n "$total" | tail -n +$((shown + 1))
+              shown=$total
+            fi
+          }
+
+          # Each attempt of the job has its own id, under which the machine keeps the log.
+          id="$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          code=$(call deploy "{\"id\":\"$id\",\"commit\":\"$GITHUB_SHA\"}") ||
+            { echo "::error::Machine unreachable at $HOOKS/deploy: nginx must relay /hooks/ (deploy/README.md)."; exit 1; }
+          sed -e '$a\' response.txt
+          case $code in
+            202) ;;
+            403) echo "::error::Request refused by the machine: missing signature, invalid commit or id."; exit 1 ;;
+            500)
+              # webhook answers 500 to a wrong signature, before running anything.
+              if grep -q "evaluating hook rules" response.txt; then
+                echo "::error::Signature refused: DEPLOY_WEBHOOK_SECRET is not the machine's secret."
+              else
+                echo "::error::Unexpected answer from the machine: HTTP 500."
+              fi
+              exit 1 ;;
+            *) echo "::error::Unexpected answer from the machine: HTTP $code."; exit 1 ;;
+          esac
+
+          # The state every 10 s until the outcome. 36 missed answers in a row (6 min) stop the
+          # following, not the update: the update restarts nginx, and an nginx that does not
+          # come back stays down until the rollback (DEPLOY_WAIT_TIMEOUT, 5 min).
+          started=$SECONDS
+          misses=0
+          while sleep 10; do
+            if code=$(call deploy-status "{\"id\":\"$id\"}") && [ "$code" = 200 ]; then
+              misses=0
+              case $(head -n 1 response.txt) in
+                state=success) show all; exit 0 ;;
+                state=failure)
+                  show all
+                  echo "::error::The update failed on the machine (log above)."
+                  exit 1 ;;
+                state=running) show ;;
+                state=unknown)
+                  if [ $((SECONDS - started)) -ge 60 ]; then
+                    echo "::error::The machine did not start the update: see journalctl -u sibylle-webhook."
+                    exit 1
+                  fi ;;
+                *) cat response.txt ;;
+              esac
+            elif [ $((misses += 1)) -ge 36 ]; then
+              echo "::error::The machine no longer answers at $HOOKS/deploy-status (HTTP ${code:-none})."
+              exit 1
+            fi
+            if [ $((SECONDS - started)) -ge 1800 ]; then
+              echo "::error::The update is still running after 30 min (log above)."
+              exit 1
+            fi
+          done

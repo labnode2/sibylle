@@ -1,0 +1,13 @@
+# Sourced by the image's entrypoint before it fills in the templates: the site's domain comes from
+# PUBLIC_ORIGIN, the address the server already checks the Origin header against.
+case ${PUBLIC_ORIGIN:-} in
+    https://?*) ;;
+    *)
+        echo "19-sibylle-domain.envsh: PUBLIC_ORIGIN must be the site's https:// address (deploy/.env)" >&2
+        exit 1
+        ;;
+esac
+SIBYLLE_DOMAIN=${PUBLIC_ORIGIN#https://}
+SIBYLLE_DOMAIN=${SIBYLLE_DOMAIN%%/*}
+SIBYLLE_DOMAIN=${SIBYLLE_DOMAIN%%:*}
+export SIBYLLE_DOMAIN

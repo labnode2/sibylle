@@ -1,8 +1,8 @@
 # Production, on the home machine, which is also the development PC: a Compose project of its
-# own (`sibylle-prod`), with its own volumes and no published port, so the development database
-# (project `sibylle`, port 5432) is never touched. deploy/update.sh runs it from /opt/sibylle,
-# with the production settings of deploy/.env (deploy/README.md).
-# nginx and certbot will join it with their configuration (T142, T207, T210).
+# own (`sibylle-prod`), with its own volumes, so the development database (project `sibylle`,
+# port 5432) is never touched. Only nginx publishes a port, on the machine's loopback, where frpc
+# reaches it. deploy/update.sh runs it from /opt/sibylle, with the production settings of
+# deploy/.env (deploy/README.md).
 name: sibylle-prod
 
 x-logging: &logging
@@ -10,7 +10,7 @@ x-logging: &logging
   driver: local
 
 x-backend: &backend
-  image: ${SIBYLLE_BACKEND_IMAGE:-registry.labnode.ovh/sibylle/backend}:${SIBYLLE_TAG:-main}
+  image: ${SIBYLLE_BACKEND_IMAGE:-registry.labnode.ovh/sibylle/backend}:${SIBYLLE_BACKEND_TAG:-main}
   restart: unless-stopped
   env_file: .env
   volumes:
@@ -71,6 +71,34 @@ services:
       timeout: 10s
       start_period: 60s
       retries: 3
+
+  # The interface and the entry point (deploy/nginx/): TLS with Cloudflare's origin certificate,
+  # the API, the WebSocket and the deploy hooks.
+  nginx:
+    image: ${SIBYLLE_WEB_IMAGE:-registry.labnode.ovh/sibylle/web}:${SIBYLLE_WEB_TAG:-main}
+    restart: unless-stopped
+    environment:
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?PUBLIC_ORIGIN missing from deploy/.env}
+      SIBYLLE_ORIGIN_PULL: ${SIBYLLE_ORIGIN_PULL:-off}
+    ports:
+      # frpc's tunnel from the VPS ends here, every connection starting with the PROXY protocol.
+      - 127.0.0.1:${SIBYLLE_HTTPS_PORT:-8443}:443
+    volumes:
+      # origin.pem and origin.key, from Cloudflare (deploy/README.md).
+      - ${SIBYLLE_TLS_DIR:-/etc/sibylle/tls}:/etc/nginx/tls:ro
+    extra_hosts:
+      # webhook listens on the docker0 bridge (systemd/sibylle-webhook.service).
+      - host.docker.internal:host-gateway
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--output", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    logging: *logging
 
 volumes:
   pgdata:

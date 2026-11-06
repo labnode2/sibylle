@@ -1,0 +1,10 @@
+# The web image is built from the repository root (Dockerfile): only the interface's sources and
+# the nginx configuration go in, without what the tests and the builds leave behind.
+*
+!frontend/
+!deploy/nginx/
+frontend/node_modules/
+frontend/dist/
+frontend/tests/
+frontend/test-results/
+frontend/playwright-report/

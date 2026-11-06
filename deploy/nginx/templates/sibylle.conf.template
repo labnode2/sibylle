@@ -1,0 +1,137 @@
+# Sibylle in production: the interface built into this image, the API and its WebSocket relayed
+# to the api service, and the deploy hooks relayed to webhook on the machine. Visitors come
+# through Cloudflare, then the VPS's frps and frpc on the machine, which starts every connection
+# with a PROXY protocol header (deploy/frpc.toml.example). Before nginx starts, the image's
+# entrypoint fills in the site's domain (SIBYLLE_DOMAIN, from PUBLIC_ORIGIN) and puts the
+# certificate in place (entrypoint/).
+
+server_tokens off;
+
+# The visitor's address: Cloudflare's CF-Connecting-IP when the connection comes from one of its
+# ranges, else the address in the PROXY header (someone who reached the VPS directly).
+geo $proxy_protocol_addr $from_cloudflare {
+    default 0;
+    include /etc/nginx/sibylle/ips.conf;
+}
+
+map "$from_cloudflare $http_cf_connecting_ip" $visitor_addr {
+    "~^1 (?<cloudflare_visitor>.+)$" $cloudflare_visitor;
+    default $proxy_protocol_addr;
+}
+
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    "" close;
+}
+
+# Docker's DNS: a deploy recreates the api container, whose address nginx then looks up again.
+resolver 127.0.0.11 valid=10s ipv6=off;
+
+upstream api {
+    zone api 64k;
+    server api:8000 resolve;
+}
+
+# A connection that does not name the site (a scanner on the VPS's address) is refused at the
+# TLS handshake.
+server {
+    listen 443 ssl proxy_protocol default_server;
+    ssl_reject_handshake on;
+}
+
+server {
+    listen 443 ssl proxy_protocol;
+    http2 on;
+    server_name ${SIBYLLE_DOMAIN};
+
+    ssl_certificate /run/sibylle/tls/cert.pem;
+    ssl_certificate_key /run/sibylle/tls/key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+    # Cloudflare's client certificate, with SIBYLLE_ORIGIN_PULL=on (Authenticated Origin Pulls).
+    include /run/sibylle/origin-pull.conf;
+
+    # No access log: no visitor address is written down.
+    access_log off;
+    root /usr/share/nginx/html;
+    # Above the 5 MB of an image sent with a prono, so that the API gives its own error.
+    client_max_body_size 8m;
+
+    gzip on;
+    gzip_vary on;
+    gzip_types text/css text/plain application/javascript application/json
+        application/manifest+json image/svg+xml;
+
+    # The application: every address the browser does not find as a file is the single page's.
+    location / {
+        include /etc/nginx/conf.d/sibylle/headers.inc;
+        add_header Cache-Control "no-cache" always;
+        try_files $uri /index.html;
+    }
+
+    # Vite's files, named after their content.
+    location /assets/ {
+        include /etc/nginx/conf.d/sibylle/headers.inc;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        try_files $uri =404;
+    }
+
+    location = /manifest.webmanifest {
+        include /etc/nginx/conf.d/sibylle/headers.inc;
+        add_header Cache-Control "no-cache" always;
+        default_type application/manifest+json;
+    }
+
+    # The public press card, which another site may show in an iframe (research.md J11): the
+    # single page served here, with its own headers (an internal redirect would take those of /).
+    location /carte/ {
+        include /etc/nginx/conf.d/sibylle/card-headers.inc;
+        add_header Cache-Control "no-cache" always;
+        try_files /index.html =404;
+    }
+
+    location /api/ {
+        include /etc/nginx/conf.d/sibylle/headers.inc;
+        proxy_pass http://api;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $visitor_addr;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    # The WebSocket: the server pings every 25 s, under nginx's and Cloudflare's idle timeouts.
+    location = /api/ws {
+        include /etc/nginx/conf.d/sibylle/headers.inc;
+        proxy_pass http://api;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $visitor_addr;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    # The deploy hooks (deploy/webhook/hooks.yaml), served by webhook on the docker0 bridge. Both
+    # answer at once: the default timeouts are enough.
+    location /hooks/ {
+        limit_except POST {
+            deny all;
+        }
+        proxy_pass http://host.docker.internal:9000;
+    }
+}
+
+# Inside the container only, without the PROXY protocol: the health check of compose.prod.yml.
+server {
+    listen 8080;
+    access_log off;
+
+    location = /healthz {
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    location / {
+        return 404;
+    }
+}

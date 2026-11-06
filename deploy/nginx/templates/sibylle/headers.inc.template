@@ -1,0 +1,9 @@
+# The security headers of research.md R15, included in each location of sibylle.conf: a
+# location that declares its own add_header no longer inherits those of the server block.
+add_header Content-Security-Policy "default-src 'self'; img-src 'self' data: blob:; connect-src 'self' wss://${SIBYLLE_DOMAIN}; style-src 'self'; font-src 'self'; frame-ancestors 'none'" always;
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+add_header Referrer-Policy "no-referrer" always;
+# Everything the application does not use; clipboard-write (the copy buttons) and web-share
+# (sharing a special edition) keep their default, the site itself.
+add_header Permissions-Policy "accelerometer=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()" always;
+add_header X-Content-Type-Options "nosniff" always;

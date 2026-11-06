@@ -113,6 +113,6 @@ Sur le domaine en HTTPS, avec l'appli installée sur Android, iOS 16.4+ et un or
 
 Le détail est dans `deploy/README.md`.
 
-1. Sur le VPS : frps en place ; enregistrements DNS A/AAAA du domaine vers le VPS ; SPF, DKIM et DMARC de Brevo.
-2. Sur la machine : `deploy/README.md` (clone dans `/opt/sibylle`, réglages, `deploy/update.sh`, crochet de déploiement, sauvegardes) ; frpc avec deux tunnels TCP (80 et 443) vers nginx, PROXY protocol v2 activé (`frpc.toml.example`).
-3. Vérifier : `https://<domaine>/api/health` répond `ok` ; certificat valide ; une sauvegarde est produite la nuit suivante, puis restaurée sur une base de test.
+1. Chez Cloudflare : enregistrements DNS A/AAAA du domaine vers le VPS, par le proxy ; mode Full (strict) ; certificat d'origine. Sur le VPS : frps en place. SPF, DKIM et DMARC de Brevo.
+2. Sur la machine : `deploy/README.md` (clone dans `/opt/sibylle`, réglages, `deploy/update.sh`, crochets de déploiement, certificat d'origine dans `/etc/sibylle/tls`, sauvegardes) ; frpc avec un seul tunnel TCP (443) vers nginx, PROXY protocol v2 activé (`frpc.toml.example`).
+3. Vérifier : `https://<domaine>/api/health` répond `ok` ; une sauvegarde est produite la nuit suivante, puis restaurée sur une base de test.
