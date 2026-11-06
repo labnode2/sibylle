@@ -155,8 +155,7 @@ deploy/
 ├── webhook/                     # crochets appelés par la CI (hooks.yaml), deploy.sh, status.sh
 ├── systemd/                     # services du crochet et de la sauvegarde de nuit
 ├── nginx/                       # Dockerfile (interface construite par Node) et configuration :
-│                                # HTTPS, proxy protocol, Cloudflare, CSP, fichiers statiques
-├── frpc.toml.example            # tunnel 443 vers nginx
+│                                # HTTPS, Cloudflare, CSP, fichiers statiques
 ├── README.md                    # mise en production pas à pas
 ├── .env.example
 └── backup/                      # backup.sh et restore.sh
@@ -188,3 +187,4 @@ Calqués sur le découpage du cahier des charges ; chaque semaine se termine par
 | Écart | Pourquoi | Alternative plus simple écartée |
 |---|---|---|
 | Principe I : le proxy de Cloudflare, tiers non européen, termine le TLS devant `sibylle.cc` et voit le trafic en clair | Choix d'Emile du 5 novembre 2026 (research.md R14) | Le DNS seul, sans proxy, avec un certificat Let's Encrypt (le premier choix de R14), écarté par Emile |
+| Contraintes techniques (« une machine à domicile, exposée par frp depuis un VPS ») : la box transfère son port 443 à la machine, sans frp ni VPS | Choix d'Emile du 6 novembre 2026 (research.md R14) | Le tunnel frp depuis le VPS, où frps tourne déjà, écarté par Emile |

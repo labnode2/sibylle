@@ -1,8 +1,8 @@
 # Production, on the home machine, which is also the development PC: a Compose project of its
 # own (`sibylle-prod`), with its own volumes, so the development database (project `sibylle`,
-# port 5432) is never touched. Only nginx publishes a port, on the machine's loopback, where frpc
-# reaches it. deploy/update.sh runs it from /opt/sibylle, with the production settings of
-# deploy/.env (deploy/README.md).
+# port 5432) is never touched. Only nginx publishes a port, to which the box forwards its port
+# 443. deploy/update.sh runs it from /opt/sibylle, with the production settings of deploy/.env
+# (deploy/README.md).
 name: sibylle-prod
 
 x-logging: &logging
@@ -81,8 +81,8 @@ services:
       PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?PUBLIC_ORIGIN missing from deploy/.env}
       SIBYLLE_ORIGIN_PULL: ${SIBYLLE_ORIGIN_PULL:-off}
     ports:
-      # frpc's tunnel from the VPS ends here, every connection starting with the PROXY protocol.
-      - 127.0.0.1:${SIBYLLE_HTTPS_PORT:-8443}:443
+      # The box forwards its port 443 here, in IPv4 (the DNS has no AAAA record).
+      - 0.0.0.0:${SIBYLLE_HTTPS_PORT:-8443}:443
     volumes:
       # origin.pem and origin.key, from Cloudflare (deploy/README.md).
       - ${SIBYLLE_TLS_DIR:-/etc/sibylle/tls}:/etc/nginx/tls:ro

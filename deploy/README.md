@@ -5,11 +5,10 @@ of the repository in `/opt/sibylle`, a Compose project `sibylle-prod` (`deploy/c
 with its own volumes, and a system user `sibylle`. Development (project `sibylle`, database on
 port 5432) is never touched.
 
-Visitors reach `sibylle.cc` through Cloudflare's proxy, which sends them on to the VPS; frps on
-the VPS hands each connection to frpc on the machine, which passes it to nginx on
-`127.0.0.1:8443` with the PROXY protocol. nginx (`deploy/nginx/`) terminates TLS with a
-Cloudflare origin certificate, serves the interface, and relays `/api/` to the `api` service and
-`/hooks/` to webhook on the machine.
+Visitors reach `sibylle.cc` through Cloudflare's proxy, which connects to the box's public
+address; the box forwards its port 443 to nginx, on port 8443 of the machine. nginx
+(`deploy/nginx/`) terminates TLS with a Cloudflare origin certificate, serves the interface, and
+relays `/api/` to the `api` service and `/hooks/` to webhook on the machine.
 
 ## How an update arrives
 
@@ -83,13 +82,12 @@ sudo -u sibylle -H /opt/sibylle/deploy/update.sh
 sudo -u sibylle -H docker compose --project-directory /opt/sibylle/deploy -f /opt/sibylle/deploy/compose.prod.yml ps
 ```
 
-`db`, `api`, `worker` and `nginx` must be `healthy`. Until Cloudflare's origin certificate is in
-place (section 5), nginx serves a provisional self-signed one; until frpc runs (section 6),
-nothing reaches it from the Internet. A check on the machine, speaking the PROXY protocol like
-frpc:
+`db`, `api`, `worker` and `nginx` must be `healthy`. Until the box forwards its port (section 5),
+nothing reaches nginx from the Internet; until Cloudflare's origin certificate is in place
+(section 6), it serves a provisional self-signed one. A check on the machine:
 
 ```bash
-curl -sk --haproxy-protocol --resolve sibylle.cc:8443:127.0.0.1 https://sibylle.cc:8443/api/health
+curl -sk --resolve sibylle.cc:8443:127.0.0.1 https://sibylle.cc:8443/api/health
 ```
 
 ## 4. The deploy hooks
@@ -130,11 +128,27 @@ or `state=unknown` for an unknown id. webhook's answers: 403 without a signature
 malformed commit or id, 500 with “Error occurred while evaluating hook rules” for a wrong
 signature. Service log: `journalctl -u sibylle-webhook`.
 
-## 5. Cloudflare and the certificate
+## 5. The box
+
+The box needs a public IPv4 address of its own (not one shared between subscribers). In its NAT
+settings, forward TCP port 443 (outside) to the machine's local address, port 8443
+(`SIBYLLE_HTTPS_PORT`; set it to 443 if the box cannot change the port on the way). Give the
+machine a fixed local address (a DHCP lease reserved on the box), so that the rule keeps pointing
+at it. Port 80 needs no rule: Cloudflare only talks to the site on 443.
+
+The box's public address becomes the site's origin: Cloudflare hides it from DNS answers, but
+anyone who finds it can reach nginx directly. nginx refuses a connection that does not name
+`sibylle.cc` at the TLS handshake, only trusts `CF-Connecting-IP` from Cloudflare's address ranges
+(`deploy/nginx/cloudflare/ips.conf`), and, with Authenticated Origin Pulls (section 6), lets in
+Cloudflare alone. If the box's public address changes from time to time, the `A` record of
+section 6 has to follow it (a dynamic DNS client for Cloudflare); nothing here does it.
+
+## 6. Cloudflare and the certificate
 
 In Cloudflare's dashboard, for `sibylle.cc`:
 
-- *DNS*: an `A` record for `sibylle.cc` to the VPS (and `AAAA` if it has IPv6), **proxied**;
+- *DNS*: an `A` record for `sibylle.cc` to the box's public address, **proxied**; no `AAAA`
+  record (IPv6 has no NAT: the rule of section 5 would not apply);
 - *SSL/TLS → Overview*: **Full (strict)**; *Edge Certificates*: **Always Use HTTPS**;
 - *SSL/TLS → Origin Server → Create Certificate*: hostnames `sibylle.cc` and `*.sibylle.cc`. Copy
   the certificate and the private key to the machine (the key is shown only once):
@@ -149,22 +163,11 @@ sudo -u sibylle -H docker compose --project-directory /opt/sibylle/deploy -f /op
 The files stay readable by root only: the Docker daemon mounts them into the container. nginx
 logs “using a provisional self-signed one” as long as it does not find them.
 
-Recommended: *SSL/TLS → Origin Server → Authenticated Origin Pulls* on, then
-`SIBYLLE_ORIGIN_PULL=on` in `.env` and `update.sh --no-pull`. nginx then only lets in
-connections that show Cloudflare's client certificate
-(`deploy/nginx/cloudflare/origin-pull-ca.pem`, valid until November 2029): nobody can reach the
-site through the VPS without going through Cloudflare. Without it, such a visitor is still told
-apart: nginx only trusts `CF-Connecting-IP` from Cloudflare's address ranges
-(`deploy/nginx/cloudflare/ips.conf`).
-
-## 6. frpc
-
-frps already runs on the VPS. On the machine, install frpc, copy
-`deploy/frpc.toml.example` to `/etc/frp/frpc.toml` (or add its proxy to an frpc that already
-runs) with the VPS's address and token, and start it. Its single tunnel takes port 443 of the VPS
-to `127.0.0.1:8443` (`SIBYLLE_HTTPS_PORT`), with the PROXY protocol v2 that nginx requires on
-that port: without it, nginx drops the connection. Cloudflare only talks to the site on 443, so
-no tunnel is needed for port 80.
+Recommended, since the box's address is the origin: *SSL/TLS → Origin Server → Authenticated
+Origin Pulls* on, then `SIBYLLE_ORIGIN_PULL=on` in `.env` and `update.sh --no-pull`. nginx then
+only lets in connections that show Cloudflare's client certificate
+(`deploy/nginx/cloudflare/origin-pull-ca.pem`, valid until November 2029): nobody reaches the
+site without going through Cloudflare.
 
 Then `https://sibylle.cc/api/health` answers `{"status":"ok","db":"ok"}` from anywhere.
 

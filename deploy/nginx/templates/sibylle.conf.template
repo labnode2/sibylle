@@ -1,23 +1,17 @@
 # Sibylle in production: the interface built into this image, the API and its WebSocket relayed
 # to the api service, and the deploy hooks relayed to webhook on the machine. Visitors come
-# through Cloudflare, then the VPS's frps and frpc on the machine, which starts every connection
-# with a PROXY protocol header (deploy/frpc.toml.example). Before nginx starts, the image's
+# through Cloudflare, which connects to the box's public address; the box forwards its port 443
+# to this container (SIBYLLE_HTTPS_PORT in compose.prod.yml). Before nginx starts, the image's
 # entrypoint fills in the site's domain (SIBYLLE_DOMAIN, from PUBLIC_ORIGIN) and puts the
 # certificate in place (entrypoint/).
 
 server_tokens off;
 
-# The visitor's address: Cloudflare's CF-Connecting-IP when the connection comes from one of its
-# ranges, else the address in the PROXY header (someone who reached the VPS directly).
-geo $proxy_protocol_addr $from_cloudflare {
-    default 0;
-    include /etc/nginx/sibylle/ips.conf;
-}
-
-map "$from_cloudflare $http_cf_connecting_ip" $visitor_addr {
-    "~^1 (?<cloudflare_visitor>.+)$" $cloudflare_visitor;
-    default $proxy_protocol_addr;
-}
+# The visitor's address, which the API gets in X-Forwarded-For: Cloudflare's CF-Connecting-IP when
+# the connection comes from one of its ranges, else the address that connected (someone who
+# reached the box directly).
+include /etc/nginx/sibylle/ips.conf;
+real_ip_header CF-Connecting-IP;
 
 map $http_upgrade $connection_upgrade {
     default upgrade;
@@ -32,15 +26,15 @@ upstream api {
     server api:8000 resolve;
 }
 
-# A connection that does not name the site (a scanner on the VPS's address) is refused at the
+# A connection that does not name the site (a scanner on the box's address) is refused at the
 # TLS handshake.
 server {
-    listen 443 ssl proxy_protocol default_server;
+    listen 443 ssl default_server;
     ssl_reject_handshake on;
 }
 
 server {
-    listen 443 ssl proxy_protocol;
+    listen 443 ssl;
     http2 on;
     server_name ${SIBYLLE_DOMAIN};
 
@@ -95,7 +89,7 @@ server {
         include /etc/nginx/conf.d/sibylle/headers.inc;
         proxy_pass http://api;
         proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $visitor_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto https;
     }
 
@@ -107,7 +101,7 @@ server {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $connection_upgrade;
         proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $visitor_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto https;
     }
 
@@ -121,7 +115,7 @@ server {
     }
 }
 
-# Inside the container only, without the PROXY protocol: the health check of compose.prod.yml.
+# Inside the container only (the port is not published): the health check of compose.prod.yml.
 server {
     listen 8080;
     access_log off;
