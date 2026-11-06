@@ -159,7 +159,7 @@ export function useProposalDecision(orgId: string, pronoId: string) {
   };
 }
 
-export type ReactionKind = 'bien_vu' | 'rire' | 'choc' | 'bravo' | 'doute';
+export type ReactionKind = 'jackpot' | 'yes' | 'enfin' | 'serieux' | 'malaise';
 
 export function useReact(orgId: string, pronoId: string) {
   const client = useQueryClient();

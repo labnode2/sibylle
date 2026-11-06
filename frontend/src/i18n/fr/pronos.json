@@ -173,11 +173,11 @@
   "reactions": {
     "label": "Réactions",
     "button": "{{name}} ({{count}})",
-    "bien_vu": "Bien vu",
-    "rire": "Ha ha",
-    "choc": "Oh !",
-    "bravo": "Bravo",
-    "doute": "Hmm"
+    "jackpot": "Jackpot",
+    "yes": "Yes !",
+    "enfin": "Enfin !",
+    "serieux": "Sérieux ?",
+    "malaise": "Malaise"
   },
   "proposals": {
     "title": "PROPOSITIONS À VALIDER",

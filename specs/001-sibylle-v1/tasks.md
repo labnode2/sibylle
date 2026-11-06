@@ -428,6 +428,19 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 
 ---
 
+## Phase 9j: Évolution de US5 - Réactions en emoji
+
+**Goal**: les réactions rapides deviennent cinq emoji en pixel art dessinés d'après des GIF, fixes au repos et animés quand on s'en approche ou qu'on réagit (research.md J17).
+
+**Independent Test**: ouvrir un prono et voir les cinq emoji immobiles ; passer la souris sur l'un et le voir s'animer ; en ajouter un et le voir jouer une fois, puis le retirer ; couper les animations et voir chaque emoji rester fixe ; après la révision 0022, retrouver les réactions déjà données sous leur nouveau nom.
+
+- [x] T211 [US5] Remplacer le jeu de réactions de `backend/src/sibylle/domain/content.py` et `ReactionKind` de `backend/src/sibylle/api/schemas.py` par `jackpot`, `yes`, `enfin`, `serieux` et `malaise`, avec la révision Alembic `backend/src/sibylle/db/migrations/versions/0022_emoji_reactions.py` qui convertit les réactions données ; mettre à jour `backend/tests/contract/test_proposals_reactions.py` ; régénérer `frontend/src/api/schema.d.ts`.
+- [x] T212 [US5] Dessiner les cinq emoji (dessins et séquences) dans `frontend/src/ui/reactions/frames.ts` et en faire des bandes SVG jouées par `ReactionEmoji` (`frontend/src/ui/reactions/index.tsx` et `reactions.module.css`) dans `frontend/src/features/pronos/ReactionBar.tsx`, qui joue une fois la réaction qu'on vient de donner ; libellés dans `frontend/src/i18n/fr/pronos.json` ; dessins vérifiés par `frontend/tests/unit/reaction-emojis.test.ts` ; parcours dans `frontend/tests/e2e/une.spec.ts`.
+
+**Checkpoint**: chaque prono a ses cinq emoji, et les réactions d'avant y sont toujours.
+
+---
+
 ## Phase 10: User Story 8 - Être prévenu (Priority: P3)
 
 **Goal**: notifications push (appli installée) et e-mails pour quatre événements, réglables type par type et canal par canal.
@@ -565,6 +578,7 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 - **US14 (P3)** : après US2 et US5 (l'écran du prono, la une et ses réactions) ; la modération revient à la rédaction en chef de US6.
 - **US15 (P3)** : après US7 (la carte de presse et ses objets mis en avant) ; la flamme de US13 la suit.
 - **Phase 9i** : transversale, après les écrans des actions qu'elle touche (US1 à US15).
+- **Phase 9j** : après US5 (la barre de réactions).
 
 ### Within Each User Story
 

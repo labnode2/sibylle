@@ -236,6 +236,14 @@ nginx résout `api` par le DNS de Docker (`resolve`, nginx 1.27.3 et plus) : un 
 
 Écartés : une image nginx qui monterait l'interface construite par la CI (la VM devrait recevoir des fichiers en plus de l'image) ; certbot (Cloudflare garde son proxy, R14) ; un seul workflow pour l'interface et le serveur, qui ne déploierait qu'une fois par push (il faudrait détecter à la main ce qui a changé dans chaque job).
 
+### J17. Réactions en emoji, d'après des GIF
+
+Choix du 6 novembre 2026, à la demande d'Emile. Les réactions rapides sont cinq emoji en pixel art de 16 × 16, dessinés d'après cinq GIF qu'il a choisis, dans cet ordre : `jackpot` (« Jackpot », la machine à sous : levier, rouleaux qui tournent, 7 7 7 et pièces), `yes` (« Yes ! », grand sourire et poing levé), `enfin` (« Enfin ! », les deux mains vers le ciel sous des étincelles), `serieux` (« Sérieux ? », les lunettes qui glissent et le sourcil qui monte) et `malaise` (« Malaise », la tête qui recule dans la haie). Ce sont des dessins originaux qui reprennent le geste de chaque GIF, sans ses personnages ni ses images, dans le style « Gazette » (principe VI) : la palette de la flamme (J8) et un contour à l'encre. Chacun a une image fixe et une animation. Au repos, la barre montre l'image fixe, pour qu'un fil de pronos ne bouge pas de partout ; l'animation se joue sous la souris (sur les écrans qui en ont une) ou le focus clavier, et une fois quand on vient de réagir. Sous « couper les animations », l'image fixe reste.
+
+Les dessins sont du texte dans `frontend/src/ui/reactions/frames.ts`, une lettre par pixel comme la flamme, et une séquence dit quel dessin montrer à chaque pas. L'interface en fait une fois pour toutes une bande SVG (`data:`) que le CSS fait défiler pas à pas (`steps`) : rien à télécharger (principe I), et net à toutes les tailles. La révision 0022 convertit les réactions déjà données, une pour une, vers la plus proche : `bien_vu` → `jackpot`, `bravo` → `yes`, `rire` → `enfin`, `choc` → `serieux`, `doute` → `malaise`.
+
+Écartés : les GIF eux-mêmes, dans une balise `<img>` (rien ne les arrête sous « couper les animations », et 3,9 Mo à charger) ou recadrés en bandes WebP (146 Ko, des photos illisibles à 32 pixels, hors du pixel art, et cinq boucles sous chaque prono) ; garder les anciennes clés en ne changeant que l'image (`rire` aurait montré « Enfin ! »).
+
 ## Contenus à produire pendant l'implémentation
 
-Ils ne bloquent pas la conception : la charte par défaut, les textes des e-mails, le jeu de réactions rapides (une poignée d'icônes en pixel art), le catalogue de la collection et ses prix (couleurs, cadres ; les boules se gagnent), les codes secrets, les modèles d'avatars et les fonds de carte d'organisation.
+Ils ne bloquent pas la conception : la charte par défaut, les textes des e-mails, le jeu de réactions rapides (cinq emoji, J17), le catalogue de la collection et ses prix (couleurs, cadres ; les boules se gagnent), les codes secrets, les modèles d'avatars et les fonds de carte d'organisation.

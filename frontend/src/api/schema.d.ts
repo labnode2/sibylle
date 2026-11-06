@@ -4305,7 +4305,7 @@ export interface operations {
             path: {
                 org_id: string;
                 prono_id: string;
-                kind: "bien_vu" | "rire" | "choc" | "bravo" | "doute";
+                kind: "jackpot" | "yes" | "enfin" | "serieux" | "malaise";
             };
             cookie?: never;
         };
@@ -4336,7 +4336,7 @@ export interface operations {
             path: {
                 org_id: string;
                 prono_id: string;
-                kind: "bien_vu" | "rire" | "choc" | "bravo" | "doute";
+                kind: "jackpot" | "yes" | "enfin" | "serieux" | "malaise";
             };
             cookie?: never;
         };

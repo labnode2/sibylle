@@ -93,15 +93,15 @@ test('la une, a proposal and a reaction', async ({ browser }, testInfo) => {
     .click();
   const camiReactions = cami.getByRole('group', { name: 'Réactions' });
   const inesReactions = ines.getByRole('group', { name: 'Réactions' });
-  await camiReactions.getByRole('button', { name: 'Bien vu (0)' }).click();
-  await expect(camiReactions.getByRole('button', { name: 'Bien vu (1)' })).toHaveAttribute(
+  await camiReactions.getByRole('button', { name: 'Jackpot (0)' }).click();
+  await expect(camiReactions.getByRole('button', { name: 'Jackpot (1)' })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
-  await expect(inesReactions.getByRole('button', { name: 'Bien vu (1)' })).toHaveAttribute(
+  await expect(inesReactions.getByRole('button', { name: 'Jackpot (1)' })).toHaveAttribute(
     'aria-pressed',
     'false',
   );
-  await camiReactions.getByRole('button', { name: 'Bien vu (1)' }).click();
-  await expect(inesReactions.getByRole('button', { name: 'Bien vu (0)' })).toBeVisible();
+  await camiReactions.getByRole('button', { name: 'Jackpot (1)' }).click();
+  await expect(inesReactions.getByRole('button', { name: 'Jackpot (0)' })).toBeVisible();
 });

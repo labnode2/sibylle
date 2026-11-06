@@ -500,7 +500,7 @@ Cami veut montrer sa carte de presse sur son blog. Sous sa carte, elle active «
 - Une correction de résultat peut rendre un solde négatif ; le membre ne peut plus miser tant qu'il l'est.
 - Pixel mystère : une fois un jeu terminé, le dessin suivant préparé par la rédaction démarre le lendemain matin.
 - Le catalogue de la collection (couleurs et cadres à acheter, boules à débloquer) et les prix en pièces sont définis par la plateforme et identiques pour toutes les rédactions ; les codes secrets aussi.
-- Le jeu fixe de réactions rapides est défini par la plateforme (une poignée d'icônes en pixel art).
+- Le jeu fixe de réactions rapides est défini par la plateforme (cinq emoji en pixel art, fixes et animés, research.md J17).
 - Sans limite stricte de membres par organisation ; l'appli est conçue pour 10 à 50 membres et doit rester fluide jusqu'à 100.
 - L'appli est hébergée sur une machine à domicile, exposée par frp depuis un VPS qui porte le nom de domaine ; les coupures de courant ou de connexion à domicile sont acceptées pour un jeu sans enjeu.
 - Les e-mails partent par Brevo ; l'heure de référence est celle de Paris.

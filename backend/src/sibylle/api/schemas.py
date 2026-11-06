@@ -557,7 +557,7 @@ class RejectIn(BaseModel):
     reason: Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)] | None = None
 
 
-ReactionKind = Literal["bien_vu", "rire", "choc", "bravo", "doute"]
+ReactionKind = Literal["jackpot", "yes", "enfin", "serieux", "malaise"]
 
 
 class CancelIn(BaseModel):

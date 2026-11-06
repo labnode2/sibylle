@@ -1,0 +1,36 @@
+/* The emoji of a reaction: its strip slides by one step at a time behind a window of one step.
+   At rest the first step, the still emoji, shows. The strip plays while the pointer (on screens
+   that have one) or the keyboard is on the element around it, and once after a press (.playing).
+   Without animations (.reduce-motion, prefers-reduced-motion), the still emoji stays. */
+.emoji {
+  display: block;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+}
+
+.strip {
+  display: block;
+  height: 100%;
+}
+
+.playing .strip {
+  animation: play var(--duration) steps(var(--steps));
+}
+
+:focus-visible > .emoji .strip {
+  animation: play var(--duration) steps(var(--steps)) infinite;
+}
+
+@media (hover: hover) {
+  :hover > .emoji .strip {
+    animation: play var(--duration) steps(var(--steps)) infinite;
+  }
+}
+
+@keyframes play {
+  to {
+    transform: translateX(-100%);
+  }
+}

@@ -143,30 +143,30 @@ async def test_reactions(make_org: MakeOrg, person: MakePerson) -> None:
     prono = await publish(hugo.client, str(org.id))
     react = url(org.id, prono["id"], "reactions")
 
-    assert (await cami.client.put(f"{react}/bien_vu")).status_code == 204
-    assert (await cami.client.put(f"{react}/bien_vu")).status_code == 204  # twice: still one
-    assert (await leo.client.put(f"{react}/bien_vu")).status_code == 204
-    assert (await leo.client.put(f"{react}/rire")).status_code == 204
+    assert (await cami.client.put(f"{react}/jackpot")).status_code == 204
+    assert (await cami.client.put(f"{react}/jackpot")).status_code == 204  # twice: still one
+    assert (await leo.client.put(f"{react}/jackpot")).status_code == 204
+    assert (await leo.client.put(f"{react}/enfin")).status_code == 204
     seen_by_cami = (await cami.client.get(url(org.id, prono["id"]))).json()
-    assert seen_by_cami["reactions"] == {"bien_vu": 2, "rire": 1}
-    assert seen_by_cami["my_reactions"] == ["bien_vu"]
+    assert seen_by_cami["reactions"] == {"jackpot": 2, "enfin": 1}
+    assert seen_by_cami["my_reactions"] == ["jackpot"]
     assert sorted((await leo.client.get(url(org.id, prono["id"]))).json()["my_reactions"]) == [
-        "bien_vu",
-        "rire",
+        "enfin",
+        "jackpot",
     ]
 
     # A second press takes it back.
-    assert (await cami.client.delete(f"{react}/bien_vu")).status_code == 204
-    assert (await cami.client.delete(f"{react}/bien_vu")).status_code == 204
+    assert (await cami.client.delete(f"{react}/jackpot")).status_code == 204
+    assert (await cami.client.delete(f"{react}/jackpot")).status_code == 204
     seen_by_cami = (await cami.client.get(url(org.id, prono["id"]))).json()
     assert (seen_by_cami["reactions"], seen_by_cami["my_reactions"]) == (
-        {"bien_vu": 1, "rire": 1},
+        {"jackpot": 1, "enfin": 1},
         [],
     )
 
     assert (await cami.client.put(f"{react}/colere")).status_code == 422
     proposal = await publish(cami.client, str(org.id))
-    on_proposal = await cami.client.put(f"{url(org.id, proposal['id'], 'reactions')}/bravo")
+    on_proposal = await cami.client.put(f"{url(org.id, proposal['id'], 'reactions')}/yes")
     assert on_proposal.status_code == 409
     outsider = await person(await make_org("Autre rédaction"))
-    assert (await outsider.client.put(f"{react}/bravo")).status_code == 404
+    assert (await outsider.client.put(f"{react}/yes")).status_code == 404
