@@ -3,7 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 
-import { Button, Field, Kicker } from '../../ui/components';
+import { AppVersion, Button, Field, Kicker } from '../../ui/components';
 import { toast } from '../../ui/Toaster';
 import { useFormErrors } from '../forms';
 import { useConfirmReset, useLogin, useRequestReset, useSignup, useVerifyEmail } from './api';
@@ -51,6 +51,7 @@ export function LoginPage() {
         <Link to={`/inscription?${search.toString()}`}>{t('login.signup')}</Link>
         <Link to="/mot-de-passe/oubli">{t('login.forgot')}</Link>
       </div>
+      <AppVersion />
     </section>
   );
 }

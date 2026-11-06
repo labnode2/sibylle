@@ -1,8 +1,34 @@
+import { execFileSync } from 'node:child_process';
+
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+import { version } from './package.json';
+
+/** The short commit the interface is built from: given by the web image's build, which has no
+ *  .git (deploy/nginx/Dockerfile), else read from git; none outside a clone. */
+function commit(): string {
+  try {
+    const sha =
+      process.env.SIBYLLE_COMMIT ||
+      execFileSync('git', ['rev-parse', 'HEAD'], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+    return sha.trim().slice(0, 7);
+  } catch {
+    return '';
+  }
+}
+
 export default defineConfig({
+  define: {
+    // « 0.1.0 · aa15cc4 », at the bottom of the sign-in page and of the settings (AppVersion).
+    'import.meta.env.SIBYLLE_VERSION': JSON.stringify(
+      [version, commit()].filter(Boolean).join(' · '),
+    ),
+  },
   plugins: [
     react(),
     VitePWA({

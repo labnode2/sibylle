@@ -9,7 +9,7 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import { ApiError } from '../../api/client';
 import type { Me } from '../../api/types';
 import { usePreferences, type Theme } from '../../app/preferences';
-import { Button, ButtonLink, Card, Icon, Switch } from '../../ui/components';
+import { AppVersion, Button, ButtonLink, Card, Icon, Switch } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
 import { toast } from '../../ui/Toaster';
 import { useMe } from '../auth/api';
@@ -266,6 +266,7 @@ export function SettingsPage() {
         {t('logout')}
       </Button>
       {logout.element}
+      <AppVersion />
     </div>
   );
 }

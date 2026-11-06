@@ -602,4 +602,13 @@ export function SwitchRow({
   );
 }
 
+/** The interface's version and the commit it was built from (vite.config.ts): at the bottom of
+ *  the sign-in page and of the settings, to tell which build is online. */
+export function AppVersion() {
+  const { t } = useTranslation();
+  return (
+    <p className={styles.version}>{t('version', { version: import.meta.env.SIBYLLE_VERSION })}</p>
+  );
+}
+
 export { styles as uiStyles };

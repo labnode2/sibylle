@@ -1,7 +1,8 @@
 # The web image: the interface built by Node, then served by nginx with the production
 # configuration of deploy/nginx/ (templates/sibylle.conf.template). Built from the repository
 # root, which Dockerfile.dockerignore narrows down to frontend/ and deploy/nginx/:
-#   docker build -f deploy/nginx/Dockerfile -t sibylle-web .
+#   docker build -f deploy/nginx/Dockerfile --build-arg SIBYLLE_COMMIT=$(git rev-parse HEAD) \
+#     -t sibylle-web .
 
 # The Node of frontend/.nvmrc, on Debian like the CI's runners.
 FROM node:26.13.0-slim AS build
@@ -10,6 +11,9 @@ WORKDIR /src
 COPY frontend/package.json frontend/package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
 COPY frontend/ ./
+# The commit shown with the interface's version (frontend/vite.config.ts): there is no .git here
+# to read it from. Declared after `npm ci`, so that a new commit keeps that layer cached.
+ARG SIBYLLE_COMMIT=
 RUN npm run build
 
 FROM nginx:1.30-alpine

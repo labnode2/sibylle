@@ -106,6 +106,9 @@ jobs:
           context: .
           file: deploy/nginx/Dockerfile
           push: ${{ steps.login.outcome == 'success' }}
+          # Shown with the version, at the bottom of the sign-in page and of the settings.
+          build-args: |
+            SIBYLLE_COMMIT=${{ github.sha }}
           tags: |
             ${{ env.IMAGE }}:main
             ${{ env.IMAGE }}:sha-${{ steps.commit.outputs.short }}

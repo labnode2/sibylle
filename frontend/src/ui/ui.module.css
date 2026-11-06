@@ -560,3 +560,11 @@
   right: auto;
   left: 0;
 }
+
+/* The version, at the bottom of a page: small, in mono. */
+.version {
+  margin: 0;
+  font: 500 11px/1.4 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+}
