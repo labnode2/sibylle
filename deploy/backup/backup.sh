@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Production backup: the database (pg_dump in custom format, already compressed) and the
-# uploaded images (an archive of the uploads volume), in BACKUP_DIR (backups/ next to deploy/ by
+# uploaded images (an archive of the uploads folder), in BACKUP_DIR (backups/ next to deploy/ by
 # default), kept BACKUP_KEEP_DAYS days (14). sibylle-backup.timer runs it every night, and
 # deploy/update.sh before each update. At night, when BACKUP_AGE_RECIPIENT and BACKUP_REMOTE are
 # set (deploy/.env), a copy encrypted with age also goes to the VPS, through rsync.

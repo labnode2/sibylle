@@ -113,6 +113,6 @@ Sur le domaine en HTTPS, avec l'appli installée sur Android, iOS 16.4+ et un or
 
 Le détail est dans `deploy/README.md`.
 
-1. Sur la box : son port 443 transféré au port 8443 de la machine. Chez Cloudflare : enregistrement DNS A du domaine vers l'adresse IPv4 publique de la box, par le proxy (sans AAAA) ; mode Full (strict) ; certificat d'origine. SPF, DKIM et DMARC de Brevo.
-2. Sur la machine : `deploy/README.md` (clone dans `/opt/sibylle`, réglages, `deploy/update.sh`, crochets de déploiement, certificat d'origine dans `/etc/sibylle/tls`, sauvegardes) .
+1. Chez Cloudflare : enregistrement DNS A du domaine vers l'adresse IPv4 publique de la box (celle des autres sites de la VM), par le proxy (sans AAAA) ; mode Full (strict) ; certificat d'origine ; Authenticated Origin Pulls. SPF, DKIM et DMARC de Brevo.
+2. Sur la VM dev-external : `deploy/README.md` (dossiers de données et règle ufw dans le `setup.sh` de la VM, clone dans `/opt/sibylle`, réglages, `deploy/update.sh`, crochets de déploiement, sauvegardes), puis, dans Nginx Proxy Manager, l'hôte du domaine vers `http://sibylle:8443`, avec le certificat d'origine.
 3. Vérifier : `https://<domaine>/api/health` répond `ok` ; une sauvegarde est produite la nuit suivante, puis restaurée sur une base de test.

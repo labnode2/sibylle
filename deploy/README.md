@@ -1,14 +1,21 @@
 # Going to production
 
-Production runs on the home machine, which is also the development PC. It lives apart: a clone
-of the repository in `/opt/sibylle`, a Compose project `sibylle-prod` (`deploy/compose.prod.yml`)
-with its own volumes, and a system user `sibylle`. Development (project `sibylle`, database on
-port 5432) is never touched.
+Production runs on dev-external, the labnode VM, behind its reverse proxy, Nginx Proxy Manager
+(NPM). It lives apart from the VM's other applications: a clone of the repository in
+`/opt/sibylle`, a Compose project `sibylle-prod` (`deploy/compose.prod.yml`), a system user
+`sibylle`, and its data in `/mnt/data/sibylle`.
 
-Visitors reach `sibylle.cc` through Cloudflare's proxy, which connects to the box's public
-address; the box forwards its port 443 to nginx, on port 8443 of the machine. nginx
-(`deploy/nginx/`) terminates TLS with a Cloudflare origin certificate, serves the interface, and
-relays `/api/` to the `api` service and `/hooks/` to webhook on the machine.
+Visitors reach `sibylle.cc` through Cloudflare's proxy, which connects to the box's port 443; the
+box forwards it to the VM, where NPM terminates TLS and forwards to `http://sibylle:8443` over the
+VM's `proxy` network. `sibylle` is the nginx container (`deploy/nginx/`): it serves the
+interface, and relays `/api/` to the `api` service and `/hooks/` to webhook on the VM. No port is
+published.
+
+The VM's own rules apply (its `CLAUDE.md` and Docker network guide, in the labnode2/docker
+repository): read-only containers without privileges and with limits, a UID per application,
+nothing on `proxy` but what NPM must reach. The `api` and the `worker` reach the Internet
+(Brevo's SMTP, push notifications) through a network of their own; the `db` reaches nothing. The
+VM cannot reach the local network, and Sibylle needs nothing there.
 
 ## How an update arrives
 
@@ -20,11 +27,11 @@ relays `/api/` to the `api` service and `/hooks/` to webhook on the machine.
 2. Each workflow that pushed an image runs the “Deploy” job (`.github/workflows/deploy.yml`),
    which calls `https://sibylle.cc/hooks/deploy` with the commit and an id specific to the job
    attempt, signed (HMAC-SHA256 of the body, with the shared secret).
-3. nginx relays the request to webhook, which runs on the machine (service `sibylle-webhook`);
-   webhook checks the signature, answers 202 at once and starts in the background
-   `deploy/webhook/deploy.sh <id> <commit>`, which runs `deploy/update.sh <commit>`. Cloudflare
-   cuts a response that takes more than 100 s: the CI cannot wait for the end of the update on
-   the same request.
+3. NPM, then nginx, relay the request to webhook, which runs on the VM (service
+   `sibylle-webhook`); webhook checks the signature, answers 202 at once and starts in the
+   background `deploy/webhook/deploy.sh <id> <commit>`, which runs `deploy/update.sh <commit>`.
+   Cloudflare cuts a response that takes more than 100 s: the CI cannot wait for the end of the
+   update on the same request.
 4. `update.sh` moves `/opt/sibylle` to `main`, pulls both images, backs up the database and the
    uploaded images, restarts what changed, then waits until every service is healthy. If one is
    not, it rolls back to the previous version (commit and images) and says so. Its log is
@@ -39,19 +46,40 @@ One update runs at a time; when both workflows push an image, the second update 
 first did not find yet. A badly signed request, or one for a commit that is not on `main`,
 starts nothing.
 
-## 1. Prepare the machine (once)
+## 1. Prepare the VM (once)
+
+What needs root on the VM goes into the `setup.sh` of labnode2/docker, so that a fresh VM gets
+the same result. That script already creates the `proxy` network; for Sibylle it also needs:
 
 ```bash
-sudo apt install webhook jq curl
+# The data: the database at UID 2005 (the VM's UID for Sibylle, the next one in its CLAUDE.md),
+# the uploaded images at UID 10001 (the server image's own user), on a volume of their own
+# (size to choose) since visitors fill it.
+install -d -m 755 "$DATA/sibylle"
+install -d -m 700 -o 2005 -g 2005 "$DATA/sibylle/db"
+make_lv sibylle 10G "$DATA/sibylle/uploads"
+chown 10001:10001 "$DATA/sibylle/uploads" && chmod 700 "$DATA/sibylle/uploads"
+# The deploy hooks (section 4): nginx, in its container, reaches webhook on docker0.
+ufw allow in from 172.30.0.0/16 to 172.30.0.1 port 9000 proto tcp comment 'sibylle deploy hooks'
+```
+
+Sibylle stays out of the script's `APPS` list: `update.sh` starts it. Its row in the
+`CLAUDE.md` application table: UID 2005 (db) and 10001 (api, worker), data in
+`/mnt/data/sibylle`, NPM forwards to `http://sibylle:8443`.
+
+Then, on the VM:
+
+```bash
+sudo apt install webhook jq curl git
 sudo useradd --system --create-home --home-dir /var/lib/sibylle --shell /usr/sbin/nologin --groups docker sibylle
 sudo install -d -o sibylle -g sibylle /opt/sibylle
 sudo -u sibylle git clone https://github.com/labnode2/sibylle.git /opt/sibylle
 sudo -u sibylle -H docker login registry.labnode.ovh
 ```
 
-The `docker` group is worth root: `sibylle` is only used for production. The registry does not
-tell reading from writing apart: a separate account for the machine can be removed without
-touching the CI's.
+The `docker` group is worth root on the VM: `sibylle` does nothing but run production, through
+`update.sh` and webhook. The registry does not tell reading from writing apart: a separate
+account for the VM can be removed without touching the CI's.
 
 ## 2. Production settings
 
@@ -66,13 +94,13 @@ In `.env`: `ENVIRONMENT=production`, `PUBLIC_ORIGIN=https://sibylle.cc`, the thr
 printed by `gen-secrets` (`POSTGRES_PASSWORD`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`), Brevo's
 e-mail settings (`SMTP_*`, `MAIL_FROM`) and `VAPID_SUBJECT`. `DATABASE_URL` and `UPLOAD_DIR` are
 set by the Compose file; nginx also takes the site's domain from `PUBLIC_ORIGIN`. The
-production-only settings (tags, port, certificate, backups, logs) are described at the end of
+production-only settings (tags, data folder, backups, logs) are described at the end of
 `.env.example`.
 
 For Discord to get every update, done or failed: in the chosen channel, *Edit Channel →
 Integrations → Webhooks → New Webhook*, copy its URL and put it in `.env` as
 `DISCORD_WEBHOOK_URL`. The URL is enough to write to the channel: it stays in `.env`, like a
-secret. A machine already up to date and healthy posts nothing; a failed post is logged without
+secret. A VM already up to date and healthy posts nothing; a failed post is logged without
 stopping the update.
 
 ## 3. First start
@@ -82,12 +110,12 @@ sudo -u sibylle -H /opt/sibylle/deploy/update.sh
 sudo -u sibylle -H docker compose --project-directory /opt/sibylle/deploy -f /opt/sibylle/deploy/compose.prod.yml ps
 ```
 
-`db`, `api`, `worker` and `nginx` must be `healthy`. Until the box forwards its port (section 5),
-nothing reaches nginx from the Internet; until Cloudflare's origin certificate is in place
-(section 6), it serves a provisional self-signed one. A check on the machine:
+`db`, `api`, `worker` and `sibylle` must be `healthy`, with an empty ports column. Until NPM
+forwards the site (section 6), nothing reaches nginx from the Internet. A check on the VM, the way
+NPM reaches it:
 
 ```bash
-curl -sk --resolve sibylle.cc:8443:127.0.0.1 https://sibylle.cc:8443/api/health
+sudo docker exec npm curl -s -H 'Host: sibylle.cc' http://sibylle:8443/api/health
 ```
 
 ## 4. The deploy hooks
@@ -107,16 +135,17 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now sibylle-webhook.service sibylle-backup.timer
 ```
 
-webhook listens on `172.17.0.1:9000`, the Docker bridge address (`ip -4 addr show docker0`):
-nginx reaches it from its container (`location /hooks/`, POST only), the Internet never
-directly. A trial on the machine, signed the way the CI does it, with the id `trial-1`:
+webhook listens on `172.30.0.1:9000`, the address of the VM's Docker bridge
+(`ip -4 addr show docker0`): nginx reaches it from its container (`location /hooks/`, POST
+only), through the ufw rule of section 1; the Internet never reaches it directly. A trial on the
+VM, signed the way the CI does it, with the id `trial-1`:
 
 ```bash
 secret=$(sudo sed -n 's/^SIBYLLE_WEBHOOK_SECRET=//p' /etc/sibylle/webhook.env)
 hook() {
   signature=$(printf '%s' "$2" | openssl dgst -sha256 -hmac "$secret" | awk '{print $NF}')
   curl -sS -H "Content-Type: application/json" -H "X-Hub-Signature-256: sha256=$signature" \
-    --data-binary "$2" "http://172.17.0.1:9000/hooks/$1"
+    --data-binary "$2" "http://172.30.0.1:9000/hooks/$1"
 }
 hook deploy "{\"id\":\"trial-1\",\"commit\":\"$(git -C /opt/sibylle rev-parse origin/main)\"}"
 hook deploy-status '{"id":"trial-1"}'
@@ -128,46 +157,48 @@ or `state=unknown` for an unknown id. webhook's answers: 403 without a signature
 malformed commit or id, 500 with “Error occurred while evaluating hook rules” for a wrong
 signature. Service log: `journalctl -u sibylle-webhook`.
 
-## 5. The box
-
-The box needs a public IPv4 address of its own (not one shared between subscribers). In its NAT
-settings, forward TCP port 443 (outside) to the machine's local address, port 8443
-(`SIBYLLE_HTTPS_PORT`; set it to 443 if the box cannot change the port on the way). Give the
-machine a fixed local address (a DHCP lease reserved on the box), so that the rule keeps pointing
-at it. Port 80 needs no rule: Cloudflare only talks to the site on 443.
-
-The box's public address becomes the site's origin: Cloudflare hides it from DNS answers, but
-anyone who finds it can reach nginx directly. nginx refuses a connection that does not name
-`sibylle.cc` at the TLS handshake, only trusts `CF-Connecting-IP` from Cloudflare's address ranges
-(`deploy/nginx/cloudflare/ips.conf`), and, with Authenticated Origin Pulls (section 6), lets in
-Cloudflare alone. If the box's public address changes from time to time, the `A` record of
-section 6 has to follow it (a dynamic DNS client for Cloudflare); nothing here does it.
-
-## 6. Cloudflare and the certificate
+## 5. Cloudflare and the certificate
 
 In Cloudflare's dashboard, for `sibylle.cc`:
 
-- *DNS*: an `A` record for `sibylle.cc` to the box's public address, **proxied**; no `AAAA`
-  record (IPv6 has no NAT: the rule of section 5 would not apply);
+- *DNS*: an `A` record for `sibylle.cc` to the box's public address, the one the VM's other
+  sites already use, **proxied**; no `AAAA` record (IPv6 has no NAT: the box's forwarding would
+  not apply);
 - *SSL/TLS → Overview*: **Full (strict)**; *Edge Certificates*: **Always Use HTTPS**;
-- *SSL/TLS → Origin Server → Create Certificate*: hostnames `sibylle.cc` and `*.sibylle.cc`. Copy
-  the certificate and the private key to the machine (the key is shown only once):
+- *SSL/TLS → Origin Server → Create Certificate*: hostnames `sibylle.cc` and `*.sibylle.cc`. Keep
+  the certificate and the private key for NPM (section 6): the key is shown only once. Valid 15
+  years, it leaves nothing to renew and no challenge to get through Cloudflare's proxy.
 
-```bash
-sudo install -d -m 700 /etc/sibylle/tls
-sudo sh -c 'umask 077; cat > /etc/sibylle/tls/origin.pem'   # paste the certificate, then Ctrl+D
-sudo sh -c 'umask 077; cat > /etc/sibylle/tls/origin.key'   # paste the private key, then Ctrl+D
-sudo -u sibylle -H docker compose --project-directory /opt/sibylle/deploy -f /opt/sibylle/deploy/compose.prod.yml restart nginx
+The box's public address is the site's origin: Cloudflare hides it from `sibylle.cc`'s DNS
+answers, but a VM site whose record is not proxied gives it away, and anyone who knows it reaches
+NPM directly. Authenticated Origin Pulls (section 6) then lets in Cloudflare alone. If the box's
+public address changes from time to time, the `A` record has to follow it (a dynamic DNS client
+for Cloudflare); nothing here does it.
+
+## 6. NPM
+
+In NPM's admin interface (through the SSH tunnel of the VM's guide), first *SSL Certificates →
+Add SSL Certificate → Custom*: the origin certificate and its key from section 5. Then *Hosts →
+Proxy Hosts → Add Proxy Host*:
+
+- *Details*: domain name `sibylle.cc`; scheme `http`, forward hostname `sibylle`, forward port
+  `8443`; **Websockets Support** on (the live updates, `/api/ws`); **Block Common Exploits** on;
+- *SSL*: the custom certificate above; **Force SSL** and **HTTP/2 Support** on; **HSTS** off:
+  Sibylle sends its own header (`deploy/nginx/templates/sibylle/headers.inc.template`), and NPM
+  would add a second one;
+- *Advanced*: Authenticated Origin Pulls, recommended. Copy `deploy/npm/origin-pull-ca.pem`
+  (Cloudflare's certificate authority for it, valid until November 2029) into NPM's data folder,
+  the one mounted on `/data` in its container, as `sibylle/origin-pull-ca.pem`, then:
+
+```nginx
+ssl_client_certificate /data/sibylle/origin-pull-ca.pem;
+ssl_verify_client on;
 ```
 
-The files stay readable by root only: the Docker daemon mounts them into the container. nginx
-logs “using a provisional self-signed one” as long as it does not find them.
-
-Recommended, since the box's address is the origin: *SSL/TLS → Origin Server → Authenticated
-Origin Pulls* on, then `SIBYLLE_ORIGIN_PULL=on` in `.env` and `update.sh --no-pull`. nginx then
-only lets in connections that show Cloudflare's client certificate
-(`deploy/nginx/cloudflare/origin-pull-ca.pem`, valid until November 2029): nobody reaches the
-site without going through Cloudflare.
+Turn on *SSL/TLS → Origin Server → Authenticated Origin Pulls* in Cloudflare first: once these
+lines are in, NPM refuses, for `sibylle.cc`, any connection that does not show Cloudflare's client
+certificate. Without them, someone who reaches NPM directly can also set the `CF-Connecting-IP`
+header, which nginx takes as the visitor's address (rate limits).
 
 Then `https://sibylle.cc/api/health` answers `{"status":"ok","db":"ok"}` from anywhere.
 
@@ -200,7 +231,7 @@ sudo -u sibylle -H /opt/sibylle/deploy/backup/restore.sh --yes \
 ```
 
 Encrypted copy on the VPS, every night: install `age`, create the key pair somewhere other than
-the machine (`age-keygen`, the private key stays offline), authorize the SSH key of `sibylle`
+the VM (`age-keygen`, the private key stays offline), authorize the SSH key of `sibylle`
 (`sudo -u sibylle -H ssh-keygen -t ed25519`) on the VPS, then set in `.env`
 `BACKUP_AGE_RECIPIENT` (the public key) and `BACKUP_REMOTE` (the rsync destination). The VPS
 keeps its copies as long as decided on its side.
@@ -212,7 +243,7 @@ keeps its copies as long as decided on its side.
 - Go back to a given version: `SIBYLLE_BACKEND_TAG=sha-<commit>` (the server) or
   `SIBYLLE_WEB_TAG=sha-<commit>` (the interface) in `.env`, then `update.sh`; the commit must be
   one that built that image. Remove the line to follow `main` again. The images from before the
-  last update also stay on the machine, tagged `previous`.
+  last update also stay on the VM, tagged `previous`.
 - If a migration ran before a failure, `update.sh` gives the `restore.sh` command that brings
   back the database from before the update.
 - Read again an update started by the CI: `/opt/sibylle/deploy-logs/<run>-<attempt>.log`, from

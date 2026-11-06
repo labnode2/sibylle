@@ -1,6 +1,7 @@
 # The deploy hooks (deploy/webhook/hooks.yaml), served by webhook as the sibylle user, a member
-# of the docker group. It listens on the Docker bridge address (docker0), where only nginx, from
-# its container, reaches it: never straight from the Internet.
+# of the docker group. It listens on the address of the VM's Docker bridge (docker0, 172.30.0.1:
+# /etc/docker/daemon.json gives Docker 172.30.0.0/16), where nginx reaches it from its container,
+# once ufw lets the Docker networks in on port 9000: never straight from the Internet.
 # The secret is in /etc/sibylle/webhook.env (SIBYLLE_WEBHOOK_SECRET=…, 64 characters from
 # `openssl rand -hex 32`), the same as GitHub's DEPLOY_WEBHOOK_SECRET secret.
 # Setup: deploy/README.md.
@@ -15,7 +16,7 @@ Group=sibylle
 Environment=SIBYLLE_DIR=/opt/sibylle
 EnvironmentFile=/etc/sibylle/webhook.env
 ExecStartPre=/bin/sh -c 'test "$${#SIBYLLE_WEBHOOK_SECRET}" -ge 32 || { echo "SIBYLLE_WEBHOOK_SECRET is missing or shorter than 32 characters" >&2; exit 1; }'
-ExecStart=/usr/bin/webhook -hooks ${SIBYLLE_DIR}/deploy/webhook/hooks.yaml -template -hotreload -ip 172.17.0.1 -port 9000 -nopanic
+ExecStart=/usr/bin/webhook -hooks ${SIBYLLE_DIR}/deploy/webhook/hooks.yaml -template -hotreload -ip 172.30.0.1 -port 9000 -nopanic
 Restart=on-failure
 RestartSec=5
 NoNewPrivileges=true

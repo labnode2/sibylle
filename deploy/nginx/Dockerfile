@@ -13,16 +13,16 @@ COPY frontend/ ./
 RUN npm run build
 
 FROM nginx:1.30-alpine
-# openssl makes the provisional certificate (entrypoint/40-sibylle-tls.sh); nginx's own site and
-# pages go.
-RUN apk add --no-cache openssl \
-    && rm /etc/nginx/conf.d/default.conf \
-    && rm -r /usr/share/nginx/html/*
+# nginx's own site and pages go, and its `user` directive: it already runs as that user
+# (compose.prod.yml), and the directive would only warn.
+RUN rm /etc/nginx/conf.d/default.conf \
+    && rm -r /usr/share/nginx/html/* \
+    && sed -i '/^user /d' /etc/nginx/nginx.conf
 # Only the SIBYLLE_* variables are filled into the templates: nginx's own ($host…) stay as they
 # are.
 ENV NGINX_ENVSUBST_FILTER=^SIBYLLE_
 COPY deploy/nginx/templates/ /etc/nginx/templates/
-COPY deploy/nginx/cloudflare/ /etc/nginx/sibylle/
 COPY deploy/nginx/entrypoint/ /docker-entrypoint.d/
 COPY --from=build /src/dist/ /usr/share/nginx/html/
-EXPOSE 443
+# Plain HTTP: NPM terminates TLS in front of it (compose.prod.yml).
+EXPOSE 8443

@@ -1,24 +1,42 @@
-# Production, on the home machine, which is also the development PC: a Compose project of its
-# own (`sibylle-prod`), with its own volumes, so the development database (project `sibylle`,
-# port 5432) is never touched. Only nginx publishes a port, to which the box forwards its port
-# 443. deploy/update.sh runs it from /opt/sibylle, with the production settings of deploy/.env
-# (deploy/README.md).
+# Production, on dev-external, the labnode VM. Nginx Proxy Manager (NPM), the VM's reverse proxy,
+# answers for sibylle.cc and forwards it to http://sibylle:8443 over the VM's shared `proxy`
+# network: no port is published here. Only the `sibylle` service (nginx) is on `proxy`; the others
+# talk among themselves on `internal`, and the api and the worker also reach the Internet through
+# `egress` (Brevo's SMTP, push notifications). The VM's rules apply: read-only containers without
+# privileges, limits, data under /mnt/data/sibylle (SIBYLLE_DATA_DIR). deploy/update.sh runs it
+# from /opt/sibylle, with the production settings of deploy/.env (deploy/README.md). Its own
+# project name keeps a trial on the development PC away from the development project (`sibylle`).
 name: sibylle-prod
 
 x-logging: &logging
   # Rotated logs: the `local` driver keeps 5 files of 20 MB per container.
   driver: local
 
-x-backend: &backend
-  image: ${SIBYLLE_BACKEND_IMAGE:-registry.labnode.ovh/sibylle/backend}:${SIBYLLE_BACKEND_TAG:-main}
+# Every container: no capability, no privilege gain, a read-only system; it writes only to its
+# data folder and its tmpfs.
+x-defaults: &defaults
   restart: unless-stopped
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  pids_limit: 256
+  logging: *logging
+
+x-backend: &backend
+  <<: *defaults
+  image: ${SIBYLLE_BACKEND_IMAGE:-registry.labnode.ovh/sibylle/backend}:${SIBYLLE_BACKEND_TAG:-main}
+  # The image's own user (backend/Dockerfile), owner of the uploads folder.
+  user: "10001"
   env_file: .env
   volumes:
-    - uploads:/data/uploads
+    - ${SIBYLLE_DATA_DIR:-/mnt/data/sibylle}/uploads:/data/uploads
+  tmpfs:
+    # Python's temporary files, and the worker's heartbeat.
+    - /tmp:size=64m,mode=1777
+  networks: [internal, egress]
   depends_on:
     db:
       condition: service_healthy
-  logging: *logging
 
 # The database is the db service's, not the one in deploy/.env (localhost in development).
 x-backend-env: &backend-env
@@ -27,28 +45,38 @@ x-backend-env: &backend-env
 
 services:
   db:
-    image: postgres:18
-    restart: unless-stopped
+    <<: *defaults
+    image: postgres:18.6
+    container_name: sibylle-db
+    # The VM's UID for Sibylle, owner of the database folder; the image's entrypoint gives it a
+    # passwd entry of its own (in /tmp).
+    user: "2005:2005"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-sibylle}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD missing from deploy/.env}
       POSTGRES_DB: ${POSTGRES_DB:-sibylle}
     volumes:
-      - pgdata:/var/lib/postgresql
+      - ${SIBYLLE_DATA_DIR:-/mnt/data/sibylle}/db:/var/lib/postgresql
+    tmpfs:
+      - /var/run/postgresql:size=1m,mode=1777
+      - /tmp:size=16m,mode=1777
+    networks: [internal]
+    mem_limit: 1g
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 10
-    logging: *logging
 
   api:
     <<: *backend
+    container_name: sibylle-api
     command: ["serve"]
     environment:
       <<: *backend-env
       # Only nginx reaches the API: the visitor's address comes from its X-Forwarded-For.
       FORWARDED_ALLOW_IPS: "*"
+    mem_limit: 768m
     healthcheck:
       test:
         - CMD
@@ -62,9 +90,11 @@ services:
 
   worker:
     <<: *backend
+    container_name: sibylle-worker
     command: ["worker"]
     environment:
       <<: *backend-env
+    mem_limit: 512m
     healthcheck:
       test: ["CMD", "sibylle", "worker", "--check"]
       interval: 30s
@@ -72,23 +102,27 @@ services:
       start_period: 60s
       retries: 3
 
-  # The interface and the entry point (deploy/nginx/): TLS with Cloudflare's origin certificate,
-  # the API, the WebSocket and the deploy hooks.
-  nginx:
+  # The entry point, to which NPM forwards sibylle.cc (deploy/nginx/): the interface, the API and
+  # its WebSocket, the deploy hooks. Named after the application, the only name it shows on the
+  # `proxy` network.
+  sibylle:
+    <<: *defaults
     image: ${SIBYLLE_WEB_IMAGE:-registry.labnode.ovh/sibylle/web}:${SIBYLLE_WEB_TAG:-main}
-    restart: unless-stopped
+    container_name: sibylle
+    # The image's nginx user: it listens above 1024 and writes only to its tmpfs.
+    user: "101:101"
     environment:
       PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?PUBLIC_ORIGIN missing from deploy/.env}
-      SIBYLLE_ORIGIN_PULL: ${SIBYLLE_ORIGIN_PULL:-off}
-    ports:
-      # The box forwards its port 443 here, in IPv4 (the DNS has no AAAA record).
-      - 0.0.0.0:${SIBYLLE_HTTPS_PORT:-8443}:443
-    volumes:
-      # origin.pem and origin.key, from Cloudflare (deploy/README.md).
-      - ${SIBYLLE_TLS_DIR:-/etc/sibylle/tls}:/etc/nginx/tls:ro
+    tmpfs:
+      # The configuration filled in at start (templates/), nginx's temporary files and its pid.
+      - /etc/nginx/conf.d:size=1m,uid=101,gid=101
+      - /var/cache/nginx:size=64m,uid=101,gid=101
+      - /run:size=1m,uid=101,gid=101
     extra_hosts:
-      # webhook listens on the docker0 bridge (systemd/sibylle-webhook.service).
+      # webhook listens on the VM's docker0 bridge (systemd/sibylle-webhook.service).
       - host.docker.internal:host-gateway
+    networks: [proxy, internal]
+    mem_limit: 128m
     depends_on:
       api:
         condition: service_healthy
@@ -98,8 +132,11 @@ services:
       timeout: 5s
       start_period: 20s
       retries: 3
-    logging: *logging
 
-volumes:
-  pgdata:
-  uploads:
+networks:
+  # NPM's network, created by the VM's setup.sh.
+  proxy:
+    external: true
+  internal:
+    internal: true
+  egress: {}

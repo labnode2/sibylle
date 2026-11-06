@@ -1,16 +1,17 @@
 # Sibylle in production: the interface built into this image, the API and its WebSocket relayed
-# to the api service, and the deploy hooks relayed to webhook on the machine. Visitors come
-# through Cloudflare, which connects to the box's public address; the box forwards its port 443
-# to this container (SIBYLLE_HTTPS_PORT in compose.prod.yml). Before nginx starts, the image's
-# entrypoint fills in the site's domain (SIBYLLE_DOMAIN, from PUBLIC_ORIGIN) and puts the
-# certificate in place (entrypoint/).
+# to the api service, and the deploy hooks relayed to webhook on the VM. Visitors come through
+# Cloudflare, then Nginx Proxy Manager (NPM), the VM's reverse proxy, which terminates TLS and
+# forwards to port 8443 here, in plain HTTP, over Docker's `proxy` network (compose.prod.yml).
+# Before nginx starts, the image's entrypoint fills in the site's domain (SIBYLLE_DOMAIN, from
+# PUBLIC_ORIGIN).
 
 server_tokens off;
 
-# The visitor's address, which the API gets in X-Forwarded-For: Cloudflare's CF-Connecting-IP when
-# the connection comes from one of its ranges, else the address that connected (someone who
-# reached the box directly).
-include /etc/nginx/sibylle/ips.conf;
+# The visitor's address, which the API gets in X-Forwarded-For: Cloudflare's CF-Connecting-IP, as
+# NPM passes it on. Only containers reach this port (Docker's addresses); with Authenticated
+# Origin Pulls on NPM's side (deploy/README.md), only Cloudflare reaches NPM for this site, so
+# nobody else sets that header.
+set_real_ip_from 172.16.0.0/12;
 real_ip_header CF-Connecting-IP;
 
 map $http_upgrade $connection_upgrade {
@@ -26,25 +27,9 @@ upstream api {
     server api:8000 resolve;
 }
 
-# A connection that does not name the site (a scanner on the box's address) is refused at the
-# TLS handshake.
 server {
-    listen 443 ssl default_server;
-    ssl_reject_handshake on;
-}
-
-server {
-    listen 443 ssl;
-    http2 on;
+    listen 8443;
     server_name ${SIBYLLE_DOMAIN};
-
-    ssl_certificate /run/sibylle/tls/cert.pem;
-    ssl_certificate_key /run/sibylle/tls/key.pem;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 1d;
-    # Cloudflare's client certificate, with SIBYLLE_ORIGIN_PULL=on (Authenticated Origin Pulls).
-    include /run/sibylle/origin-pull.conf;
 
     # No access log: no visitor address is written down.
     access_log off;
@@ -93,7 +78,8 @@ server {
         proxy_set_header X-Forwarded-Proto https;
     }
 
-    # The WebSocket: the server pings every 25 s, under nginx's and Cloudflare's idle timeouts.
+    # The WebSocket: the server pings every 25 s, under the idle timeouts of nginx, NPM and
+    # Cloudflare.
     location = /api/ws {
         include /etc/nginx/conf.d/sibylle/headers.inc;
         proxy_pass http://api;
@@ -105,8 +91,8 @@ server {
         proxy_set_header X-Forwarded-Proto https;
     }
 
-    # The deploy hooks (deploy/webhook/hooks.yaml), served by webhook on the docker0 bridge. Both
-    # answer at once: the default timeouts are enough.
+    # The deploy hooks (deploy/webhook/hooks.yaml), served by webhook on the VM's docker0
+    # bridge. Both answer at once: the default timeouts are enough.
     location /hooks/ {
         limit_except POST {
             deny all;

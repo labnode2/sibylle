@@ -20,7 +20,7 @@ set -euo pipefail
 
 # The services whose image the CI builds: pulled, kept as `previous` and rolled back together (the
 # worker runs the api's image).
-IMAGE_SERVICES=(api nginx)
+IMAGE_SERVICES=(api sibylle)
 # Old versions of those images, and only those, are pruned after a success.
 IMAGE_SOURCE=https://github.com/labnode2/sibylle
 
@@ -125,7 +125,7 @@ main() {
 
   log "A service is not healthy:"
   compose ps --all >&2
-  compose logs --no-color --tail 30 api worker nginx >&2
+  compose logs --no-color --tail 30 api worker sibylle >&2
   DETAILS=$'\n'$(services)
   rollback "$repo" "$old_rev" "${retag[@]}"
   if [[ -n $backup ]]; then
@@ -172,7 +172,7 @@ report() {
 }
 
 # The image a service runs, from the configuration as it stands: nothing for a service it does not
-# have yet. (`config --images nginx` would also give the images of the services it depends on.)
+# have yet. (`config --images sibylle` would also give the images of the services it depends on.)
 image_ref() {
   compose config --format json | jq --raw-output --arg service "$1" '.services[$service].image // empty'
 }
