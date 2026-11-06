@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Sauvegarde de la production : la base (pg_dump au format personnalisé, déjà compressé) et les
-# images envoyées (archive du volume uploads), dans BACKUP_DIR (backups/ à côté de deploy/ par
-# défaut), gardées BACKUP_KEEP_DAYS jours (14). sibylle-backup.timer la lance chaque nuit, et
-# deploy/update.sh avant chaque mise à jour. La nuit, si BACKUP_AGE_RECIPIENT et BACKUP_REMOTE
-# sont posés (deploy/.env), une copie chiffrée avec age part aussi sur le VPS, par rsync.
-#   deploy/backup/backup.sh [étiquette]    nightly par défaut ; pre-deploy depuis update.sh
-# Écrit le chemin de la sauvegarde de la base sur la sortie standard, le reste sur l'erreur.
+# Production backup: the database (pg_dump in custom format, already compressed) and the
+# uploaded images (an archive of the uploads volume), in BACKUP_DIR (backups/ next to deploy/ by
+# default), kept BACKUP_KEEP_DAYS days (14). sibylle-backup.timer runs it every night, and
+# deploy/update.sh before each update. At night, when BACKUP_AGE_RECIPIENT and BACKUP_REMOTE are
+# set (deploy/.env), a copy encrypted with age also goes to the VPS, through rsync.
+#   deploy/backup/backup.sh [label]    nightly by default; pre-deploy from update.sh
+# Writes the path of the database backup to standard output, the rest to standard error.
 set -euo pipefail
 
 main() {
@@ -14,7 +14,7 @@ main() {
   . "$DEPLOY_DIR/lib.sh"
 
   local label=${1:-nightly}
-  [[ $label =~ ^[a-z-]+$ ]] || fail "étiquette invalide : $label"
+  [[ $label =~ ^[a-z-]+$ ]] || fail "invalid label: $label"
   local dir keep
   dir=$(setting BACKUP_DIR "$DEPLOY_DIR/../backups")
   keep=$(setting BACKUP_KEEP_DAYS 14)
@@ -23,13 +23,13 @@ main() {
   local base
   base="$(cd "$dir" && pwd)/sibylle-$(date +%Y%m%d-%H%M%S)-$label"
 
-  log "Base -> $base.dump"
+  log "Database -> $base.dump"
   compose exec -T db sh -c \
     'pg_dump --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --format=custom' \
     >"$base.dump.part"
   mv "$base.dump.part" "$base.dump"
 
-  log "Images envoyées -> $base.uploads.tar.gz"
+  log "Uploaded images -> $base.uploads.tar.gz"
   compose run --rm --no-deps -T --entrypoint tar api -C /data -czf - uploads \
     >"$base.uploads.tar.gz.part"
   mv "$base.uploads.tar.gz.part" "$base.uploads.tar.gz"
@@ -41,7 +41,7 @@ main() {
   printf '%s\n' "$base.dump"
 }
 
-# Copie chiffrée hors site : seul le détenteur de la clé privée age peut la lire.
+# Encrypted offsite copy: only the holder of the age private key can read it.
 offsite() {
   local base=$1 recipient remote file
   recipient=$(setting BACKUP_AGE_RECIPIENT)
@@ -49,11 +49,11 @@ offsite() {
   if [[ -z $recipient || -z $remote ]]; then
     return 0
   fi
-  command -v age >/dev/null || fail "age n'est pas installé : pas de copie hors site"
+  command -v age >/dev/null || fail "age is not installed: no offsite copy"
   for file in "$base.dump" "$base.uploads.tar.gz"; do
     age --encrypt --recipient "$recipient" --output "$file.age" "$file"
   done
-  log "Copie chiffrée -> $remote"
+  log "Encrypted copy -> $remote"
   rsync --remove-source-files "$base.dump.age" "$base.uploads.tar.gz.age" "$remote"
 }
 

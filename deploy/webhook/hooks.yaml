@@ -1,17 +1,21 @@
-# Le crochet de déploiement, servi par webhook (adnanh/webhook, paquet Debian `webhook`) : la CI
-# l'appelle après avoir envoyé une image, sur https://sibylle.cc/hooks/deploy, que nginx relaie.
-# Il lance deploy/update.sh avec le commit arrivé sur main et renvoie sa sortie, avec un code 500
-# si la mise à jour échoue. La requête doit être signée comme le fait GitHub : HMAC-SHA256 du
-# corps avec le secret partagé, dans l'en-tête X-Hub-Signature-256. Le fichier est lu avec
-# `-template` : chemins et secret viennent de l'environnement du service (sibylle-webhook.service),
-# jamais du dépôt.
+# The deploy hooks, served by webhook (adnanh/webhook, Debian package `webhook`): the CI calls
+# them after pushing an image, under https://sibylle.cc/hooks/, which nginx relays.
+# Cloudflare cuts a response that takes more than 100 s, and no webhook version streams a
+# command's output: `deploy` therefore answers at once (202) and starts deploy/webhook/deploy.sh
+# in the background, which keeps the log and the outcome of deploy/update.sh under the given id;
+# `deploy-status` returns them (deploy/webhook/status.sh), and the CI polls it until the outcome.
+# Every request must be signed the way GitHub does it: HMAC-SHA256 of the body with the shared
+# secret, in the X-Hub-Signature-256 header. The file is read with `-template`: paths and secret
+# come from the service's environment (sibylle-webhook.service), never from the repository.
 - id: deploy
-  execute-command: '{{ getenv "SIBYLLE_DIR" }}/deploy/update.sh'
+  execute-command: '{{ getenv "SIBYLLE_DIR" }}/deploy/webhook/deploy.sh'
   command-working-directory: '{{ getenv "SIBYLLE_DIR" }}'
   http-methods: [POST]
-  include-command-output-in-response: true
-  include-command-output-in-response-on-error: true
+  success-http-response-code: 202
+  response-message: "Update started.\n"
   pass-arguments-to-command:
+    - source: payload
+      name: id
     - source: payload
       name: commit
   trigger-rule-mismatch-http-response-code: 403
@@ -29,3 +33,34 @@
           parameter:
             source: payload
             name: commit
+      - match:
+          type: regex
+          regex: '^[0-9a-z][0-9a-z-]{0,63}$'
+          parameter:
+            source: payload
+            name: id
+
+- id: deploy-status
+  execute-command: '{{ getenv "SIBYLLE_DIR" }}/deploy/webhook/status.sh'
+  command-working-directory: '{{ getenv "SIBYLLE_DIR" }}'
+  http-methods: [POST]
+  include-command-output-in-response: true
+  include-command-output-in-response-on-error: true
+  pass-arguments-to-command:
+    - source: payload
+      name: id
+  trigger-rule-mismatch-http-response-code: 403
+  trigger-rule:
+    and:
+      - match:
+          type: payload-hmac-sha256
+          secret: '{{ getenv "SIBYLLE_WEBHOOK_SECRET" }}'
+          parameter:
+            source: header
+            name: X-Hub-Signature-256
+      - match:
+          type: regex
+          regex: '^[0-9a-z][0-9a-z-]{0,63}$'
+          parameter:
+            source: payload
+            name: id

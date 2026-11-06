@@ -150,7 +150,7 @@ deploy/
 ├── docker-compose.yml           # développement : db et mailpit (profil dev)
 ├── compose.prod.yml             # production (projet sibylle-prod) : db, api, worker, nginx, certbot
 ├── update.sh  lib.sh            # mise à jour : sauvegarde, redémarrage, santé, retour arrière
-├── webhook/hooks.yaml           # crochet de déploiement appelé par la CI
+├── webhook/                     # crochets appelés par la CI (hooks.yaml), deploy.sh, status.sh
 ├── systemd/                     # services du crochet et de la sauvegarde de nuit
 ├── nginx/                       # Dockerfile (interface construite par Node) et configuration :
 │                                # HTTPS, proxy protocol, CSP, fichiers statiques

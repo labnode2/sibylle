@@ -1,8 +1,8 @@
-# Outils communs aux scripts de production (update.sh, backup/backup.sh, backup/restore.sh), qui
-# posent DEPLOY_DIR (le dossier deploy/ de /opt/sibylle) avant de lire ce fichier.
+# Helpers shared by the production scripts (update.sh, backup/, webhook/), which set DEPLOY_DIR
+# (the deploy/ folder of /opt/sibylle) before sourcing this file.
 
-# setting NOM [défaut] : la valeur de l'environnement, sinon celle de deploy/.env, sinon le
-# défaut. deploy/.env n'est jamais exécuté par le shell : MAIL_FROM y contient des chevrons.
+# setting NAME [default]: the value from the environment, else from deploy/.env, else the
+# default. deploy/.env is never run by the shell: MAIL_FROM holds angle brackets.
 setting() {
   local name=$1 default=${2-} value
   if [[ -n ${!name-} ]]; then
@@ -13,18 +13,38 @@ setting() {
   printf '%s\n' "${value:-$default}"
 }
 
-# Le projet Compose de production (COMPOSE_PROJECT_NAME le remplace, pour un essai). Sans les
-# lignes de progression de Compose : le journal d'une mise à jour se lit dans la CI.
+# The production Compose project (COMPOSE_PROJECT_NAME overrides it, for a trial). Without
+# Compose's progress lines: an update's log is read in the CI.
 compose() {
   docker compose --progress quiet --project-directory "$DEPLOY_DIR" \
     -f "$DEPLOY_DIR/compose.prod.yml" "$@"
+}
+
+# The logs of the updates started by the hook (webhook/deploy.sh), kept 30 days.
+deploy_log_dir() {
+  setting DEPLOY_LOG_DIR "$DEPLOY_DIR/../deploy-logs"
+}
+
+# notify MESSAGE: posts MESSAGE to the Discord channel of DISCORD_WEBHOOK_URL, when set. A failed
+# post is logged without stopping anything.
+notify() {
+  local url
+  url=$(setting DISCORD_WEBHOOK_URL)
+  [[ -n $url ]] || return 0
+  # Discord rejects a message over 2000 characters; no mention (@everyone…) goes out.
+  jq --null-input --arg content "${1:0:2000}" '{content: $content, allowed_mentions: {parse: []}}' |
+    curl --silent --show-error --fail --max-time 10 --output /dev/null \
+      --header "Content-Type: application/json" --data-binary @- "$url" ||
+    log "Discord message not sent."
 }
 
 log() {
   printf '%s  %s\n' "$(date '+%F %T')" "$*" >&2
 }
 
+# The failure reason stays in FAILURE, for an EXIT trap (update.sh posts it to Discord).
 fail() {
-  log "ÉCHEC : $*"
+  FAILURE=$*
+  log "FAILED: $*"
   exit 1
 }

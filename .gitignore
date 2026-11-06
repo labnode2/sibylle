@@ -35,4 +35,5 @@ Thumbs.db
 
 # Production (/opt/sibylle)
 /backups/
+/deploy-logs/
 deploy/.deploy.lock

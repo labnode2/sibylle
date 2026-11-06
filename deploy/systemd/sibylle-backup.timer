@@ -1,6 +1,6 @@
-# Une sauvegarde chaque nuit vers 3 h 30 ; rattrapée au démarrage si la machine était éteinte.
+# A backup every night around 3:30; caught up at boot if the machine was off.
 [Unit]
-Description=Sibylle : sauvegarde chaque nuit
+Description=Sibylle: nightly backup
 
 [Timer]
 OnCalendar=*-*-* 03:30:00

@@ -1,12 +1,12 @@
-# Production, sur la machine à domicile, qui est aussi le PC de développement : un projet Compose
-# à part (`sibylle-prod`), avec ses propres volumes et aucun port publié, si bien que la base de
-# développement (projet `sibylle`, port 5432) n'est jamais touchée. deploy/update.sh le lance
-# depuis /opt/sibylle, avec les réglages de production de deploy/.env (deploy/README.md).
-# nginx et certbot s'y ajouteront avec leur configuration (T142, T207, T210).
+# Production, on the home machine, which is also the development PC: a Compose project of its
+# own (`sibylle-prod`), with its own volumes and no published port, so the development database
+# (project `sibylle`, port 5432) is never touched. deploy/update.sh runs it from /opt/sibylle,
+# with the production settings of deploy/.env (deploy/README.md).
+# nginx and certbot will join it with their configuration (T142, T207, T210).
 name: sibylle-prod
 
 x-logging: &logging
-  # Journaux tournants : le pilote `local` garde 5 fichiers de 20 Mo par conteneur.
+  # Rotated logs: the `local` driver keeps 5 files of 20 MB per container.
   driver: local
 
 x-backend: &backend
@@ -20,9 +20,9 @@ x-backend: &backend
       condition: service_healthy
   logging: *logging
 
-# La base est celle du service db, pas celle de deploy/.env (localhost en développement).
+# The database is the db service's, not the one in deploy/.env (localhost in development).
 x-backend-env: &backend-env
-  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-sibylle}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manque dans deploy/.env}@db:5432/${POSTGRES_DB:-sibylle}
+  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-sibylle}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD missing from deploy/.env}@db:5432/${POSTGRES_DB:-sibylle}
   UPLOAD_DIR: /data/uploads
 
 services:
@@ -31,7 +31,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-sibylle}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manque dans deploy/.env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD missing from deploy/.env}
       POSTGRES_DB: ${POSTGRES_DB:-sibylle}
     volumes:
       - pgdata:/var/lib/postgresql
@@ -47,7 +47,7 @@ services:
     command: ["serve"]
     environment:
       <<: *backend-env
-      # Seul nginx atteint l'API : l'adresse du visiteur vient de son X-Forwarded-For.
+      # Only nginx reaches the API: the visitor's address comes from its X-Forwarded-For.
       FORWARDED_ALLOW_IPS: "*"
     healthcheck:
       test:

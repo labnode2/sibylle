@@ -1,7 +1,7 @@
-# La sauvegarde de la production (deploy/backup/backup.sh), lancée chaque nuit par
-# sibylle-backup.timer. `systemctl start sibylle-backup` en fait une tout de suite.
+# The production backup (deploy/backup/backup.sh), run every night by sibylle-backup.timer.
+# `systemctl start sibylle-backup` makes one right away.
 [Unit]
-Description=Sibylle : sauvegarde de la production
+Description=Sibylle: production backup
 After=docker.service
 Requires=docker.service
 
