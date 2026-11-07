@@ -42,7 +42,8 @@ start() {
   done
   echo "Keycloak is ready. Sign-in page: http://localhost:$PORT/realms/sibylle/account"
   echo "Accounts: camille@sibylle.test / gazette-camille, dominique@sibylle.test / gazette-dominique" \
-    "(asked for a new password). Admin console: http://localhost:$PORT/admin/ (admin / admin)."
+    "(asked for a new password), and the demo newsroom's (backend/seed/README.md)." \
+    "Admin console: http://localhost:$PORT/admin/ (admin / admin)."
 }
 
 case ${1:-} in

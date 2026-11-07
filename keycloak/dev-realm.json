@@ -38,27 +38,211 @@
       "attributes": {
         "post.logout.redirect.uris": "http://localhost:5173/*"
       }
+    },
+    {
+      "clientId": "sibylle",
+      "name": "Sibylle",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "sibylle-dev-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": true,
+      "frontchannelLogout": false,
+      "rootUrl": "http://localhost:5173",
+      "baseUrl": "/",
+      "redirectUris": [
+        "http://localhost:5173/api/auth/callback",
+        "http://localhost:5173/api/auth/login*"
+      ],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*",
+        "backchannel.logout.url": "http://localhost:8000/api/auth/backchannel-logout",
+        "backchannel.logout.session.required": "true",
+        "backchannel.logout.revoke.offline.tokens": "false"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "service_account",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email",
+        "kc-admin-api"
+      ]
+    },
+    {
+      "clientId": "sibylle-e2e",
+      "name": "Sibylle",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "sibylle-e2e-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": true,
+      "frontchannelLogout": false,
+      "rootUrl": "http://localhost:5180",
+      "baseUrl": "/",
+      "redirectUris": [
+        "http://localhost:5180/api/auth/callback",
+        "http://localhost:5180/api/auth/login*"
+      ],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5180/*",
+        "backchannel.logout.url": "http://localhost:8001/api/auth/backchannel-logout",
+        "backchannel.logout.session.required": "true",
+        "backchannel.logout.revoke.offline.tokens": "false"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "service_account",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email",
+        "kc-admin-api"
+      ]
     }
   ],
   "users": [
     {
+      "id": "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0001",
       "username": "camille@sibylle.test",
       "email": "camille@sibylle.test",
       "emailVerified": true,
       "firstName": "Camille",
       "lastName": "Martin",
       "enabled": true,
-      "credentials": [{ "type": "password", "value": "gazette-camille", "temporary": false }]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "gazette-camille",
+          "temporary": false
+        }
+      ]
     },
     {
+      "id": "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0002",
       "username": "dominique@sibylle.test",
       "email": "dominique@sibylle.test",
       "emailVerified": false,
       "firstName": "Dominique",
       "lastName": "Petit",
       "enabled": true,
-      "credentials": [{ "type": "password", "value": "gazette-dominique", "temporary": false }],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "gazette-dominique",
+          "temporary": false
+        }
+      ],
       "requiredActions": ["UPDATE_PASSWORD"]
+    },
+    {
+      "id": "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0003",
+      "username": "ines@demo.sibylle.test",
+      "email": "ines@demo.sibylle.test",
+      "emailVerified": true,
+      "firstName": "Inès",
+      "lastName": "Démo",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "lauriers-de-demo",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0004",
+      "username": "hugo@demo.sibylle.test",
+      "email": "hugo@demo.sibylle.test",
+      "emailVerified": true,
+      "firstName": "Hugo",
+      "lastName": "Démo",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "lauriers-de-demo",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0005",
+      "username": "cami@demo.sibylle.test",
+      "email": "cami@demo.sibylle.test",
+      "emailVerified": true,
+      "firstName": "Cami",
+      "lastName": "Démo",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "lauriers-de-demo",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0006",
+      "username": "leo@demo.sibylle.test",
+      "email": "leo@demo.sibylle.test",
+      "emailVerified": true,
+      "firstName": "Léo",
+      "lastName": "Démo",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "lauriers-de-demo",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0007",
+      "username": "manon@demo.sibylle.test",
+      "email": "manon@demo.sibylle.test",
+      "emailVerified": true,
+      "firstName": "Manon",
+      "lastName": "Démo",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "lauriers-de-demo",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "service-account-sibylle",
+      "enabled": true,
+      "serviceAccountClientId": "sibylle",
+      "clientRoles": {
+        "realm-management": ["manage-users"]
+      }
+    },
+    {
+      "username": "service-account-sibylle-e2e",
+      "enabled": true,
+      "serviceAccountClientId": "sibylle-e2e",
+      "clientRoles": {
+        "realm-management": ["manage-users"]
+      }
     }
   ]
 }

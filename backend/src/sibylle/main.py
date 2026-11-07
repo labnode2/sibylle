@@ -40,6 +40,9 @@ from sibylle.realtime.bus import Listener, asyncpg_dsn
 from sibylle.realtime.hub import Hub
 
 _UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+# Keycloak's back-channel logout: a server's call, whose signed token is its proof
+# (specs/002-keycloak-auth/contracts/auth.md).
+_NOT_FROM_BROWSERS = {"/api/auth/backchannel-logout"}
 
 
 class CsrfMiddleware:
@@ -50,7 +53,11 @@ class CsrfMiddleware:
         self.origin = origin
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope["type"] == "http" and scope["method"] in _UNSAFE_METHODS:
+        if (
+            scope["type"] == "http"
+            and scope["method"] in _UNSAFE_METHODS
+            and scope["path"] not in _NOT_FROM_BROWSERS
+        ):
             headers = Headers(scope=scope)
             if headers.get("x-sibylle") != "1" or headers.get("origin") != self.origin:
                 await error_response("forbidden", 403)(scope, receive, send)

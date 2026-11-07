@@ -85,17 +85,41 @@ resource "keycloak_openid_client" "sibylle" {
   # Its own account, to delete a person's account and send the address check (below).
   service_accounts_enabled = true
 
-  root_url                        = var.app_origin
-  base_url                        = "/"
-  valid_redirect_uris             = ["${var.app_origin}/api/auth/callback"]
+  root_url = var.app_origin
+  base_url = "/"
+  # The way back from Keycloak's pages, and the end of the address check's link: a sign-in that
+  # Keycloak passes at once, back to the settings (/api/auth/login?suite=/compte, research.md K9).
+  valid_redirect_uris = [
+    "${var.app_origin}/api/auth/callback",
+    "${var.app_origin}/api/auth/login*",
+  ]
   valid_post_logout_redirect_uris = ["${var.app_origin}/*"]
   web_origins                     = []
   pkce_code_challenge_method      = "S256"
 
-  # Keycloak tells the app's server when a session ends: signed out elsewhere, a new password.
+  # Keycloak tells the app's server when a session ends: signed out elsewhere, a new password, an
+  # administrator's « Sign out ». It calls Sibylle's nginx over the VM's network (research.md K8).
   frontchannel_logout_enabled         = false
-  backchannel_logout_url              = "${var.app_origin}/api/auth/backchannel-logout"
+  backchannel_logout_url              = var.backchannel_logout_url
   backchannel_logout_session_required = true
+}
+
+# The client's default scopes: those Keycloak gives a client with a service account, and
+# kc-admin-api, whose audience Keycloak 26.8 wants on a token of its admin API: without it, the
+# service account's calls get 401 (research.md K5).
+resource "keycloak_openid_client_default_scopes" "sibylle" {
+  realm_id  = keycloak_realm.sibylle.id
+  client_id = keycloak_openid_client.sibylle.id
+  default_scopes = [
+    "web-origins",
+    "service_account",
+    "acr",
+    "profile",
+    "roles",
+    "basic",
+    "email",
+    "kc-admin-api",
+  ]
 }
 
 # The client's account manages the realm's users, and nothing else.

@@ -35,23 +35,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/auth/signup": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Signup */
-        post: operations["signup_api_auth_signup_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/auth/login": {
         parameters: {
             query?: never;
@@ -59,10 +42,36 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Login
+         * @description To Keycloak's sign-in page (`signup`: its sign-up page; `password`: a new password to
+         *     choose; `forgot`: its forgotten password page), or to the page that says it does not answer.
+         */
+        get: operations["login_api_auth_login_get"];
         put?: never;
-        /** Login */
-        post: operations["login_api_auth_login_post"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Callback
+         * @description The way back from Keycloak: the browser that started this sign-in, within 10 minutes and
+         *     once, gets a session and goes on to its page; anything else ends on `/connexion?erreur=…`,
+         *     without a session.
+         */
+        get: operations["callback_api_auth_callback_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -78,7 +87,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Logout */
+        /**
+         * Logout
+         * @description Closes the session, then its Keycloak session, or Keycloak would sign the browser in again
+         *     at once. The first is committed before Keycloak is called: Keycloak then tells this server of
+         *     that session's end (a back-channel logout), which must not wait behind this request. Keycloak
+         *     not answering closes Sibylle's session all the same: its own ends after 30 minutes without
+         *     use (research.md K7).
+         */
         post: operations["logout_api_auth_logout_post"];
         delete?: never;
         options?: never;
@@ -86,7 +102,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/auth/verify-email": {
+    "/api/auth/backchannel-logout": {
         parameters: {
             query?: never;
             header?: never;
@@ -95,8 +111,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Verify Email */
-        post: operations["verify_email_api_auth_verify_email_post"];
+        /**
+         * Backchannel Logout
+         * @description Keycloak tells of Keycloak sessions that ended elsewhere: signed out of another device by a
+         *     new password, closed by an administrator, or by Sibylle's own sign-out (OpenID Connect
+         *     Back-Channel Logout, research.md K8). Their Sibylle sessions end, WebSockets included. Called
+         *     by Keycloak, not by browsers: the signed token is its proof, without X-Sibylle nor Origin.
+         */
+        post: operations["backchannel_logout_api_auth_backchannel_logout_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -120,40 +142,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/auth/password-reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Request Password Reset */
-        post: operations["request_password_reset_api_auth_password_reset_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/password-reset/confirm": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Confirm Password Reset */
-        post: operations["confirm_password_reset_api_auth_password_reset_confirm_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/me": {
         parameters: {
             query?: never;
@@ -165,29 +153,15 @@ export interface paths {
         get: operations["get_me_api_me_get"];
         put?: never;
         post?: never;
-        /** Delete Me */
+        /**
+         * Delete Me
+         * @description Deletes the account, in Keycloak too; Keycloak not answering deletes nothing (503).
+         */
         delete: operations["delete_me_api_me_delete"];
         options?: never;
         head?: never;
         /** Update Me */
         patch: operations["update_me_api_me_patch"];
-        trace?: never;
-    };
-    "/api/me/password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Change Password */
-        post: operations["change_password_api_me_password_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/api/me/export": {
@@ -1239,6 +1213,11 @@ export interface components {
             /** Payout */
             payout: number;
         };
+        /** Body_backchannel_logout_api_auth_backchannel_logout_post */
+        Body_backchannel_logout_api_auth_backchannel_logout_post: {
+            /** Logout Token */
+            logout_token: string;
+        };
         /** Body_upload_image_api_orgs__org_id__uploads_post */
         Body_upload_image_api_orgs__org_id__uploads_post: {
             /** File */
@@ -1618,13 +1597,6 @@ export interface components {
              */
             expires_at: string;
         };
-        /** LoginIn */
-        LoginIn: {
-            /** Email */
-            email: string;
-            /** Password */
-            password: string;
-        };
         /** Me */
         Me: {
             /**
@@ -1652,12 +1624,12 @@ export interface components {
             /** Memberships */
             memberships: components["schemas"]["MembershipEntry"][];
         };
-        /** MePatch */
+        /**
+         * MePatch
+         * @description The account's own settings. Names and e-mail change in Keycloak, which Sibylle copies at
+         *     each sign-in (specs/002-keycloak-auth/contracts/auth.md).
+         */
         MePatch: {
-            /** First Name */
-            first_name?: string | null;
-            /** Last Name */
-            last_name?: string | null;
             /** Theme */
             theme?: ("auto" | "light" | "dark") | null;
             /** Reduce Motion */
@@ -1944,13 +1916,6 @@ export interface components {
              * Format: date-time
              */
             acquired_at: string;
-        };
-        /** PasswordChange */
-        PasswordChange: {
-            /** Current Password */
-            current_password: string;
-            /** New Password */
-            new_password: string;
         };
         /**
          * Period
@@ -2518,18 +2483,6 @@ export interface components {
             /** Resolution Note */
             resolution_note?: string | null;
         };
-        /** ResetConfirm */
-        ResetConfirm: {
-            /** Token */
-            token: string;
-            /** Password */
-            password: string;
-        };
-        /** ResetRequest */
-        ResetRequest: {
-            /** Email */
-            email: string;
-        };
         /**
          * ResultIn
          * @description The correct options of a choice or yes/no prono, or the real number or date.
@@ -2678,17 +2631,6 @@ export interface components {
              */
             id: string;
         };
-        /** SignupIn */
-        SignupIn: {
-            /** Email */
-            email: string;
-            /** Password */
-            password: string;
-            /** First Name */
-            first_name: string;
-            /** Last Name */
-            last_name: string;
-        };
         /**
          * SpecialEditionOut
          * @description The published result of a prono: who won what, and whether the pot was lost.
@@ -2723,11 +2665,6 @@ export interface components {
             /** Name */
             name: string;
             image: components["schemas"]["PixelImage"];
-        };
-        /** TokenIn */
-        TokenIn: {
-            /** Token */
-            token: string;
         };
         /** TrophyOut */
         TrophyOut: {
@@ -2873,27 +2810,24 @@ export interface operations {
             };
         };
     };
-    signup_api_auth_signup_post: {
+    login_api_auth_login_get: {
         parameters: {
-            query?: never;
+            query?: {
+                action?: "login" | "signup" | "password" | "forgot";
+                suite?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SignupIn"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
-            201: {
+            303: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["Me"];
-                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -2906,27 +2840,25 @@ export interface operations {
             };
         };
     };
-    login_api_auth_login_post: {
+    callback_api_auth_callback_get: {
         parameters: {
-            query?: never;
+            query?: {
+                code?: string | null;
+                state?: string | null;
+                error?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginIn"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
-            200: {
+            303: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["Me"];
-                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -2957,7 +2889,7 @@ export interface operations {
             };
         };
     };
-    verify_email_api_auth_verify_email_post: {
+    backchannel_logout_api_auth_backchannel_logout_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2966,12 +2898,21 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TokenIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["Body_backchannel_logout_api_auth_backchannel_logout_post"];
             };
         };
         responses: {
             /** @description Successful Response */
-            204: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Jeton refusé */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3003,70 +2944,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-        };
-    };
-    request_password_reset_api_auth_password_reset_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ResetRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    confirm_password_reset_api_auth_password_reset_confirm_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ResetConfirm"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
             };
         };
     };
@@ -3142,37 +3019,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Me"];
                 };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    change_password_api_me_password_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PasswordChange"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
             /** @description Validation Error */
             422: {

@@ -142,8 +142,12 @@ export const realtime = new RealtimeClient({
   url: () =>
     `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws`,
   onReconnect: () => void queryClient.invalidateQueries(),
+  // A session that ended elsewhere (signed out, or closed by Keycloak): sign in again, then back.
   onUnauthenticated: () => {
-    if (!window.location.pathname.startsWith('/connexion')) window.location.assign('/connexion');
+    const { pathname, search } = window.location;
+    if (!pathname.startsWith('/connexion')) {
+      window.location.assign(`/connexion?${new URLSearchParams({ suite: pathname + search })}`);
+    }
   },
 });
 

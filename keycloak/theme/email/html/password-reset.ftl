@@ -1,4 +1,4 @@
-<#-- Changer de mot de passe (backend/src/sibylle/notify/templates/fr/reset_password.html). -->
+<#-- Changer de mot de passe: the app's own e-mail until specs/002-keycloak-auth, in its frame. -->
 <#import "template.ftl" as layout>
 <@layout.emailLayout title=msg("passwordResetSubject")>
 <@layout.hello/>

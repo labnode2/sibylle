@@ -33,6 +33,14 @@
   color: var(--ink-2);
 }
 
+/* An unconfirmed address: the note, then the button that sends the address check again. */
+.unconfirmed {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 /* This device: what it receives and the button that changes it. */
 .device {
   display: flex;

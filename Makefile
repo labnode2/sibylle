@@ -28,7 +28,19 @@ setup: env install db migrate seed ## Tout installer et préparer la base (premi
 	@echo ""
 	@echo "Prêt. Lancer l'appli avec : make dev"
 
-env: deploy/.env ## Crée deploy/.env pour le développement s'il n'existe pas
+# Les réglages de la connexion par Keycloak, venus après la création de deploy/.env, y sont
+# ajoutés avec leurs valeurs de développement ; jamais dans un deploy/.env de production.
+OIDC_SETTINGS = OIDC_ISSUER KEYCLOAK_INTERNAL_URL OIDC_CLIENT_ID OIDC_CLIENT_SECRET
+
+env: deploy/.env ## Crée deploy/.env pour le développement, ou y ajoute les réglages qui manquent
+	@if ! grep -q '^ENVIRONMENT=production' deploy/.env; then \
+		for key in $(OIDC_SETTINGS); do \
+			grep -q "^$$key=" deploy/.env && continue; \
+			[ -z "$$(tail -c1 deploy/.env)" ] || echo >> deploy/.env; \
+			grep "^$$key=" deploy/.env.example >> deploy/.env; \
+			echo "$$key ajouté à deploy/.env (valeur de développement)."; \
+		done; \
+	fi
 
 deploy/.env:
 	sed -e 's/^POSTGRES_PASSWORD=$$/POSTGRES_PASSWORD=sibylle/' \
@@ -87,7 +99,10 @@ check-frontend:
 	cd frontend && npm run test
 	cd frontend && npm run check:api
 
-e2e: ## Parcours de bout en bout (Playwright)
+# Les parcours se connectent par les pages du Keycloak local, avec son client sibylle-e2e.
+e2e: ## Parcours de bout en bout (Playwright), avec le Keycloak local (make keycloak)
+	@curl --silent --fail --output /dev/null http://localhost:8280/realms/sibylle || \
+		{ echo "Le Keycloak local ne répond pas : lance d'abord make keycloak." >&2; exit 1; }
 	cd frontend && SIBYLLE_WEB_PORT=$(E2E_WEB_PORT) npm run e2e
 
 # Thème Keycloak (keycloak/README.md) : le Keycloak de la production, en local, avec le thème et

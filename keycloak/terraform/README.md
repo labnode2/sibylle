@@ -6,8 +6,10 @@ Keycloak's ("What the realm sets" in `../README.md`): change both together.
 
 - `main.tf`: the realm (French, the `sibylle` theme, sign-up by e-mail, forgotten password, no
   blocking address check, `length(8)`, the brute-force lock of research.md R4, Brevo's SMTP)
-  and the confidential client `sibylle` (authorization code with PKCE, back-channel logout),
-  whose service account may manage the realm's users and nothing else.
+  and the confidential client `sibylle` (authorization code with PKCE, back-channel logout to
+  `http://sibylle:8443` over the VM's `proxy` network), whose service account may manage the
+  realm's users and nothing else. Its default scopes include `kc-admin-api`: without it, Keycloak
+  26.8 answers 401 to the service account's admin calls (specs/002-keycloak-auth, research.md K5).
 - `variables.tf`: production's values by default; the SMTP login and key come from the
   environment.
 - `outputs.tf`: the issuer, the client's id and its secret, for the app's settings.
@@ -60,7 +62,10 @@ ssh -t dev@192.168.71.7 sudo -u sibylle -H /opt/sibylle/keycloak/terraform/tofu.
 https://auth.sibylle.cc/realms/sibylle/account.
 
 A local trial applied these files to the same Keycloak (26.8.2), and a second `plan` found no
-changes.
+changes. On 7 November 2026, another applied the first version, as production has it, then the
+one of `specs/002-keycloak-auth`: its plan changed only the client's back-channel address and
+its redirect addresses, and added its default scopes; the service account then reached the admin
+API, and a second `plan` found no changes.
 
 ## The state
 

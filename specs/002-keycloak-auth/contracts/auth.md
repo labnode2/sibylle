@@ -12,8 +12,8 @@ back-channel ci-dessous.
 | GET | `/auth/login` | Public, navigation | `?action=login\|signup\|password&suite=<chemin>` → `303` vers l'autorisation de Keycloak (`code`, PKCE `S256`, `scope=openid`, `prompt=create` pour `signup`, `kc_action=UPDATE_PASSWORD` pour `password`), cookie `sibylle_signin` posé ; `303 /connexion-indisponible` si le realm ne répond pas dans les 2 s. `suite` invalide (pas un chemin de Sibylle, ou `//…`) : `/`. `?action=forgot` → `303` vers `…/login-actions/reset-credentials?client_id=<OIDC_CLIENT_ID>`, sans tentative ni cookie |
 | GET | `/auth/callback` | Public, navigation | `?code&state` (ou `?error&state`) → `303 <suite>` avec le cookie `sibylle_session`, `sibylle_signin` effacé ; `303 /connexion?erreur=<code>` sans session si le cookie manque, si le `state` diffère, si la tentative a expiré ou servi, si l'échange ou le jeton échouent, ou si l'adresse appartient à un autre compte ; `303 /connexion-indisponible` si Keycloak ne répond pas |
 | POST | `/auth/logout` | Compte | → `204`, cookie effacé ; ferme aussi la session Keycloak (au mieux, voir research.md K7) |
-| POST | `/auth/backchannel-logout` | Keycloak | formulaire `logout_token=<JWT>` → `200` ; `400` si le jeton n'est pas valable. Pas d'`X-Sibylle` ni d'`Origin` : le jeton signé fait foi |
-| POST | `/auth/verify-email/resend` | Compte | → `204` (inchangé ; Keycloak envoie l'e-mail) ; `429 rate_limited` au-delà de 3 par heure |
+| POST | `/auth/backchannel-logout` | Keycloak | formulaire `logout_token=<JWT>` → `200` (`Cache-Control: no-store`) ; `400 invalid_token` si le jeton n'est pas valable ; `503 identity_unavailable` si les clés du realm ne se lisent pas. Pas d'`X-Sibylle` ni d'`Origin` : le jeton signé fait foi |
+| POST | `/auth/verify-email/resend` | Compte | → `204` (inchangé ; Keycloak envoie l'e-mail) ; `429 rate_limited` au-delà de 3 par heure ; `503 identity_unavailable` si Keycloak ne répond pas |
 | GET | `/me` | Compte | → `Me` (inchangé) ; pour un compte non confirmé, relit Keycloak au plus une fois par minute ; si Keycloak ne répond pas, renvoie l'état connu, sans erreur |
 | PATCH | `/me` | Compte | `{theme?, reduce_motion?, locale?}` → `Me` ; `first_name` et `last_name` ne s'y changent plus |
 | DELETE | `/me` | Compte | `{confirm: true}` → `204` ; supprime aussi le compte Keycloak ; `503 identity_unavailable` si Keycloak ne répond pas, rien n'est supprimé ; `409 last_editor` inchangé |
@@ -25,7 +25,8 @@ back-channel ci-dessous.
 
 | Code | Où | Sens |
 |---|---|---|
-| `identity_unavailable` | `DELETE /me` (503) | Keycloak ne répond pas ; réessayer plus tard |
+| `identity_unavailable` | `DELETE /me`, `POST /auth/verify-email/resend`, `POST /auth/backchannel-logout` (503) | Keycloak ne répond pas ; réessayer plus tard |
+| `invalid_token` | `POST /auth/backchannel-logout` (400) | jeton de déconnexion refusé (signature, émetteur, audience, événement, `nonce`, âge) |
 | `erreur=expired` | retour vers `/connexion` | tentative expirée, déjà servie ou d'un autre navigateur |
 | `erreur=denied` | retour vers `/connexion` | la personne a annulé sur la page de Keycloak |
 | `erreur=email_taken` | retour vers `/connexion` | l'adresse appartient à un autre compte Sibylle |
@@ -73,3 +74,4 @@ not_authenticated`, ou fermeture 4401) ; Keycloak injoignable, la requête conti
 | `/mot-de-passe/nouveau`, `/verifier-email` | page « ce lien ne marche plus » avec le bon bouton (FR-018) |
 | `/connexion-indisponible` | **nouvelle** : Keycloak ne répond pas, réessayer |
 | `/compte` | gagne « Changer mon mot de passe » → `/api/auth/login?action=password&suite=/compte` |
+| `/au-revoir` | **nouvelle** : après la suppression du compte, « Ton compte est supprimé » et « Créer un nouveau compte » (`/inscription`) |

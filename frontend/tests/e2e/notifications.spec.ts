@@ -4,10 +4,15 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import {
+  backOnSibylle,
+  call,
   createNewsroom,
+  emailOf,
   invitationPath,
   joinWith,
+  keycloakLinkInMail,
   newPerson,
+  notes,
   orgIdOf,
   publishProno,
   resetClock,
@@ -174,4 +179,36 @@ test('push offered after a bet, then set kind by kind in the settings', async ({
   await settings.getByRole('button', { name: 'Couper sur cet appareil' }).click();
   expect((await forgotten).status()).toBe(204);
   await expect(settings).toContainText('ne sont pas activées sur cet appareil');
+});
+
+// US2 of specs/002-keycloak-auth: Keycloak sends the address check at sign-up and again from the
+// settings; its link confirms the address and opens the notification e-mails.
+test("the address check of Keycloak's e-mail opens the notification e-mails", async ({
+  browser,
+}, testInfo) => {
+  const SUBJECT = 'Confirme ton adresse pour Sibylle';
+  const cami = await newPerson(browser, testInfo, 'Camille');
+  const email = emailOf(cami);
+  await keycloakLinkInMail(email, SUBJECT);
+
+  await cami.goto('/compte#notifications');
+  const settings = cami.getByRole('region', { name: 'NOTIFICATIONS' });
+  await expect(settings).toContainText("Ton adresse n'est pas encore confirmée");
+  await settings.getByRole('button', { name: "Renvoyer l'e-mail de confirmation" }).click();
+  await expect(notes(cami)).toContainText("L'e-mail de confirmation vient de partir.");
+  const link = await keycloakLinkInMail(email, SUBJECT, 2);
+
+  // Followed in the same browser, the link confirms the address and leads back to the settings.
+  await cami.goto(link);
+  await cami.getByRole('link', { name: 'Continuer' }).click();
+  await expect(cami.getByRole('heading', { name: 'Compte à jour' })).toBeVisible();
+  await cami.getByRole('link', { name: 'Retour à Sibylle' }).click();
+  await backOnSibylle(cami, testInfo);
+  await expect(cami).toHaveURL(/\/compte$/);
+  await expect(settings.getByRole('switch', { name: 'Résultats par e-mail' })).toBeVisible();
+  await expect(settings).not.toContainText('pas encore confirmée');
+  await expect(
+    settings.getByRole('button', { name: "Renvoyer l'e-mail de confirmation" }),
+  ).toBeHidden();
+  expect((await call(cami, 'GET', '/me')).body.email_verified).toBe(true);
 });

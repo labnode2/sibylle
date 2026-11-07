@@ -73,6 +73,28 @@ async def publish(
     )
 
 
+SIGNED_OUT = "signed_out"
+# Session ids per signed_out event, well under PostgreSQL's limit on a payload.
+_SESSIONS_PER_EVENT = 50
+
+
+async def publish_signed_out(session: AsyncSession, session_ids: Sequence[uuid.UUID]) -> None:
+    """Closes the WebSockets of sessions that just ended (contracts/realtime.md, code 4401); it
+    leaves when the transaction commits."""
+    ids = [str(session_id) for session_id in session_ids]
+    for start in range(0, len(ids), _SESSIONS_PER_EVENT):
+        message: Message = {
+            "event": SIGNED_OUT,
+            "topics": [],
+            "at": clock.now().isoformat(),
+            "sessions": ids[start : start + _SESSIONS_PER_EVENT],
+        }
+        await session.execute(
+            text("SELECT pg_notify(:channel, :payload)"),
+            {"channel": CHANNEL, "payload": json.dumps(message, separators=(",", ":"))},
+        )
+
+
 def asyncpg_dsn(database_url: str) -> str:
     return database_url.replace("postgresql+asyncpg://", "postgresql://", 1)
 

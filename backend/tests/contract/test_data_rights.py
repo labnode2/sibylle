@@ -3,10 +3,11 @@
 import httpx
 import pytest
 from sqlalchemy import func, select
-from tests.conftest import PASSWORD, ClientFor, MakeOrg, MakePerson
-from tests.contract.helpers import give_coins
+from tests.conftest import ClientFor, MakeOrg, MakePerson
+from tests.contract.helpers import give_coins, sign_in
 from tests.contract.test_pronos import place, publish
 from tests.contract.test_results import close, option, url
+from tests.keycloak_fake import FakeKeycloak
 
 from sibylle import clock
 from sibylle.db.models import (
@@ -66,6 +67,9 @@ async def test_the_export_holds_everything_about_me(
     data = response.json()
     assert data["account"]["email"] == cami.account.email
     assert (data["account"]["first_name"], data["account"]["last_name"]) == ("Camille", "Martin")
+    # What Sibylle knows of the person's identity, copied from Keycloak (FR-014).
+    assert data["account"]["email_verified_at"] is not None
+    assert data["account"]["created_at"] is not None
     [newsroom] = data["newsrooms"]
     assert newsroom["newsroom"] == {"id": str(org.id), "title": "Sophia Office"}
     membership = newsroom["membership"]
@@ -105,6 +109,7 @@ async def test_deleting_my_account_keeps_the_others_history(
     client_for: ClientFor,
     client: httpx.AsyncClient,
     fake_clock: clock.FakeClock,
+    fake_keycloak: FakeKeycloak,
 ) -> None:
     org = await make_org(early_bird_pct=0)
     ines = await person(org, "editor", "Inès")
@@ -130,17 +135,17 @@ async def test_deleting_my_account_keeps_the_others_history(
     assert response.status_code == 204, response.text
     assert "sibylle_session=" in response.headers.get("set-cookie", "")
 
-    # Signed out everywhere, and no way back in.
+    # Signed out everywhere, and gone from Keycloak too: no way back in.
     assert (await cami.client.get("/api/me")).status_code == 401
     assert (await other_device.get("/api/me")).status_code == 401
-    login = await client.post("/api/auth/login", json={"email": email, "password": PASSWORD})
-    assert login.status_code == 401
+    assert str(cami.account.keycloak_id) not in fake_keycloak.users
+    assert fake_keycloak.calls_to(f"DELETE /admin/realms/sibylle/users/{cami.account.keycloak_id}")
 
     async with transaction() as session:
         account = await session.get(Account, cami.account.id)
         assert account is not None and account.deleted_at is not None
         assert (account.email, account.first_name, account.last_name) == (None, None, None)
-        assert (account.password_hash, account.email_verified_at) == (None, None)
+        assert (account.keycloak_id, account.email_verified_at) == (None, None)
         for table in (AuthSession, PushSubscription, NotificationPref, Notification):
             left = await session.scalar(
                 select(func.count()).select_from(table).where(table.account_id == account.id)
@@ -170,12 +175,12 @@ async def test_deleting_my_account_keeps_the_others_history(
     members = (await ines.client.get(f"/api/orgs/{org.id}/members")).json()
     assert {m["pseudo"] for m in members} == {"Inès", "Léo"}
 
-    # The address is free again.
-    again = await client.post(
-        "/api/auth/signup",
-        json={"email": email, "password": PASSWORD, "first_name": "Cami", "last_name": "Neuve"},
-    )
-    assert again.status_code == 201, again.text
+    # The address is free again: signing up with it gives a new account.
+    newcomer = fake_keycloak.add_user(email, first_name="Cami", last_name="Neuve")
+    again = await sign_in(client, fake_keycloak, newcomer)
+    assert again.headers["location"] == "/", again.text
+    me = (await client.get("/api/me")).json()
+    assert me["id"] != str(cami.account.id) and me["memberships"] == []
 
 
 async def test_the_invitations_sent_to_my_address_go_too(
@@ -196,7 +201,9 @@ async def test_the_invitations_sent_to_my_address_go_too(
         assert all(payload.get("to") != cami.account.email for payload in queued)
 
 
-async def test_the_only_editor_names_another_first(make_org: MakeOrg, person: MakePerson) -> None:
+async def test_the_only_editor_names_another_first(
+    make_org: MakeOrg, person: MakePerson, fake_keycloak: FakeKeycloak
+) -> None:
     org = await make_org()
     ines = await person(org, "editor", "Inès")
     cami = await person(org, "reader", "Cami")
@@ -206,6 +213,9 @@ async def test_the_only_editor_names_another_first(make_org: MakeOrg, person: Ma
     assert refused.json()["error"]["code"] == "last_editor"
     assert refused.json()["error"]["fields"] == {"org_id": str(org.id)}
     assert (await ines.client.get("/api/me")).status_code == 200
+    # Refused before anything changed: the account is still in Keycloak.
+    assert str(ines.account.keycloak_id) in fake_keycloak.users
+    assert fake_keycloak.calls_to("DELETE /admin/realms/sibylle/users") == []
     refused = await leave(ines.client, org.id)
     assert refused.status_code == 409
     assert refused.json()["error"]["code"] == "last_editor"
@@ -250,3 +260,43 @@ async def test_a_newsroom_goes_with_its_only_member(make_org: MakeOrg, person: M
             stored = await session.get(Organisation, org.id)
             assert stored is not None and stored.deleted_at is not None, org.title
             assert stored.access_code is None
+
+
+async def test_without_keycloak_nothing_is_deleted(
+    make_org: MakeOrg, person: MakePerson, fake_keycloak: FakeKeycloak
+) -> None:
+    org = await make_org()
+    await person(org, "editor", "Inès")
+    cami = await person(org, "reader", "Cami")
+    fake_keycloak.down = True
+
+    response = await delete_me(cami.client)
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "identity_unavailable"
+    assert "sibylle_session=" not in response.headers.get("set-cookie", "")
+
+    # Nothing changed: still signed in, still a member, still in Keycloak (FR-013).
+    fake_keycloak.down = False
+    me = await cami.client.get("/api/me")
+    assert me.status_code == 200
+    assert me.json()["email"] == cami.account.email
+    async with transaction() as session:
+        account = await session.get(Account, cami.account.id)
+        assert account is not None and account.deleted_at is None
+        assert account.keycloak_id == cami.account.keycloak_id
+        member = await session.get(Membership, cami.member.id)
+        assert member is not None and (member.status, member.pseudo) == ("active", "Cami")
+    assert str(cami.account.keycloak_id) in fake_keycloak.users
+
+
+async def test_an_account_already_gone_from_keycloak_is_deleted_all_the_same(
+    make_org: MakeOrg, person: MakePerson, fake_keycloak: FakeKeycloak
+) -> None:
+    org = await make_org()
+    await person(org, "editor", "Inès")
+    cami = await person(org, "reader", "Cami")
+    del fake_keycloak.users[str(cami.account.keycloak_id)]
+    assert (await delete_me(cami.client)).status_code == 204
+    async with transaction() as session:
+        account = await session.get(Account, cami.account.id)
+        assert account is not None and account.deleted_at is not None

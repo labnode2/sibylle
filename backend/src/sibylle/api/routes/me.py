@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle import clock
 from sibylle.api.deps import SESSION_COOKIE, CurrentAccount, Db, clear_session_cookie
-from sibylle.api.schemas import AccountDeletion, Me, MePatch, PasswordChange
+from sibylle.api.schemas import AccountDeletion, Me, MePatch
 from sibylle.db.models import Account, Membership, Organisation
 from sibylle.domain.seasons import PARIS
 from sibylle.services import accounts, coins, export
@@ -37,6 +37,8 @@ async def me_of(session: AsyncSession, account: Account) -> Me:
 
 @router.get("/me")
 async def get_me(account: CurrentAccount, session: Db) -> Me:
+    # An unconfirmed address may have been confirmed in Keycloak since (research.md K9).
+    await accounts.refresh_identity(account)
     return await me_of(session, account)
 
 
@@ -44,19 +46,6 @@ async def get_me(account: CurrentAccount, session: Db) -> Me:
 async def update_me(body: MePatch, account: CurrentAccount, session: Db) -> Me:
     accounts.update_account(account, body.model_dump(exclude_unset=True))
     return await me_of(session, account)
-
-
-@router.post("/me/password", status_code=204)
-async def change_password(
-    body: PasswordChange, request: Request, account: CurrentAccount, session: Db
-) -> None:
-    await accounts.change_password(
-        session,
-        account,
-        body.current_password,
-        body.new_password,
-        request.cookies.get(SESSION_COOKIE),
-    )
 
 
 @router.get(
@@ -75,7 +64,14 @@ async def export_my_data(account: CurrentAccount, session: Db) -> JSONResponse:
 
 @router.delete("/me", status_code=204)
 async def delete_me(
-    body: AccountDeletion, response: Response, account: CurrentAccount, session: Db
+    body: AccountDeletion,
+    request: Request,
+    response: Response,
+    account: CurrentAccount,
+    session: Db,
 ) -> None:
-    await accounts.delete_account(session, account)
+    """Deletes the account, in Keycloak too; Keycloak not answering deletes nothing (503)."""
+    await accounts.delete_account(
+        session, account, current_token=request.cookies.get(SESSION_COOKIE)
+    )
     clear_session_cookie(response)

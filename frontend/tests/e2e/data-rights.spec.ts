@@ -1,5 +1,7 @@
 // Quickstart V10, points 1 to 3 (US11): export one's data, the last editor names another before
 // leaving, and a deleted account can no longer sign in while its bets stay under « Ancien membre ».
+// Since specs/002-keycloak-auth (US5), the deletion deletes the Keycloak account too: the same
+// address then signs up again as a new account.
 import { readFile } from 'node:fs/promises';
 
 import { expect, test } from '@playwright/test';
@@ -10,12 +12,12 @@ import {
   invitationPath,
   joinWith,
   newPerson,
-  notes,
   orgIdOf,
   PASSWORD,
   pot,
   publishProno,
   resetClock,
+  signUpOnKeycloak,
 } from './helpers';
 
 test.beforeEach(resetClock);
@@ -75,15 +77,23 @@ test('export, the last editor, then deleting an account', async ({ browser }, te
   ).toBeVisible();
   expect((await call(ines, 'GET', '/me')).status).toBe(200);
 
-  // 2. Cami deletes hers: signed out, and no way back in.
+  // 2. Cami deletes hers, in Keycloak too: goodbye, and no way back in with that account.
   await cami.getByRole('button', { name: 'Supprimer mon compte' }).click();
   await cami.getByRole('button', { name: 'Oui, supprimer mon compte' }).click();
-  await expect(cami).toHaveURL(/\/connexion$/);
-  await expect(notes(cami)).toContainText('Ton compte est supprimé.');
-  await cami.getByLabel('E-MAIL').fill(email);
-  await cami.getByLabel('MOT DE PASSE').fill(PASSWORD);
+  await expect(cami).toHaveURL(/\/au-revoir$/);
+  await expect(cami.getByRole('heading', { name: 'Ton compte est supprimé' })).toBeVisible();
+  await cami.goto('/connexion');
+  await cami.getByLabel('E-mail').fill(email);
+  await cami.getByLabel('Mot de passe').fill(PASSWORD);
   await cami.getByRole('button', { name: 'Se connecter' }).click();
-  await expect(notes(cami)).toContainText('E-mail ou mot de passe incorrect.');
+  await expect(cami.getByText('E-mail ou mot de passe incorrect.')).toBeVisible();
+
+  // The same address signs up again: a new account, in no newsroom.
+  await cami.goto('/au-revoir');
+  await cami.getByRole('link', { name: 'Créer un nouveau compte' }).click();
+  await signUpOnKeycloak(cami, testInfo, 'Camille', email);
+  await expect(cami.getByRole('heading', { name: 'Bienvenue sur Sibylle' })).toBeVisible();
+  expect((await call(cami, 'GET', '/me')).body.memberships).toEqual([]);
 
   // Her bet still counts, under « Ancien membre ».
   await ines.goto(`/o/${orgId}/pronos/${prono.id}`);

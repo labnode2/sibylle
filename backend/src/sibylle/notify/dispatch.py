@@ -71,7 +71,8 @@ async def _handle(
         relevant = account is not None and await notifications.still_relevant(session, notification)
         channels = await _channels(session, account, notification, push) if relevant else []
     else:
-        # Address check, password reset, invitation: always by e-mail.
+        # An invitation: always by e-mail. (Keycloak sends the address checks and the new
+        # passwords.)
         channels = [Channel.EMAIL] if account or notification.payload.get("to") else []
     if not channels:
         notification.state = "skipped"

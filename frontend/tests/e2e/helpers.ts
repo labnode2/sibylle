@@ -2,18 +2,91 @@ import { execFileSync } from 'node:child_process';
 
 import { expect, type Browser, type Locator, type Page, type TestInfo } from '@playwright/test';
 
-// A password for throwaway test accounts on the local app only.
+// A password for throwaway test accounts of the local Keycloak only.
 export const PASSWORD = 'lauriers-de-test';
 
 let counter = 0;
 
-/** An e-mail no other run has used. */
+/** An e-mail no other run has used. Keycloak wants its local part in ASCII: « Inès » signs up as
+ *  ines-…. */
 export function uniqueEmail(name: string, testInfo: TestInfo): string {
   counter += 1;
-  return `${name}-${testInfo.project.name}-${Date.now()}-${counter}@e2e.sibylle.test`;
+  const ascii = name.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+  return `${ascii}-${testInfo.project.name}-${Date.now()}-${counter}@e2e.sibylle.test`;
 }
 
-/** A fresh browser context (its own cookies), signed up as a new account. */
+const emails = new WeakMap<Page, string>();
+
+/** The address a page of `newPerson` signed up with. */
+export function emailOf(page: Page): string {
+  return emails.get(page)!;
+}
+
+// The local Keycloak (`make keycloak`) and its admin, admin / admin (keycloak/dev.sh): what an
+// administrator does in its console.
+const KEYCLOAK = process.env.KEYCLOAK_URL ?? 'http://localhost:8280';
+
+/** A call to the admin API of the realm `sibylle`, as the local Keycloak's admin. */
+export async function keycloakAdmin(method: string, path: string): Promise<Response> {
+  const signedIn = await fetch(`${KEYCLOAK}/realms/master/protocol/openid-connect/token`, {
+    method: 'POST',
+    body: new URLSearchParams({
+      grant_type: 'password',
+      client_id: 'admin-cli',
+      username: 'admin',
+      password: 'admin',
+    }),
+  });
+  const { access_token: token } = (await signedIn.json()) as { access_token: string };
+  return fetch(`${KEYCLOAK}/admin/realms/sibylle${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+/** The id of the account `email` in Keycloak's realm. */
+export async function keycloakUserId(email: string): Promise<string> {
+  const query = new URLSearchParams({ email, exact: 'true' });
+  const users = (await (await keycloakAdmin('GET', `/users?${query}`)).json()) as { id: string }[];
+  return users[0]!.id;
+}
+
+// Mailpit (`make db`), where the local Keycloak sends its e-mails.
+const MAILPIT = process.env.MAILPIT_URL ?? 'http://localhost:8025';
+
+/** The link to Keycloak of the newest e-mail sent to `to` with `subject`, once Mailpit holds
+ *  `count` of them. */
+export async function keycloakLinkInMail(to: string, subject: string, count = 1): Promise<string> {
+  let link = '';
+  await expect
+    .poll(
+      async () => {
+        const query = new URLSearchParams({ query: `to:"${to}" subject:"${subject}"` });
+        const found = (await (await fetch(`${MAILPIT}/api/v1/search?${query}`)).json()) as {
+          messages: { ID: string }[];
+        };
+        if (found.messages.length < count) return false;
+        const newest = (await (
+          await fetch(`${MAILPIT}/api/v1/message/${found.messages[0]!.ID}`)
+        ).json()) as { Text: string };
+        link = newest.Text.match(/https?:\/\/\S+\/login-actions\/\S+/)?.[0] ?? '';
+        return link !== '';
+      },
+      { message: `${count} e-mail(s) « ${subject} » to ${to}`, timeout: 15_000 },
+    )
+    .toBe(true);
+  return link;
+}
+
+/** Back on Sibylle from Keycloak's pages, past the server's way back (/api/auth/callback). */
+export async function backOnSibylle(page: Page, testInfo: TestInfo): Promise<void> {
+  const app = new URL(testInfo.project.use.baseURL!).origin;
+  await page.waitForURL((url) => url.origin === app && !url.pathname.startsWith('/api/'));
+}
+
+/** A fresh browser context (its own cookies), signed up as a new account on the sign-up page of
+ *  the local Keycloak (`make keycloak`), and back on `startAt`, signed in. A page behind a
+ *  session sends the visitor to Keycloak's sign-in page, which leads to the sign-up. */
 export async function newPerson(
   browser: Browser,
   testInfo: TestInfo,
@@ -24,12 +97,26 @@ export async function newPerson(
   const page = await context.newPage();
   await page.goto(startAt);
   await page.getByRole('link', { name: 'Créer un compte' }).click();
-  await page.getByLabel('PRÉNOM').fill(firstName);
-  await page.getByLabel('NOM', { exact: true }).fill('Test');
-  await page.getByLabel('E-MAIL').fill(uniqueEmail(firstName.toLowerCase(), testInfo));
-  await page.getByLabel('MOT DE PASSE').fill(PASSWORD);
-  await page.getByRole('button', { name: 'Créer mon compte' }).click();
+  const email = uniqueEmail(firstName.toLowerCase(), testInfo);
+  emails.set(page, email);
+  await signUpOnKeycloak(page, testInfo, firstName, email);
   return page;
+}
+
+/** Fills Keycloak's « Créer un compte » page, on screen, and comes back on Sibylle. */
+export async function signUpOnKeycloak(
+  page: Page,
+  testInfo: TestInfo,
+  firstName: string,
+  email: string,
+): Promise<void> {
+  await expect(page.getByRole('heading', { name: 'Créer un compte' })).toBeVisible();
+  await page.getByLabel('Prénom').fill(firstName);
+  await page.getByLabel('Nom', { exact: true }).fill('Test');
+  await page.getByLabel('E-mail').fill(email);
+  await page.getByLabel('Mot de passe').fill(PASSWORD);
+  await page.getByRole('button', { name: 'Créer mon compte' }).click();
+  await backOnSibylle(page, testInfo);
 }
 
 export async function createNewsroom(page: Page, title: string, pseudo: string): Promise<void> {

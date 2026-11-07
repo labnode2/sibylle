@@ -3,7 +3,9 @@
 `uv run sibylle seed-demo` (refusé en production) crée la rédaction « Sophia Office » et ses
 cinq membres. La commande peut être relancée sans rien dupliquer.
 
-Mot de passe commun : `lauriers-de-demo`
+On se connecte par le Keycloak local (`make keycloak`), où ces comptes existent avec les mêmes
+identifiants (`keycloak/dev-realm.json`) : le seed rattache chaque compte au sien. Mot de passe
+commun : `lauriers-de-demo`
 
 | Pseudo | E-mail | Rôle |
 |---|---|---|

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Production backup: the database (pg_dump in custom format, already compressed) and the
-# uploaded images (an archive of the uploads folder), in BACKUP_DIR (backups/ next to deploy/ by
-# default), kept BACKUP_KEEP_DAYS days (14). sibylle-backup.timer runs it every night, and
-# deploy/update.sh before each update. At night, when BACKUP_AGE_RECIPIENT and BACKUP_REMOTE are
-# set (deploy/.env), a copy encrypted with age also goes to the VPS, through rsync.
+# Production backup: the database (pg_dump in custom format, already compressed), the uploaded
+# images (an archive of the uploads folder) and Keycloak's database, which holds the accounts
+# (specs/002-keycloak-auth, research.md K14), in BACKUP_DIR (backups/ next to deploy/ by default),
+# kept BACKUP_KEEP_DAYS days (14). sibylle-backup.timer runs it every night, and deploy/update.sh
+# before each update. At night, when BACKUP_AGE_RECIPIENT and BACKUP_REMOTE are set
+# (deploy/.env), a copy encrypted with age also goes to the VPS, through rsync.
 #   deploy/backup/backup.sh [label]    nightly by default; pre-deploy from update.sh
 # Writes the path of the database backup to standard output, the rest to standard error.
 set -euo pipefail
@@ -34,6 +35,18 @@ main() {
     >"$base.uploads.tar.gz.part"
   mv "$base.uploads.tar.gz.part" "$base.uploads.tar.gz"
 
+  # Keycloak runs from labnode2/docker, next to Sibylle: its database container, by name.
+  local keycloak_db
+  keycloak_db=$(setting KEYCLOAK_DB_CONTAINER keycloak-db)
+  if docker container inspect "$keycloak_db" >/dev/null 2>&1; then
+    log "Keycloak's database -> $base.keycloak.dump"
+    docker exec "$keycloak_db" pg_dump --username=keycloak --dbname=keycloak --format=custom \
+      >"$base.keycloak.dump.part"
+    mv "$base.keycloak.dump.part" "$base.keycloak.dump"
+  else
+    log "No $keycloak_db container: Keycloak's accounts are not in this backup."
+  fi
+
   find "$dir" -maxdepth 1 -type f -name 'sibylle-*' -mtime "+$keep" -delete
   if [[ $label == nightly ]]; then
     offsite "$base"
@@ -50,11 +63,14 @@ offsite() {
     return 0
   fi
   command -v age >/dev/null || fail "age is not installed: no offsite copy"
-  for file in "$base.dump" "$base.uploads.tar.gz"; do
+  local files=("$base.dump" "$base.uploads.tar.gz") encrypted=()
+  [[ -f $base.keycloak.dump ]] && files+=("$base.keycloak.dump")
+  for file in "${files[@]}"; do
     age --encrypt --recipient "$recipient" --output "$file.age" "$file"
+    encrypted+=("$file.age")
   done
   log "Encrypted copy -> $remote"
-  rsync --remove-source-files "$base.dump.age" "$base.uploads.tar.gz.age" "$remote"
+  rsync --remove-source-files "${encrypted[@]}" "$remote"
 }
 
 main "$@"

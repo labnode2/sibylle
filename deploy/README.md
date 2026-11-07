@@ -15,7 +15,9 @@ The VM's own rules apply (its `CLAUDE.md` and Docker network guide, in the labno
 repository): read-only containers without privileges and with limits, a UID per application,
 nothing on `proxy` but what NPM must reach. The `api` and the `worker` reach the Internet
 (Brevo's SMTP, push notifications) through a network of their own; the `db` reaches nothing. The
-VM cannot reach the local network, and Sibylle needs nothing there.
+`api` also joins Keycloak, which runs sign-up, sign-in and passwords at `auth.sibylle.cc`, on the
+VM's `keycloak` network (section 9). The VM cannot reach the local network, and Sibylle needs
+nothing there.
 
 ## How an update arrives
 
@@ -105,15 +107,22 @@ SMTP_USER=<the SMTP login shown by Brevo>
 SMTP_PASSWORD=<an SMTP key created at Brevo>
 MAIL_FROM=Sibylle <ne-pas-repondre@sibylle.cc>
 DISCORD_WEBHOOK_URL=<the channel's webhook URL, below>
+OIDC_ISSUER=https://auth.sibylle.cc/realms/sibylle
+OIDC_CLIENT_ID=sibylle
+OIDC_CLIENT_SECRET=<keycloak/terraform/tofu.sh output -raw client_secret, section 9>
 ```
+
+The server refuses to start in production without `OIDC_CLIENT_SECRET`, or with an issuer in
+plain `http`.
 
 No comment at the end of a line: the scripts read `.env` with `sed` (`deploy/lib.sh`), and the
 comment would end up in the value. `MAIL_FROM` must be on a domain validated at Brevo (its
 records are still missing, see the end of this file). nginx also takes the site's domain from
 `PUBLIC_ORIGIN`.
 
-The other lines stay as they are: the Compose file sets `DATABASE_URL` and `UPLOAD_DIR` itself,
-`UI_HOST` and `SIBYLLE_FAKE_CLOCK_FILE` only serve development, and `SIBYLLE_CLOCK` must stay
+The other lines stay as they are: the Compose file sets `DATABASE_URL`, `UPLOAD_DIR` and the
+api's `KEYCLOAK_INTERNAL_URL` itself, `UI_HOST` and `SIBYLLE_FAKE_CLOCK_FILE` only serve
+development, and `SIBYLLE_CLOCK` must stay
 `system` (the server refuses `fake` in production). The production-only settings (tags, data
 folder, backups, logs) are described, commented out, at the end of `.env.example`; their
 defaults match section 1, so none is needed to start.
@@ -129,7 +138,7 @@ A check of `.env` before the first start: Compose prints nothing, or says which 
 
 ```bash
 sudo -u sibylle -H docker compose --project-directory /opt/sibylle/deploy -f /opt/sibylle/deploy/compose.prod.yml config --quiet
-sudo -u sibylle grep -E '^(ENVIRONMENT|PUBLIC_ORIGIN|SMTP_HOST|SMTP_PORT|MAIL_FROM)=' /opt/sibylle/deploy/.env
+sudo -u sibylle grep -E '^(ENVIRONMENT|PUBLIC_ORIGIN|SMTP_HOST|SMTP_PORT|MAIL_FROM|OIDC_ISSUER|OIDC_CLIENT_ID)=' /opt/sibylle/deploy/.env
 ```
 
 ## 3. First start
@@ -247,9 +256,11 @@ hand, for instance after a change to `deploy/compose.prod.yml` alone, which buil
 
 ## 8. Backups and restore
 
-`deploy/backup/backup.sh` backs up the database (`pg_dump` in custom format) and the uploaded
-images to `/opt/sibylle/backups`, every night around 3:30 (`sibylle-backup.timer`) and before
-each update; 14 days are kept. `sudo systemctl start sibylle-backup` makes one right away.
+`deploy/backup/backup.sh` backs up the database (`pg_dump` in custom format), the uploaded images
+and Keycloak's database, which holds the accounts (`keycloak-db` of labnode2/docker, in
+`*.keycloak.dump`), to `/opt/sibylle/backups`, every night around 3:30 (`sibylle-backup.timer`)
+and before each update; 14 days are kept. `sudo systemctl start sibylle-backup` makes one right
+away.
 
 Restore a backup (the API and the worker stop while it runs):
 
@@ -259,11 +270,103 @@ sudo -u sibylle -H /opt/sibylle/deploy/backup/restore.sh --yes \
   /opt/sibylle/backups/sibylle-YYYYMMDD-HHMMSS-nightly.uploads.tar.gz
 ```
 
+Restore Keycloak's accounts, alone or along with the above (Keycloak stops while it runs, then
+answers about a minute later; `keycloak-db` must be running):
+
+```bash
+sudo -u sibylle -H /opt/sibylle/deploy/backup/restore.sh --yes \
+  --keycloak /opt/sibylle/backups/sibylle-YYYYMMDD-HHMMSS-nightly.keycloak.dump
+```
+
+Rehearsed on 7 November 2026 (specs/002-keycloak-auth, SC-007): a Keycloak 26.8.2 on PostgreSQL
+18.6 with Sibylle's realm and one more account, its dump made the way `backup.sh` makes it, then
+restored by this command into a fresh Keycloak; both accounts and the backup's admin signed in
+there.
+
 Encrypted copy on the VPS, every night: install `age`, create the key pair somewhere other than
 the VM (`age-keygen`, the private key stays offline), authorize the SSH key of `sibylle`
 (`sudo -u sibylle -H ssh-keygen -t ed25519`) on the VPS, then set in `.env`
-`BACKUP_AGE_RECIPIENT` (the public key) and `BACKUP_REMOTE` (the rsync destination). The VPS
-keeps its copies as long as decided on its side.
+`BACKUP_AGE_RECIPIENT` (the public key) and `BACKUP_REMOTE` (the rsync destination). Keycloak's
+dump goes with the rest. The VPS keeps its copies as long as decided on its side.
+
+## 9. Switching sign-in to Keycloak (once)
+
+Sign-up, sign-in, passwords and address checks move to Keycloak (`specs/002-keycloak-auth`): it
+runs from labnode2/docker at `https://auth.sibylle.cc`, with the realm `sibylle` that OpenTofu
+made (`keycloak/terraform/README.md`). Production starts again from zero: its database and its
+uploaded images, which hold only trial accounts, are emptied, and nothing is imported
+(research.md K13). In this order, on the VM, with this helper for the Compose project:
+
+```bash
+prod() { sudo -u sibylle -H docker compose --project-directory /opt/sibylle/deploy -f /opt/sibylle/deploy/compose.prod.yml "$@"; }
+```
+
+1. **A backup**, to undo the switch if need be:
+
+   ```bash
+   sudo -u sibylle -H /opt/sibylle/deploy/backup/backup.sh before-keycloak
+   ```
+
+2. **The `keycloak` network**, once labnode2/docker's change is pushed. `setup.sh` creates the
+   network and recreates the `keycloak` container on it (it answers again a minute later); the
+   second command lists `keycloak`:
+
+   ```bash
+   cd ~/workdir/docker && git pull && sudo bash ~/workdir/docker/setup.sh keycloak
+   sudo docker network inspect keycloak --format '{{range .Containers}}{{.Name}} {{end}}'
+   ```
+
+3. **The settings** of section 2: the realm, the client and its secret, read from OpenTofu's
+   state without showing it. Applying the new realm settings (step 6) keeps that secret. The
+   second command prints 3:
+
+   ```bash
+   sudo -u sibylle -H bash -c 'cd /opt/sibylle && secret=$(keycloak/terraform/tofu.sh output -raw client_secret </dev/null) && printf "OIDC_ISSUER=https://auth.sibylle.cc/realms/sibylle\nOIDC_CLIENT_ID=sibylle\nOIDC_CLIENT_SECRET=%s\n" "$secret" >>deploy/.env'
+   sudo -u sibylle grep -c '^OIDC_' /opt/sibylle/deploy/.env
+   ```
+
+4. **An empty database and no uploaded images**. The site answers 502 until step 5; the API
+   creates the tables when it starts (it migrates first):
+
+   ```bash
+   prod stop api worker
+   prod exec -T db sh -c 'dropdb --force --username="$POSTGRES_USER" "$POSTGRES_DB" && createdb --username="$POSTGRES_USER" "$POSTGRES_DB"'
+   prod run --rm --no-deps -T --entrypoint sh api -c 'find /data/uploads -mindepth 1 -delete'
+   ```
+
+5. **The new version**: push `main`. The workflows build both images and deploy them (“How an
+   update arrives”); `sudo -u sibylle -H /opt/sibylle/deploy/update.sh` does it by hand. Then
+   `prod ps` shows every service `healthy`, and `https://sibylle.cc/api/health` answers
+   `{"status":"ok","db":"ok"}`.
+
+6. **The realm's new settings**, now in `/opt/sibylle`: the client's `kc-admin-api` scope
+   (without it, the server's calls to Keycloak's admin API get 401), its back-channel logout to
+   `http://sibylle:8443` and the return of the address check's link. The plan must show only
+   these, one resource to add and one to change; a second `plan` then finds no changes:
+
+   ```bash
+   sudo -u sibylle -H /opt/sibylle/keycloak/terraform/tofu.sh plan
+   sudo -u sibylle -H /opt/sibylle/keycloak/terraform/tofu.sh apply
+   ```
+
+7. **No trial account left in the realm**: through the tunnel
+   (`ssh -L 8180:127.0.0.1:8180 dev@192.168.71.7` from a PC), http://localhost:8180/admin/, realm
+   `sibylle`, *Users*: delete each one.
+
+8. **The checks** of `specs/002-keycloak-auth/quickstart.md`, “En production”:
+   - `https://sibylle.cc` → « Créer un compte »: Keycloak's page on `auth.sibylle.cc`, then back
+     signed in; the address check arrives by e-mail (Brevo, see “Still missing”);
+   - « Me déconnecter », then back: the password is asked again;
+   - from `/compte`, « Changer mon mot de passe » with « Déconnecter mes autres appareils »: the
+     other device goes to the sign-in page at once;
+   - `https://auth.sibylle.cc/admin/` from the Internet: still blocked;
+   - the next morning, `/opt/sibylle/backups` holds a `*.keycloak.dump`, and the VPS its
+     encrypted copy.
+
+To undo: `update.sh` rolls back by itself when a service is not healthy. By hand, set
+`SIBYLLE_BACKEND_TAG` and `SIBYLLE_WEB_TAG` to the previous commit's `sha-…` in `.env`, run
+`update.sh`, then `restore.sh` with step 1's backup. The `OIDC_*` lines and the `keycloak`
+network can stay: the previous version ignores them.
 
 ## Day to day
 

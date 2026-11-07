@@ -1,7 +1,7 @@
-// The account's settings (US11): display, notifications (US8), newsrooms to leave, the export of
-// one's data and the deletion of the account. Reached from the gear of the pages outside a
-// newsroom and from the press card, it leads back where one came from; notification e-mails
-// link to `#notifications`.
+// The account's settings (US11): display, notifications (US8), newsrooms to leave, the password
+// (on Keycloak's page), the export of one's data and the deletion of the account. Reached from the
+// gear of the pages outside a newsroom and from the press card, it leads back where one came
+// from; notification e-mails link to `#notifications`.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router';
@@ -14,11 +14,23 @@ import { PixelImage } from '../../ui/PixelImage';
 import { toast } from '../../ui/Toaster';
 import { useMe } from '../auth/api';
 import { useLogoutConfirm } from '../auth/LogoutDialog';
+import { signInUrl } from '../auth/signIn';
 import { NotificationPrefs } from '../notifications/NotificationPrefs';
 import { downloadMyData, useDeleteAccount, useLeaveNewsroom, useUpdateAccount } from './api';
 import styles from './settings.module.css';
 
 const THEMES: Theme[] = ['light', 'dark', 'auto'];
+
+/** Keycloak did not answer the deletion: nothing is deleted, try again later (FR-013). */
+function SignInServiceDown({ error }: { error: unknown }) {
+  const { t } = useTranslation('settings');
+  if (!(error instanceof ApiError) || error.code !== 'identity_unavailable') return null;
+  return (
+    <div role="alert" className={styles.alert}>
+      <p>{t('delete.unavailable')}</p>
+    </div>
+  );
+}
 
 /** « Nomme d'abord une autre rédaction en chef », with the way to do it. */
 function LastEditor({ error, me }: { error: unknown; me: Me }) {
@@ -154,6 +166,23 @@ function Newsrooms({ me }: { me: Me }) {
   );
 }
 
+/** « Changer mon mot de passe »: Keycloak's page, which can also sign the other devices out, then
+ *  back here (specs/002-keycloak-auth, FR-010). */
+export function PasswordChange() {
+  const { t } = useTranslation('settings');
+  return (
+    <section className={styles.section} aria-labelledby="settings-password">
+      <h2 id="settings-password" className={styles.sectionTitle}>
+        {t('password.title')}
+      </h2>
+      <p className={styles.text}>{t('password.text')}</p>
+      <ButtonLink to={signInUrl('password', '/compte')} reloadDocument variant="secondary">
+        {t('password.change')}
+      </ButtonLink>
+    </section>
+  );
+}
+
 function MyData() {
   const { t } = useTranslation('settings');
   const [busy, setBusy] = useState(false);
@@ -197,15 +226,13 @@ function DeleteAccount({ me }: { me: Me }) {
         <Card as="div" shadow={0} className={styles.confirm}>
           <p className={styles.text}>{t('delete.confirm')}</p>
           <LastEditor error={remove.error} me={me} />
+          <SignInServiceDown error={remove.error} />
           <div className={styles.actions}>
             <Button
               disabled={remove.isPending}
               onClick={() =>
                 remove.mutate(undefined, {
-                  onSuccess: () => {
-                    toast.success(t('auth:login.deleted'));
-                    void navigate('/connexion', { replace: true });
-                  },
+                  onSuccess: () => void navigate('/au-revoir', { replace: true }),
                 })
               }
             >
@@ -260,6 +287,7 @@ export function SettingsPage() {
       <Display />
       <NotificationPrefs emailVerified={me.data.email_verified} />
       <Newsrooms me={me.data} />
+      <PasswordChange />
       <MyData />
       <DeleteAccount me={me.data} />
       <Button variant="link" onClick={logout.ask}>

@@ -28,3 +28,5 @@ def configure_logging(level: str) -> None:
     root = logging.getLogger()
     root.handlers[:] = [handler]
     root.setLevel(level.upper())
+    # httpx notes each call to Keycloak at INFO; its failures come through services/keycloak.py.
+    logging.getLogger("httpx").setLevel(max(root.level, logging.WARNING))

@@ -26,6 +26,8 @@
   },
   "switch": "{{kind}} par {{channel}}",
   "unverified": "Ton adresse n'est pas encore confirmée : aucun e-mail de notification ne part avant.",
+  "resend": "Renvoyer l'e-mail de confirmation",
+  "resent": "L'e-mail de confirmation vient de partir. Son lien est valable 24 heures.",
   "saved": "Préférence de notification enregistrée.",
   "device": {
     "label": "SUR CET APPAREIL",

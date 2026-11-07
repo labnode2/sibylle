@@ -27,18 +27,19 @@ Ce document fixe les routes, les droits et les charges utiles. L'OpenAPI génér
 
 ## Comptes et session
 
+L'inscription, la connexion, les mots de passe et la confirmation d'adresse passent par Keycloak
+depuis la fonctionnalité 002 : les routes `/auth/*` et celles de `/me` qui en dépendent sont
+décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `POST /auth/signup`,
+`POST /auth/login`, `POST /auth/verify-email`, `POST /auth/password-reset`,
+`POST /auth/password-reset/confirm` et `POST /me/password` (retirées).
+
 | Méthode | Route | Qui | Corps → Réponse |
 |---|---|---|---|
-| POST | `/auth/signup` | Public | `{email, password, first_name, last_name}` → `201 Me` + cookie ; envoie l'e-mail de vérification |
-| POST | `/auth/login` | Public | `{email, password}` → `200 Me` + cookie |
-| POST | `/auth/logout` | Compte | → `204` |
-| POST | `/auth/verify-email` | Public | `{token}` → `204` |
-| POST | `/auth/verify-email/resend` | Compte | → `204` |
-| POST | `/auth/password-reset` | Public | `{email}` → `202` (toujours, que l'adresse existe ou non) |
-| POST | `/auth/password-reset/confirm` | Public | `{token, password}` → `204` ; ferme les autres sessions |
+| GET | `/auth/login`, `/auth/callback` | Public | l'aller-retour par Keycloak : `specs/002-keycloak-auth/contracts/auth.md` |
+| POST | `/auth/logout` | Compte | → `204` ; ferme aussi la session Keycloak (002) |
+| POST | `/auth/verify-email/resend` | Compte | → `204` ; Keycloak envoie l'e-mail (002) |
 | GET | `/me` | Compte | → `Me` |
-| PATCH | `/me` | Compte | `{first_name?, last_name?, theme?, reduce_motion?, locale?}` → `Me` |
-| POST | `/me/password` | Compte | `{current_password, new_password}` → `204` |
+| PATCH | `/me` | Compte | `{theme?, reduce_motion?, locale?}` → `Me` ; les noms changent dans Keycloak (002) |
 | GET | `/me/export` | Compte | → fichier JSON `sibylle-mes-donnees-AAAA-MM-JJ.json` (compte, rédactions, paris, relevés de lauriers et de pièces, collections, trophées, signalements, préférences, appareils sans leur adresse push) |
 | DELETE | `/me` | Compte | `{confirm: true}` → `204` (cookie effacé) ; `409 last_editor` avec `fields.org_id` si seule rédaction en chef d'une rédaction qui a d'autres membres |
 | GET | `/me/notification-prefs` | Compte | → `[{type, channel, enabled}]` |

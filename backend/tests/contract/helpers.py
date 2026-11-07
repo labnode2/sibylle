@@ -4,16 +4,19 @@ import asyncio
 import re
 from datetime import date
 from typing import Any
+from urllib.parse import parse_qs, urlsplit
 
 import httpx
 from sqlalchemy import select, text, update
+from tests.keycloak_fake import FakeKeycloak
 
 from sibylle.db.models import CoinEntry, Membership, Notification
 from sibylle.db.session import transaction
 from sibylle.domain.content import AVATAR_TEMPLATES
 
 AVATAR: dict[str, Any] = AVATAR_TEMPLATES[0]["image"]
-PRIVATE_KEYS = {"email", "first_name", "last_name", "password_hash"}
+PRIVATE_KEYS = {"email", "first_name", "last_name", "keycloak_id"}
+SIGNIN_COOKIE = "sibylle_signin"
 
 
 async def notifications(type: str) -> list[Notification]:
@@ -90,3 +93,33 @@ def assert_no_private_data(payload: Any) -> None:
     elif isinstance(payload, list):
         for value in payload:
             assert_no_private_data(value)
+
+
+async def start_sign_in(
+    client: httpx.AsyncClient, *, action: str | None = None, suite: str | None = None
+) -> httpx.Response:
+    """`GET /api/auth/login`, as the interface sends the browser there."""
+    params = {
+        key: value for key, value in (("action", action), ("suite", suite)) if value is not None
+    }
+    return await client.get("/api/auth/login", params=params)
+
+
+async def sign_in(
+    client: httpx.AsyncClient,
+    fake: FakeKeycloak,
+    user: str,
+    *,
+    suite: str = "/",
+    action: str | None = None,
+    **changes: Any,
+) -> httpx.Response:
+    """A whole sign-in through the fake Keycloak, as `user` (an id of `fake.users`): the way
+    there, Keycloak's pages (`fake.authorize`, whose identity token `changes` alter), and the
+    answer of the way back."""
+    started = await start_sign_in(client, action=action, suite=suite)
+    assert started.status_code == 303, started.text
+    location = started.headers["location"]
+    code = fake.authorize(location, user, **changes)
+    state = parse_qs(urlsplit(location).query)["state"][0]
+    return await client.get("/api/auth/callback", params={"code": code, "state": state})

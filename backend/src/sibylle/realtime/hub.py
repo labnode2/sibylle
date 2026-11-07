@@ -6,7 +6,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from sibylle.realtime.bus import Message
+from sibylle.realtime.bus import SIGNED_OUT, Message
 
 log = logging.getLogger(__name__)
 
@@ -19,6 +19,8 @@ async def _no_close(_code: int) -> None:
 
 
 _NEWSROOM_ROLES = {"journalist", "editor"}
+# The session ended (signed out, closed by Keycloak): the browser goes to sign in again.
+CLOSE_UNAUTHENTICATED = 4401
 
 
 @dataclass(eq=False)
@@ -26,6 +28,8 @@ class Connection:
     account_id: uuid.UUID
     send: Send
     close: Close = _no_close
+    # The session the connection opened with: it closes when that session ends.
+    session_id: uuid.UUID | None = None
     # topic -> newsroom it belongs to (None for the private "me" topic)
     topics: dict[str, uuid.UUID | None] = field(default_factory=dict)
     # newsroom -> (membership id, role) of this account
@@ -86,7 +90,20 @@ class Hub:
             return role in _NEWSROOM_ROLES
         return isinstance(audience, list) and str(membership_id) in audience
 
+    async def _sign_out(self, session_ids: set[str]) -> None:
+        for connection in list(self._connections):
+            if str(connection.session_id) not in session_ids:
+                continue
+            self.remove(connection)
+            try:
+                await connection.close(CLOSE_UNAUTHENTICATED)
+            except Exception:
+                log.debug("connection already closed")
+
     async def dispatch(self, message: Message) -> None:
+        if message.get("event") == SIGNED_OUT:
+            await self._sign_out(set(message.get("sessions", [])))
+            return
         revoke = message.get("revoke")
         if revoke:
             self._revoke(revoke["account_id"], revoke["org_id"])

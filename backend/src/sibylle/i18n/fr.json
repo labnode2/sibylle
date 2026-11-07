@@ -1,9 +1,9 @@
 {
   "errors": {
     "not_authenticated": "Connecte-toi pour continuer.",
-    "invalid_credentials": "E-mail ou mot de passe incorrect.",
     "forbidden": "Tu n'as pas le droit de faire cela.",
     "not_found": "Introuvable.",
+    "invalid_token": "Ce jeton n'est pas valable.",
     "invalid_state": "Ce n'est pas possible pour le moment.",
     "already_bet": "Tu as déjà joué ce prono : ton choix est définitif.",
     "insufficient_balance": "Tu n'as pas assez de lauriers pour cette mise.",
@@ -12,7 +12,6 @@
     "pseudo_taken": "Ce pseudo est déjà pris dans cette rédaction.",
     "email_taken": "Un compte existe déjà avec cette adresse.",
     "invitation_invalid": "Cette invitation n'est plus valable.",
-    "token_invalid": "Ce lien a expiré ou a déjà servi.",
     "last_editor": "Nomme d'abord une autre rédaction en chef.",
     "attempts_exhausted": "Plus d'essai pour le moment.",
     "too_large": "Le fichier est trop lourd : 5 Mo au plus.",
@@ -20,12 +19,11 @@
     "rate_limited": "Trop d'essais. Réessaie dans quelques minutes.",
     "error": "Une erreur est survenue.",
     "run_finished": "Cette partie est déjà terminée.",
-    "game_not_scheduled": "Ce jeu n'est pas au programme cette semaine."
+    "game_not_scheduled": "Ce jeu n'est pas au programme cette semaine.",
+    "identity_unavailable": "Le service de connexion ne répond pas pour le moment. Réessaie dans quelques minutes."
   },
   "email": {
     "subject": {
-      "verify_email": "Confirme ton adresse pour Sibylle",
-      "reset_password": "Ton lien pour changer de mot de passe",
       "invitation": "{inviter_pseudo} t'invite dans la rédaction {org_title}",
       "new_prono": "{org_title} · Nouveau prono : {question}",
       "closing_soon": "{org_title} · Plus que 2 h pour jouer",

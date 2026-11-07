@@ -1,25 +1,9 @@
 import pytest
 
 from sibylle.config import Settings
-from sibylle.services.security import hash_password, new_token, token_hash, verify_password
+from sibylle.services.security import new_token, token_hash
 
 pytestmark = pytest.mark.unit
-
-
-def test_password_hash_is_argon2id_and_verifies() -> None:
-    hashed = hash_password("lauriers et boules")
-    assert hashed.startswith("$argon2id$")
-    assert "lauriers" not in hashed
-    assert verify_password(hashed, "lauriers et boules")
-    assert not verify_password(hashed, "lauriers et boule")
-
-
-def test_same_password_hashes_differently() -> None:
-    assert hash_password("même mot") != hash_password("même mot")
-
-
-def test_verify_rejects_a_malformed_hash() -> None:
-    assert not verify_password("pas-un-hash", "x")
 
 
 def test_tokens_are_long_random_and_url_safe() -> None:
@@ -56,5 +40,11 @@ def test_only_the_token_hash_is_stored() -> None:
 def test_the_session_cookie_is_secure_but_on_a_local_network_in_http(
     environment: str, origin: str, secure: bool
 ) -> None:
-    settings = Settings(_env_file=None, environment=environment, public_origin=origin)
+    settings = Settings(
+        _env_file=None,
+        environment=environment,
+        public_origin=origin,
+        oidc_issuer="https://auth.sibylle.test/realms/sibylle",
+        oidc_client_secret="un-secret",
+    )
     assert settings.secure_cookies is secure

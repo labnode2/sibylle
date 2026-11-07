@@ -1,10 +1,14 @@
-"""Accounts and sessions: sign-up, sign-in, address check, password changes, deletion."""
+"""Accounts and sessions: the account a Keycloak sign-in opens, signing out, deletion
+(specs/002-keycloak-auth, research.md K6 and K7). Keycloak holds the passwords and sends the
+e-mailed links; Sibylle copies the rest at each sign-in."""
 
+import logging
 import uuid
+from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import ColumnElement, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle import clock
@@ -13,7 +17,6 @@ from sibylle.config import get_settings
 from sibylle.db.models import (
     Account,
     AuthSession,
-    EmailToken,
     Invitation,
     Membership,
     Message,
@@ -22,35 +25,27 @@ from sibylle.db.models import (
     PushSubscription,
 )
 from sibylle.domain.content import DEFAULT_AVATAR
-from sibylle.services import notifications, orgs
-from sibylle.services.security import (
-    hash_password,
-    needs_rehash,
-    new_token,
-    token_hash,
-    verify_password,
-)
+from sibylle.realtime import bus
+from sibylle.services import keycloak, orgs
+from sibylle.services.keycloak import Identity
+from sibylle.services.security import new_token, token_hash
+
+log = logging.getLogger(__name__)
 
 SESSION_LIFETIME = timedelta(days=30)
-VERIFY_EMAIL_LIFETIME = timedelta(hours=24)
-RESET_PASSWORD_LIFETIME = timedelta(hours=1)
-# Verifies against this hash when the address is unknown, so both cases take the same time.
-_DUMMY_HASH = hash_password("pas-un-vrai-mot-de-passe")
+# An unconfirmed address is read again in Keycloak at most this often (research.md K9).
+IDENTITY_CHECK_EVERY = timedelta(minutes=1)
 
 
-def normalize_email(email: str) -> str:
-    return email.strip().lower()
-
-
-async def find_by_email(session: AsyncSession, email: str) -> Account | None:
-    account: Account | None = await session.scalar(
-        select(Account).where(Account.email == normalize_email(email), Account.deleted_at.is_(None))
-    )
-    return account
-
-
-async def open_session(session: AsyncSession, account: Account, user_agent: str | None) -> str:
-    """Signs a browser in; returns the token for its cookie."""
+async def open_session(
+    session: AsyncSession,
+    account: Account,
+    user_agent: str | None,
+    *,
+    keycloak_sid: str | None = None,
+) -> str:
+    """Signs a browser in; returns the token for its cookie. `keycloak_sid` is the Keycloak
+    session opened by the same sign-in, closed with this one."""
     token = new_token()
     session.add(
         AuthSession(
@@ -58,159 +53,145 @@ async def open_session(session: AsyncSession, account: Account, user_agent: str 
             token_hash=token_hash(token),
             expires_at=clock.now() + SESSION_LIFETIME,
             user_agent=(user_agent or "")[:200] or None,
+            keycloak_sid=keycloak_sid,
         )
     )
     return token
 
 
-async def close_sessions(
-    session: AsyncSession, account_id: uuid.UUID, *, keep_token: str | None = None
-) -> None:
-    statement = delete(AuthSession).where(AuthSession.account_id == account_id)
-    if keep_token:
-        statement = statement.where(AuthSession.token_hash != token_hash(keep_token))
-    await session.execute(statement)
+@dataclass(frozen=True)
+class SignedIn:
+    account: Account
+    token: str
+    # The sign-in made the account: its address check, if unconfirmed, is still to send.
+    created: bool
 
 
-async def _email_token(
-    session: AsyncSession, account: Account, purpose: str
-) -> tuple[str, uuid.UUID]:
-    lifetime = VERIFY_EMAIL_LIFETIME if purpose == "verify_email" else RESET_PASSWORD_LIFETIME
-    token = new_token()
-    row = EmailToken(
-        account_id=account.id,
-        purpose=purpose,
-        token_hash=token_hash(token),
-        expires_at=clock.now() + lifetime,
+async def sign_in(session: AsyncSession, identity: Identity, user_agent: str | None) -> SignedIn:
+    """The account of the person Keycloak signed in, made at their first sign-in, and a new
+    session's token. E-mail, names and the address check are copied from Keycloak each time;
+    an address held by another live account stops the sign-in (`email_taken`): an account is
+    tied by its Keycloak id, never by its address (research.md K6)."""
+    account = await session.scalar(
+        select(Account)
+        .where(Account.keycloak_id == identity.sub, Account.deleted_at.is_(None))
+        .with_for_update()
     )
-    session.add(row)
-    await session.flush()
-    return token, row.id
-
-
-async def send_verification(session: AsyncSession, account: Account) -> None:
-    token, row_id = await _email_token(session, account, "verify_email")
-    await notifications.enqueue(
-        session,
-        type="verify_email",
-        account_id=account.id,
-        dedupe_key=f"verify_email:{row_id}",
-        payload={
-            "first_name": account.first_name,
-            "link": f"{get_settings().public_origin}/verifier-email?jeton={token}",
-        },
+    holder = await session.scalar(
+        select(Account.id).where(Account.email == identity.email, Account.deleted_at.is_(None))
     )
-
-
-async def signup(
-    session: AsyncSession,
-    *,
-    email: str,
-    password: str,
-    first_name: str,
-    last_name: str,
-    user_agent: str | None,
-) -> tuple[Account, str]:
-    if await find_by_email(session, email):
+    if holder is not None and (account is None or holder != account.id):
         raise AppError("email_taken")
-    account = Account(
-        email=normalize_email(email),
-        password_hash=hash_password(password),
-        first_name=first_name,
-        last_name=last_name,
-    )
-    session.add(account)
+    created = account is None
+    if account is None:
+        account = Account(keycloak_id=identity.sub)
+        session.add(account)
+    account.email = identity.email
+    account.first_name = identity.first_name or None
+    account.last_name = identity.last_name or None
+    if not identity.email_verified:
+        account.email_verified_at = None
+    elif account.email_verified_at is None:
+        account.email_verified_at = clock.now()
     await session.flush()
-    token = await open_session(session, account, user_agent)
-    await send_verification(session, account)
-    return account, token
+    token = await open_session(session, account, user_agent, keycloak_sid=identity.sid)
+    return SignedIn(account, token, created)
 
 
-async def login(
-    session: AsyncSession, email: str, password: str, user_agent: str | None
-) -> tuple[Account, str] | None:
-    """The account and a new session token, or None when the credentials are wrong."""
-    account = await find_by_email(session, email)
-    if account is None or account.password_hash is None:
-        verify_password(_DUMMY_HASH, password)
+async def logout(session: AsyncSession, token: str | None) -> str | None:
+    """Closes the browser's session; returns the Keycloak session to close with it."""
+    if not token:
         return None
-    if not verify_password(account.password_hash, password):
-        return None
-    if needs_rehash(account.password_hash):
-        account.password_hash = hash_password(password)
-    return account, await open_session(session, account, user_agent)
+    sid: str | None = await session.scalar(
+        delete(AuthSession)
+        .where(AuthSession.token_hash == token_hash(token))
+        .returning(AuthSession.keycloak_sid)
+    )
+    return sid
 
 
-async def logout(session: AsyncSession, token: str | None) -> None:
-    if token:
-        await session.execute(
-            delete(AuthSession).where(AuthSession.token_hash == token_hash(token))
-        )
+async def end_sessions(session: AsyncSession, *where: ColumnElement[bool]) -> list[uuid.UUID]:
+    """Ends the sessions that match `where` and closes their WebSockets (4401), once the
+    transaction commits; returns their ids."""
+    ended = list(
+        (await session.scalars(delete(AuthSession).where(*where).returning(AuthSession.id))).all()
+    )
+    if ended:
+        await bus.publish_signed_out(session, ended)
+    return ended
+
+
+async def end_keycloak_sessions(session: AsyncSession, logout: keycloak.Logout) -> list[uuid.UUID]:
+    """The sessions a back-channel logout from Keycloak ends (research.md K8): those opened with
+    its Keycloak session, or every session of its account when it names only the account."""
+    where: list[ColumnElement[bool]] = []
+    if logout.sub is not None:
+        account = select(Account.id).where(Account.keycloak_id == logout.sub).scalar_subquery()
+        where.append(AuthSession.account_id == account)
+    if logout.sid is not None:
+        where.append(AuthSession.keycloak_sid == logout.sid)
+    return await end_sessions(session, *where) if where else []
 
 
 def update_account(account: Account, changes: dict[str, Any]) -> None:
-    for field in ("first_name", "last_name", "theme", "reduce_motion", "locale"):
+    """The account's own settings; names and e-mail change in Keycloak."""
+    for field in ("theme", "reduce_motion", "locale"):
         if field in changes and changes[field] is not None:
             setattr(account, field, changes[field])
 
 
-async def change_password(
-    session: AsyncSession, account: Account, current: str, new: str, current_token: str | None
-) -> None:
-    if account.password_hash is None or not verify_password(account.password_hash, current):
-        raise AppError("validation_error", {"current_password": "invalid"})
-    account.password_hash = hash_password(new)
-    await close_sessions(session, account.id, keep_token=current_token)
+def verification_return() -> str:
+    """Where the address check's link ends: back to the settings, through a sign-in that Keycloak
+    passes at once (research.md K9)."""
+    return f"{get_settings().public_origin}/api/auth/login?suite=/compte"
 
 
-async def _use_token(session: AsyncSession, token: str, purpose: str) -> Account:
-    row = await session.scalar(
-        select(EmailToken)
-        .where(EmailToken.token_hash == token_hash(token), EmailToken.purpose == purpose)
-        .with_for_update()
-    )
-    if row is None or row.used_at is not None or row.expires_at <= clock.now():
-        raise AppError("token_invalid")
-    account = await session.get(Account, row.account_id)
-    if account is None or account.deleted_at is not None:
-        raise AppError("token_invalid")
-    row.used_at = clock.now()
-    return account
+async def send_verification(account: Account) -> None:
+    """Has Keycloak send the address check (research.md K9); IdentityUnavailable when it does not
+    answer."""
+    if account.keycloak_id is not None:
+        await keycloak.send_verify_email(account.keycloak_id, verification_return())
 
 
-async def verify_email(session: AsyncSession, token: str) -> None:
-    account = await _use_token(session, token, "verify_email")
-    account.email_verified_at = account.email_verified_at or clock.now()
+async def send_first_verification(keycloak_id: uuid.UUID) -> None:
+    """The address check of a new account, sent once its sign-in has answered (FR-008). Keycloak
+    not sending it stops nobody: the settings send it again on demand."""
+    try:
+        await keycloak.send_verify_email(keycloak_id, verification_return())
+    except keycloak.IdentityUnavailable:
+        log.warning("address check not sent", extra={"keycloak_id": str(keycloak_id)})
 
 
-async def request_password_reset(session: AsyncSession, email: str) -> None:
-    """Sends a reset link when the address has an account; says nothing either way."""
-    account = await find_by_email(session, email)
-    if account is None:
+async def refresh_identity(account: Account) -> None:
+    """For an unconfirmed address: reads the account again in Keycloak, at most once a minute,
+    and notes the address confirmed once Keycloak says so (FR-008), whichever device the link
+    was followed on. Only the account's own address counts: a new one is copied, with its
+    confirmation, at the next sign-in. Keycloak not answering changes nothing (SC-006)."""
+    if account.email_verified_at is not None or account.keycloak_id is None:
         return
-    token, row_id = await _email_token(session, account, "reset_password")
-    await notifications.enqueue(
-        session,
-        type="reset_password",
-        account_id=account.id,
-        dedupe_key=f"reset_password:{row_id}",
-        payload={
-            "first_name": account.first_name,
-            "link": f"{get_settings().public_origin}/mot-de-passe/nouveau?jeton={token}",
-        },
-    )
-
-
-async def reset_password(session: AsyncSession, token: str, password: str) -> None:
-    account = await _use_token(session, token, "reset_password")
-    account.password_hash = hash_password(password)
-    await close_sessions(session, account.id)
+    now = clock.now()
+    checked = account.identity_checked_at
+    if checked is not None and now - checked < IDENTITY_CHECK_EVERY:
+        return
+    account.identity_checked_at = now
+    try:
+        user = await keycloak.get_user(account.keycloak_id)
+    except keycloak.IdentityUnavailable:
+        return
+    if (
+        user is not None
+        and user.get("emailVerified") is True
+        and str(user.get("email", "")).lower() == (account.email or "").lower()
+    ):
+        account.email_verified_at = now
 
 
 ANONYMOUS_PSEUDO = "Ancien membre"
 
 
-async def delete_account(session: AsyncSession, account: Account) -> None:
+async def delete_account(
+    session: AsyncSession, account: Account, *, current_token: str | None = None
+) -> None:
     """Deletes an account (research.md R20): what identifies the person goes, their bets and
     ledger entries stay under « Ancien membre », so that past pots stay right for the others.
     Their messages go too, with their likes, since what they wrote may say who they are; their
@@ -218,7 +199,13 @@ async def delete_account(session: AsyncSession, account: Account) -> None:
 
     The newsroom's last editor names another first (`last_editor`, with its `org_id`); a
     newsroom whose only member this was goes with it.
+
+    The account in Keycloak goes too, all or nothing (FR-013): once every change here is checked
+    by the database, Keycloak deletes it, then the caller commits; Keycloak not answering
+    (`identity_unavailable`) rolls everything back. The other devices' WebSockets close (4401);
+    the browser of `current_token` leaves by itself.
     """
+    keycloak_id = account.keycloak_id
     memberships = list(
         (
             await session.scalars(
@@ -250,7 +237,11 @@ async def delete_account(session: AsyncSession, account: Account) -> None:
             member.status = "anonymized"
 
     email = account.email
-    for table in (AuthSession, EmailToken, PushSubscription, NotificationPref, Notification):
+    elsewhere = [AuthSession.account_id == account.id]
+    if current_token:
+        elsewhere.append(AuthSession.token_hash != token_hash(current_token))
+    await end_sessions(session, *elsewhere)
+    for table in (AuthSession, PushSubscription, NotificationPref, Notification):
         await session.execute(delete(table).where(table.account_id == account.id))
     if email:
         address = email.lower()
@@ -258,9 +249,15 @@ async def delete_account(session: AsyncSession, account: Account) -> None:
         await session.execute(
             delete(Notification).where(func.lower(Notification.payload["to"].astext) == address)
         )
+    account.keycloak_id = None
     account.email = None
-    account.password_hash = None
     account.first_name = None
     account.last_name = None
     account.email_verified_at = None
     account.deleted_at = clock.now()
+    await session.flush()
+    if keycloak_id is not None:
+        try:
+            await keycloak.delete_user(keycloak_id)
+        except keycloak.IdentityUnavailable as error:
+            raise AppError("identity_unavailable") from error

@@ -96,6 +96,32 @@ the same values for the local Keycloak:
 - Links valid 1 hour when the person asks (forgotten password) and 24 hours when the app does
   (address check). The e-mails give the realm's duration.
 - SMTP: Brevo in production, Mailpit locally.
+- The app's client, `sibylle` (`specs/002-keycloak-auth`): confidential, with the standard flow
+  and PKCE `S256`. Its service account has `manage-users` of `realm-management`, and the
+  `kc-admin-api` client scope is among its default scopes: without it, Keycloak 26.8 answers 401
+  to the admin API. Keycloak tells the server, by a back-channel logout, of the sessions that
+  close. `dev-realm.json` has two such clients, since a client has only one back-channel logout
+  address:
+  - `sibylle`, for `make dev`: back to `http://localhost:5173/api/auth/callback`, back-channel
+    logout to `http://localhost:8000`;
+  - `sibylle-e2e`, for Playwright: the same on `http://localhost:5180` and `http://localhost:8001`.
+
+  Their secrets, `sibylle-dev-secret` and `sibylle-e2e-secret`, are written in the repository
+  like the local admin's `admin` / `admin`: they are development values, good only for this local
+  Keycloak. The public client `sibylle-dev` only serves `check-theme.py`.
+- Locally, the accounts of the demo newsroom (`backend/seed/README.md`) have fixed ids, which
+  `make seed` gives Sibylle's accounts as their `keycloak_id`.
+
+## Disabling or deleting an account
+
+Keycloak does not tell Sibylle when an administrator disables or deletes an account of the
+`sibylle` realm in the console (checked on Keycloak 26.8.2). Sibylle reads each signed-in account
+again in Keycloak when its session slides forward, at most once an hour, so the person is signed
+out within the hour (`specs/002-keycloak-auth`, research.md K15).
+
+To sign them out at once, close their sessions first: *Users* → the account → *Sessions* →
+*Sign out*. Keycloak then tells Sibylle (a back-channel logout), which ends the person's sessions
+and closes their WebSockets. Then disable or delete the account.
 
 ## Working on the theme
 
@@ -108,7 +134,8 @@ make keycloak-stop
 - **Sign-in page:** http://localhost:8280/realms/sibylle/account. Keycloak runs in dev mode, so
   an edit under `theme/` shows on the next reload.
 - **Accounts:** `camille@sibylle.test` / `gazette-camille`, and `dominique@sibylle.test` /
-  `gazette-dominique`, whom Keycloak asks for a new password.
+  `gazette-dominique`, whom Keycloak asks for a new password; the demo newsroom's,
+  `ines@demo.sibylle.test` and the others, with `lauriers-de-demo` (`backend/seed/README.md`).
 - **E-mails:** they arrive in Mailpit, http://localhost:8025.
 - **Admin console:** http://localhost:8280/admin/ (`admin` / `admin`).
 - **Each start** creates the realm anew.

@@ -1,4 +1,4 @@
-// Routes: public pages (sign-in, sign-up, links from e-mails), pages behind a session, and a
+// Routes: public pages (the ways to Keycloak's pages), pages behind a session, and a
 // newsroom's pages under /o/:orgId. Each user story adds its screens here.
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,10 +14,11 @@ import {
 
 import {
   ForgotPasswordPage,
+  GoodbyePage,
   LoginPage,
-  ResetPasswordPage,
+  OldLinkPage,
+  SignInUnavailablePage,
   SignupPage,
-  VerifyEmailPage,
 } from '../features/auth/AuthPages';
 import { RequireAuth } from '../features/auth/RequireAuth';
 import { NewsroomPage } from '../features/orgs/NewsroomPage';
@@ -104,11 +105,16 @@ export const router = createBrowserRouter([
     element: <PublicPage />,
     errorElement: <RouteError />,
     children: [
+      // Keycloak's pages, through the server (specs/002-keycloak-auth/contracts/auth.md). The
+      // last two are the links of the former sign-in's e-mails.
       { path: '/connexion', element: <LoginPage /> },
+      { path: '/connexion-indisponible', element: <SignInUnavailablePage /> },
       { path: '/inscription', element: <SignupPage /> },
       { path: '/mot-de-passe/oubli', element: <ForgotPasswordPage /> },
-      { path: '/mot-de-passe/nouveau', element: <ResetPasswordPage /> },
-      { path: '/verifier-email', element: <VerifyEmailPage /> },
+      { path: '/mot-de-passe/nouveau', element: <OldLinkPage link="password" /> },
+      { path: '/verifier-email', element: <OldLinkPage link="address" /> },
+      // After deleting one's account.
+      { path: '/au-revoir', element: <GoodbyePage /> },
     ],
   },
   // A press card its member made public (US15): without an account and without the app's

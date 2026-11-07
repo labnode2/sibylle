@@ -32,7 +32,17 @@ export default defineConfig({
     {
       command: `uv run --directory ${backend} uvicorn sibylle.main:create_app --factory --port ${apiPort}`,
       url: `http://localhost:${apiPort}/api/health`,
-      env: { SIBYLLE_CLOCK: 'fake', ENVIRONMENT: 'test', PUBLIC_ORIGIN: web },
+      // Sign-in goes through the local Keycloak (`make keycloak`) and its client for these tests,
+      // whose back-channel logout reaches this API's port (keycloak/dev-realm.json).
+      env: {
+        SIBYLLE_CLOCK: 'fake',
+        ENVIRONMENT: 'test',
+        PUBLIC_ORIGIN: web,
+        OIDC_ISSUER: 'http://localhost:8280/realms/sibylle',
+        KEYCLOAK_INTERNAL_URL: '',
+        OIDC_CLIENT_ID: 'sibylle-e2e',
+        OIDC_CLIENT_SECRET: 'sibylle-e2e-secret',
+      },
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
     },

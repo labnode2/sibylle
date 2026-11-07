@@ -1,7 +1,7 @@
 """Every model, imported here so that Alembic sees the whole schema."""
 
 from sibylle.db.base import Base
-from sibylle.db.models.accounts import Account, AuthSession, EmailToken
+from sibylle.db.models.accounts import Account, AuthSession, SignInAttempt
 from sibylle.db.models.coins import CoinEntry, WeeklyDeal
 from sibylle.db.models.collection import (
     CatalogItem,
@@ -46,7 +46,6 @@ __all__ = [
     "AuthSession",
     "Base",
     "Bet",
-    "EmailToken",
     "GameDefault",
     "GameWeek",
     "Invitation",
@@ -72,6 +71,7 @@ __all__ = [
     "SeasonClosure",
     "Section",
     "Settlement",
+    "SignInAttempt",
     "Trophy",
     "Upload",
     "WeeklyDeal",

@@ -11,9 +11,9 @@ from sibylle.i18n import t
 
 STATUS: dict[str, int] = {
     "not_authenticated": 401,
-    "invalid_credentials": 401,
     "forbidden": 403,
     "not_found": 404,
+    "invalid_token": 400,
     "invalid_state": 409,
     "already_bet": 409,
     "insufficient_balance": 409,
@@ -22,7 +22,6 @@ STATUS: dict[str, int] = {
     "pseudo_taken": 409,
     "email_taken": 409,
     "invitation_invalid": 409,
-    "token_invalid": 409,
     "last_editor": 409,
     "attempts_exhausted": 409,
     "run_finished": 409,
@@ -30,6 +29,8 @@ STATUS: dict[str, int] = {
     "too_large": 413,
     "validation_error": 422,
     "rate_limited": 429,
+    # Keycloak did not answer (specs/002-keycloak-auth/contracts/auth.md).
+    "identity_unavailable": 503,
 }
 
 

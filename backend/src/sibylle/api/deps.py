@@ -1,5 +1,6 @@
 """Dependencies shared by the routes: database session, signed-in account, member and role."""
 
+import logging
 import uuid
 from collections import defaultdict, deque
 from collections.abc import AsyncIterator, Awaitable, Callable
@@ -17,11 +18,15 @@ from sibylle.config import get_settings
 from sibylle.db.models import Account, AuthSession, Membership, Organisation
 from sibylle.db.session import transaction
 from sibylle.domain.permissions import Action, can
+from sibylle.services import accounts, keycloak
 from sibylle.services.accounts import SESSION_LIFETIME
 from sibylle.services.security import token_hash
 
+log = logging.getLogger(__name__)
+
 SESSION_COOKIE = "sibylle_session"
-# A session's expiry slides forward at most once an hour, to spare a write on every request.
+# A session's expiry slides forward at most once an hour, to spare a write on every request; the
+# account is then read again in Keycloak (research.md K15).
 TOUCH_EVERY = timedelta(hours=1)
 
 
@@ -48,7 +53,26 @@ async def get_db() -> AsyncIterator[AsyncSession]:
 Db = Annotated[AsyncSession, Depends(get_db, scope="function")]
 
 
-async def account_from_token(session: AsyncSession, token: str | None) -> Account | None:
+async def _still_in_keycloak(account: Account) -> bool:
+    """The account still exists and is enabled in Keycloak, which says nothing when an
+    administrator disables or deletes one (research.md K15). Keycloak not answering keeps the
+    session (SC-006); an account made before Keycloak has nothing to read."""
+    if account.keycloak_id is None:
+        return True
+    try:
+        user = await keycloak.get_user(account.keycloak_id)
+    except keycloak.IdentityUnavailable:
+        log.warning("account not read again in keycloak", extra={"account_id": str(account.id)})
+        return True
+    return user is not None and user.get("enabled") is not False
+
+
+async def session_from_token(
+    session: AsyncSession, token: str | None
+) -> tuple[Account, AuthSession] | None:
+    """The account and the session of a cookie's token, if it is signed in. The session slides
+    forward once an hour, after the account was read again in Keycloak: gone or disabled there,
+    every session of the account ends, and the token signs nobody in."""
     if not token:
         return None
     auth = await session.scalar(
@@ -61,9 +85,20 @@ async def account_from_token(session: AsyncSession, token: str | None) -> Accoun
     if account is None or account.deleted_at is not None:
         return None
     if now - auth.last_seen_at >= TOUCH_EVERY:
+        if not await _still_in_keycloak(account):
+            # In a transaction of its own: the request's rolls back once it answers 401.
+            async with transaction() as ending:
+                await accounts.end_sessions(ending, AuthSession.account_id == account.id)
+            log.info("signed out by keycloak", extra={"account_id": str(account.id)})
+            return None
         auth.last_seen_at = now
         auth.expires_at = now + SESSION_LIFETIME
-    return account
+    return account, auth
+
+
+async def account_from_token(session: AsyncSession, token: str | None) -> Account | None:
+    signed_in = await session_from_token(session, token)
+    return signed_in[0] if signed_in else None
 
 
 async def current_account(request: Request, session: Db) -> Account:
@@ -155,14 +190,8 @@ def client_ip(request: Request) -> str:
 class Limits:
     """The rate limits of one API process."""
 
-    # Failed sign-ins and reset requests are limited tightly per address and loosely per IP: a
-    # whole office signs in from behind one IP, and one person's typos must not lock out the rest.
-    login: RateLimiter = field(default_factory=lambda: RateLimiter(10, timedelta(minutes=15)))
-    login_ip: RateLimiter = field(default_factory=lambda: RateLimiter(100, timedelta(minutes=15)))
-    password_reset: RateLimiter = field(default_factory=lambda: RateLimiter(5, timedelta(hours=1)))
-    password_reset_ip: RateLimiter = field(
-        default_factory=lambda: RateLimiter(50, timedelta(hours=1))
-    )
+    # Keycloak limits the sign-ins and the reset requests (specs/002-keycloak-auth); Sibylle, the
+    # address checks it asks Keycloak to send.
     resend_verification: RateLimiter = field(
         default_factory=lambda: RateLimiter(3, timedelta(hours=1))
     )

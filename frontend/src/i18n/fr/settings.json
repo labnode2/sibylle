@@ -34,6 +34,11 @@
   },
   "lastEditor": "Tu es la seule rédaction en chef de {{org}} : nomme d'abord une autre rédaction en chef.",
   "lastEditorLink": "Gérer les membres de {{org}}",
+  "password": {
+    "title": "MOT DE PASSE",
+    "text": "Il se change sur la page de connexion de Sibylle, qui peut aussi déconnecter tes autres appareils.",
+    "change": "Changer mon mot de passe"
+  },
   "data": {
     "title": "MES DONNÉES",
     "text": "Télécharge un fichier avec ton compte, tes rédactions, tes paris, tes relevés de lauriers et de pièces et ta collection.",
@@ -47,7 +52,8 @@
     "open": "Supprimer mon compte",
     "confirm": "C'est définitif : tu ne pourras plus te connecter avec ce compte. Une rédaction dont tu es le seul membre disparaît avec toi.",
     "confirmYes": "Oui, supprimer mon compte",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "unavailable": "Le service de connexion ne répond pas : rien n'est supprimé. Réessaie dans quelques minutes."
   },
   "logout": "Me déconnecter"
 }

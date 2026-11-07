@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
 
 import { Button, Switch } from '../../ui/components';
+import { useResendVerification } from '../auth/api';
 import { CHANNELS, KINDS, useNotificationPrefs, useSetNotificationPref } from './api';
 import styles from './notifications.module.css';
 import { usePush } from './usePush';
@@ -28,6 +29,21 @@ function PushDevice() {
           {t('device.disable')}
         </Button>
       )}
+    </div>
+  );
+}
+
+/** An unconfirmed address: no notification e-mail before it is confirmed, and the address check
+ *  that Keycloak sends again on demand (FR-008). */
+function Unconfirmed() {
+  const { t } = useTranslation('notifications');
+  const resend = useResendVerification();
+  return (
+    <div className={styles.unconfirmed}>
+      <p className={styles.note}>{t('unverified')}</p>
+      <Button variant="secondary" onClick={() => resend.mutate()} disabled={resend.isPending}>
+        {t('resend')}
+      </Button>
     </div>
   );
 }
@@ -56,7 +72,7 @@ export function NotificationPrefs({ emailVerified }: { emailVerified: boolean })
       </h2>
       <p className={styles.text}>{t('intro')}</p>
       <PushDevice />
-      {!emailVerified && <p className={styles.note}>{t('unverified')}</p>}
+      {!emailVerified && <Unconfirmed />}
       {prefs.data && (
         <table className={styles.table}>
           <thead>

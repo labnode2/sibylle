@@ -27,7 +27,7 @@ serveur) et de `PyJWT[crypto]` (research.md K2) ; retrait d'`argon2-cffi`. Keycl
 (labnode2/docker, `dev-external/keycloak`), realm et client par OpenTofu 1.13
 (`keycloak/terraform`), pages et e-mails par le thème `keycloak/theme`.
 
-**Storage**: PostgreSQL 18 de Sibylle, migration `0022_keycloak` (data-model.md :
+**Storage**: PostgreSQL 18 de Sibylle, migration `0023_keycloak` (data-model.md :
 `accounts.keycloak_id`, `accounts.identity_checked_at`, `sessions.keycloak_sid`, table
 `sign_in_attempts` ; retrait de `accounts.password_hash` et d'`email_tokens`). Les identités
 vivent dans la base de Keycloak (`keycloak-db`, PostgreSQL 18.6).
@@ -109,7 +109,7 @@ backend/
 │   ├── api/schemas.py                     # − SignupIn, LoginIn, ResetRequest, ResetConfirm, PasswordChange, TokenIn
 │   ├── realtime/hub.py, realtime/ws.py    # fermer les WebSocket d'une session supprimée
 │   ├── db/models/accounts.py              # keycloak_id, identity_checked_at, keycloak_sid, SignInAttempt ; − EmailToken
-│   ├── db/migrations/versions/0022_keycloak.py
+│   ├── db/migrations/versions/0023_keycloak.py
 │   ├── worker/jobs.py                     # purge des tentatives expirées
 │   ├── seed.py                            # comptes de démo rattachés à ceux de dev-realm.json
 │   └── notify/templates/fr/               # − verify_email.*, reset_password.*

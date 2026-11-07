@@ -1,10 +1,12 @@
-"""Shared fixtures: a real PostgreSQL (testcontainers), the simulated clock and HTTP clients.
+"""Shared fixtures: a real PostgreSQL (testcontainers), the simulated clock, a fake Keycloak and
+HTTP clients.
 
 Unit tests use none of the database fixtures, so they run without Docker.
 """
 
 import asyncio
 import os
+import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterator, Sequence
 from dataclasses import dataclass
 from datetime import datetime
@@ -34,14 +36,37 @@ from sibylle.db.models import (
 from sibylle.db.session import dispose_engine, transaction
 from sibylle.domain.content import AVATAR_TEMPLATES
 from sibylle.domain.ledger import starting_balance
-from sibylle.services import deals, ledger
-from sibylle.services.security import hash_password, new_token, token_hash
+from sibylle.services import deals, keycloak, ledger
+from sibylle.services.security import new_token, token_hash
+from tests import keycloak_fake
+from tests.keycloak_fake import FakeKeycloak
 
 PARIS = ZoneInfo("Europe/Paris")
 DEFAULT_NOW = datetime(2026, 11, 2, 10, 0, tzinfo=PARIS)
 ORIGIN = "http://localhost:5173"
-PASSWORD = "lauriers-et-boules"
 DEFAULT_AVATAR: dict[str, Any] = AVATAR_TEMPLATES[0]["image"]
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _keycloak_settings() -> None:
+    """The realm and client of the fake Keycloak, whatever deploy/.env says."""
+    os.environ.update(
+        OIDC_ISSUER=keycloak_fake.ISSUER,
+        KEYCLOAK_INTERNAL_URL=keycloak_fake.INTERNAL,
+        OIDC_CLIENT_ID=keycloak_fake.CLIENT_ID,
+        OIDC_CLIENT_SECRET=keycloak_fake.CLIENT_SECRET,
+    )
+    get_settings.cache_clear()
+
+
+@pytest.fixture(autouse=True)
+def fake_keycloak() -> Iterator[FakeKeycloak]:
+    """Keycloak, for every test: no call of the server reaches the network
+    (tests/keycloak_fake.py)."""
+    fake = FakeKeycloak()
+    keycloak.use_transport(fake.transport)
+    yield fake
+    keycloak.use_transport(None)
 
 
 @pytest.fixture(autouse=True)
@@ -124,19 +149,25 @@ ClientFor = Callable[[Account], Awaitable[httpx.AsyncClient]]
 
 
 @pytest.fixture
-def make_account(db: None) -> MakeAccount:
+def make_account(db: None, fake_keycloak: FakeKeycloak) -> MakeAccount:
+    """An account of Sibylle and its account in the fake Keycloak, tied as a first sign-in ties
+    them."""
+
     async def make(
         email: str | None = None,
         *,
-        password: str = PASSWORD,
         first_name: str = "Camille",
         last_name: str = "Martin",
         verified: bool = True,
     ) -> Account:
+        email = email or f"compte-{new_id().hex[-8:]}@exemple.fr"
+        user = fake_keycloak.add_user(
+            email, first_name=first_name, last_name=last_name, verified=verified
+        )
         async with transaction() as session:
             account = Account(
-                email=email or f"compte-{new_id().hex[-8:]}@exemple.fr",
-                password_hash=hash_password(password),
+                keycloak_id=uuid.UUID(user),
+                email=email,
                 first_name=first_name,
                 last_name=last_name,
                 email_verified_at=clock.now() if verified else None,

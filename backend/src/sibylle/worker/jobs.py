@@ -11,7 +11,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from sibylle import clock
 from sibylle.config import get_settings
@@ -129,6 +129,21 @@ async def reveal_pixel_puzzles(org_id: uuid.UUID | None = None) -> int:
 
     async with transaction() as session:
         return await minigames.reveal_pixel_puzzles(session, org_id=org_id)
+
+
+@job("purge_sign_in_attempts", hour=4, minute=10)
+async def purge_sign_in_attempts() -> int:
+    """Deletes, once a day, the sign-ins through Keycloak started and never finished, past their
+    10 minutes (specs/002-keycloak-auth/data-model.md); returns how many went."""
+    from sibylle.db.models import SignInAttempt
+
+    async with transaction() as session:
+        expired = await session.scalars(
+            delete(SignInAttempt)
+            .where(SignInAttempt.expires_at <= clock.now())
+            .returning(SignInAttempt.id)
+        )
+        return len(expired.all())
 
 
 @job("advance_pronos", minute="*")

@@ -6,7 +6,7 @@
 
 - URL : `wss://<domaine>/api/ws`. Authentifiée par le cookie de session ; l'en-tête `Origin` doit être le domaine.
 - Une seule connexion par onglet. Le serveur envoie `{"type": "ping"}` toutes les 25 s ; le client répond `{"type": "pong"}`. Sans pong pendant 60 s, le serveur ferme.
-- Codes de fermeture : `4401` session absente ou expirée (le client renvoie vers la connexion) ; `4403` sujet refusé ; `1012` redémarrage du serveur.
+- Codes de fermeture : `4401` session absente, expirée ou fermée, par Keycloak compris (déconnexion back-channel, compte désactivé ou supprimé : `specs/002-keycloak-auth/contracts/auth.md`) ; le client renvoie vers la connexion ; `4403` sujet refusé ; `1012` redémarrage du serveur.
 - Reconnexion : délai croissant de 1 s à 30 s avec un peu d'aléa ; après reconnexion, le client se réabonne et recharge les données des écrans ouverts (invalidation TanStack Query).
 
 ## Messages du client

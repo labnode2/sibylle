@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { createNewsroom, joinWith, newPerson, notes, openSettings } from './helpers';
 
-const PRIVATE_KEYS = ['first_name', 'last_name', 'email', 'password_hash'];
+const PRIVATE_KEYS = ['first_name', 'last_name', 'email', 'keycloak_id'];
 
 /** Fails the test if a response other than the account's own carries private data. */
 function watchPrivacy(page: Page, leaks: string[]) {
@@ -124,5 +124,8 @@ test('the newsroom card opens a menu to change newsroom or join another, and the
   await expect(ines).toHaveURL(/\/profil$/);
   await ines.getByRole('button', { name: 'Déconnexion' }).click();
   await leaving.getByRole('button', { name: 'Me déconnecter' }).click();
-  await expect(ines).toHaveURL(/\/connexion$/);
+  // Signed out of Keycloak too: its sign-in page asks for the password again.
+  await expect(ines.getByRole('heading', { name: 'Connexion' })).toBeVisible();
+  await expect(ines.getByLabel('Mot de passe')).toBeEmpty();
+  expect(new URL(ines.url()).port).toBe('8280');
 });

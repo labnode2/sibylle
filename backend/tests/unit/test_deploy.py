@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 
 import pytest
+import yaml
 
 from sibylle.cli import build_parser
 from sibylle.db.migrate import MIGRATIONS, alembic_config
@@ -30,6 +31,17 @@ def test_the_compose_commands_parse() -> None:
     assert parser.parse_args(["migrate"]).command == "migrate"
     assert parser.parse_args(["worker", "--check"]).check is True
     assert parser.parse_args(["worker"]).check is False
+
+
+def test_only_the_api_reaches_keycloak() -> None:
+    """The api calls Keycloak on the VM's shared `keycloak` network (specs/002-keycloak-auth,
+    research.md K4); the worker, which never does, stays off it."""
+    compose = yaml.safe_load((Path(__file__).parents[3] / "deploy/compose.prod.yml").read_text())
+    services = compose["services"]
+    assert "keycloak" in services["api"]["networks"]
+    assert services["api"]["environment"]["KEYCLOAK_INTERNAL_URL"] == "http://keycloak:8080"
+    assert "keycloak" not in services["worker"]["networks"]
+    assert compose["networks"]["keycloak"] == {"external": True}
 
 
 def test_the_worker_is_alive_while_it_beats(

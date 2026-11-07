@@ -46,7 +46,8 @@ export function useDeleteAccount() {
       realtime.close();
       client.clear();
     },
-    meta: { shown: ['last_editor'] },
+    // The dialog says what to do: name another editor, or try again once Keycloak answers.
+    meta: { shown: ['last_editor', 'identity_unavailable'] },
   });
 }
 

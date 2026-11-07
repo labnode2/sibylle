@@ -10,7 +10,7 @@ Prérequis : `make setup` déjà fait une fois (base, dépendances, `deploy/.env
 ```bash
 make db          # PostgreSQL et Mailpit
 make keycloak    # Keycloak 26.8.2 avec le thème et le realm de dev-realm.json, sur :8280
-make migrate     # dont 0022_keycloak
+make migrate     # dont 0023_keycloak
 make seed        # la rédaction de démonstration, rattachée aux comptes de dev-realm.json
 make dev         # serveur, worker et interface
 ```

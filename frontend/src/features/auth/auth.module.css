@@ -1,3 +1,6 @@
+/* The account pages that lead to Keycloak's (AuthPages.tsx): one column, a title and a lead.
+   Keycloak's own pages copy this column (keycloak/theme/login/resources/css/sibylle.css). */
+
 .page {
   display: flex;
   flex-direction: column;
@@ -14,29 +17,4 @@
 
 .lead {
   color: var(--ink-2);
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.note {
-  font: 500 11px/1.4 var(--font-mono);
-  letter-spacing: 0.02em;
-  color: var(--ink-2);
-}
-
-.links {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 8px 16px;
 }

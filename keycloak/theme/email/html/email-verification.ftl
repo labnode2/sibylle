@@ -1,4 +1,4 @@
-<#-- Confirme ton adresse (backend/src/sibylle/notify/templates/fr/verify_email.html). -->
+<#-- Confirme ton adresse: the app's own e-mail until specs/002-keycloak-auth, in its frame. -->
 <#import "template.ftl" as layout>
 <@layout.emailLayout title=msg("emailVerificationSubject")>
 <@layout.hello/>

@@ -30,8 +30,6 @@ EMAIL_PATTERN = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
 Email = Annotated[
     str, StringConstraints(strip_whitespace=True, max_length=254, pattern=EMAIL_PATTERN)
 ]
-Password = Annotated[str, StringConstraints(min_length=8, max_length=200)]
-Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
 Pseudo = Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=24)]
 Title = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)]
 Role = Literal["reader", "journalist", "editor"]
@@ -229,21 +227,10 @@ class Joined(BaseModel):
 # Requests
 
 
-class SignupIn(BaseModel):
-    email: Email
-    password: Password
-    first_name: Name
-    last_name: Name
-
-
-class LoginIn(BaseModel):
-    email: str
-    password: str
-
-
 class MePatch(BaseModel):
-    first_name: Name | None = None
-    last_name: Name | None = None
+    """The account's own settings. Names and e-mail change in Keycloak, which Sibylle copies at
+    each sign-in (specs/002-keycloak-auth/contracts/auth.md)."""
+
     theme: Theme | None = None
     reduce_motion: bool | None = None
     locale: Literal["fr"] | None = None
@@ -251,24 +238,6 @@ class MePatch(BaseModel):
 
 class AccountDeletion(BaseModel):
     confirm: Literal[True]
-
-
-class PasswordChange(BaseModel):
-    current_password: str
-    new_password: Password
-
-
-class TokenIn(BaseModel):
-    token: str
-
-
-class ResetRequest(BaseModel):
-    email: str
-
-
-class ResetConfirm(BaseModel):
-    token: str
-    password: Password
 
 
 class OrgIn(BaseModel):

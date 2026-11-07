@@ -4,6 +4,12 @@ variable "app_origin" {
   default     = "https://sibylle.cc"
 }
 
+variable "backchannel_logout_url" {
+  description = "Where Keycloak tells Sibylle of ended sessions: its nginx, over the VM's proxy network, without Cloudflare (research.md K8)."
+  type        = string
+  default     = "http://sibylle:8443/api/auth/backchannel-logout"
+}
+
 variable "keycloak_public_url" {
   description = "Keycloak's public address, KC_HOSTNAME in labnode2/docker's compose file."
   type        = string

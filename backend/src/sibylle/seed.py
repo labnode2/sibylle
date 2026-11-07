@@ -1,9 +1,12 @@
 """Demo data (`sibylle seed-demo`): the « Sophia Office » newsroom, its five members and a few
 pronos in every state (open, closed, resolved, relaunched, cancelled).
 
-Idempotent, and refused in production. Accounts and password are listed in backend/seed/README.md.
+Idempotent, and refused in production. The accounts, listed in backend/seed/README.md, sign in
+through the local Keycloak (`make keycloak`): seed.py ties each one to its account in
+keycloak/dev-realm.json by its fixed id.
 """
 
+import uuid
 from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any
@@ -18,18 +21,16 @@ from sibylle.db.session import transaction
 from sibylle.domain.content import AVATAR_TEMPLATES
 from sibylle.domain.lifecycle import State
 from sibylle.services import bets, coins, orgs, pronos, results
-from sibylle.services.security import hash_password
 
-DEMO_PASSWORD = "lauriers-de-demo"
 ORG_TITLE = "Sophia Office"
 
-# (pseudo, e-mail, role, avatar template)
+# (pseudo, e-mail, role, avatar template, id of the account in keycloak/dev-realm.json)
 PEOPLE = [
-    ("Inès", "ines@demo.sibylle.test", "editor", "t1"),
-    ("Hugo", "hugo@demo.sibylle.test", "journalist", "t2"),
-    ("Cami", "cami@demo.sibylle.test", "reader", "t0"),
-    ("Léo", "leo@demo.sibylle.test", "reader", "t3"),
-    ("Manon", "manon@demo.sibylle.test", "reader", "t4"),
+    ("Inès", "ines@demo.sibylle.test", "editor", "t1", "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0003"),
+    ("Hugo", "hugo@demo.sibylle.test", "journalist", "t2", "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0004"),
+    ("Cami", "cami@demo.sibylle.test", "reader", "t0", "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0005"),
+    ("Léo", "leo@demo.sibylle.test", "reader", "t3", "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0006"),
+    ("Manon", "manon@demo.sibylle.test", "reader", "t4", "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0007"),
 ]
 
 
@@ -184,18 +185,24 @@ async def seed_demo() -> str:
         raise SystemExit("seed-demo est refusé en production")
     async with transaction() as session:
         accounts: dict[str, Account] = {}
-        for pseudo, email, _, _ in PEOPLE:
-            account = await session.scalar(select(Account).where(Account.email == email))
+        for pseudo, email, _, _, user_id in PEOPLE:
+            keycloak_id = uuid.UUID(user_id)
+            # By its Keycloak id, or by its address for a demo seeded before Keycloak.
+            account = await session.scalar(
+                select(Account).where(Account.keycloak_id == keycloak_id)
+            ) or await session.scalar(
+                select(Account).where(Account.email == email, Account.deleted_at.is_(None))
+            )
             if account is None:
                 account = Account(
                     email=email,
-                    password_hash=hash_password(DEMO_PASSWORD),
                     first_name=pseudo,
                     last_name="Démo",
                     email_verified_at=clock.now(),
                 )
                 session.add(account)
-                await session.flush()
+            account.keycloak_id = keycloak_id
+            await session.flush()
             accounts[pseudo] = account
 
         ines = accounts["Inès"]
@@ -214,7 +221,7 @@ async def seed_demo() -> str:
                 pseudo="Inès",
                 avatar=_avatar("t1"),
             )
-        for pseudo, _, role, template in PEOPLE[1:]:
+        for pseudo, _, role, template, _ in PEOPLE[1:]:
             exists = await session.scalar(
                 select(Membership.id).where(
                     Membership.org_id == org.id, Membership.account_id == accounts[pseudo].id

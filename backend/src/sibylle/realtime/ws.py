@@ -9,26 +9,26 @@ from typing import Any
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from sqlalchemy import select
 
-from sibylle.api.deps import SESSION_COOKIE, account_from_token, member_of
+from sibylle.api.deps import SESSION_COOKIE, member_of, session_from_token
 from sibylle.config import get_settings
 from sibylle.db.models import Prono
 from sibylle.db.session import transaction
-from sibylle.realtime.hub import Connection, Hub
+from sibylle.realtime.hub import CLOSE_UNAUTHENTICATED, Connection, Hub
 from sibylle.services.pronos import visible_to
 
 PING_EVERY = 25.0
 PONG_TIMEOUT = 60.0
-CLOSE_UNAUTHENTICATED = 4401
 CLOSE_FORBIDDEN = 4403
 
 log = logging.getLogger(__name__)
 router = APIRouter()
 
 
-async def _authenticate(token: str | None) -> uuid.UUID | None:
+async def _authenticate(token: str | None) -> tuple[uuid.UUID, uuid.UUID] | None:
+    """The account and the session of the cookie, if it is signed in."""
     async with transaction() as session:
-        account = await account_from_token(session, token)
-        return account.id if account else None
+        signed_in = await session_from_token(session, token)
+        return (signed_in[0].id, signed_in[1].id) if signed_in else None
 
 
 async def authorize(account_id: uuid.UUID, topic: str) -> tuple[uuid.UUID, uuid.UUID, str] | None:
@@ -66,16 +66,19 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     if websocket.headers.get("origin") != get_settings().public_origin or hub is None:
         await websocket.close(code=CLOSE_FORBIDDEN)
         return
-    account_id = await _authenticate(websocket.cookies.get(SESSION_COOKIE))
+    signed_in = await _authenticate(websocket.cookies.get(SESSION_COOKIE))
     await websocket.accept()
-    if account_id is None:
+    if signed_in is None:
         await websocket.close(code=CLOSE_UNAUTHENTICATED)
         return
+    account_id, session_id = signed_in
 
     async def close(code: int) -> None:
         await websocket.close(code=code)
 
-    connection = Connection(account_id=account_id, send=websocket.send_json, close=close)
+    connection = Connection(
+        account_id=account_id, send=websocket.send_json, close=close, session_id=session_id
+    )
     hub.add(connection)
     last_pong = time.monotonic()
 

@@ -1,17 +1,20 @@
 // US7: the press card, the card's editor (pixel art, pseudo, frame, things on show) with the card
 // redrawn as it goes, buying a colour with coins and a secret code, and another member's card
-// from « La rédaction ».
+// from « La rédaction ». Then a new password from the settings (specs/002-keycloak-auth, US3).
 import { expect, test } from '@playwright/test';
 
 import {
+  backOnSibylle,
   call,
   createNewsroom,
+  emailOf,
   invitationPath,
   joinWith,
   laurels,
   newPerson,
   notes,
   orgIdOf,
+  PASSWORD,
   resetClock,
   sibylle,
 } from './helpers';
@@ -144,4 +147,44 @@ test('a press card, an avatar drawn by hand and a collection', async ({ browser 
   await expect(ines.getByRole('region', { name: 'Carte de presse' })).toContainText('Cami');
   await expect(ines.getByRole('list', { name: 'MIS EN AVANT' })).toContainText("Boule d'Halloween");
   await expect(ines.getByRole('region', { name: 'Mon relevé' })).toHaveCount(0);
+});
+
+// US3 of specs/002-keycloak-auth: « Changer mon mot de passe » leads to Keycloak's page, which signs
+// the other devices out (a back-channel logout, US4), then back to the settings.
+test('a new password from the settings signs the other devices out', async ({
+  browser,
+}, testInfo) => {
+  const NEW_PASSWORD = 'nouvelles-boules-de-cristal';
+  const ines = await newPerson(browser, testInfo, 'Inès');
+  await createNewsroom(ines, 'Sophia Office', 'Inès');
+  const une = `/o/${orgIdOf(ines)}`;
+
+  // The same account on a phone, on la une: its WebSocket is open.
+  const phone = await (await browser.newContext({ ...testInfo.project.use })).newPage();
+  await phone.goto(une);
+  await phone.getByLabel('E-mail').fill(emailOf(ines));
+  await phone.getByLabel('Mot de passe').fill(PASSWORD);
+  await phone.getByRole('button', { name: 'Se connecter' }).click();
+  await backOnSibylle(phone, testInfo);
+  await expect(phone.getByRole('heading', { name: 'La une de Sophia Office' })).toBeVisible();
+
+  await ines.goto('/compte');
+  await ines.getByRole('link', { name: 'Changer mon mot de passe' }).click();
+  await expect(ines.getByRole('heading', { name: 'Nouveau mot de passe' })).toBeVisible();
+  const signOutOthers = ines.getByRole('checkbox', { name: 'Déconnecter mes autres appareils' });
+  await expect(signOutOthers).toBeChecked();
+  // The page's region is named like its field: the field, by its name.
+  await ines.locator('input[name="password-new"]').fill(NEW_PASSWORD);
+  await ines.getByRole('button', { name: 'Changer de mot de passe' }).click();
+  await backOnSibylle(ines, testInfo);
+  await expect(ines).toHaveURL(/\/compte$/);
+  await expect(ines.getByRole('heading', { name: 'Mes réglages' })).toBeVisible();
+
+  // The phone is signed out at once: Keycloak's sign-in page, where the new password works.
+  await expect(phone.getByRole('heading', { name: 'Connexion' })).toBeVisible();
+  await phone.getByLabel('E-mail').fill(emailOf(ines));
+  await phone.getByLabel('Mot de passe').fill(NEW_PASSWORD);
+  await phone.getByRole('button', { name: 'Se connecter' }).click();
+  await backOnSibylle(phone, testInfo);
+  await expect(phone.getByRole('heading', { name: 'La une de Sophia Office' })).toBeVisible();
 });

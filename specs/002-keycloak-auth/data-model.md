@@ -1,7 +1,7 @@
 # Data Model: Connexion par Keycloak
 
 Ce qui change par rapport à `specs/001-sibylle-v1/data-model.md` (section « Comptes »). Une
-seule migration de base (`0022_keycloak`) ; le reste du modèle ne bouge pas.
+seule migration de base (`0023_keycloak`) ; le reste du modèle ne bouge pas.
 
 ## Dans Sibylle
 
