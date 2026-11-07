@@ -86,15 +86,19 @@ async def test_the_press_card(
     fake_clock.set(datetime(2026, 12, 21, 0, 0, 30, tzinfo=PARIS))
     assert await close_finished_seasons() == 1
 
-    # Léo looks at Cami's card: everything public, nothing private.
+    # Léo looks at Cami's card: everything public, nothing private. Its laurels are her green
+    # laurels, the same number as her own date bar.
+    async with transaction() as session:
+        balance = await session.scalar(
+            select(Membership.balance).where(Membership.id == cami.member.id)
+        )
     response = await leo.client.get(org_url(org.id, f"/members/{cami.member.id}"))
     assert response.status_code == 200, response.text
     card = response.json()
     assert_no_private_data(card)
-    assert "balance" not in card
     assert (card["pseudo"], card["role"], card["card_number"]) == ("Cami", "reader", "0003")
     assert card["stats"] == {
-        "laurels": 30,  # 20 base + 10 of profit, engraved on the autumn trophy
+        "laurels": balance,
         "pronos_played": 3,
         "settled": 2,
         "wins": 1,

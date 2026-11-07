@@ -73,9 +73,11 @@ class MemberPublic(BaseModel):
 
 
 class MemberListed(MemberPublic):
-    """A member in the newsroom's list, with their chain of wins under way (US13)."""
+    """A member in the newsroom's list, with their chain of wins under way (US13) and their green
+    laurels, which their press card shows too (the editor adjusts them from this list)."""
 
     streak: int
+    balance: int
 
 
 class MemberSelf(MemberPublic):
@@ -779,7 +781,7 @@ class TrophyOut(BaseModel):
 
 
 class PressStats(BaseModel):
-    # All time: the engraved scores and the season under way.
+    # The green laurels: the balance, what the member can stake, as their date bar shows it.
     laurels: int
     pronos_played: int
     settled: int

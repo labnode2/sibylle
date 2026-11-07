@@ -73,9 +73,14 @@ test('the editor runs the newsroom', async ({ browser }, testInfo) => {
   const camiRow = ines.getByRole('listitem').filter({ hasText: 'Cami' });
   await camiRow.getByRole('button', { name: 'Ajuster les lauriers' }).click();
   await camiRow.getByLabel('LAURIERS À AJOUTER OU À RETIRER').fill('-15');
+  // Her green laurels now, and what the adjustment leaves.
+  await expect(camiRow).toContainText(
+    "AUJOURD'HUI : 100 LAURIERS VERTS · APRÈS : 85 LAURIERS VERTS",
+  );
   await camiRow.getByLabel('MOTIF (VISIBLE DANS SON RELEVÉ)').fill('erreur de saisie');
   await camiRow.getByRole('button', { name: 'Ajuster les lauriers de Cami' }).click();
   await expect(notes(ines)).toContainText('Lauriers ajustés : -15.');
+  await expect(camiRow).toContainText('85 lauriers verts à miser');
   expect(await laurels(cami, orgId)).toEqual([85, 0]);
   const statement = await call(cami, 'GET', `/orgs/${orgId}/members/me/ledger`);
   expect(statement.body.items[0]).toMatchObject({ kind: 'adjustment', reason: 'erreur de saisie' });

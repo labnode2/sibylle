@@ -65,7 +65,7 @@ async def test_a_card_goes_public_then_private_and_keeps_its_address(
     assert card["newsroom"] == {"title": "Sophia Office", "logo": DEFAULT_LOGO}
     assert (card["pseudo"], card["role"], card["card_number"]) == ("Cami", "journalist", "0002")
     assert card["stats"] == {
-        "laurels": 0,
+        "laurels": 100,  # her green laurels: the starting balance
         "pronos_played": 0,
         "settled": 0,
         "wins": 0,

@@ -245,6 +245,9 @@ async def test_adjustments_and_the_ledger(make_org: MakeOrg, person: MakePerson)
     )
     me = (await leo.client.get(org_url(org.id))).json()["my_membership"]
     assert (me["balance"], me["season_score"]) == (85, 0)
+    # The editor sees everyone's green laurels in the list she adjusts them from.
+    listed = (await ines.client.get(org_url(org.id, "/members"))).json()
+    assert {m["pseudo"]: m["balance"] for m in listed} == {"Inès": 100, "Léo": 85}
     for body in ({"amount": 0, "reason": "rien"}, {"amount": 5}, {"amount": 5, "reason": "  "}):
         assert (await ines.client.post(adjust, json=body)).status_code == 422, body
 

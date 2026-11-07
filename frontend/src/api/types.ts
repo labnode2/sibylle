@@ -5,6 +5,7 @@ type Schemas = components['schemas'];
 
 export type Me = Schemas['Me'];
 export type MemberPublic = Schemas['MemberPublic'];
+export type MemberListed = Schemas['MemberListed'];
 export type MemberSelf = Schemas['MemberSelf'];
 export type OrgCard = Schemas['OrgCard'];
 export type Org = Schemas['Org'];

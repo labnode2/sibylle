@@ -142,6 +142,8 @@ export function useMemberActions(orgId: string) {
             body: { amount, reason },
           }),
         ),
+      // The list shows each member's green laurels.
+      onSuccess: refresh,
     }),
   };
 }

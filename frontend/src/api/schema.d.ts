@@ -1643,7 +1643,8 @@ export interface components {
         };
         /**
          * MemberListed
-         * @description A member in the newsroom's list, with their chain of wins under way (US13).
+         * @description A member in the newsroom's list, with their chain of wins under way (US13) and their green
+         *     laurels, which their press card shows too (the editor adjusts them from this list).
          */
         MemberListed: {
             /**
@@ -1670,6 +1671,8 @@ export interface components {
             joined_at: string;
             /** Streak */
             streak: number;
+            /** Balance */
+            balance: number;
         };
         /** MemberPatch */
         MemberPatch: {

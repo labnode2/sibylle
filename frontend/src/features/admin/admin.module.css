@@ -273,6 +273,13 @@
   background: var(--grey);
 }
 
+/* The member's green laurels now, and after the adjustment being typed. */
+.after {
+  margin: 0;
+  font: 700 12px/1.3 var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
 .quote {
   margin: 0;
   padding-left: 12px;

@@ -1,12 +1,13 @@
-// The editor's members page: roles, laurel adjustments with a reason, removal; the invitations
-// under way and the newsroom's access code.
+// The editor's members page: each member's green laurels and role, laurel adjustments with a
+// reason (and the laurels they leave), removal; the invitations under way and the newsroom's
+// access code.
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 
-import type { MemberPublic } from '../../api/types';
+import type { MemberListed } from '../../api/types';
 import { formatDate } from '../../i18n';
-import { Button, Chip, Field, Kicker } from '../../ui/components';
+import { Button, Chip, Field, Kicker, Laurel } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
 import { toast } from '../../ui/Toaster';
 import { useOrg } from '../orgs/api';
@@ -30,7 +31,7 @@ function MemberRow({
   isMe,
 }: {
   orgId: string;
-  member: MemberPublic;
+  member: MemberListed;
   isMe: boolean;
 }) {
   const { t } = useTranslation('admin');
@@ -40,9 +41,12 @@ function MemberRow({
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
 
+  // A whole number of laurels, other than 0: what the adjustment would leave.
+  const value = Number(amount);
+  const valid = amount.trim() !== '' && Number.isInteger(value) && value !== 0;
+
   const submitAdjustment = (event: FormEvent) => {
     event.preventDefault();
-    const value = Number(amount);
     adjust.mutate(
       { memberId: member.id, amount: value, reason: reason.trim() },
       {
@@ -64,6 +68,10 @@ function MemberRow({
           {member.pseudo}
           {isMe && <span className={styles.you}> {t('members.you')}</span>}
         </span>
+        <Laurel
+          value={member.balance}
+          label={t('common:wallet.greenLabel', { count: member.balance })}
+        />
         <label className={`${styles.select} ${styles[`role_${member.role}`]}`}>
           <span className="visually-hidden">{t('members.role', { pseudo: member.pseudo })}</span>
           <select
@@ -129,13 +137,17 @@ function MemberRow({
             value={amount}
             onChange={(event) => setAmount(event.target.value)}
           />
+          <p className={styles.after} aria-live="polite">
+            {t('members.balance', { count: member.balance })}
+            {valid && ` · ${t('members.after', { count: member.balance + value })}`}
+          </p>
           <Field
             label={t('members.reason')}
             value={reason}
             maxLength={200}
             onChange={(event) => setReason(event.target.value)}
           />
-          <Button type="submit" disabled={adjust.isPending || !Number(amount) || !reason.trim()}>
+          <Button type="submit" disabled={adjust.isPending || !valid || !reason.trim()}>
             {t('members.adjustSubmit', { pseudo: member.pseudo })}
           </Button>
         </form>

@@ -21,8 +21,7 @@ from sibylle.db.models import (
     Trophy,
 )
 from sibylle.domain.coins import CoinKind
-from sibylle.domain.leaderboard import Metric, Period
-from sibylle.services import coins, deals, leaderboard, ledger, streaks
+from sibylle.services import coins, deals, ledger, streaks
 from sibylle.services.security import token_hash
 
 _KIND_ORDER = {"color": 0, "frame": 1, "animation": 2, "ball": 3}
@@ -180,10 +179,10 @@ async def _stats(session: AsyncSession, member: Membership) -> dict[str, Any]:
             ).where(Bet.membership_id == member.id)
         )
     ).one()
-    laurels = await leaderboard.values(session, member.org_id, Metric.LAURELS, Period.ALL_TIME)
     chain = await streaks.of_member(session, member)
     return {
-        "laurels": laurels.get(member.id, 0),
+        # The green laurels, as the date bar shows them: the balance, what the member can stake.
+        "laurels": member.balance,
         "pronos_played": int(played),
         "settled": int(settled),
         "wins": int(wins),

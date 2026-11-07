@@ -46,7 +46,9 @@ def entry_out(entry: LedgerEntry, question: str | None) -> LedgerEntryOut:
 async def list_members(org_id: uuid.UUID, member: CurrentMember, session: Db) -> list[MemberListed]:
     chains = await streaks.current(session, org_id)
     return [
-        MemberListed.model_validate({**orgs.public_member(m), "streak": chains.get(m.id, 0)})
+        MemberListed.model_validate(
+            {**orgs.public_member(m), "streak": chains.get(m.id, 0), "balance": m.balance}
+        )
         for m in await orgs.active_members(session, org_id)
     ]
 

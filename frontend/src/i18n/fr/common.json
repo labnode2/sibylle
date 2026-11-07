@@ -32,7 +32,7 @@
     "greenLabel_other": "{{count}} lauriers verts à miser",
     "goldLabel_one": "{{count}} laurier en or",
     "goldLabel_other": "{{count}} lauriers en or",
-    "greenHint": "Lauriers verts : ce que tu peux miser, solde de départ compris. Tes mises en sortent et tes gains y reviennent. Le classement et ta carte de presse, eux, ne comptent que les lauriers gagnés aux pronos.",
+    "greenHint": "Lauriers verts : ce que tu peux miser. Tes mises en sortent, tes gains y reviennent.",
     "goldHint": "Lauriers en or : tes lauriers verts plus tes mises encore en jeu. Chaque lundi, ils te rapportent autant de pièces.",
     "coinsHint": "Pièces : pour acheter des couleurs, des cadres et des animations dans la collection. Les dépenser ne touche ni tes lauriers ni ton classement."
   },
