@@ -156,7 +156,6 @@ export function GameSchedulePage() {
                     <td key={game}>
                       <input
                         type="checkbox"
-                        className={styles.box}
                         aria-label={
                           index === 0
                             ? t('games.box.current', { game: t(`games.names.${game}`) })

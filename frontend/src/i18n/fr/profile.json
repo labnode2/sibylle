@@ -190,7 +190,7 @@
       "frame": "Pas encore de cadre : ils s'achètent avec des pièces.",
       "animation": "Pas encore d'animation : elles s'achètent avec des pièces, dès 1 200."
     },
-    "collection": "Voir la collection →",
+    "collection": "Voir la collection",
     "showcase_one": "MIS EN AVANT · {{count}} / {{max}}",
     "showcase_other": "MIS EN AVANT · {{count}} / {{max}}",
     "showcaseHint": "Trois objets ou trophées au plus, montrés sur ta carte dans l'ordre où tu les choisis.",

@@ -306,15 +306,6 @@
   cursor: pointer;
 }
 
-.check input,
-.box {
-  width: 22px;
-  height: 22px;
-  margin: 0;
-  accent-color: var(--ink);
-  cursor: pointer;
-}
-
 .weeks {
   width: 100%;
   border-collapse: collapse;

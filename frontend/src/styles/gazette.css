@@ -40,6 +40,28 @@ textarea {
   outline-offset: 2px;
 }
 
+/* Check boxes: a plain square, white when empty, ink when ticked. */
+input[type='checkbox'] {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--surface);
+  appearance: none;
+  cursor: pointer;
+}
+
+input[type='checkbox']:checked {
+  background: var(--ink);
+}
+
+input[type='checkbox']:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 h1,
 h2,
 h3,

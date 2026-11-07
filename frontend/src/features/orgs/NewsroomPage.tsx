@@ -158,7 +158,6 @@ function OrgCard({ org, editors }: { org: Org; editors: string[] }) {
           <Link to={`${base}/reglages`} className={styles.settings}>
             {t('newsroom.settings')}
             <CountBadge count={reports} label={t('common:tabs.reports', { count: reports })} />
-            <span aria-hidden="true"> →</span>
           </Link>
         </>
       )}
