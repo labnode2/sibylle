@@ -48,5 +48,13 @@
     "text": "Reçois le résultat de ce prono dès qu'il tombe, et les nouveaux pronos de ta rédaction.",
     "enable": "Activer les notifications",
     "later": "Plus tard"
+  },
+  "installed": {
+    "kicker": "APPLI INSTALLÉE",
+    "title": "Activer les notifications ?",
+    "text": "Reçois sur cet appareil les nouveaux pronos de ta rédaction, un rappel 2 h avant la clôture si tu n'as pas joué, et le résultat de tes pronos dès qu'il tombe.",
+    "note": "Tu choisis ensuite lesquelles dans tes réglages.",
+    "enable": "Activer les notifications",
+    "later": "Plus tard"
   }
 }

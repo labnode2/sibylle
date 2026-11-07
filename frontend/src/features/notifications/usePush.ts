@@ -56,7 +56,8 @@ function isIos(): boolean {
   );
 }
 
-function isStandalone(): boolean {
+/** The installed app, opened from its icon: on a phone's home screen or on a computer. */
+export function isStandalone(): boolean {
   return (
     window.matchMedia?.('(display-mode: standalone)').matches ||
     (navigator as Navigator & { standalone?: boolean }).standalone === true

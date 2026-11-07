@@ -244,6 +244,12 @@ Les dessins sont du texte dans `frontend/src/ui/reactions/frames.ts`, une lettre
 
 Écartés : les GIF eux-mêmes, dans une balise `<img>` (rien ne les arrête sous « couper les animations », et 3,9 Mo à charger) ou recadrés en bandes WebP (146 Ko, des photos illisibles à 32 pixels, hors du pixel art, et cinq boucles sous chaque prono) ; garder les anciennes clés en ne changeant que l'image (`rire` aurait montré « Enfin ! »).
 
+### J18. Notifications proposées par l'appli installée
+
+Choix du 7 novembre 2026, à la demande d'Emile (spec FR-102). Quand l'appli installée s'ouvre sur une rédaction (ajoutée à l'écran d'accueil depuis Chrome sur Android ou Safari sur iPhone, ou installée sur un ordinateur : `display-mode: standalone`), une fenêtre « Activer les notifications ? » propose les notifications push (`frontend/src/features/notifications/InstalledPushDialog.tsx`). Son bouton fait poser la question par le navigateur, toujours après un clic (T123). La fenêtre se ferme quand le navigateur a sa réponse ; elle reste ouverte si la question du navigateur a été écartée sans réponse ou si l'abonnement a échoué, pour réessayer ou choisir « Plus tard ». Une fois répondue (« Activer les notifications », « Plus tard », Échap ou le geste retour du téléphone), elle ne revient plus sur cet appareil (`localStorage`) : les réglages et l'offre après un pari restent pour changer d'avis. Rien n'est proposé quand les notifications sont déjà actives ou refusées dans le navigateur ; sans push dans le navigateur ou sur le serveur, la fenêtre attend une prochaine ouverture. Elle passe après la bonne nouvelle des pièces du lundi (J6), jamais par-dessus. Dans un onglet du navigateur, rien ne change : pas de fenêtre, et l'iPhone garde son explication (ajouter d'abord l'appli à l'écran d'accueil).
+
+Écartés : demander l'autorisation du navigateur dès l'ouverture, sans clic (Safari et Firefox ne la demandent qu'après un geste, et un refus du navigateur est définitif : seuls ses réglages le changent) ; reposer la question à chaque ouverture tant que les notifications sont coupées (une fenêtre de plus à chaque lancement) ; la proposer aussi dans un onglet (les notifications push passent par l'appli installée, FR-100).
+
 ## Contenus à produire pendant l'implémentation
 
 Ils ne bloquent pas la conception : la charte par défaut, les textes des e-mails, le jeu de réactions rapides (cinq emoji, J17), le catalogue de la collection et ses prix (couleurs, cadres ; les boules se gagnent), les codes secrets, les modèles d'avatars et les fonds de carte d'organisation.

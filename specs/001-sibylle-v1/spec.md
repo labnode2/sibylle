@@ -420,6 +420,7 @@ Cami veut montrer sa carte de presse sur son blog. Sous sa carte, elle active «
 
 - **FR-100**: Le système DOIT envoyer des notifications push (appli installée) et des e-mails pour : un nouveau prono, un prono qui ferme dans 2 h sans pari de ma part, le résultat d'un prono que j'ai joué, un rappel de désignation (journalistes).
 - **FR-101**: Chaque membre DOIT pouvoir activer ou couper chaque type, canal par canal ; il n'y a aucun récapitulatif périodique.
+- **FR-102**: Quand l'appli installée s'ouvre sur une rédaction, elle DOIT proposer d'activer les notifications push dans une fenêtre, une seule fois par appareil ; l'autorisation du navigateur n'est demandée qu'après un clic sur « Activer les notifications ».
 
 **Mini-jeux**
 

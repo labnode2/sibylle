@@ -62,6 +62,61 @@ async function bet(page: Page, orgId: string, pronoId: string): Promise<void> {
   await expect(page.getByText('TON PRONO', { exact: true })).toBeVisible();
 }
 
+/** The app opened from its icon, once installed from Chrome on a phone (or on a computer). */
+async function installedApp(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const matchMedia = window.matchMedia.bind(window);
+    window.matchMedia = (query: string) => {
+      const list = matchMedia(query);
+      if (query.includes('display-mode: standalone'))
+        Object.defineProperty(list, 'matches', { value: true });
+      return list;
+    };
+  });
+}
+
+test('the installed app offers push when it opens, once per device', async ({
+  browser,
+}, testInfo) => {
+  test.setTimeout(90_000);
+  const lea = await newPerson(browser, testInfo, 'Léa');
+  await createNewsroom(lea, 'Antibes Matin', 'Léa');
+  const une = lea.getByRole('heading', { name: 'La une de Antibes Matin' });
+  const offer = lea.getByRole('dialog', { name: 'Activer les notifications ?' });
+  const answered = () => lea.evaluate(() => localStorage.getItem('sibylle.push-dialog.done'));
+  // In a browser's tab: no pop-up.
+  await expect(offer).toBeHidden();
+
+  // Opened from its icon: the pop-up; « Plus tard » sets it aside on this device.
+  await installedApp(lea);
+  await pushCapableDevice(lea);
+  await lea.reload();
+  await expect(offer).toBeVisible();
+  await expect(offer).toContainText('APPLI INSTALLÉE');
+  await offer.getByRole('button', { name: 'Plus tard' }).click();
+  await expect(offer).toBeHidden();
+  expect(await answered()).toBe('1');
+  await lea.reload();
+  await expect(une).toBeVisible();
+  await expect(offer).toBeHidden();
+
+  // As on a new device: « Activer les notifications » asks the browser, then sends this device
+  // to the server, and the pop-up is done.
+  await lea.evaluate(() => localStorage.removeItem('sibylle.push-dialog.done'));
+  await lea.reload();
+  const subscribed = lea.waitForResponse(
+    (r) => r.url().endsWith('/api/me/push-subscriptions') && r.request().method() === 'POST',
+  );
+  await offer.getByRole('button', { name: 'Activer les notifications' }).click();
+  expect((await subscribed).status()).toBe(201);
+  await expect(offer).toBeHidden();
+  await expect(lea.getByText('Notifications activées sur cet appareil.')).toBeVisible();
+  expect(await answered()).toBe('1');
+  await lea.reload();
+  await expect(une).toBeVisible();
+  await expect(offer).toBeHidden();
+});
+
 test('push offered after a bet, then set kind by kind in the settings', async ({
   browser,
 }, testInfo) => {

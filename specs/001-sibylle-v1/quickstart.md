@@ -90,7 +90,7 @@ Chaque scénario renvoie à une histoire de [spec.md](spec.md). Utiliser deux na
 
 Sur le domaine en HTTPS, avec l'appli installée sur Android, iOS 16.4+ et un ordinateur :
 
-1. Activer les notifications ; publier un prono : notification push et e-mail.
+1. Ouvrir l'appli installée depuis son icône : la fenêtre « Activer les notifications ? » s'ouvre sur la rédaction ; l'accepter, puis publier un prono : notification push et e-mail. À l'ouverture suivante, la fenêtre ne revient pas.
 2. Un prono qui ferme dans 2 h : seuls les membres sans pari sont prévenus, une seule fois.
 3. Couper l'e-mail pour `new_prono` : seule la notification push arrive.
 

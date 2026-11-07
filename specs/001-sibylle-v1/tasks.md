@@ -441,6 +441,18 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 
 ---
 
+## Phase 9k: Évolution de US8 - Les notifications proposées par l'appli installée
+
+**Goal**: à l'ouverture de l'appli installée (depuis Chrome sur un téléphone, Safari sur iPhone, ou sur un ordinateur), une fenêtre propose d'activer les notifications push, une fois par appareil (spec FR-102, research.md J18).
+
+**Independent Test**: ouvrir une rédaction dans un onglet : pas de fenêtre ; ouvrir l'appli installée : « Activer les notifications ? » ; « Plus tard » l'écarte pour de bon sur cet appareil ; sur un autre appareil, « Activer les notifications » fait poser la question par le navigateur, envoie l'abonnement au serveur et ferme la fenêtre, qui ne revient plus.
+
+- [x] T213 [US8] Écrire `frontend/src/features/notifications/InstalledPushDialog.tsx` (appli installée seulement, par `isStandalone` de `usePush.ts` ; ouverte quand le push peut s'activer, fermée quand le navigateur a sa réponse ; réponse gardée par appareil dans `localStorage`) et la monter dans `frontend/src/app/OrgLayout.tsx`, après la bonne nouvelle des pièces ; styles dans `notifications.module.css`, textes dans `frontend/src/i18n/fr/notifications.json` ; `frontend/tests/unit/installed-push-dialog.test.tsx` et parcours dans `frontend/tests/e2e/notifications.spec.ts`.
+
+**Checkpoint**: l'appli installée propose les notifications une fois, au bon moment, sans insister.
+
+---
+
 ## Phase 10: User Story 8 - Être prévenu (Priority: P3)
 
 **Goal**: notifications push (appli installée) et e-mails pour quatre événements, réglables type par type et canal par canal.
@@ -579,6 +591,7 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 - **US15 (P3)** : après US7 (la carte de presse et ses objets mis en avant) ; la flamme de US13 la suit.
 - **Phase 9i** : transversale, après les écrans des actions qu'elle touche (US1 à US15).
 - **Phase 9j** : après US5 (la barre de réactions).
+- **Phase 9k** : après US8 (l'abonnement push de l'appareil) et la phase 9b (la bonne nouvelle du lundi passe d'abord).
 
 ### Within Each User Story
 

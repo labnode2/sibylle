@@ -1,4 +1,5 @@
-/* The notification settings (profile) and the offer shown after a bet. */
+/* The notification settings (profile), the offer shown after a bet and the installed app's
+   pop-up. */
 
 .section {
   display: flex;
@@ -93,4 +94,46 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+/* The installed app's pop-up: a card in the middle of the screen, like Monday's good news. */
+.dialog {
+  width: min(420px, calc(100vw - 2 * var(--gutter)));
+  margin: auto;
+  padding: 24px;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+  text-align: center;
+}
+
+.dialog::backdrop {
+  background: rgb(21 22 45 / 55%);
+}
+
+.ball {
+  display: flex;
+  justify-content: center;
+  min-height: 64px;
+  margin-bottom: 12px;
+}
+
+.dialogTitle {
+  margin: 8px 0 12px;
+  font: 700 24px/1.15 var(--font-text);
+}
+
+.dialogText {
+  margin: 0 0 10px;
+  font: 400 15px/1.45 var(--font-text);
+  color: var(--ink-2);
+}
+
+.dialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
 }

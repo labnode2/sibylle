@@ -1,19 +1,33 @@
 // A newsroom's frame: loads it, then fills the shell's desktop slots (laurels and coins, pseudo,
-// the newsroom's small card), and shows the good news of Monday's coins.
+// the newsroom's small card), and shows the good news of Monday's coins, then the installed
+// app's offer of notifications.
 import { useQueryClient } from '@tanstack/react-query';
 import { Navigate, useParams } from 'react-router';
 
 import { ApiError } from '../api/client';
 import { useTopic } from '../api/realtime';
 import { reportsKey } from '../features/admin/api';
-import { weeklyCoinsKey } from '../features/coins/api';
+import { useWeeklyCoins, weeklyCoinsKey } from '../features/coins/api';
 import { WeeklyCoinsDialog } from '../features/coins/WeeklyCoinsDialog';
+import { InstalledPushDialog } from '../features/notifications/InstalledPushDialog';
 import { orgKey, useOrg } from '../features/orgs/api';
 import { pronoKey } from '../features/pronos/api';
 import { NewsroomSwitcher } from '../features/orgs/NewsroomPage';
 import { Wallet } from '../ui/components';
 import { PixelImage } from '../ui/PixelImage';
 import { AppShell } from './AppShell';
+
+/** A newsroom's pop-ups, one at a time: Monday's good news first, then the installed app's offer
+ *  to turn notifications on. */
+function Dialogs({ orgId, coins }: { orgId: string; coins: number }) {
+  const weekly = useWeeklyCoins(orgId);
+  return (
+    <>
+      <WeeklyCoinsDialog orgId={orgId} coins={coins} />
+      {!weekly.isPending && !weekly.data && <InstalledPushDialog />}
+    </>
+  );
+}
 
 export function OrgLayout() {
   const { orgId = '' } = useParams();
@@ -56,7 +70,7 @@ export function OrgLayout() {
         issue={org.data.edition_number}
         newsroom={<NewsroomSwitcher org={org.data} />}
       />
-      <WeeklyCoinsDialog orgId={orgId} coins={me.coins} />
+      <Dialogs orgId={orgId} coins={me.coins} />
     </>
   );
 }
