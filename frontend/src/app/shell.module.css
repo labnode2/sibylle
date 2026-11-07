@@ -115,6 +115,22 @@
   min-height: var(--tap);
 }
 
+/* The avatar and the pseudo of the date bar: the way to « Mon profil ». */
+.accountLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap);
+  color: inherit;
+  text-decoration: none;
+}
+
+.accountLink:hover span {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 @media (min-width: 1024px) {
   .page {
     padding: 0 32px 48px;

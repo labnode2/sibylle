@@ -4,7 +4,7 @@
 // back home.
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Navigate, useNavigate, useParams } from 'react-router';
+import { Link, Navigate, useNavigate, useParams } from 'react-router';
 
 import { ApiError } from '../api/client';
 import { useTopic } from '../api/realtime';
@@ -20,6 +20,7 @@ import { Wallet } from '../ui/components';
 import { PixelImage } from '../ui/PixelImage';
 import { toast } from '../ui/Toaster';
 import { AppShell } from './AppShell';
+import styles from './shell.module.css';
 
 /** A newsroom's pop-ups, one at a time: Monday's good news first, then the installed app's offer
  *  to turn notifications on. */
@@ -82,8 +83,14 @@ export function OrgLayout() {
           <>
             <Wallet balance={me.balance} gold={me.gold} coins={me.coins} />
             <span aria-hidden="true">·</span>
-            <PixelImage image={me.avatar} size={24} />
-            <span>{me.pseudo.toUpperCase()}</span>
+            <Link
+              to={`/o/${orgId}/profil`}
+              className={styles.accountLink}
+              title={t('common:tabs.profileLong')}
+            >
+              <PixelImage image={me.avatar} size={24} />
+              <span>{me.pseudo.toUpperCase()}</span>
+            </Link>
           </>
         }
         issue={org.data.edition_number}
