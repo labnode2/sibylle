@@ -61,6 +61,7 @@ main() {
   fi
   git -C "$repo" checkout --quiet --detach origin/main ||
     fail "the repository in $repo has local changes"
+  theme_readable "$repo"
   local new_rev
   local -A new_ref=() new_image=()
   new_rev=$(git -C "$repo" rev-parse HEAD)
@@ -143,6 +144,7 @@ rollback() {
   shift 2
   log "Rolling back to the previous version ($(short "$rev"))"
   git -C "$repo" checkout --quiet --detach "$rev"
+  theme_readable "$repo"
   while (($#)); do
     docker tag "$1" "$2" || log "Cannot give $2 back its previous image."
     shift 2
@@ -154,6 +156,14 @@ rollback() {
   fi
   log "$outcome"
   DETAILS+=$'\n'$outcome
+}
+
+# theme_readable REPO: Keycloak (labnode2/docker) mounts keycloak/theme read-only and reads it as
+# its own user, not sibylle. Whatever umask the checkout ran with, the theme stays readable by
+# everyone: its pages, styles and fonts are what every browser gets anyway.
+theme_readable() {
+  [[ ! -d $1/keycloak/theme ]] || chmod -R a+rX "$1/keycloak/theme" ||
+    log "Cannot make keycloak/theme readable: Keycloak may not see Sibylle's theme."
 }
 
 # The state of each service, one line each, for Discord.
