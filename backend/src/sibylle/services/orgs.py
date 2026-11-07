@@ -13,7 +13,13 @@ from sibylle.api.errors import AppError
 from sibylle.db.models import Account, LedgerEntry, Membership, Organisation, Prono, Section
 from sibylle.domain.content import BACKGROUND_KEYS, DEFAULT_CHARTER, DEFAULT_LOGO
 from sibylle.domain.ledger import adjustment, starting_balance
-from sibylle.domain.pixels import PixelImageError, validate_pixel_image
+from sibylle.domain.pixels import (
+    AVATAR_INDICES,
+    BASE_INDICES,
+    PixelImageError,
+    decode,
+    validate_pixel_image,
+)
 from sibylle.realtime import bus
 from sibylle.services import collection, ledger
 
@@ -41,12 +47,24 @@ async def new_access_code(session: AsyncSession, title: str) -> str:
 
 
 def checked_drawing(
-    field: str, data: dict[str, Any], unlocked: set[int] | None = None
+    field: str,
+    data: dict[str, Any],
+    unlocked: set[int] | None = None,
+    base: frozenset[int] = BASE_INDICES,
 ) -> dict[str, Any]:
     try:
-        return validate_pixel_image(data, unlocked or set())
+        return validate_pixel_image(data, unlocked or set(), base)
     except PixelImageError as error:
         raise AppError("validation_error", {field: "invalid"}) from error
+
+
+def checked_avatar(
+    data: dict[str, Any], unlocked: set[int] | None = None, current: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """An avatar: its free colours, the colours the member bought, and those already in their
+    saved avatar, which stay usable (drawn before those colours went on sale)."""
+    kept = set(decode(current)) - {0} if current else set()
+    return checked_drawing("avatar", data, (unlocked or set()) | kept, AVATAR_INDICES)
 
 
 async def pseudo_taken(
@@ -92,7 +110,7 @@ async def add_member(
         account_id=account.id,
         role=role,
         pseudo=pseudo,
-        avatar=checked_drawing("avatar", avatar),
+        avatar=checked_avatar(avatar),
         charter_accepted_at=clock.now(),
     )
     session.add(member)
@@ -168,7 +186,9 @@ async def update_profile(
             raise AppError("pseudo_taken")
         member.pseudo = pseudo
     if avatar is not None:
-        member.avatar = checked_drawing("avatar", avatar, await unlocked_colors(session, member))
+        member.avatar = checked_avatar(
+            avatar, await unlocked_colors(session, member), member.avatar
+        )
     if frame_item_id is not KEEP:
         member.avatar_frame = (
             await collection.owned_wearable(session, member, frame_item_id, "frame")

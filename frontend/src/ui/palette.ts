@@ -62,3 +62,9 @@ const RARE = ['#6e74ff', '#8f94ff', '#6267e8', '#8a6a12'];
 
 export const PALETTE: readonly (string | null)[] = [null, ...BASE, ...UNLOCKABLE, ...RARE];
 export const BASE_INDICES = BASE.map((_, i) => i + 1);
+
+/** The colours an avatar gets for free: the skin tones (which also make hair and beards), then
+ *  ink, paper, red, indigo and gold. The base palette's others are bought in the collection for
+ *  avatars; logos and Pixel mystère drawings keep the whole base palette. Must match
+ *  AVATAR_INDICES in backend/src/sibylle/domain/pixels.py. */
+export const AVATAR_INDICES = [2, 4, 6, 9, 14, 17, 21, 26, 28, 1, 13, 15, 19, 32];

@@ -38,7 +38,9 @@ export type Drawing = { size: Size; palette: 'base-v1'; pixels: string };
 export type PixelEditorProps = {
   initial?: PixelImageData | null;
   sizes?: Size[];
-  /** Colours beyond the base palette the member may use. */
+  /** The colours given for free: the whole base palette, or an avatar's free colours. */
+  base?: readonly number[];
+  /** Colours beyond `base` the member may use. */
   unlocked?: number[];
   title: string;
   saveLabel?: string;
@@ -70,6 +72,7 @@ function Glyph({ name }: { name: EditorIcon }) {
 export function PixelEditor({
   initial,
   sizes = [16, 32],
+  base = BASE_INDICES,
   unlocked = [],
   title,
   saveLabel = '',
@@ -99,7 +102,7 @@ export function PixelEditor({
   const canvas = useRef<HTMLCanvasElement>(null);
   // The last cell of the stroke under way, to join it to the next one.
   const last = useRef<Cell | null>(null);
-  const colors = [...BASE_INDICES, ...unlocked.filter((i) => !BASE_INDICES.includes(i))];
+  const colors = [...base, ...unlocked.filter((i) => !base.includes(i))];
   const cell = GRID_PX / size;
 
   useEffect(() => {

@@ -210,6 +210,48 @@ async def test_avatars_use_unlocked_colours_and_owned_frames(
     assert unframed.json()["frame"] is None
 
 
+async def test_avatar_colours_beyond_the_free_ones_are_bought(
+    make_org: MakeOrg, person: MakePerson
+) -> None:
+    """An avatar gets the skin tones and five colours for free; the rest of the base palette is
+    bought, except a colour already in the saved avatar, which stays usable. Logos keep the whole
+    base palette."""
+    org = await make_org()
+    ines = await person(org, "editor", "Inès")
+    cami = await person(org, "reader", "Cami")
+    profile = org_url(org.id, "/members/me")
+    mint, mist, lavender = 24, 30, 29  # sold for avatars since migration 0026
+
+    refused = await cami.client.patch(profile, json={"avatar": painted(mint)})
+    assert refused.status_code == 422 and "avatar" in refused.json()["error"]["fields"]
+    assert (await ines.client.patch(org_url(org.id), json={"logo": painted(mint)})).status_code == (
+        200
+    )
+    items = await catalog(cami.client, org.id)
+    assert items[f"color-{mint}"]["item"]["price"] == 400
+    await give_coins(cami.member, 400)
+    assert (await buy(cami.client, org.id, f"color-{mint}")).status_code == 201
+    assert (await cami.client.patch(profile, json={"avatar": painted(mint)})).status_code == 200
+    assert mint in (await me(cami.client, org.id))["unlocked_colors"]
+
+    # Drawn before the colour went on sale: Léo keeps it, but may not add another.
+    leo = await person(org, "reader", "Léo")
+    async with transaction() as session:
+        await session.execute(
+            update(Membership)
+            .where(Membership.id == leo.member.id)
+            .values(avatar=painted(lavender))
+        )
+    kept = painted(lavender)
+    pixels = bytearray(decode(kept))
+    pixels[1] = 1
+    redrawn = await leo.client.patch(profile, json={"avatar": encode(16, bytes(pixels))})
+    assert redrawn.status_code == 200, redrawn.text
+    pixels[2] = mist
+    added = await leo.client.patch(profile, json={"avatar": encode(16, bytes(pixels))})
+    assert added.status_code == 422
+
+
 async def test_animations_and_the_gold_frame(make_org: MakeOrg, person: MakePerson) -> None:
     """Animations around the avatar from 1,200 coins, worn with a frame; the gold frame at
     10,000."""

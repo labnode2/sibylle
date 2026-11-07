@@ -12,6 +12,7 @@ import type { Org } from '../../api/types';
 import { Button, Field, TopBar } from '../../ui/components';
 import { CrystalBall } from '../../ui/CrystalBall';
 import { FramedAvatar } from '../../ui/FramedAvatar';
+import { AVATAR_INDICES } from '../../ui/palette';
 import { decodePixels, encodePixels } from '../../ui/PixelImage';
 import { toast } from '../../ui/Toaster';
 import type { Variant } from '../../vendor/crystal-ball/crystal-ball.js';
@@ -260,6 +261,7 @@ function CardEditor({ orgId, org, card }: { orgId: string; org: Org; card: Press
             key={round}
             layout="screen"
             initial={saved.avatar}
+            base={AVATAR_INDICES}
             unlocked={org.my_membership.unlocked_colors}
             title={t('editor.title')}
             onChange={setAvatar}

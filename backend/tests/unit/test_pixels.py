@@ -2,12 +2,17 @@ import base64
 
 import pytest
 
+from sibylle.domain.content import AVATAR_TEMPLATES
 from sibylle.domain.pixels import (
+    AVATAR_INDICES,
     BASE_INDICES,
     COLORS,
     RARE_INDICES,
+    SKIN_INDICES,
+    SOLD_BASE_INDICES,
     UNLOCKABLE_INDICES,
     PixelImageError,
+    decode,
     validate_pixel_image,
 )
 
@@ -61,3 +66,23 @@ def test_extra_colours_need_to_be_unlocked(index: int) -> None:
     with pytest.raises(PixelImageError):
         validate_pixel_image(data)
     assert validate_pixel_image(data, unlocked={index}) == data
+
+
+def test_an_avatar_gets_the_skin_tones_and_five_colours_for_free() -> None:
+    assert AVATAR_INDICES == SKIN_INDICES | {1, 13, 15, 19, 32}
+    assert AVATAR_INDICES < BASE_INDICES
+    assert SOLD_BASE_INDICES == BASE_INDICES - AVATAR_INDICES
+    assert len(SOLD_BASE_INDICES) == 18
+    sold = sorted(SOLD_BASE_INDICES)[0]
+    with pytest.raises(PixelImageError):
+        validate_pixel_image(image([sold] * 256), base=AVATAR_INDICES)
+    assert validate_pixel_image(image([sold] * 256), {sold}, AVATAR_INDICES)
+    # The rest of the drawings keep the whole base palette.
+    assert validate_pixel_image(image([sold] * 256))
+
+
+def test_the_default_avatars_use_only_free_colours() -> None:
+    assert len(AVATAR_TEMPLATES) == 10
+    for template in AVATAR_TEMPLATES:
+        validate_pixel_image(template["image"], base=AVATAR_INDICES)
+        assert set(decode(template["image"])) - {0} <= AVATAR_INDICES, template["name"]

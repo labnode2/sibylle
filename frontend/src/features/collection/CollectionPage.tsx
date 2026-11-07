@@ -84,46 +84,49 @@ function Item({
     <li className={`${styles.item} ${onSale ? styles.itemDeal : ''}`} aria-label={name}>
       <ItemPreview item={entry.item} avatar={avatar} />
       <span className={styles.name}>{name}</span>
-      {onSale && !entry.owned && <DealPrice entry={entry} />}
-      {entry.owned ? (
-        <Chip variant="ink">{t('collection.owned')}</Chip>
-      ) : confirming ? (
-        <div className={styles.confirm}>
-          <span>{t('collection.confirm', { price: formatNumber(price) })}</span>
-          <Button variant="secondary" onClick={() => setConfirming(false)}>
-            {t('collection.no')}
-          </Button>
-          <Button
-            onClick={() =>
-              buy.mutate(
-                { itemId: entry.item.id, price },
-                {
-                  onSuccess: () => {
-                    setConfirming(false);
-                    toast.success(t('collection.bought', { name }));
+      {/* The price at the bottom of the tile, level with its neighbours'. */}
+      <div className={styles.buy}>
+        {onSale && !entry.owned && <DealPrice entry={entry} />}
+        {entry.owned ? (
+          <Chip variant="ink">{t('collection.owned')}</Chip>
+        ) : confirming ? (
+          <div className={styles.confirm}>
+            <span>{t('collection.confirm', { price: formatNumber(price) })}</span>
+            <Button variant="secondary" onClick={() => setConfirming(false)}>
+              {t('collection.no')}
+            </Button>
+            <Button
+              onClick={() =>
+                buy.mutate(
+                  { itemId: entry.item.id, price },
+                  {
+                    onSuccess: () => {
+                      setConfirming(false);
+                      toast.success(t('collection.bought', { name }));
+                    },
                   },
-                },
-              )
+                )
+              }
+              disabled={buy.isPending}
+            >
+              {t('collection.yes')}
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="secondary"
+            onClick={() => setConfirming(true)}
+            disabled={price > coins}
+            aria-label={
+              onSale
+                ? t('collection.buyDealLabel', { name, price, regular: entry.regular_price })
+                : t('collection.buyLabel', { name, price })
             }
-            disabled={buy.isPending}
           >
-            {t('collection.yes')}
+            <Coins value={price} />
           </Button>
-        </div>
-      ) : (
-        <Button
-          variant="secondary"
-          onClick={() => setConfirming(true)}
-          disabled={price > coins}
-          aria-label={
-            onSale
-              ? t('collection.buyDealLabel', { name, price, regular: entry.regular_price })
-              : t('collection.buyLabel', { name, price })
-          }
-        >
-          <Coins value={price} />
-        </Button>
-      )}
+        )}
+      </div>
     </li>
   );
 }

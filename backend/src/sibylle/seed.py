@@ -28,9 +28,9 @@ ORG_TITLE = "Sophia Office"
 PEOPLE = [
     ("Inès", "ines@demo.sibylle.test", "editor", "t1", "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0003"),
     ("Hugo", "hugo@demo.sibylle.test", "journalist", "t2", "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0004"),
-    ("Cami", "cami@demo.sibylle.test", "reader", "t0", "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0005"),
-    ("Léo", "leo@demo.sibylle.test", "reader", "t3", "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0006"),
-    ("Manon", "manon@demo.sibylle.test", "reader", "t4", "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0007"),
+    ("Cami", "cami@demo.sibylle.test", "reader", "t3", "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0005"),
+    ("Léo", "leo@demo.sibylle.test", "reader", "t8", "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0006"),
+    ("Manon", "manon@demo.sibylle.test", "reader", "t7", "7c1e0c55-5b1a-4c37-9a0e-3d1f0c9e0007"),
 ]
 
 

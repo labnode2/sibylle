@@ -13,6 +13,7 @@ import { useFormErrors } from '../forms';
 import { useContent, useCreateOrg, useJoin, useJoinPreview, type JoinSource } from './api';
 import { OrgLogo } from './NewsroomPage';
 import { PixelEditor } from '../pixel-editor/PixelEditor';
+import { AVATAR_INDICES } from '../../ui/palette';
 import styles from './orgs.module.css';
 import { AvatarPicker, BackgroundPicker } from './pickers';
 
@@ -134,6 +135,7 @@ function ProfileFields({
         />
         <PixelEditor
           initial={avatar}
+          base={AVATAR_INDICES}
           title={t('join.drawTitle')}
           saveLabel={t('join.drawDone')}
           onCancel={() => setDrawing(false)}

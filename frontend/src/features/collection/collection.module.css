@@ -65,6 +65,14 @@
   font: 600 13px/1.3 var(--font-text);
 }
 
+.buy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+}
+
 .swatch {
   display: inline-block;
   border: 1px solid var(--ink);

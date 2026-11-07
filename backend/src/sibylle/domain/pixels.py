@@ -33,6 +33,13 @@ BASE_INDICES = frozenset(range(1, 1 + len(_BASE)))
 UNLOCKABLE_INDICES = frozenset(range(1 + len(_BASE), 1 + len(_BASE) + len(_UNLOCKABLE)))
 RARE_INDICES = frozenset(range(1 + len(_BASE) + len(_UNLOCKABLE), len(COLORS)))
 
+# The colours an avatar gets for free: the skin tones (which also make hair and beards), then ink,
+# paper, red, indigo and gold. The other colours of the base palette are sold in the collection
+# for avatars; newsroom logos and Pixel mystère drawings keep the whole base palette.
+SKIN_INDICES = frozenset({2, 4, 6, 9, 14, 17, 21, 26, 28})
+AVATAR_INDICES = SKIN_INDICES | {1, 13, 15, 19, 32}
+SOLD_BASE_INDICES = BASE_INDICES - AVATAR_INDICES
+
 
 class PixelImageError(ValueError):
     pass
@@ -49,8 +56,11 @@ def encode(size: int, indices: bytes) -> dict[str, Any]:
     return {"size": size, "palette": PALETTE_NAME, "pixels": base64.b64encode(indices).decode()}
 
 
-def validate_pixel_image(data: object, unlocked: Collection[int] = ()) -> dict[str, Any]:
-    """Checks a drawing; colours beyond the base palette must be in `unlocked`."""
+def validate_pixel_image(
+    data: object, unlocked: Collection[int] = (), base: Collection[int] = BASE_INDICES
+) -> dict[str, Any]:
+    """Checks a drawing; colours beyond `base` (the base palette, or an avatar's free colours)
+    must be in `unlocked`."""
     if not isinstance(data, dict) or set(data) != {"size", "palette", "pixels"}:
         raise PixelImageError("a drawing has exactly size, palette and pixels")
     size = data["size"]
@@ -63,7 +73,7 @@ def validate_pixel_image(data: object, unlocked: Collection[int] = ()) -> dict[s
     pixels = decode(data)
     if len(pixels) != size * size:
         raise PixelImageError(f"a {size}×{size} drawing has {size * size} pixels")
-    allowed = BASE_INDICES | set(unlocked)
+    allowed = set(base) | set(unlocked)
     for index in set(pixels):
         if index != 0 and (index >= len(COLORS) or index not in allowed):
             raise PixelImageError(f"colour {index} is not available")
