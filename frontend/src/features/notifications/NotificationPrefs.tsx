@@ -1,5 +1,6 @@
 // The notification settings: this device's push subscription, then four kinds × two channels
-// (push, e-mail). Notification e-mails link here (`#notifications`).
+// (push, e-mail); the e-mail ones wait for a confirmed address, since no notification e-mail
+// leaves before. Notification e-mails link here (`#notifications`).
 import { useEffect, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
@@ -102,6 +103,7 @@ export function NotificationPrefs({ emailVerified }: { emailVerified: boolean })
                         kind: t(`kinds.${kind}.label`),
                         channel: t(`channels.${channel}`).toLowerCase(),
                       })}
+                      disabled={channel === 'email' && !emailVerified}
                       onChange={(on) => setPref.mutate({ type: kind, channel, enabled: on })}
                     />
                   </td>

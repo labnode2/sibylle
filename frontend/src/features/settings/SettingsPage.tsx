@@ -1,7 +1,8 @@
 // The account's settings (US11): display, notifications (US8), newsrooms to leave, the password
 // (on Keycloak's page), the export of one's data and the deletion of the account. Reached from the
 // gear of the pages outside a newsroom and from the press card, it leads back where one came
-// from; notification e-mails link to `#notifications`.
+// from; reached otherwise (the address check ends here, an address typed in), back home.
+// Notification e-mails link to `#notifications`.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router';
@@ -229,6 +230,7 @@ function DeleteAccount({ me }: { me: Me }) {
           <SignInServiceDown error={remove.error} />
           <div className={styles.actions}>
             <Button
+              variant="danger"
               disabled={remove.isPending}
               onClick={() =>
                 remove.mutate(undefined, {
@@ -245,7 +247,7 @@ function DeleteAccount({ me }: { me: Me }) {
         </Card>
       ) : (
         <Button
-          variant="secondary"
+          variant="dangerSecondary"
           onClick={() => {
             remove.reset();
             setAsking(true);
@@ -258,12 +260,17 @@ function DeleteAccount({ me }: { me: Me }) {
   );
 }
 
-/** Back to the page that opened the settings (`state.from`), else to the first newsroom. */
-function useWayBack(): { to: string; label: string } {
+/** Back to the page that opened the settings (`state.from`), else to the first newsroom, else
+ *  (no newsroom yet) to the welcome page. */
+function useWayBack(hasNewsroom: boolean): { to: string; label: string } {
   const { t } = useTranslation('settings');
   const { state } = useLocation();
   const from = (state as { from?: unknown } | null)?.from;
-  if (typeof from !== 'string' || !from.startsWith('/')) return { to: '/', label: t('back') };
+  if (typeof from !== 'string' || !from.startsWith('/')) {
+    return hasNewsroom
+      ? { to: '/', label: t('back') }
+      : { to: '/bienvenue', label: t('backStart') };
+  }
   if (from === '/bienvenue') return { to: from, label: t('backStart') };
   if (/^\/o\/[^/]+\/profil$/.test(from)) return { to: from, label: t('backProfile') };
   return { to: from, label: t('back') };
@@ -273,16 +280,14 @@ export function SettingsPage() {
   const { t } = useTranslation('settings');
   const me = useMe();
   const logout = useLogoutConfirm();
-  const back = useWayBack();
+  const back = useWayBack((me.data?.memberships.length ?? 0) > 0);
   if (!me.data) return <p role="status">{t('common:shell.loading')}</p>;
   return (
     <div className={styles.page}>
-      {(me.data.memberships.length > 0 || back.to !== '/') && (
-        <Link to={back.to} className={styles.back}>
-          <Icon name="chevronLeft" size={12} />
-          {back.label}
-        </Link>
-      )}
+      <Link to={back.to} className={styles.back}>
+        <Icon name="chevronLeft" size={12} />
+        {back.label}
+      </Link>
       <h1 className={styles.title}>{t('title')}</h1>
       <Display />
       <NotificationPrefs emailVerified={me.data.email_verified} />

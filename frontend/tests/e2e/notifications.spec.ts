@@ -161,13 +161,15 @@ test('push offered after a bet, then set kind by kind in the settings', async ({
   });
   await expect(settings).toContainText('Les notifications push arrivent sur cet appareil.');
 
-  const newsByMail = settings.getByRole('switch', { name: 'Nouveau prono par e-mail' });
-  await expect(newsByMail).toHaveAttribute('aria-checked', 'true');
-  await newsByMail.click();
-  await expect(newsByMail).toHaveAttribute('aria-checked', 'false');
+  // Her address is not confirmed yet: the e-mail switches wait, the push ones work at once.
+  await expect(settings.getByRole('switch', { name: 'Nouveau prono par e-mail' })).toBeDisabled();
+  const newsByPush = settings.getByRole('switch', { name: 'Nouveau prono par push' });
+  await expect(newsByPush).toHaveAttribute('aria-checked', 'true');
+  await newsByPush.click();
+  await expect(newsByPush).toHaveAttribute('aria-checked', 'false');
   await cami.reload();
-  await expect(newsByMail).toHaveAttribute('aria-checked', 'false');
-  await expect(settings.getByRole('switch', { name: 'Nouveau prono par push' })).toHaveAttribute(
+  await expect(newsByPush).toHaveAttribute('aria-checked', 'false');
+  await expect(settings.getByRole('switch', { name: 'Résultats par push' })).toHaveAttribute(
     'aria-checked',
     'true',
   );
@@ -194,6 +196,7 @@ test("the address check of Keycloak's e-mail opens the notification e-mails", as
   await cami.goto('/compte#notifications');
   const settings = cami.getByRole('region', { name: 'NOTIFICATIONS' });
   await expect(settings).toContainText("Ton adresse n'est pas encore confirmée");
+  await expect(settings.getByRole('switch', { name: 'Résultats par e-mail' })).toBeDisabled();
   await settings.getByRole('button', { name: "Renvoyer l'e-mail de confirmation" }).click();
   await expect(notes(cami)).toContainText("L'e-mail de confirmation vient de partir.");
   const link = await keycloakLinkInMail(email, SUBJECT, 2);
@@ -205,10 +208,14 @@ test("the address check of Keycloak's e-mail opens the notification e-mails", as
   await cami.getByRole('link', { name: 'Retour à Sibylle' }).click();
   await backOnSibylle(cami, testInfo);
   await expect(cami).toHaveURL(/\/compte$/);
-  await expect(settings.getByRole('switch', { name: 'Résultats par e-mail' })).toBeVisible();
+  await expect(settings.getByRole('switch', { name: 'Résultats par e-mail' })).toBeEnabled();
   await expect(settings).not.toContainText('pas encore confirmée');
   await expect(
     settings.getByRole('button', { name: "Renvoyer l'e-mail de confirmation" }),
   ).toBeHidden();
   expect((await call(cami, 'GET', '/me')).body.email_verified).toBe(true);
+
+  // Landed here without a newsroom, the way home is still there.
+  await cami.getByRole('link', { name: "Retour à l'accueil" }).click();
+  await expect(cami.getByRole('heading', { name: 'Bienvenue sur Sibylle' })).toBeVisible();
 });

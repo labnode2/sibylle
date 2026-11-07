@@ -206,13 +206,17 @@ export function Card({
   );
 }
 
-type ButtonVariant = 'primary' | 'secondary' | 'link';
+/** `danger` and `dangerSecondary`: red, for what is not undone lightly (deleting an account or
+ *  a newsroom), filled to confirm, outlined for the way in. */
+type ButtonVariant = 'primary' | 'secondary' | 'link' | 'danger' | 'dangerSecondary';
 
 const buttonClass = (variant: ButtonVariant, block?: boolean, className?: string) =>
   cx(
     styles.button,
-    variant === 'secondary' && styles.buttonSecondary,
+    (variant === 'secondary' || variant === 'dangerSecondary') && styles.buttonSecondary,
     variant === 'link' && styles.buttonLink,
+    variant === 'danger' && styles.buttonDanger,
+    variant === 'dangerSecondary' && styles.buttonDangerSecondary,
     block && styles.buttonBlock,
     className,
   );
@@ -584,10 +588,12 @@ export function Switch({
   checked,
   onChange,
   label,
+  disabled,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label: string;
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -596,6 +602,7 @@ export function Switch({
       aria-checked={checked}
       aria-label={label}
       className={styles.switch}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
     >
       <span className={styles.switchKnob} />

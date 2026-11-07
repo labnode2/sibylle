@@ -54,14 +54,14 @@ function DeleteNewsroom({ org }: { org: Org }) {
             >
               {t('parameters.delete.cancel')}
             </Button>
-            <Button type="submit" disabled={!confirmed || remove.isPending}>
+            <Button type="submit" variant="danger" disabled={!confirmed || remove.isPending}>
               {t('parameters.delete.confirmYes')}
             </Button>
           </div>
         </form>
       ) : (
         <div>
-          <Button variant="secondary" onClick={() => setAsking(true)}>
+          <Button variant="dangerSecondary" onClick={() => setAsking(true)}>
             {t('parameters.delete.open')}
           </Button>
         </div>

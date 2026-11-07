@@ -244,6 +244,21 @@
 .buttonBlock {
   width: 100%;
 }
+/* Red, for what is not undone lightly: filled to confirm, outlined for the way in. */
+.buttonDanger,
+.buttonDanger:hover {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: var(--on-ink);
+}
+.buttonDangerSecondary,
+.buttonDangerSecondary:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.buttonDangerSecondary:hover {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
 
 /* Fields: square, ink rule, mono caps label. */
 .field {
@@ -487,6 +502,10 @@
   content: '';
   position: absolute;
   inset: -12px -2px;
+}
+.switch:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 .switchRow .switch::before {
   content: none;
