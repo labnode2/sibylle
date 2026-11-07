@@ -1,0 +1,550 @@
+/* Sibylle's sign-in pages, in the app's Gazette style. The tokens come from
+   frontend/src/styles/tokens.css, the base from gazette.css, the components from
+   frontend/src/ui/ui.module.css and the page's column from frontend/src/features/auth/: change them
+   together. */
+
+/* Fonts: the files the app serves itself (fontsource 5.3.0), Latin character sets only. */
+@font-face {
+  font-family: 'Jacquard 12';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('../fonts/jacquard-12-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Jacquard 12';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('../fonts/jacquard-12-latin-ext-400-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Bricolage Grotesque Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('../fonts/bricolage-grotesque-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Bricolage Grotesque Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('../fonts/bricolage-grotesque-latin-ext-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('../fonts/geist-mono-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('../fonts/geist-mono-latin-500-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url('../fonts/geist-mono-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('../fonts/geist-mono-latin-700-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('../fonts/geist-mono-latin-ext-400-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('../fonts/geist-mono-latin-ext-700-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Tokens (canvas G-Style). Light, the app's own choice until it knows the account's; dark when
+   data-theme on <html> is "dark", or "auto" on a system that prefers dark. */
+:root {
+  color-scheme: light;
+  --paper: #f3f4fa;
+  --surface: #ffffff;
+  --ink: #15162d;
+  --ink-2: #4a4d6a;
+  --rule: #c9cbe4;
+  --grey: #e3e4eb;
+  --indigo: #4a50d0;
+  --mist: #8f94ff;
+  --on-ink: #ffffff;
+  --shadow: #15162d;
+  --gold: #f2c230;
+  --gold-line: #c99a18;
+  /* Red for what cannot be taken back, such as signing out. */
+  --danger: #c62f1a;
+
+  --font-title: 'Jacquard 12', 'Times New Roman', serif;
+  --font-text:
+    'Bricolage Grotesque Variable', 'Bricolage Grotesque', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+
+  --gutter: 20px;
+  --tap: 44px;
+  --page-max: 1200px;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #10111e;
+  --surface: #1a1c30;
+  --ink: #eceefa;
+  --ink-2: #a9acc8;
+  --rule: #3b3e5e;
+  --grey: #282a43;
+  --indigo: #9095ff;
+  --mist: #5b60d6;
+  --on-ink: #10111e;
+  --shadow: #05060d;
+  --danger: #ff6b57;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='auto'] {
+    color-scheme: dark;
+    --paper: #10111e;
+    --surface: #1a1c30;
+    --ink: #eceefa;
+    --ink-2: #a9acc8;
+    --rule: #3b3e5e;
+    --grey: #282a43;
+    --indigo: #9095ff;
+    --mist: #5b60d6;
+    --on-ink: #10111e;
+    --shadow: #05060d;
+    --danger: #ff6b57;
+  }
+}
+
+/* Base: paper, ink, square corners, 1 and 2 px rules, hard offset shadows only. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 16px/1.45 var(--font-text);
+}
+
+a {
+  color: var(--indigo);
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--ink);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 2px;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* The frame of the app's public pages (frontend/src/app/shell.module.css). */
+.page {
+  min-height: 100vh;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 0 var(--gutter) calc(24px + env(safe-area-inset-bottom));
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 16px;
+}
+
+@media (min-width: 1024px) {
+  .page {
+    padding: 0 32px 48px;
+  }
+}
+
+/* Masthead: « LA GAZETTE DE » over « Sibylle », the ball on the left, a double rule below. */
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 18px 0 12px;
+}
+
+.masthead-ball {
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+}
+
+.masthead-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.masthead-kicker {
+  font: 600 11px/1 var(--font-mono);
+  letter-spacing: 0.24em;
+  color: var(--ink-2);
+}
+
+.masthead-name {
+  font: 400 60px/0.9 var(--font-title);
+}
+
+/* Rules: a double rule (4 + 1 px) under the masthead. */
+.rule-double {
+  height: 2px;
+  border-top: 4px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  box-sizing: content-box;
+}
+
+/* The page's column (frontend/src/features/auth/auth.module.css). */
+.auth {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 440px;
+  margin: 8px auto 0;
+}
+
+.title {
+  font: 800 28px/1.05 var(--font-text);
+  letter-spacing: -0.025em;
+}
+
+.lead,
+.instruction {
+  color: var(--ink-2);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.note {
+  font: 500 11px/1.4 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+/* Several buttons side by side, the main one first. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* The account a page is about, once Keycloak knows it, and the way to start again. */
+.attempted {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  font: 500 12px/1.4 var(--font-mono);
+  color: var(--ink-2);
+}
+
+.attempted strong {
+  color: var(--ink);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* Buttons: ink for the main action, outline for the second, underlined link for the rest. */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--ink);
+  color: var(--on-ink);
+  font: 700 16px/1 var(--font-text);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button:hover {
+  color: var(--on-ink);
+}
+
+.button:disabled,
+.button[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.button-secondary {
+  min-height: var(--tap);
+  padding: 0 16px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.button-secondary:hover {
+  color: var(--ink);
+  background: var(--grey);
+}
+
+.button-link {
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--indigo);
+  font: 600 15px/1 var(--font-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.button-link:hover {
+  color: var(--ink);
+}
+
+.button-block {
+  width: 100%;
+}
+
+/* Signing out, which cannot be taken back (frontend/src/features/auth/logout.module.css). */
+.button-danger {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: var(--on-ink);
+}
+
+/* Fields: square, ink rule, mono caps label. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+fieldset.field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+fieldset.field > legend {
+  margin-bottom: 8px;
+  padding: 0;
+}
+
+.field-label,
+.kicker {
+  font: 600 11px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.field-input {
+  min-height: var(--tap);
+  width: 100%;
+  padding: 0 12px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font: 700 17px/1 var(--font-text);
+}
+
+textarea.field-input {
+  padding: 10px 12px;
+  line-height: 1.4;
+}
+
+.field-input[aria-invalid='true'] {
+  border-width: 2px;
+}
+
+.field-input:disabled {
+  background: var(--grey);
+}
+
+.field-hint,
+.field-error {
+  font: 500 11px/1.4 var(--font-mono);
+  color: var(--ink-2);
+}
+
+.field-error {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.kicker-indigo {
+  color: var(--indigo);
+}
+
+/* A box to tick, and the choices of a list. */
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  font: 500 15px/1.3 var(--font-text);
+  cursor: pointer;
+}
+
+.checkbox input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--ink);
+}
+
+/* A message from Keycloak (a wrong password, a link that left…), like the app's notes
+   (frontend/src/ui/toaster.module.css): a small card with a hard shadow and its mark. */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.alert-mark {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.alert-error .alert-mark {
+  background: var(--danger);
+}
+
+.alert-text {
+  flex: 1;
+  min-width: 0;
+  margin: 2px 0 0;
+  font: 600 14px/1.35 var(--font-text);
+  overflow-wrap: anywhere;
+}
+
+/* The base theme's show-password buttons need its icon font: the pages keep a plain field. */
+[data-password-toggle] {
+  display: none;
+}

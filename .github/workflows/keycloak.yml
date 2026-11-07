@@ -1,0 +1,61 @@
+# Keycloak theme: on every push to main and every pull request that touches the theme
+# (keycloak/), the Keycloak of production starts with it (keycloak/dev.sh), then every page and
+# e-mail of the theme is shown and checked (keycloak/check-theme.py): a template error would break
+# the sign-in of everyone. On main, once they show, the production machine updates itself
+# (deploy.yml): Keycloak reads the theme from that machine's copy of the repository, with no cache,
+# so nothing restarts. No image is built.
+name: Keycloak theme
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "keycloak/**"
+      - "crystal-ball-kit/src/crystal-ball.js"
+      - ".github/workflows/keycloak.yml"
+  pull_request:
+    paths:
+      - "keycloak/**"
+      - "crystal-ball-kit/src/crystal-ball.js"
+      - ".github/workflows/keycloak.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A new push to a pull request replaces its running run; on main, each commit keeps its own.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      # Keycloak's e-mails, read back by check-theme.py.
+      mailpit:
+        image: axllent/mailpit:v1.33.0
+        ports:
+          - 1025:1025
+          - 8025:8025
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Start Keycloak with the theme
+        run: keycloak/dev.sh start
+      - name: Show and check every page and e-mail
+        run: python3 -I keycloak/check-theme.py
+      - name: Keycloak's log
+        if: failure()
+        run: docker logs sibylle-keycloak-dev
+
+  # The machine updates itself (deploy.yml).
+  deploy:
+    name: Deploy
+    needs: check
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit

@@ -16,7 +16,7 @@ E2E_WEB_PORT ?= 5180
 .DEFAULT_GOAL := help
 
 .PHONY: help setup env install db stop migrate seed dev api worker web \
-	check check-backend check-frontend e2e
+	check check-backend check-frontend e2e keycloak keycloak-stop check-keycloak
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -89,3 +89,16 @@ check-frontend:
 
 e2e: ## Parcours de bout en bout (Playwright)
 	cd frontend && SIBYLLE_WEB_PORT=$(E2E_WEB_PORT) npm run e2e
+
+# Thème Keycloak (keycloak/README.md) : le Keycloak de la production, en local, avec le thème et
+# le realm de keycloak/dev-realm.json ; ses e-mails arrivent dans Mailpit. Une retouche du thème
+# se voit au rechargement de la page.
+
+keycloak: db ## Lance un Keycloak local avec le thème (http://localhost:8280)
+	keycloak/dev.sh start
+
+keycloak-stop: ## Arrête le Keycloak local
+	keycloak/dev.sh stop
+
+check-keycloak: ## Affiche et vérifie chaque page et e-mail du thème (après make keycloak)
+	python3 -I keycloak/check-theme.py

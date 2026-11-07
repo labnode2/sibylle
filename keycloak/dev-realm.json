@@ -1,0 +1,64 @@
+{
+  "realm": "sibylle",
+  "displayName": "Sibylle",
+  "enabled": true,
+  "loginTheme": "sibylle",
+  "emailTheme": "sibylle",
+  "internationalizationEnabled": true,
+  "supportedLocales": ["fr"],
+  "defaultLocale": "fr",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": false,
+  "verifyEmail": false,
+  "passwordPolicy": "length(8)",
+  "actionTokenGeneratedByUserLifespan": 3600,
+  "actionTokenGeneratedByAdminLifespan": 86400,
+  "smtpServer": {
+    "host": "127.0.0.1",
+    "port": "1025",
+    "from": "noreply@sibylle.test",
+    "fromDisplayName": "La Gazette de Sibylle"
+  },
+  "clients": [
+    {
+      "clientId": "sibylle-dev",
+      "name": "Sibylle",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "rootUrl": "http://localhost:5173",
+      "baseUrl": "/",
+      "redirectUris": ["http://localhost:5173/*"],
+      "webOrigins": ["http://localhost:5173"],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:5173/*"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "camille@sibylle.test",
+      "email": "camille@sibylle.test",
+      "emailVerified": true,
+      "firstName": "Camille",
+      "lastName": "Martin",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "gazette-camille", "temporary": false }]
+    },
+    {
+      "username": "dominique@sibylle.test",
+      "email": "dominique@sibylle.test",
+      "emailVerified": false,
+      "firstName": "Dominique",
+      "lastName": "Petit",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "gazette-dominique", "temporary": false }],
+      "requiredActions": ["UPDATE_PASSWORD"]
+    }
+  ]
+}
