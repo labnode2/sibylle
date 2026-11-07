@@ -186,6 +186,42 @@ def _secret_code_add(args: argparse.Namespace) -> None:
     asyncio.run(run())
 
 
+def _orgs_deleted(_: argparse.Namespace) -> None:
+    from sibylle.db.session import dispose_engine, transaction
+    from sibylle.services.orgs import deleted_orgs
+
+    async def run() -> None:
+        try:
+            async with transaction() as session:
+                found = await deleted_orgs(session)
+                for org in found:
+                    assert org.deleted_at is not None
+                    print(f"{org.id}  {org.deleted_at:%Y-%m-%d %H:%M %Z}  {org.title}")
+            if not found:
+                print("aucune rédaction supprimée")
+        finally:
+            await dispose_engine()
+
+    asyncio.run(run())
+
+
+def _orgs_restore(args: argparse.Namespace) -> None:
+    from sibylle.db.session import dispose_engine, transaction
+    from sibylle.services.orgs import restore_org
+
+    async def run() -> None:
+        try:
+            async with transaction() as session:
+                org = await restore_org(session, args.org_id)
+                print(f"rédaction restaurée : {org.title}")
+        except LookupError as error:
+            raise SystemExit(f"aucune rédaction supprimée : {args.org_id}") from error
+        finally:
+            await dispose_engine()
+
+    asyncio.run(run())
+
+
 def _b64url(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
 
@@ -290,6 +326,14 @@ def build_parser() -> argparse.ArgumentParser:
         "item_key", help="clé d'un objet du catalogue, par exemple ball-halloween"
     )
 
+    orgs_parser = commands.add_parser("orgs", help="rédactions")
+    orgs_commands = orgs_parser.add_subparsers(dest="orgs_command", required=True)
+    orgs_commands.add_parser("deleted", help="liste les rédactions supprimées")
+    restore_parser = orgs_commands.add_parser(
+        "restore", help="restaure une rédaction supprimée, telle qu'elle était"
+    )
+    restore_parser.add_argument("org_id", type=uuid.UUID, help="identifiant de la rédaction")
+
     commands.add_parser("seed-demo", help="crée la rédaction de démonstration (hors production)")
     commands.add_parser(
         "gen-secrets",
@@ -313,6 +357,8 @@ _HANDLERS: dict[tuple[str, str | None], Callable[[argparse.Namespace], None]] = 
     ("games", "reveal-pixel"): _games_reveal_pixel,
     ("seasons", "close"): _seasons_close,
     ("secret-code", "add"): _secret_code_add,
+    ("orgs", "deleted"): _orgs_deleted,
+    ("orgs", "restore"): _orgs_restore,
     ("seed-demo", None): _seed_demo,
     ("gen-secrets", None): _gen_secrets,
 }

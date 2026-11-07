@@ -47,6 +47,7 @@ Enveloppe commune : `{"type": "event", "topic": "<sujet>", "event": "<nom>", "at
 | `leaderboard.changed` | `org` | `{}` ; le client recharge le classement affiché |
 | `member.updated` | `org` | `{member: MemberPublic}` (pseudo, avatar, rôle) |
 | `member.joined`, `member.left` | `org` | `{member: MemberPublic}` |
+| `org.deleted` | `org` | `{org_id}` ; la rédaction en chef l'a supprimée : le client oublie la rédaction et revient à l'accueil |
 | `balance.changed` | `me` | `{org_id, balance, season_score}` |
 | `coins.granted` | `me` | `{org_id, week_start, amount, coins}` ; le client recharge la rédaction et ouvre la fenêtre « Bonne nouvelle » |
 | `games.runner.updated` | `org` | `{week_start, top}` |

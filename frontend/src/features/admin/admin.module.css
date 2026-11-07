@@ -376,3 +376,35 @@
   margin: 0;
   font: 600 15px/1.45 var(--font-text);
 }
+
+/* « Paramètres »: a paragraph of explanation, then deleting the newsroom, confirmed by its
+   name, on the red of what is not undone lightly. */
+.text {
+  margin: 0;
+  font: 400 15px/1.5 var(--font-text);
+}
+
+.danger {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 2px solid var(--danger);
+  background: var(--surface);
+}
+
+.danger p {
+  margin: 0;
+  font: 600 15px/1.45 var(--font-text);
+  color: var(--danger);
+}
+
+.danger button[type='submit'] {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: #ffffff;
+}
+
+.danger button[type='submit']:disabled {
+  opacity: 0.45;
+}

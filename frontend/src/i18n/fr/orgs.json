@@ -87,5 +87,6 @@
     "send": "Envoyer l'invitation",
     "sent": "Invitation envoyée à {{email}}.",
     "code": "CODE D'ACCÈS"
-  }
+  },
+  "deleted": "{{org}} a été supprimée par sa rédaction en chef."
 }

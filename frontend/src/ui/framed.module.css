@@ -19,3 +19,153 @@
 .dotted {
   border: 3px dotted var(--indigo);
 }
+
+/* The gold frame: a bevelled gold border, light on the top and left, deep on the bottom and
+   right, on a pale gold mat and inside a thin dark line. */
+.gold {
+  border: 4px solid;
+  border-color: #f7da6e #a8740f #a8740f #f7da6e;
+  background: #fbe9a6;
+  box-shadow:
+    0 0 0 2px #5c3d05,
+    inset 0 0 0 1px #c99a18;
+}
+
+/* The animations around the avatar (and its frame). They are drawn outside the avatar's box,
+   so that the layout does not move whether a member wears one or not. */
+.animated {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+  isolation: isolate;
+}
+
+/* The sun: gold rays turning slowly behind the avatar, in steps, as pixel art turns. */
+.sun::before {
+  content: '';
+  position: absolute;
+  inset: -22%;
+  z-index: -1;
+  background: repeating-conic-gradient(from 0deg, var(--gold) 0deg 12deg, transparent 12deg 30deg);
+  mask: radial-gradient(circle closest-side, #000 55%, transparent 100%);
+  animation: turn 12s steps(48) infinite;
+}
+
+.sun::after {
+  content: '';
+  position: absolute;
+  inset: -6%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side, #fff4bf, rgb(242 194 48 / 0%));
+  animation: glow 3s steps(6) infinite alternate;
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes glow {
+  from {
+    opacity: 0.5;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* The shine: a band of light that crosses the avatar now and then. */
+.shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+      115deg,
+      transparent 0 42%,
+      rgb(255 255 255 / 85%) 42% 50%,
+      rgb(255 255 255 / 45%) 50% 54%,
+      transparent 54% 100%
+    )
+    no-repeat;
+  background-size: 300% 100%;
+  background-position: 120% 0;
+  mix-blend-mode: screen;
+  animation: sweep 3.2s steps(16) infinite;
+}
+
+@keyframes sweep {
+  0% {
+    background-position: 120% 0;
+  }
+
+  45%,
+  100% {
+    background-position: -20% 0;
+  }
+}
+
+/* The sparkles: four pixel stars around the avatar, twinkling one after the other. */
+.sparkles > .spark {
+  position: absolute;
+  width: max(7px, 22%);
+  aspect-ratio: 1;
+  background: var(--gold);
+  clip-path: polygon(
+    40% 0,
+    60% 0,
+    60% 40%,
+    100% 40%,
+    100% 60%,
+    60% 60%,
+    60% 100%,
+    40% 100%,
+    40% 60%,
+    0 60%,
+    0 40%,
+    40% 40%
+  );
+  pointer-events: none;
+  animation: twinkle 2.4s steps(4) infinite;
+}
+
+.sparkles > .spark[data-spark='0'] {
+  top: -12%;
+  left: -12%;
+}
+
+.sparkles > .spark[data-spark='1'] {
+  top: -8%;
+  right: -14%;
+  background: var(--mist);
+  animation-delay: -0.6s;
+}
+
+.sparkles > .spark[data-spark='2'] {
+  right: -12%;
+  bottom: -12%;
+  animation-delay: -1.2s;
+}
+
+.sparkles > .spark[data-spark='3'] {
+  bottom: -6%;
+  left: -14%;
+  background: var(--mist);
+  animation-delay: -1.8s;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    transform: scale(0.4);
+    opacity: 0.2;
+  }
+
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

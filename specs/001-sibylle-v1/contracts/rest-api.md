@@ -57,6 +57,7 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 | POST | `/orgs` | Compte | `{title, background_key, logo?, pseudo, avatar}` → `201 {org: Org, membership: MemberSelf}` ; le créateur est `editor` ; sans `logo`, la rédaction prend le logo par défaut |
 | GET | `/orgs/{org}` | Membre | → `Org` (carte, réglages de lauriers, charte, mot de la rédaction en chef, `member_count`, `edition_number` : le jour de la rédaction, « N° 305 », `my_membership`) |
 | PATCH | `/orgs/{org}` | Réd. chef | `{title?, logo?, background_key?, starting_balance?, max_base_gain?, early_bird_pct?, early_bird_count?, editor_note?, charter?}` → `Org` ; `logo: null` remet le logo par défaut (`OrgCard.logo` n'est jamais `null`) |
+| DELETE | `/orgs/{org}` | Réd. chef | → `204` ; suppression douce : la rédaction disparaît aussitôt pour tous ses membres (`404` partout), et ni ses invitations ni son code ne laissent entrer ; rien n'est effacé, et `sibylle orgs restore <org>` la rend telle qu'elle était (`sibylle orgs deleted` liste les rédactions supprimées) |
 | POST | `/orgs/{org}/access-code` | Réd. chef | → `{access_code}` (nouveau code ; l'ancien ne marche plus) |
 | DELETE | `/orgs/{org}/access-code` | Réd. chef | → `204` (désactive) |
 | POST | `/join/preview` | Compte | `{token}` ou `{code}` → `{org: OrgCard, member_count, places_left, invited_by_pseudo, charter}` ou `409 invitation_invalid` |
@@ -66,7 +67,7 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 | DELETE | `/orgs/{org}/invitations/{id}` | Réd. chef | → `204` (révoque) |
 | GET | `/orgs/{org}/members` | Membre | → `[MemberPublic + {streak}]` : `streak`, la chaîne de victoires en cours (research.md J8) |
 | GET | `/orgs/{org}/members/{member}` | Membre | → `PressCard` (carte de presse : pseudo, avatar, cadre, rôle, arrivée, statistiques `{laurels, pronos_played, settled, wins, success_rate, streak, best_streak}`, trophées `{id, season, score, rank, podium}`, collection, `showcase`) ; tout membre de la rédaction peut la lire |
-| PATCH | `/orgs/{org}/members/me` | Membre | `{pseudo?, avatar?, avatar_frame_item_id?, showcase?: [{kind: "item" \| "trophy", id}], card_public?}` → `MemberSelf` ; `showcase` remplace toute la sélection : 3 au plus (`fields.showcase` : `too_many`, `duplicate`, `not_owned`) ; `card_public` rend la carte publique ou privée (US15), et la première mise en public tire `card_token` |
+| PATCH | `/orgs/{org}/members/me` | Membre | `{pseudo?, avatar?, avatar_frame_item_id?, avatar_animation_item_id?, showcase?: [{kind: "item" \| "trophy", id}], card_public?}` → `MemberSelf` ; `showcase` remplace toute la sélection : 3 au plus (`fields.showcase` : `too_many`, `duplicate`, `not_owned`) ; `card_public` rend la carte publique ou privée (US15), et la première mise en public tire `card_token` |
 | DELETE | `/orgs/{org}/members/me` | Membre | → `204` (quitter ; la dernière personne qui part ferme la rédaction) ; `409 last_editor` avec `fields.org_id` |
 | PATCH | `/orgs/{org}/members/{member}/role` | Réd. chef | `{role}` → `MemberPublic` ; `409 last_editor` si on retire la dernière |
 | DELETE | `/orgs/{org}/members/{member}` | Réd. chef | → `204` (retire un membre) |
@@ -79,7 +80,7 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 
 `PressCard.showcase` = `[{kind: "item", item} | {kind: "trophy", trophy}]`, dans l'ordre choisi ; un objet qui n'appartient plus au membre n'y figure pas.
 
-`MemberPublic` = `{id, pseudo, avatar, frame, role, joined_at}`, jamais de nom, prénom ni e-mail. `MemberSelf` ajoute `balance` (lauriers verts), `gold` (lauriers en or : solde plus mises en jeu), `season_score`, `coins`, `unlocked_colors`, `card_public` et `card_token` (l'adresse de la carte publique est `/carte/<card_token>` ; `null` tant que la carte n'a jamais été publique).
+`MemberPublic` = `{id, pseudo, avatar, frame, animation, role, joined_at}` (`frame` et `animation` : les clés du cadre et de l'animation portés, ou `null`), jamais de nom, prénom ni e-mail. `MemberSelf` ajoute `balance` (lauriers verts), `gold` (lauriers en or : solde plus mises en jeu), `season_score`, `coins`, `unlocked_colors`, `card_public` et `card_token` (l'adresse de la carte publique est `/carte/<card_token>` ; `null` tant que la carte n'a jamais été publique).
 
 ## Pronos et paris
 
@@ -124,7 +125,7 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 | GET | `/orgs/{org}/seasons/current` | Membre | → `{year, name, starts_at, ends_at}` |
 | GET | `/orgs/{org}/reports` | Réd. chef | `?state=open` → `[Report]` |
 | POST | `/orgs/{org}/reports/{id}/handle` | Réd. chef | `{state: "resolved" \| "dismissed", note?}` → `Report` |
-| GET | `/orgs/{org}/catalog` | Membre | → `[{item, price, regular_price, discount_pct, discount_until, owned}]` : ce qui est à vendre (couleurs, cadres), plus les objets sans prix que le membre a débloqués ; les boules ne sont jamais à vendre. `price` est le prix de cette semaine : pour la promotion de la semaine (un seul objet), `discount_pct` vaut 20, 30, 40 ou 50, `regular_price` le prix habituel et `discount_until` le lundi suivant 00:00 (Paris) ; sinon ces trois champs valent `null` |
+| GET | `/orgs/{org}/catalog` | Membre | → `[{item, price, regular_price, discount_pct, discount_until, owned}]` : ce qui est à vendre (couleurs, cadres, animations), plus les objets sans prix que le membre a débloqués ; les boules ne sont jamais à vendre. `price` est le prix de cette semaine : pour la promotion de la semaine (un seul objet), `discount_pct` vaut 20, 30, 40 ou 50, `regular_price` le prix habituel et `discount_until` le lundi suivant 00:00 (Paris) ; sinon ces trois champs valent `null` |
 | POST | `/orgs/{org}/catalog/{item}/purchase` | Membre | `{price?}` (le prix affiché) → `201 {owned_item, coins}` ; payé en pièces, au prix de la semaine ; `insufficient_coins` ; `409 price_changed` si `price` n'est plus le prix de la semaine |
 | GET | `/orgs/{org}/coins/weekly` | Membre | → `WeeklyCoins` ou `null` : la dernière conversion pas encore annoncée (montant > 0) |
 | POST | `/orgs/{org}/coins/weekly/seen` | Membre | `{week_start}` → `204` ; la fenêtre ne revient plus pour cette semaine ni les précédentes |
@@ -159,7 +160,7 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 | GET | `/ws` | Compte | passage en WebSocket, voir [realtime.md](realtime.md) |
 | GET | `/public/cards/{token}` | Public | → `PublicCard` (US15) ; `404 not_found` si la carte est privée, si son membre a quitté la rédaction ou supprimé son compte, ou si le jeton est inconnu ; `429 rate_limited` au-delà de 600 lectures par IP en 10 minutes |
 
-`PublicCard` = `{newsroom: {title, logo}, pseudo, avatar, frame, role, joined_at, card_number, stats, showcase}` : la carte seule, sans l'identifiant du membre, ses trophées ni sa collection hors des objets mis en avant.
+`PublicCard` = `{newsroom: {title, logo}, pseudo, avatar, frame, animation, role, joined_at, card_number, stats, showcase}` : la carte seule, sans l'identifiant du membre, ses trophées ni sa collection hors des objets mis en avant.
 
 ## Tests de contrat attendus
 

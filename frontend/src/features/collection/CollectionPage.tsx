@@ -1,5 +1,6 @@
-// The collection: colours for the pixel editor, avatar frames and crystal balls, bought with
-// coins (laurels and score never move), the deal of the week, and secret codes for surprises.
+// The collection: colours for the pixel editor, avatar frames and animations, crystal balls,
+// bought with coins (laurels and score never move), the deal of the week, and secret codes for
+// surprises.
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
@@ -13,7 +14,7 @@ import { useCatalog, useCollectionActions, type CatalogEntry } from '../profile/
 import { ItemPreview } from './ItemPreview';
 import styles from './collection.module.css';
 
-const KINDS = ['color', 'frame', 'ball'] as const;
+const KINDS = ['color', 'frame', 'animation', 'ball'] as const;
 
 type Avatar = Parameters<typeof ItemPreview>[0]['avatar'];
 

@@ -32,6 +32,7 @@ class Action(StrEnum):
     SCHEDULE_GAMES = "schedule_games"
     DISCUSS = "discuss"
     MODERATE_MESSAGES = "moderate_messages"
+    DELETE_NEWSROOM = "delete_newsroom"
 
 
 _EVERYONE = frozenset(Role)
@@ -63,6 +64,8 @@ _ALLOWED: dict[Action, frozenset[Role]] = {
     Action.DISCUSS: _EVERYONE,
     # The editor moderates the newsroom (the charter); anyone deletes their own messages.
     Action.MODERATE_MESSAGES: _EDITOR,
+    # A soft deletion: the newsroom disappears for everyone, and can still be restored.
+    Action.DELETE_NEWSROOM: _EDITOR,
 }
 
 

@@ -9,11 +9,11 @@ import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
 import type { Org } from '../../api/types';
-import { Chip, Icon } from '../../ui/components';
+import { Chip, CountBadge, Icon } from '../../ui/components';
 import { Streak } from '../../ui/Flame';
 import { FramedAvatar } from '../../ui/FramedAvatar';
 import { PixelImage } from '../../ui/PixelImage';
-import { useMembers, type Role } from '../admin/api';
+import { useMembers, useReports, type Role } from '../admin/api';
 import { useMe } from '../auth/api';
 import { useOrg } from './api';
 import styles from './newsroom.module.css';
@@ -118,6 +118,8 @@ export function NewsroomSwitcher({ org, align = 'end' }: { org: Org; align?: 'st
 function OrgCard({ org, editors }: { org: Org; editors: string[] }) {
   const { t } = useTranslation('orgs');
   const base = `/o/${org.id}`;
+  const editor = org.my_membership.role === 'editor';
+  const reports = useReports(org.id, editor).data?.length ?? 0;
   return (
     <div className={styles.card}>
       <div className={`${styles.band} bg-${org.background_key}`} aria-hidden="true">
@@ -133,7 +135,7 @@ function OrgCard({ org, editors }: { org: Org; editors: string[] }) {
             ` · ${t('newsroom.editors', { names: editors.join(', ').toUpperCase() })}`}
         </p>
       </div>
-      {org.my_membership.role === 'editor' && (
+      {editor && (
         <>
           <div className={styles.row}>
             <span className={styles.rowText}>
@@ -155,6 +157,7 @@ function OrgCard({ org, editors }: { org: Org; editors: string[] }) {
           )}
           <Link to={`${base}/reglages`} className={styles.settings}>
             {t('newsroom.settings')}
+            <CountBadge count={reports} label={t('common:tabs.reports', { count: reports })} />
             <span aria-hidden="true"> →</span>
           </Link>
         </>
@@ -194,7 +197,12 @@ export function NewsroomPage() {
         <ul className={styles.directory}>
           {sorted.map((member) => (
             <li key={member.id} className={styles.line}>
-              <FramedAvatar image={member.avatar} frame={member.frame ?? null} size={32} />
+              <FramedAvatar
+                image={member.avatar}
+                frame={member.frame ?? null}
+                animation={member.animation ?? null}
+                size={32}
+              />
               <Link to={`/o/${orgId}/membres/${member.id}`} className={styles.member}>
                 {member.id === me ? t('newsroom.you', { pseudo: member.pseudo }) : member.pseudo}
               </Link>

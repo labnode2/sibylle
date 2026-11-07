@@ -31,6 +31,7 @@ MATRIX: dict[Action, set[Role]] = {
     Action.SCHEDULE_GAMES: {EDITOR},
     Action.DISCUSS: {READER, JOURNALIST, EDITOR},
     Action.MODERATE_MESSAGES: {EDITOR},
+    Action.DELETE_NEWSROOM: {EDITOR},
 }
 
 

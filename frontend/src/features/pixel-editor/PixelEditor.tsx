@@ -46,6 +46,8 @@ export type PixelEditorProps = {
   /** Each change of the drawing, for a page that shows it as it goes. */
   onChange?: (image: Drawing) => void;
   onCancel?: () => void;
+  /** The save button waits until the drawing differs from `initial`. */
+  requireChange?: boolean;
   busy?: boolean;
   error?: string | null;
   /** `screen`: the editor is the whole page (the avatar); `box`: it sits inside a form. */
@@ -74,6 +76,7 @@ export function PixelEditor({
   onSave,
   onChange,
   onCancel,
+  requireChange = false,
   busy,
   error,
   layout = 'box',
@@ -81,6 +84,8 @@ export function PixelEditor({
   const { t } = useTranslation('pixel');
   const [size, setSize] = useState<Size>(initial?.size ?? sizes[0]!);
   const [pixels, setPixels] = useState(() => (initial ? decodePixels(initial) : blank(size)));
+  // The drawing it started from, encoded as the editor encodes, to tell whether it changed.
+  const [start] = useState(() => ({ size, pixels: encodePixels(pixels) }));
   // Drawings before (undo) and after (redo) the one on screen.
   const [past, setPast] = useState<Uint8Array[]>([]);
   const [future, setFuture] = useState<Uint8Array[]>([]);
@@ -283,6 +288,7 @@ export function PixelEditor({
     t(`colors.${index}`, { defaultValue: t('color', { index }) });
   const scale = previewScale(size);
   const empty = pixels.every((index) => index === 0);
+  const changed = image.size !== start.size || image.pixels !== start.pixels;
 
   return (
     <section
@@ -299,7 +305,11 @@ export function PixelEditor({
             <span />
           )}
           <h2 className={styles.title}>{title}</h2>
-          <Button className={styles.save} onClick={() => onSave(image)} disabled={busy}>
+          <Button
+            className={styles.save}
+            onClick={() => onSave(image)}
+            disabled={busy || (requireChange && !changed)}
+          >
             {saveLabel}
           </Button>
         </header>

@@ -27,6 +27,7 @@ import { AdminLayout } from '../features/admin/AdminLayout';
 import { GameSchedulePage } from '../features/admin/GameSchedulePage';
 import { MembersPage } from '../features/admin/MembersPage';
 import { OrgSettingsPage } from '../features/admin/OrgSettingsPage';
+import { ParametersPage } from '../features/admin/ParametersPage';
 import { ReportsPage } from '../features/admin/ReportsPage';
 import { CollectionPage } from '../features/collection/CollectionPage';
 import { LeaderboardPage } from '../features/leaderboard/LeaderboardPage';
@@ -161,6 +162,7 @@ export const router = createBrowserRouter([
               { path: 'membres', element: <MembersPage /> },
               { path: 'jeux', element: <GameSchedulePage /> },
               { path: 'signalements', element: <ReportsPage /> },
+              { path: 'parametres', element: <ParametersPage /> },
             ],
           },
         ],

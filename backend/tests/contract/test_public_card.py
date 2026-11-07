@@ -21,6 +21,7 @@ CARD_KEYS = {
     "pseudo",
     "avatar",
     "frame",
+    "animation",
     "role",
     "joined_at",
     "card_number",

@@ -393,6 +393,32 @@
   padding: 2px 4px;
 }
 
+/* A count in ink: beside a link, or on the corner of a tab's icon. */
+.badge {
+  display: inline-block;
+  min-width: 20px;
+  padding: 3px 5px;
+  background: var(--ink);
+  color: var(--on-ink);
+  text-align: center;
+  font: 700 11px/1 var(--font-mono);
+  letter-spacing: 0;
+}
+
+.tabIcon {
+  position: relative;
+  display: inline-flex;
+}
+
+.tabBadge {
+  position: absolute;
+  top: -6px;
+  left: 16px;
+  min-width: 18px;
+  padding: 2px 4px;
+  font-size: 10px;
+}
+
 /* Laurels and coins: value in Geist Mono, then the sprite. */
 .laurel {
   display: inline-flex;

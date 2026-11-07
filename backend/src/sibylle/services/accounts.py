@@ -228,6 +228,7 @@ async def delete_account(
         member.pseudo = ANONYMOUS_PSEUDO
         member.avatar = DEFAULT_AVATAR
         member.avatar_frame_item_id = None
+        member.avatar_animation_item_id = None
         member.showcase = []
         if member.status == "active":
             await orgs.depart(session, member, "anonymized")

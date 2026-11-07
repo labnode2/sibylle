@@ -1,6 +1,6 @@
 // The editor's settings, under /o/:orgId/reglages, reached from « La rédaction »: the card and
-// the laurels, the members, the games of each week, the reports. Other roles get a short notice
-// (the server refuses them anyway).
+// the laurels, the members, the games of each week, the reports, and the parameters (deleting
+// the newsroom). Other roles get a short notice (the server refuses them anyway).
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useParams } from 'react-router';
 
@@ -50,6 +50,9 @@ export function AdminLayout() {
         </NavLink>
         <NavLink to={`${base}/signalements`} className={link}>
           {t('tabs.reports')} <OpenReports orgId={orgId} />
+        </NavLink>
+        <NavLink to={`${base}/parametres`} className={link}>
+          {t('tabs.parameters')}
         </NavLink>
       </nav>
       <Outlet />

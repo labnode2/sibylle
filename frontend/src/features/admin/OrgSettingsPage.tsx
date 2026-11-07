@@ -1,10 +1,12 @@
 // The card and the laurels (canvas G-Orga): logo, background and title; the gain ceiling, the
 // starting balance and the early-bird bonus; the editor's note, the charter and the sections.
+// The logo is saved on its own, as soon as it is drawn; « Enregistrer les réglages » saves the
+// rest, and only wakes up once something differs from what is saved.
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 
-import type { Org } from '../../api/types';
+import type { Org, PixelImage as Drawing } from '../../api/types';
 import { Button, Field, Icon, Kicker, Stepper, uiStyles } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
 import { useFormErrors } from '../forms';
@@ -12,7 +14,7 @@ import { useContent, useOrg } from '../orgs/api';
 import { AvatarPicker, BackgroundPicker } from '../orgs/pickers';
 import { PixelEditor } from '../pixel-editor/PixelEditor';
 import { useSections } from '../pronos/api';
-import { useSectionActions, useUpdateOrg } from './api';
+import { useSectionActions, useUpdateOrg, type OrgPatch } from './api';
 import styles from './admin.module.css';
 
 function Setting({ label, hint, children }: { label: string; hint: string; children: ReactNode }) {
@@ -27,6 +29,56 @@ function Setting({ label, hint, children }: { label: string; hint: string; child
   );
 }
 
+/** The newsroom's logo, saved as soon as it is drawn (or chosen among several templates). */
+function LogoSetting({ orgId, org }: { orgId: string; org: Org }) {
+  const { t } = useTranslation('admin');
+  const content = useContent();
+  const save = useUpdateOrg(orgId, 'admin:toasts.logoSaved');
+  const errors = useFormErrors(save.error);
+  const [drawing, setDrawing] = useState(false);
+  const templates = content.data?.logos ?? [];
+  const take = (logo: Drawing, onDone?: () => void) => {
+    if (logo.size === org.logo.size && logo.pixels === org.logo.pixels) return onDone?.();
+    save.mutate({ logo }, { onSuccess: onDone });
+  };
+
+  return (
+    <>
+      <span id="admin-logo" className={styles.label}>
+        {t('card.logo')}
+      </span>
+      {drawing ? (
+        <PixelEditor
+          initial={org.logo}
+          title={t('card.drawLogo')}
+          saveLabel={t('card.saveLogo')}
+          requireChange
+          busy={save.isPending}
+          error={errors.field('logo')}
+          onCancel={() => setDrawing(false)}
+          onSave={(image) => take(image, () => setDrawing(false))}
+        />
+      ) : (
+        <div className={styles.inline}>
+          <PixelImage image={org.logo} size={64} avatar={false} label={t('card.currentLogo')} />
+          {/* With a single template, the default logo, there is nothing to choose. */}
+          {templates.length > 1 && (
+            <AvatarPicker
+              templates={templates}
+              value={org.logo}
+              onChange={(image) => take(image)}
+              labelId="admin-logo"
+            />
+          )}
+          <Button variant="secondary" onClick={() => setDrawing(true)}>
+            {t('card.drawLogo')}
+          </Button>
+        </div>
+      )}
+    </>
+  );
+}
+
 function SettingsForm({ orgId, org }: { orgId: string; org: Org }) {
   const { t } = useTranslation('admin');
   const content = useContent();
@@ -34,28 +86,29 @@ function SettingsForm({ orgId, org }: { orgId: string; org: Org }) {
   const errors = useFormErrors(update.error);
   const [title, setTitle] = useState(org.title);
   const [background, setBackground] = useState(org.background_key);
-  const [logo, setLogo] = useState(org.logo);
   const [maxGain, setMaxGain] = useState(org.max_base_gain);
   const [starting, setStarting] = useState(org.starting_balance);
   const [earlyPct, setEarlyPct] = useState(org.early_bird_pct);
   const [earlyCount, setEarlyCount] = useState(org.early_bird_count);
   const [note, setNote] = useState(org.editor_note ?? '');
   const [charter, setCharter] = useState(org.charter);
-  const [drawingLogo, setDrawingLogo] = useState(false);
+
+  // Only what differs from the saved settings is sent; nothing differs, nothing to save.
+  const changes: OrgPatch = {};
+  if (title.trim() !== org.title) changes.title = title.trim();
+  if (background !== org.background_key) changes.background_key = background;
+  if (maxGain !== org.max_base_gain) changes.max_base_gain = maxGain;
+  if (starting !== org.starting_balance) changes.starting_balance = starting;
+  if (earlyPct !== org.early_bird_pct) changes.early_bird_pct = earlyPct;
+  if (earlyCount !== org.early_bird_count) changes.early_bird_count = earlyCount;
+  if ((note.trim() || null) !== (org.editor_note ?? null))
+    changes.editor_note = note.trim() || null;
+  if (charter.trim() !== org.charter) changes.charter = charter.trim();
+  const dirty = Object.keys(changes).length > 0;
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    update.mutate({
-      title: title.trim(),
-      background_key: background,
-      logo,
-      max_base_gain: maxGain,
-      starting_balance: starting,
-      early_bird_pct: earlyPct,
-      early_bird_count: earlyCount,
-      editor_note: note.trim() || null,
-      charter: charter.trim(),
-    });
+    if (dirty && !update.isPending) update.mutate(changes);
   };
 
   return (
@@ -65,7 +118,7 @@ function SettingsForm({ orgId, org }: { orgId: string; org: Org }) {
         <div className={styles.preview} aria-hidden="true">
           <div className={`${styles.previewBand} bg-${background}`}>
             <span className={styles.previewLogo}>
-              <PixelImage image={logo} size={64} avatar={false} />
+              <PixelImage image={org.logo} size={64} avatar={false} />
             </span>
           </div>
           <div className={styles.previewBody}>
@@ -80,34 +133,7 @@ function SettingsForm({ orgId, org }: { orgId: string; org: Org }) {
           onChange={(event) => setTitle(event.target.value)}
           error={errors.field('title')}
         />
-        <span id="admin-logo" className={styles.label}>
-          {t('card.logo')}
-        </span>
-        {drawingLogo ? (
-          <PixelEditor
-            initial={logo}
-            title={t('card.drawLogo')}
-            saveLabel={t('card.takeLogo')}
-            onCancel={() => setDrawingLogo(false)}
-            onSave={(image) => {
-              setLogo(image);
-              setDrawingLogo(false);
-            }}
-          />
-        ) : (
-          <div className={styles.inline}>
-            <PixelImage image={logo} size={64} label={t('card.currentLogo')} />
-            <AvatarPicker
-              templates={content.data?.logos ?? []}
-              value={logo}
-              onChange={setLogo}
-              labelId="admin-logo"
-            />
-            <Button variant="secondary" onClick={() => setDrawingLogo(true)}>
-              {t('card.drawLogo')}
-            </Button>
-          </div>
-        )}
+        <LogoSetting orgId={orgId} org={org} />
         <span id="admin-background" className={styles.label}>
           {t('card.background')}
         </span>
@@ -191,7 +217,7 @@ function SettingsForm({ orgId, org }: { orgId: string; org: Org }) {
         </label>
       </section>
 
-      <Button type="submit" disabled={update.isPending}>
+      <Button type="submit" disabled={!dirty || update.isPending}>
         {t('save')}
       </Button>
     </form>

@@ -101,7 +101,7 @@ test('a press card, an avatar drawn by hand and a collection', async ({ browser 
 
   // Back on the card: the colour is in the palette; the laurels statement has no purchase.
   await cami.getByRole('link', { name: 'Retour à ma carte de presse' }).click();
-  await expect(cami.getByRole('region', { name: 'Couleurs et cadres' })).toContainText(
+  await expect(cami.getByRole('region', { name: 'Couleurs, cadres et animations' })).toContainText(
     'Couleur Rouge vif',
   );
   await expect(cami.getByRole('region', { name: 'Boules collectionnées' })).toContainText(

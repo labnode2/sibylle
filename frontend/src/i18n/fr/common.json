@@ -44,7 +44,9 @@
     "newsroom": "RÉDACTION",
     "newsroomLong": "LA RÉDACTION",
     "profile": "PROFIL",
-    "profileLong": "MON PROFIL"
+    "profileLong": "MON PROFIL",
+    "reports_one": "{{count}} signalement ouvert",
+    "reports_other": "{{count}} signalements ouverts"
   },
   "shell": {
     "loading": "Chargement…",

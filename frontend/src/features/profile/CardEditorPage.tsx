@@ -1,9 +1,9 @@
 // « Personnaliser ma carte » (canvases G-Pixel and B-Profil together): the press card as the other
 // members will see it, redrawn at each change, with « Annuler » and « Enregistrer » under it,
 // which wake up once something changed; beside it, what makes the card: the pseudo, the pixel
-// art, the frame among those of the collection, and up to three objects or engraved trophies
-// shown in the order they were chosen. Saving keeps the page open; « Annuler » puts back what
-// was saved.
+// art, the frame and the animation among those of the collection, and up to three objects or
+// engraved trophies shown in the order they were chosen. Saving keeps the page open;
+// « Annuler » puts back what was saved.
 import { useCallback, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
@@ -29,7 +29,19 @@ type Ref = { kind: 'item' | 'trophy'; id: string };
 type Candidate = Ref & { name: string; preview: ReactNode; podium?: boolean };
 type Shown = PressCard['showcase'][number];
 /** What the page edits: saved, or in progress. */
-type Draft = { pseudo: string; avatar: Drawing; frameId: string; showcase: Ref[] };
+type Draft = {
+  pseudo: string;
+  avatar: Drawing;
+  frameId: string;
+  animationId: string;
+  showcase: Ref[];
+};
+type Wearable = 'frame' | 'animation';
+
+/** The id of the frame or the animation the card wears, among the member's collection. */
+const wornId = (card: PressCard, kind: Wearable) =>
+  card.collection.find((owned) => owned.item.kind === kind && owned.item.key === card[kind])?.item
+    .id ?? '';
 
 const same = (a: Ref) => (b: Ref) => a.kind === b.kind && a.id === b.id;
 
@@ -42,9 +54,8 @@ function draftOf(card: PressCard): Draft {
       palette: 'base-v1',
       pixels: encodePixels(decodePixels(card.avatar)),
     },
-    frameId:
-      card.collection.find((owned) => owned.item.kind === 'frame' && owned.item.key === card.frame)
-        ?.item.id ?? '',
+    frameId: wornId(card, 'frame'),
+    animationId: wornId(card, 'animation'),
     showcase: card.showcase.flatMap((entry): Ref[] => {
       if (entry.kind === 'item' && entry.item) return [{ kind: 'item', id: entry.item.id }];
       if (entry.kind === 'trophy' && entry.trophy) return [{ kind: 'trophy', id: entry.trophy.id }];
@@ -58,8 +69,64 @@ const unchanged = (a: Draft, b: Draft) =>
   a.avatar.size === b.avatar.size &&
   a.avatar.pixels === b.avatar.pixels &&
   a.frameId === b.frameId &&
+  a.animationId === b.animationId &&
   a.showcase.length === b.showcase.length &&
   a.showcase.every((ref, index) => same(ref)(b.showcase[index]!));
+
+/** The frames, or the animations, of the member's collection, « none » first; or, without any,
+ *  the way to the collection. */
+function WearablePicker({
+  kind,
+  orgId,
+  owned,
+  chosen,
+  onChoose,
+  preview,
+}: {
+  kind: Wearable;
+  orgId: string;
+  owned: PressCard['collection'];
+  chosen: string;
+  onChoose: (id: string) => void;
+  preview: (key: string | null) => ReactNode;
+}) {
+  const { t } = useTranslation('profile');
+  const legend = t(`customize.${kind}`);
+  return (
+    <fieldset className={styles.choices}>
+      <legend className={styles.label}>{legend}</legend>
+      {owned.length === 0 ? (
+        <p className={styles.meta}>
+          {t(`customize.no.${kind}`)}{' '}
+          <Link to={`/o/${orgId}/collection`}>{t('customize.collection')}</Link>
+        </p>
+      ) : (
+        <div className={styles.choiceGrid} role="radiogroup" aria-label={legend}>
+          {[
+            { id: '', key: null, name: t(`${kind}.none`) },
+            ...owned.map((entry) => ({
+              id: entry.item.id,
+              key: entry.item.key,
+              name: t(`catalog.${entry.item.key}`),
+            })),
+          ].map((choice) => (
+            <button
+              key={choice.id || 'none'}
+              type="button"
+              role="radio"
+              aria-checked={chosen === choice.id}
+              className={styles.choice}
+              onClick={() => onChoose(choice.id)}
+            >
+              {preview(choice.key)}
+              <span className={styles.choiceName}>{choice.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </fieldset>
+  );
+}
 
 function CardEditor({ orgId, org, card }: { orgId: string; org: Org; card: PressCard }) {
   const { t } = useTranslation('profile');
@@ -71,8 +138,10 @@ function CardEditor({ orgId, org, card }: { orgId: string; org: Org; card: Press
   const [round, setRound] = useState(0);
   const setAvatar = useCallback((avatar: Drawing) => setDraft((d) => ({ ...d, avatar })), []);
   const dirty = !unchanged(draft, saved);
-  const frames = card.collection.filter((owned) => owned.item.kind === 'frame');
-  const frameKey = frames.find((owned) => owned.item.id === draft.frameId)?.item.key ?? null;
+  const owned = (kind: Wearable) => card.collection.filter((entry) => entry.item.kind === kind);
+  const keyOf = (id: string) => card.collection.find((entry) => entry.item.id === id)?.item.key;
+  const frameKey = (draft.frameId && keyOf(draft.frameId)) || null;
+  const animationKey = (draft.animationId && keyOf(draft.animationId)) || null;
 
   // The card as the others will see it once saved.
   const preview: PressCard = {
@@ -80,6 +149,7 @@ function CardEditor({ orgId, org, card }: { orgId: string; org: Org; card: Press
     pseudo: draft.pseudo.trim() || saved.pseudo,
     avatar: draft.avatar,
     frame: frameKey,
+    animation: animationKey,
     showcase: draft.showcase.flatMap((ref): Shown[] => {
       if (ref.kind === 'trophy') {
         const trophy = card.trophies.find((entry) => entry.id === ref.id);
@@ -133,6 +203,7 @@ function CardEditor({ orgId, org, card }: { orgId: string; org: Org; card: Press
         ...(next.pseudo !== saved.pseudo ? { pseudo: next.pseudo } : {}),
         ...(redrawn ? { avatar: next.avatar } : {}),
         avatar_frame_item_id: next.frameId || null,
+        avatar_animation_item_id: next.animationId || null,
         showcase: next.showcase,
       },
       {
@@ -195,42 +266,25 @@ function CardEditor({ orgId, org, card }: { orgId: string; org: Org; card: Press
             error={errors.field('avatar')}
           />
 
-          <fieldset className={styles.choices}>
-            <legend className={styles.label}>{t('customize.frame')}</legend>
-            {frames.length === 0 ? (
-              <p className={styles.meta}>
-                {t('customize.noFrame')}{' '}
-                <Link to={`/o/${orgId}/collection`}>{t('customize.collection')}</Link>
-              </p>
-            ) : (
-              <div
-                className={styles.choiceGrid}
-                role="radiogroup"
-                aria-label={t('customize.frame')}
-              >
-                {[
-                  { id: '', key: null, name: t('frame.none') },
-                  ...frames.map((owned) => ({
-                    id: owned.item.id,
-                    key: owned.item.key,
-                    name: t(`catalog.${owned.item.key}`),
-                  })),
-                ].map((frame) => (
-                  <button
-                    key={frame.id || 'none'}
-                    type="button"
-                    role="radio"
-                    aria-checked={draft.frameId === frame.id}
-                    className={styles.choice}
-                    onClick={() => setDraft((current) => ({ ...current, frameId: frame.id }))}
-                  >
-                    <FramedAvatar image={draft.avatar} frame={frame.key} size={48} />
-                    <span className={styles.choiceName}>{frame.name}</span>
-                  </button>
-                ))}
-              </div>
+          <WearablePicker
+            kind="frame"
+            orgId={orgId}
+            owned={owned('frame')}
+            chosen={draft.frameId}
+            onChoose={(frameId) => setDraft((current) => ({ ...current, frameId }))}
+            preview={(key) => <FramedAvatar image={draft.avatar} frame={key} size={48} />}
+          />
+
+          <WearablePicker
+            kind="animation"
+            orgId={orgId}
+            owned={owned('animation')}
+            chosen={draft.animationId}
+            onChoose={(animationId) => setDraft((current) => ({ ...current, animationId }))}
+            preview={(key) => (
+              <FramedAvatar image={draft.avatar} frame={frameKey} animation={key} size={48} />
             )}
-          </fieldset>
+          />
 
           <fieldset className={styles.choices}>
             <legend className={styles.label}>

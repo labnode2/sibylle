@@ -1,9 +1,11 @@
 // The editor's settings: the card and the laurels, the access code, invitations, members,
-// sections and reports.
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+// sections, reports, and deleting the newsroom.
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 import { api, unwrap } from '../../api/client';
 import type { components } from '../../api/schema';
+import type { Me } from '../../api/types';
+import { meKey } from '../auth/api';
 import { orgKey } from '../orgs/api';
 
 export type OrgPatch = components['schemas']['OrgPatch'];
@@ -16,13 +18,39 @@ const invitationsKey = (orgId: string) => ['invitations', orgId] as const;
 const sectionsKey = (orgId: string) => ['sections', orgId] as const;
 export const reportsKey = (orgId: string) => ['reports', orgId] as const;
 
-export function useUpdateOrg(orgId: string) {
+/** Saves some of the settings; `success` is the toast's text key. */
+export function useUpdateOrg(orgId: string, success = 'admin:saved') {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (body: OrgPatch) =>
       unwrap(api.PATCH('/api/orgs/{org_id}', { params: { path: { org_id: orgId } }, body })),
     onSuccess: (org) => client.setQueryData(orgKey(orgId), org),
-    meta: { success: 'admin:saved' },
+    meta: { success },
+  });
+}
+
+export const deleteOrgKey = (orgId: string) => ['deleteOrg', orgId] as const;
+
+/** Forgets a deleted newsroom: out of the account's newsrooms at once, so that « / » does not
+ *  lead back to it, and every query about it dropped. */
+export function forgetOrg(client: QueryClient, orgId: string) {
+  client.setQueryData<Me>(
+    meKey,
+    (me) => me && { ...me, memberships: me.memberships.filter((entry) => entry.org.id !== orgId) },
+  );
+  client.removeQueries({ predicate: (query) => query.queryKey.includes(orgId) });
+  void client.invalidateQueries({ queryKey: meKey });
+}
+
+/** Deletes the newsroom (a mark the server can take back). */
+export function useDeleteOrg(orgId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationKey: deleteOrgKey(orgId),
+    mutationFn: () =>
+      unwrap(api.DELETE('/api/orgs/{org_id}', { params: { path: { org_id: orgId } } })),
+    onSuccess: () => forgetOrg(client, orgId),
+    meta: { success: 'admin:toasts.orgDeleted' },
   });
 }
 
@@ -161,8 +189,10 @@ export function useSectionActions(orgId: string) {
   };
 }
 
-export function useReports(orgId: string) {
+/** The open reports; `enabled` false for a member who is not an editor (the server refuses). */
+export function useReports(orgId: string, enabled = true) {
   return useQuery({
+    enabled,
     queryKey: reportsKey(orgId),
     queryFn: () =>
       unwrap(

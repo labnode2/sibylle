@@ -6,7 +6,8 @@
     "card": "CARTE ET LAURIERS",
     "members": "MEMBRES",
     "games": "JEUX",
-    "reports": "SIGNALEMENTS"
+    "reports": "SIGNALEMENTS",
+    "parameters": "PARAMÈTRES"
   },
   "card": {
     "title": "La carte",
@@ -14,7 +15,7 @@
     "logo": "LOGO",
     "background": "FOND DE LA CARTE",
     "drawLogo": "Modifier le logo",
-    "takeLogo": "Prendre",
+    "saveLogo": "Enregistrer",
     "currentLogo": "Le logo actuel",
     "preview": "{{count}} MEMBRES · APERÇU DE LA CARTE"
   },
@@ -43,7 +44,9 @@
     "sectionAdded": "Rubrique ajoutée.",
     "sectionChanged": "Rubrique modifiée.",
     "sectionRemoved": "Rubrique supprimée.",
-    "reportHandled": "Signalement traité."
+    "reportHandled": "Signalement traité.",
+    "orgDeleted": "Rédaction supprimée.",
+    "logoSaved": "Logo enregistré."
   },
   "sections": {
     "title": "Les rubriques",
@@ -149,6 +152,18 @@
       "no": "Garder"
     },
     "saved": "Programme enregistré."
+  },
+  "parameters": {
+    "delete": {
+      "title": "Supprimer la rédaction",
+      "text": "La rédaction disparaît aussitôt pour tous ses membres : sa une, ses pronos et son classement ne s'affichent plus, et ni ses invitations ni son code d'accès ne permettent d'y entrer.",
+      "restore": "Rien n'est effacé : en cas de changement d'avis, l'administration de Sibylle peut la restaurer telle qu'elle était, avec ses membres, ses pronos et leurs lauriers.",
+      "open": "Supprimer la rédaction",
+      "confirm": "Pour confirmer, écris le nom de la rédaction : {{org}}.",
+      "name": "NOM DE LA RÉDACTION",
+      "confirmYes": "Oui, supprimer la rédaction",
+      "cancel": "Annuler"
+    }
   },
   "back": "LA RÉDACTION"
 }

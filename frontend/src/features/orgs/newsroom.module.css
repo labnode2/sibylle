@@ -114,6 +114,7 @@
 .settings {
   display: flex;
   align-items: center;
+  gap: 8px;
   min-height: var(--tap);
   padding: 0 20px;
   border-top: 1px solid var(--rule);

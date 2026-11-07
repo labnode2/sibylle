@@ -1,5 +1,5 @@
-"""The collection: buying colours, frames and balls with coins, secret codes, and the press card
-that shows a member's statistics, trophies and collection."""
+"""The collection: buying colours, frames, animations and balls with coins, secret codes, and the
+press card that shows a member's statistics, trophies and collection."""
 
 import uuid
 from typing import Any
@@ -25,7 +25,7 @@ from sibylle.domain.leaderboard import Metric, Period
 from sibylle.services import coins, deals, leaderboard, ledger, streaks
 from sibylle.services.security import token_hash
 
-_KIND_ORDER = {"color": 0, "frame": 1, "ball": 2}
+_KIND_ORDER = {"color": 0, "frame": 1, "animation": 2, "ball": 3}
 
 
 def _order(item: CatalogItem) -> tuple[int, int, str]:
@@ -67,18 +67,21 @@ async def unlocked_colors(session: AsyncSession, member: Membership) -> set[int]
     return {int(d["index"]) for d in data}
 
 
-async def owned_frame(session: AsyncSession, member: Membership, item_id: uuid.UUID) -> CatalogItem:
+async def owned_wearable(
+    session: AsyncSession, member: Membership, item_id: uuid.UUID, kind: str
+) -> CatalogItem:
+    """A frame or an animation of the member's collection, to wear around the avatar."""
     item = await session.scalar(
         select(CatalogItem)
         .join(OwnedItem, OwnedItem.item_id == CatalogItem.id)
         .where(
             OwnedItem.membership_id == member.id,
             CatalogItem.id == item_id,
-            CatalogItem.kind == "frame",
+            CatalogItem.kind == kind,
         )
     )
     if item is None:
-        raise AppError("validation_error", {"avatar_frame_item_id": "not_owned"})
+        raise AppError("validation_error", {f"avatar_{kind}_item_id": "not_owned"})
     return item
 
 

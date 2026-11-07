@@ -11,11 +11,12 @@ from sibylle.db.base import Base, new_id
 
 class CatalogItem(Base):
     """An object of the collection, the same for every newsroom: a crystal ball, a colour of the
-    pixel editor or an avatar frame. Without a price, it only comes from a secret code."""
+    pixel editor, an avatar frame or an animation around the avatar. Without a price, it only
+    comes from a secret code."""
 
     __tablename__ = "catalog_items"
     __table_args__ = (
-        CheckConstraint("kind IN ('ball', 'color', 'frame')", name="kind"),
+        CheckConstraint("kind IN ('ball', 'color', 'frame', 'animation')", name="kind"),
         CheckConstraint("price IS NULL OR price > 0", name="price"),
     )
 
@@ -26,7 +27,8 @@ class CatalogItem(Base):
     price: Mapped[int | None]
     # The season of a seasonal ball.
     season: Mapped[str | None] = mapped_column(Text)
-    # A ball's variant of the crystal ball kit, a colour's palette index, a frame's style.
+    # A ball's variant of the crystal ball kit, a colour's palette index, a frame's or an
+    # animation's style.
     data: Mapped[dict[str, Any]] = mapped_column(default=dict, server_default=text("'{}'"))
     active: Mapped[bool] = mapped_column(default=True, server_default=text("true"))
 

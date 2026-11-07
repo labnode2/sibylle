@@ -10,7 +10,15 @@ export type PublicCard = components['schemas']['PublicCard'];
 /** What the card itself shows, on the press card as on the public card (US15). */
 export type CardFace = Pick<
   PressCard,
-  'pseudo' | 'avatar' | 'frame' | 'role' | 'joined_at' | 'card_number' | 'stats' | 'showcase'
+  | 'pseudo'
+  | 'avatar'
+  | 'frame'
+  | 'animation'
+  | 'role'
+  | 'joined_at'
+  | 'card_number'
+  | 'stats'
+  | 'showcase'
 >;
 export type CatalogItem = components['schemas']['CatalogItemOut'];
 export type CatalogEntry = components['schemas']['CatalogEntry'];

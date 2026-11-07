@@ -281,7 +281,11 @@ export interface paths {
         get: operations["get_org_api_orgs__org_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Org
+         * @description A soft deletion, which `sibylle orgs restore` undoes.
+         */
+        delete: operations["delete_org_api_orgs__org_id__delete"];
         options?: never;
         head?: never;
         /** Update Org */
@@ -1264,7 +1268,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "ball" | "color" | "frame";
+            kind: "ball" | "color" | "frame" | "animation";
             /** Key */
             key: string;
             /** Name Key */
@@ -1652,6 +1656,8 @@ export interface components {
             avatar: components["schemas"]["PixelImage"];
             /** Frame */
             frame?: string | null;
+            /** Animation */
+            animation?: string | null;
             /**
              * Role
              * @enum {string}
@@ -1672,6 +1678,8 @@ export interface components {
             avatar?: components["schemas"]["PixelImage"] | null;
             /** Avatar Frame Item Id */
             avatar_frame_item_id?: string | null;
+            /** Avatar Animation Item Id */
+            avatar_animation_item_id?: string | null;
             /** Showcase */
             showcase?: components["schemas"]["ShowcaseRef"][] | null;
             /** Card Public */
@@ -1689,6 +1697,8 @@ export interface components {
             avatar: components["schemas"]["PixelImage"];
             /** Frame */
             frame?: string | null;
+            /** Animation */
+            animation?: string | null;
             /**
              * Role
              * @enum {string}
@@ -1712,6 +1722,8 @@ export interface components {
             avatar: components["schemas"]["PixelImage"];
             /** Frame */
             frame?: string | null;
+            /** Animation */
+            animation?: string | null;
             /**
              * Role
              * @enum {string}
@@ -2051,6 +2063,8 @@ export interface components {
             avatar: components["schemas"]["PixelImage"];
             /** Frame */
             frame?: string | null;
+            /** Animation */
+            animation?: string | null;
             /**
              * Role
              * @enum {string}
@@ -2317,6 +2331,8 @@ export interface components {
             avatar: components["schemas"]["PixelImage"];
             /** Frame */
             frame: string | null;
+            /** Animation */
+            animation?: string | null;
             /**
              * Role
              * @enum {string}
@@ -3238,6 +3254,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Org"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_org_api_orgs__org_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

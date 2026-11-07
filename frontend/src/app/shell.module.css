@@ -86,6 +86,7 @@
 .navLink {
   display: flex;
   align-items: center;
+  gap: 6px;
   height: var(--tap);
   color: var(--ink-2);
   text-decoration: none;
@@ -102,7 +103,7 @@
   font-weight: 700;
 }
 
-.navLinkActive > span {
+.navLinkActive > span:first-child {
   padding: 4px 0;
   border-bottom: 2px solid var(--ink);
 }

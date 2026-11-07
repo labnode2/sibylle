@@ -28,6 +28,7 @@ router = APIRouter(prefix="/orgs", tags=["orgs"])
 
 Editor = Annotated[Membership, Depends(require(Action.CUSTOMIZE_CARD))]
 Gatekeeper = Annotated[Membership, Depends(require(Action.MANAGE_MEMBERS))]
+Owner = Annotated[Membership, Depends(require(Action.DELETE_NEWSROOM))]
 SectionEditor = Annotated[Membership, Depends(require(Action.MANAGE_SECTIONS))]
 
 
@@ -80,6 +81,13 @@ async def update_org(org_id: uuid.UUID, body: OrgPatch, editor: Editor, session:
         in_play=await coins.in_play_of(session, editor),
         unlocked=await orgs.unlocked_colors(session, editor),
     )
+
+
+@router.delete("/{org_id}", status_code=204)
+async def delete_org(org_id: uuid.UUID, editor: Owner, session: Db) -> Response:
+    """A soft deletion, which `sibylle orgs restore` undoes."""
+    await orgs.delete_org(session, await _org(session, org_id))
+    return Response(status_code=204)
 
 
 @router.post("/{org_id}/access-code")

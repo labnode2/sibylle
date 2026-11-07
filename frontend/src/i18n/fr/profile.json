@@ -22,6 +22,9 @@
   "frame": {
     "none": "Sans cadre"
   },
+  "animation": {
+    "none": "Sans animation"
+  },
   "seasons": {
     "spring": "PRINTEMPS",
     "summer": "ÉTÉ",
@@ -40,6 +43,7 @@
     "kinds": {
       "color": "Les couleurs",
       "frame": "Les cadres",
+      "animation": "Les animations",
       "ball": "Les boules"
     },
     "owned": "À TOI",
@@ -113,6 +117,10 @@
     "frame-indigo": "Cadre indigo",
     "frame-double": "Cadre double filet",
     "frame-dotted": "Cadre pointillé",
+    "frame-gold": "Cadre doré",
+    "animation-sun": "Animation soleil",
+    "animation-shine": "Animation éclat",
+    "animation-sparkles": "Animation étincelles",
     "ball-spring": "Boule de printemps",
     "ball-summer": "Boule d'été",
     "ball-autumn": "Boule d'automne",
@@ -162,7 +170,7 @@
     "logout": "Déconnexion"
   },
   "objects": {
-    "title": "Couleurs et cadres"
+    "title": "Couleurs, cadres et animations"
   },
   "backNewsroom": "LA RÉDACTION",
   "showcase": {
@@ -177,12 +185,16 @@
     "saved": "Carte enregistrée : les autres la voient ainsi.",
     "pseudo": "TON PSEUDO DANS CETTE RÉDACTION",
     "frame": "LE CADRE",
-    "noFrame": "Pas encore de cadre : ils s'achètent avec des pièces.",
+    "animation": "L'ANIMATION",
+    "no": {
+      "frame": "Pas encore de cadre : ils s'achètent avec des pièces.",
+      "animation": "Pas encore d'animation : elles s'achètent avec des pièces, dès 1 200."
+    },
     "collection": "Voir la collection →",
     "showcase_one": "MIS EN AVANT · {{count}} / {{max}}",
     "showcase_other": "MIS EN AVANT · {{count}} / {{max}}",
     "showcaseHint": "Trois objets ou trophées au plus, montrés sur ta carte dans l'ordre où tu les choisis.",
-    "nothing": "Rien à mettre en avant pour l'instant : chaque saison jouée grave une boule, et la collection vend des couleurs et des cadres."
+    "nothing": "Rien à mettre en avant pour l'instant : chaque saison jouée grave une boule, et la collection vend des couleurs, des cadres et des animations."
   },
   "backProfile": "PROFIL",
   "public": {

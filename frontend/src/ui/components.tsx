@@ -359,7 +359,36 @@ export function Stepper({
   );
 }
 
-export type Tab = { to: string; label: string; icon: IconName; end?: boolean };
+export type Tab = {
+  to: string;
+  label: string;
+  icon: IconName;
+  end?: boolean;
+  /** A count beside the tab (open reports), and what it counts for screen readers. */
+  badge?: { count: number; label: string };
+};
+
+/** A small count in ink, such as the open reports beside « La rédaction »; screen readers hear
+ *  `label` instead of the bare number. */
+export function CountBadge({
+  count,
+  label,
+  className,
+}: {
+  count: number;
+  label: string;
+  className?: string;
+}) {
+  if (count <= 0) return null;
+  return (
+    <>
+      <span className={cx(styles.badge, className)} aria-hidden="true">
+        {count > 99 ? '99+' : count}
+      </span>
+      <span className="visually-hidden"> {label}</span>
+    </>
+  );
+}
 
 export function TabBar({ tabs, label }: { tabs: Tab[]; label: string }) {
   return (
@@ -371,7 +400,10 @@ export function TabBar({ tabs, label }: { tabs: Tab[]; label: string }) {
           end={tab.end}
           className={({ isActive }) => cx(styles.tab, isActive && styles.tabActive)}
         >
-          <Icon name={tab.icon} size={24} />
+          <span className={styles.tabIcon}>
+            <Icon name={tab.icon} size={24} />
+            {tab.badge && <CountBadge {...tab.badge} className={styles.tabBadge} />}
+          </span>
           <span className={styles.tabLabel}>{tab.label}</span>
         </NavLink>
       ))}

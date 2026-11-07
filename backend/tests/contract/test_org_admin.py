@@ -9,7 +9,9 @@ from tests.contract.test_pronos import publish, section_id
 from tests.contract.test_results import url
 
 from sibylle import clock
+from sibylle.db.session import transaction
 from sibylle.domain.content import DEFAULT_LOGO, LOGO_TEMPLATES
+from sibylle.services import orgs
 
 pytestmark = pytest.mark.contract
 
@@ -116,6 +118,37 @@ async def test_the_access_code(
     assert (await ines.client.delete(org_url(org.id, "/access-code"))).status_code == 204
     assert (await ines.client.get(org_url(org.id))).json()["access_code"] is None
     assert await preview(outsider, code=new) == 409
+
+
+async def test_deleting_the_newsroom_only_marks_it(
+    make_org: MakeOrg, person: MakePerson, make_account: MakeAccount, client_for: ClientFor
+) -> None:
+    """The editor deletes the newsroom: it is gone for every member and its code lets nobody in,
+    but nothing else changes, so that restoring it brings everything back."""
+    org = await make_org()
+    ines = await person(org, "editor")
+    hugo = await person(org, "journalist")
+    outsider = await client_for(await make_account())
+    prono = await publish(hugo.client, str(org.id))
+    code = (await ines.client.post(org_url(org.id, "/access-code"))).json()["access_code"]
+
+    assert (await ines.client.delete(org_url(org.id))).status_code == 204
+    for who in (ines, hugo):
+        assert (await who.client.get(org_url(org.id))).status_code == 404
+        memberships = (await who.client.get("/api/me")).json()["memberships"]
+        assert all(entry["org"]["id"] != str(org.id) for entry in memberships)
+    assert await preview(outsider, code=code) == 409
+    assert (await ines.client.delete(org_url(org.id))).status_code == 404
+
+    async with transaction() as session:
+        assert [o.id for o in await orgs.deleted_orgs(session)] == [org.id]
+        await orgs.restore_org(session, org.id)
+    back = await hugo.client.get(org_url(org.id, f"/pronos/{prono['id']}"))
+    assert back.status_code == 200, back.text
+    assert (await ines.client.get(org_url(org.id))).json()["access_code"] == code
+    assert await preview(outsider, code=code) == 200
+    async with transaction() as session:
+        assert await orgs.deleted_orgs(session) == []
 
 
 async def test_listing_and_revoking_invitations(
@@ -367,6 +400,7 @@ async def test_admin_routes_are_for_the_editor_only(make_org: MakeOrg, person: M
         ("DELETE", org_url(org.id, f"/sections/{general}"), None),
         ("GET", org_url(org.id, "/reports"), None),
         ("POST", org_url(org.id, f"/reports/{report['id']}/handle"), {"state": "dismissed"}),
+        ("DELETE", org_url(org.id), None),
     ]
     for who in (hugo, cami):
         for method, path, body in calls:

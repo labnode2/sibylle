@@ -26,6 +26,7 @@ async def get_public_card(
         pseudo=member.pseudo,
         avatar=member.avatar,
         frame=member.frame,
+        animation=member.animation,
         role=member.role,
         joined_at=member.joined_at,
         card_number=face["card_number"],

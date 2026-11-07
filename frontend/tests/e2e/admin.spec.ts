@@ -34,11 +34,24 @@ test('the editor runs the newsroom', async ({ browser }, testInfo) => {
   await openSettings(ines);
   await expect(ines.getByRole('heading', { name: 'Sophia Office', level: 1 })).toBeVisible();
   await expect(ines.getByText('Réglages de la rédaction', { exact: true })).toBeVisible();
+  // « Enregistrer les réglages » waits for a change, and sleeps again once it is saved.
+  const save = ines.getByRole('button', { name: 'Enregistrer les réglages' });
+  await expect(save).toBeDisabled();
   const ceiling = ines.getByRole('group', { name: 'Gain fixe maximum' });
   for (let i = 0; i < 4; i += 1) await ceiling.getByRole('button', { name: 'Moins' }).click();
   await expect(ceiling).toContainText('30');
-  await ines.getByRole('button', { name: 'Enregistrer les réglages' }).click();
+  await save.click();
   await expect(notes(ines)).toContainText('Réglages enregistrés.');
+  await expect(save).toBeDisabled();
+
+  // The logo is saved on its own, once the drawing changed.
+  await ines.getByRole('button', { name: 'Modifier le logo' }).click();
+  const editor = ines.getByRole('region', { name: 'Modifier le logo' });
+  await expect(editor.getByRole('button', { name: 'Enregistrer' })).toBeDisabled();
+  await editor.getByRole('button', { name: 'Effacer' }).click();
+  await editor.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(notes(ines)).toContainText('Logo enregistré.');
+  await expect(save).toBeDisabled();
 
   // Hugo becomes a journalist and publishes at once, under the new ceiling.
   await ines.getByRole('link', { name: 'MEMBRES', exact: true }).click();
@@ -100,4 +113,21 @@ test('the editor runs the newsroom', async ({ browser }, testInfo) => {
       page.getByText('Ces réglages sont réservés à la rédaction en chef.'),
     ).toBeVisible();
   }
+});
+
+test('the editor deletes the newsroom', async ({ browser }, testInfo) => {
+  const ines = await newPerson(browser, testInfo, 'Inès');
+  await createNewsroom(ines, 'Gazette éphémère', 'Inès');
+  const orgId = orgIdOf(ines);
+  await openSettings(ines);
+  await ines.getByRole('link', { name: 'PARAMÈTRES', exact: true }).click();
+  await ines.getByRole('button', { name: 'Supprimer la rédaction' }).click();
+  // Confirmed by the newsroom's name, whatever its case.
+  const yes = ines.getByRole('button', { name: 'Oui, supprimer la rédaction' });
+  await expect(yes).toBeDisabled();
+  await ines.getByLabel('NOM DE LA RÉDACTION').fill('gazette éphémère');
+  await yes.click();
+  await expect(notes(ines)).toContainText('Rédaction supprimée.');
+  await expect(ines.getByRole('heading', { name: 'Bienvenue sur Sibylle' })).toBeVisible();
+  expect((await call(ines, 'GET', `/orgs/${orgId}`)).status).toBe(404);
 });

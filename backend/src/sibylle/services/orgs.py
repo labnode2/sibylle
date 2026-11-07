@@ -69,6 +69,7 @@ def public_member(member: Membership) -> dict[str, Any]:
         "pseudo": member.pseudo,
         "avatar": member.avatar,
         "frame": member.frame,
+        "animation": member.animation,
         "role": member.role,
         "joined_at": member.joined_at.isoformat(),
     }
@@ -147,7 +148,7 @@ async def member_count(session: AsyncSession, org_id: uuid.UUID) -> int:
     return int(count or 0)
 
 
-# Tells "leave the frame as it is" from "remove the frame" (None).
+# Tells "leave the frame (or the animation) as it is" from "remove it" (None).
 KEEP: Any = object()
 
 
@@ -158,6 +159,7 @@ async def update_profile(
     pseudo: str | None = None,
     avatar: dict[str, Any] | None = None,
     frame_item_id: uuid.UUID | None = KEEP,
+    animation_item_id: uuid.UUID | None = KEEP,
     showcase: list[tuple[str, uuid.UUID]] | None = None,
     card_public: bool | None = None,
 ) -> Membership:
@@ -169,7 +171,15 @@ async def update_profile(
         member.avatar = checked_drawing("avatar", avatar, await unlocked_colors(session, member))
     if frame_item_id is not KEEP:
         member.avatar_frame = (
-            await collection.owned_frame(session, member, frame_item_id) if frame_item_id else None
+            await collection.owned_wearable(session, member, frame_item_id, "frame")
+            if frame_item_id
+            else None
+        )
+    if animation_item_id is not KEEP:
+        member.avatar_animation = (
+            await collection.owned_wearable(session, member, animation_item_id, "animation")
+            if animation_item_id
+            else None
         )
     if showcase is not None:
         member.showcase = await collection.checked_showcase(session, member, showcase)
@@ -345,6 +355,41 @@ async def close(session: AsyncSession, org_id: uuid.UUID) -> None:
     assert org is not None
     org.deleted_at = clock.now()
     org.access_code = None
+
+
+async def delete_org(session: AsyncSession, org: Organisation) -> None:
+    """The editor deletes the newsroom. Only a mark: it disappears for every member at once,
+    its pronos, laurels and members stay as they are, and `restore_org` brings it all back.
+    The access code is kept for that; nobody can use it meanwhile (see invitations)."""
+    if org.deleted_at is not None:
+        raise AppError("not_found")
+    org.deleted_at = clock.now()
+    await session.flush()
+    await bus.publish(session, "org.deleted", {"org_id": str(org.id)}, topics=[f"org:{org.id}"])
+
+
+async def deleted_orgs(session: AsyncSession) -> list[Organisation]:
+    """The newsrooms deleted by their editor or closed by their last member, latest first."""
+    return list(
+        (
+            await session.scalars(
+                select(Organisation)
+                .where(Organisation.deleted_at.is_not(None))
+                .order_by(Organisation.deleted_at.desc())
+            )
+        ).all()
+    )
+
+
+async def restore_org(session: AsyncSession, org_id: uuid.UUID) -> Organisation:
+    """Undoes a deletion: the newsroom comes back for its active members, as it was. A newsroom
+    closed by its last member comes back too, but empty, and without an access code."""
+    org = await session.get(Organisation, org_id)
+    if org is None or org.deleted_at is None:
+        raise LookupError(f"no deleted newsroom {org_id}")
+    org.deleted_at = None
+    await session.flush()
+    return org
 
 
 async def remove_member(session: AsyncSession, org_id: uuid.UUID, member_id: uuid.UUID) -> None:

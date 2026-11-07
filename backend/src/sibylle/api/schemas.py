@@ -63,6 +63,7 @@ class MemberPublic(BaseModel):
     pseudo: str
     avatar: PixelImage
     frame: str | None = None
+    animation: str | None = None
     role: Role
     joined_at: datetime
 
@@ -261,6 +262,8 @@ class MemberPatch(BaseModel):
     avatar: PixelImage | None = None
     # A frame of the member's collection; null takes the frame off.
     avatar_frame_item_id: uuid.UUID | None = None
+    # An animation of the member's collection around the avatar; null takes it off.
+    avatar_animation_item_id: uuid.UUID | None = None
     # What the press card shows, in order: three at most; an empty list shows nothing.
     showcase: list[ShowcaseRef] | None = Field(default=None, max_length=3)
     # The press card seen by anyone with its link, without an account (US15).
@@ -703,12 +706,12 @@ class CatalogItemOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    kind: Literal["ball", "color", "frame"]
+    kind: Literal["ball", "color", "frame", "animation"]
     key: str
     name_key: str
     price: int | None
     season: str | None
-    # A ball's kit variant, a colour's palette index and hex, a frame's style.
+    # A ball's kit variant, a colour's palette index and hex, a frame's or an animation's style.
     data: dict[str, Any]
 
 
@@ -826,6 +829,7 @@ class PublicCard(BaseModel):
     pseudo: str
     avatar: PixelImage
     frame: str | None
+    animation: str | None = None
     role: Role
     joined_at: datetime
     card_number: str

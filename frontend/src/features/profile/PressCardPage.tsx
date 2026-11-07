@@ -104,10 +104,20 @@ export function Identity({
       </div>
       <div className={styles.identity}>
         <span className="only-mobile">
-          <FramedAvatar image={card.avatar} frame={card.frame} size={96} />
+          <FramedAvatar
+            image={card.avatar}
+            frame={card.frame}
+            animation={card.animation}
+            size={96}
+          />
         </span>
         <span className="only-desktop">
-          <FramedAvatar image={card.avatar} frame={card.frame} size={128} />
+          <FramedAvatar
+            image={card.avatar}
+            frame={card.frame}
+            animation={card.animation}
+            size={128}
+          />
         </span>
         <div className={styles.identityText}>
           <div className={styles.pseudoLine}>

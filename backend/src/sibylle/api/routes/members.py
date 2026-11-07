@@ -55,15 +55,16 @@ async def list_members(org_id: uuid.UUID, member: CurrentMember, session: Db) ->
 async def update_my_profile(
     org_id: uuid.UUID, body: MemberPatch, member: CurrentMember, session: Db
 ) -> MemberSelf:
-    frame = (
-        body.avatar_frame_item_id if "avatar_frame_item_id" in body.model_fields_set else orgs.KEEP
-    )
+    given = body.model_fields_set
+    frame = body.avatar_frame_item_id if "avatar_frame_item_id" in given else orgs.KEEP
+    animation = body.avatar_animation_item_id if "avatar_animation_item_id" in given else orgs.KEEP
     await orgs.update_profile(
         session,
         member,
         pseudo=body.pseudo,
         avatar=drawing(body.avatar),
         frame_item_id=frame,
+        animation_item_id=animation,
         showcase=None if body.showcase is None else [(r.kind, r.id) for r in body.showcase],
         card_public=body.card_public,
     )

@@ -73,12 +73,21 @@ class Membership(Base):
     pseudo: Mapped[str] = mapped_column(Text)
     avatar: Mapped[dict[str, Any]]
     avatar_frame_item_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("catalog_items.id"))
+    # An animation of the collection around the avatar, worn with or without a frame.
+    avatar_animation_item_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("catalog_items.id")
+    )
     # Up to three things shown on the press card, in order: {"kind": "item" | "trophy", "id"}.
     showcase: Mapped[list[dict[str, str]]] = mapped_column(
         JSONB, default=list, server_default=text("'[]'::jsonb")
     )
-    # Loaded with the member, so that every screen can show the frame.
-    avatar_frame: Mapped[CatalogItem | None] = relationship(lazy="selectin")
+    # Loaded with the member, so that every screen can show the frame and the animation.
+    avatar_frame: Mapped[CatalogItem | None] = relationship(
+        lazy="selectin", foreign_keys=[avatar_frame_item_id]
+    )
+    avatar_animation: Mapped[CatalogItem | None] = relationship(
+        lazy="selectin", foreign_keys=[avatar_animation_item_id]
+    )
     # The press card seen from outside, without an account (US15): private until the member
     # makes it public. Its address is drawn the first time and kept, so that a link or an iframe
     # shows the card again when it goes public again.
@@ -98,6 +107,11 @@ class Membership(Base):
     def frame(self) -> str | None:
         """The key of the avatar's frame, if the member chose one."""
         return self.avatar_frame.key if self.avatar_frame else None
+
+    @property
+    def animation(self) -> str | None:
+        """The key of the animation around the avatar, if the member chose one."""
+        return self.avatar_animation.key if self.avatar_animation else None
 
 
 class Invitation(Base):

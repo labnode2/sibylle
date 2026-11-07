@@ -1,5 +1,5 @@
-// How an object of the collection looks: a colour swatch, a frame around the member's avatar,
-// or the crystal ball's variant from the kit.
+// How an object of the collection looks: a colour swatch, a frame or an animation around the
+// member's avatar, or the crystal ball's variant from the kit.
 import type { PixelImageData } from '../../ui/PixelImage';
 import { CrystalBall } from '../../ui/CrystalBall';
 import { FramedAvatar } from '../../ui/FramedAvatar';
@@ -26,6 +26,9 @@ export function ItemPreview({
   }
   if (item.kind === 'frame') {
     return <FramedAvatar image={avatar} frame={item.key} size={size - 12} />;
+  }
+  if (item.kind === 'animation') {
+    return <FramedAvatar image={avatar} animation={item.key} size={size - 12} />;
   }
   return <CrystalBall variant={String(item.data.variant) as Variant} size={size} />;
 }

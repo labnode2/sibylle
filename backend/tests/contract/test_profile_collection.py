@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -204,6 +204,53 @@ async def test_avatars_use_unlocked_colours_and_owned_frames(
     assert members["Cami"]["avatar"]["size"] == 32
     unframed = await leo.client.patch(profile, json={"avatar_frame_item_id": None})
     assert unframed.json()["frame"] is None
+
+
+async def test_animations_and_the_gold_frame(make_org: MakeOrg, person: MakePerson) -> None:
+    """Animations around the avatar from 1,200 coins, worn with a frame; the gold frame at
+    10,000."""
+    org = await make_org()
+    cami = await person(org, "reader", "Cami")
+    leo = await person(org, "reader", "Léo")
+    profile = org_url(org.id, "/members/me")
+    items = await catalog(cami.client, org.id)
+    animations = {
+        key: entry for key, entry in items.items() if entry["item"]["kind"] == "animation"
+    }
+    assert set(animations) == {"animation-sun", "animation-shine", "animation-sparkles"}
+    assert min(entry["item"]["price"] for entry in animations.values()) >= 1200
+    assert items["frame-gold"]["item"]["price"] == 10_000
+
+    await give_coins(cami.member, 1199)
+    poor = await buy(cami.client, org.id, "animation-sun")
+    assert poor.status_code == 409 and poor.json()["error"]["code"] == "insufficient_coins"
+    sun_id = items["animation-sun"]["item"]["id"]
+    unowned = await cami.client.patch(profile, json={"avatar_animation_item_id": sun_id})
+    assert unowned.status_code == 422
+    assert "avatar_animation_item_id" in unowned.json()["error"]["fields"]
+
+    await give_coins(cami.member, 10_001, week=date(2026, 11, 2))
+    for key in ("animation-sun", "frame-gold"):
+        assert (await buy(cami.client, org.id, key)).status_code == 201
+    frame_id = items["frame-gold"]["item"]["id"]
+    # A frame is not an animation, nor the other way round.
+    crossed = await cami.client.patch(profile, json={"avatar_animation_item_id": frame_id})
+    assert crossed.status_code == 422
+    worn = await cami.client.patch(
+        profile, json={"avatar_animation_item_id": sun_id, "avatar_frame_item_id": frame_id}
+    )
+    assert worn.status_code == 200, worn.text
+    assert (worn.json()["animation"], worn.json()["frame"]) == ("animation-sun", "frame-gold")
+    members = {m["pseudo"]: m for m in (await leo.client.get(org_url(org.id, "/members"))).json()}
+    assert (members["Cami"]["animation"], members["Cami"]["frame"]) == (
+        "animation-sun",
+        "frame-gold",
+    )
+    # Changing the frame leaves the animation; taking the animation off leaves the frame.
+    kept = await cami.client.patch(profile, json={"avatar_frame_item_id": None})
+    assert (kept.json()["animation"], kept.json()["frame"]) == ("animation-sun", None)
+    off = await cami.client.patch(profile, json={"avatar_animation_item_id": None})
+    assert off.json()["animation"] is None
 
 
 async def test_secret_codes(make_org: MakeOrg, person: MakePerson) -> None:

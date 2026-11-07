@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useMatch, useMatches, useParams } from 'react-router';
 
 import { formatDate } from '../i18n';
-import { Logo, Masthead, Rule, TabBar, type Tab } from '../ui/components';
+import { CountBadge, Logo, Masthead, Rule, TabBar, type Tab } from '../ui/components';
 import styles from './shell.module.css';
 
 function subscribeOnline(callback: () => void) {
@@ -45,12 +45,14 @@ export type ShellSlots = {
   newsroom?: ReactNode;
   /** « N° 305 »: the day of the newsroom's life, before the date. */
   issue?: number;
+  /** For the editor, the open reports, counted beside « La rédaction ». */
+  reports?: number;
 };
 
 /** A route's `handle`: `bare` pages (an editor, a form with its own header) have no tabs. */
 export type RouteHandle = { bare?: boolean };
 
-export function AppShell({ account, newsroom, issue }: ShellSlots) {
+export function AppShell({ account, newsroom, issue, reports = 0 }: ShellSlots) {
   const { t } = useTranslation();
   const { orgId = '' } = useParams();
   const base = `/o/${orgId}`;
@@ -64,6 +66,7 @@ export function AppShell({ account, newsroom, issue }: ShellSlots) {
       label: t('tabs.newsroom'),
       long: t('tabs.newsroomLong'),
       icon: 'people',
+      badge: { count: reports, label: t('tabs.reports', { count: reports }) },
     },
     { to: `${base}/profil`, label: t('tabs.profile'), long: t('tabs.profileLong'), icon: 'user' },
   ];
@@ -83,6 +86,7 @@ export function AppShell({ account, newsroom, issue }: ShellSlots) {
           className={({ isActive }) => `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`}
         >
           <span>{tab.long}</span>
+          {tab.badge && <CountBadge {...tab.badge} />}
         </NavLink>
       ))}
     </nav>
