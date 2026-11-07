@@ -282,7 +282,7 @@ async def test_outsiders_get_404_everywhere(
 
 async def test_content_is_public(client: httpx.AsyncClient) -> None:
     content = (await client.get("/api/content")).json()
-    assert len(content["avatars"]) == 7 and content["avatars"][0]["name"] == "Cami"
+    assert len(content["avatars"]) == 10 and content["avatars"][0]["name"] == "Homme"
     assert "mer" in content["backgrounds"]
     assert "politique" in content["charter"]
 

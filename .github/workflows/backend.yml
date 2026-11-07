@@ -1,8 +1,9 @@
 # Backend: on every push to main and every pull request that touches the server, the checks of
 # `make check-backend` (the tests' PostgreSQL comes from testcontainers, Docker is on the runner),
 # then the server's Docker image (backend/Dockerfile). On main, once the checks pass, the image
-# goes to the registry, tagged `main` and `sha-<commit>`, then the production machine updates
-# itself (deploy.yml); elsewhere, the image is only built. Repository secrets: REGISTRY_USERNAME
+# goes to the registry, tagged `main` and `sha-<commit>` (and with its release tag, v0.2.0, when
+# the commit has one), then the production machine updates itself (deploy.yml); elsewhere, the
+# image is only built. Repository secrets: REGISTRY_USERNAME
 # and REGISTRY_PASSWORD for the registry, DEPLOY_WEBHOOK_SECRET for the hooks (deploy/README.md).
 name: Backend
 
@@ -71,9 +72,16 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Short commit hash
+          # With the tags, for the version.
+          fetch-depth: 0
+      # The version comes from the release tags (`git describe`): v0.2.0 on the tagged commit,
+      # v0.2.0-3-g88f5f2f three commits later. A tagged commit's image also gets its tag.
+      - name: Commit and version
         id: commit
-        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          echo "describe=$(git describe --tags --match 'v[0-9]*' 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
+          echo "release=$(git describe --tags --exact-match --match 'v[0-9]*' 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
       # The actions that see the registry password are pinned by their commit.
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Log in to the registry
@@ -92,6 +100,7 @@ jobs:
           tags: |
             ${{ env.IMAGE }}:main
             ${{ env.IMAGE }}:sha-${{ steps.commit.outputs.short }}
+            ${{ steps.commit.outputs.release && format('{0}:{1}', env.IMAGE, steps.commit.outputs.release) || '' }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}

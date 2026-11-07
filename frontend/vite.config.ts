@@ -4,7 +4,28 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-import { version } from './package.json';
+import { version as packageVersion } from './package.json';
+
+/** The version shown: from the release tags, as `git describe` writes it (v0.2.0 on the tagged
+ *  commit, v0.2.0-3-g88f5f2f three commits later), given by the web image's build, which has no
+ *  .git (deploy/nginx/Dockerfile), else read from git: « 0.2.0 », or « 0.2.0+3 ». Without a
+ *  release tag, package.json's version. */
+function version(): string {
+  let described = process.env.SIBYLLE_DESCRIBE ?? '';
+  if (!described) {
+    try {
+      described = execFileSync('git', ['describe', '--tags', '--match', 'v[0-9]*'], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+    } catch {
+      described = '';
+    }
+  }
+  const match = /^v(\d+\.\d+\.\d+)(?:-(\d+)-g[0-9a-f]+)?$/.exec(described.trim());
+  if (!match) return packageVersion;
+  return match[2] ? `${match[1]}+${match[2]}` : match[1]!;
+}
 
 /** The short commit the interface is built from: given by the web image's build, which has no
  *  .git (deploy/nginx/Dockerfile), else read from git; none outside a clone. */
@@ -24,9 +45,9 @@ function commit(): string {
 
 export default defineConfig({
   define: {
-    // « 0.1.0 · aa15cc4 », at the bottom of the sign-in page and of the settings (AppVersion).
+    // « 0.2.0 · aa15cc4 », at the bottom of the sign-in page and of the settings (AppVersion).
     'import.meta.env.SIBYLLE_VERSION': JSON.stringify(
-      [version, commit()].filter(Boolean).join(' · '),
+      [version(), commit()].filter(Boolean).join(' · '),
     ),
   },
   plugins: [
