@@ -221,9 +221,18 @@ async def test_animations_and_the_gold_frame(make_org: MakeOrg, person: MakePers
     animations = {
         key: entry for key, entry in items.items() if entry["item"]["kind"] == "animation"
     }
-    assert set(animations) == {"animation-sun", "animation-shine", "animation-sparkles"}
+    assert set(animations) == {
+        "animation-sun",
+        "animation-shine",
+        "animation-sparkles",
+        "animation-flowers",
+    }
     assert min(entry["item"]["price"] for entry in animations.values()) >= 1200
     assert items["frame-gold"]["item"]["price"] == 10_000
+    # The frames by price: the plain ones, the vine, the flowers, then the gold frame.
+    frames = [key for key, entry in items.items() if entry["item"]["kind"] == "frame"]
+    assert frames[-3:] == ["frame-vine", "frame-flowers", "frame-gold"]
+    assert [items[key]["item"]["price"] for key in frames[-3:]] == [2500, 3000, 10_000]
 
     await give_coins(cami.member, 1199)
     poor = await buy(cami.client, org.id, "animation-sun")
