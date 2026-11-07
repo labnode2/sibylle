@@ -20,6 +20,10 @@ test-results/
 .env
 deploy/.env
 !*.env.example
+# OpenTofu (keycloak/terraform): its providers, and its state, which holds the client's secret and
+# the SMTP key
+keycloak/terraform/.terraform/
+keycloak/terraform/terraform.tfstate*
 
 # Local data
 data/

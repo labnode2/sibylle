@@ -81,8 +81,8 @@ than create the folder as root, which would break `update.sh`'s next checkout.
 
 ## What the realm sets
 
-Terraform will create Sibylle's realm. `dev-realm.json` already sets the same values for the
-local Keycloak:
+OpenTofu creates Sibylle's realm in production (`terraform/`, its README). `dev-realm.json` sets
+the same values for the local Keycloak:
 
 - `login_theme` and `email_theme`: `sibylle`.
 - Internationalization on, French as the only and default locale. Without it, Keycloak shows
