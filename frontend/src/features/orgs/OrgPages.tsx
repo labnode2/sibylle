@@ -205,6 +205,10 @@ export function CreateOrgPage() {
 
   return (
     <section className={styles.page}>
+      <Link to="/bienvenue" className={styles.back}>
+        <Icon name="chevronLeft" size={12} />
+        {t('create.back')}
+      </Link>
       <h1 className={styles.title}>{t('create.title')}</h1>
       <form className={styles.form} onSubmit={submit} noValidate>
         <Field

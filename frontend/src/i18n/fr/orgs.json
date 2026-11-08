@@ -7,6 +7,7 @@
   },
   "create": {
     "title": "Créer une rédaction",
+    "back": "Retour à l'accueil",
     "name": "NOM DE LA RÉDACTION",
     "background": "FOND DE LA CARTE",
     "submit": "Créer la rédaction",
