@@ -1,7 +1,7 @@
 {
   "name": "sibylle-web",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.1",
   "type": "module",
   "engines": {
     "node": ">=24"
