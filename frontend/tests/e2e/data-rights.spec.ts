@@ -62,18 +62,18 @@ test('export, the last editor, then deleting an account', async ({ browser }, te
   });
   const email: string = data.account.email;
 
-  // 3. Inès is the only editor: neither leaving nor deleting her account before naming another.
+  // 3. Inès is the only editor: told up front that she names another before leaving or deleting
+  //    her account, with no button to do either meanwhile.
   await ines.goto('/compte');
-  await ines.getByRole('button', { name: 'Quitter Sophia Office' }).click();
-  await ines.getByRole('button', { name: 'Oui, quitter' }).click();
   const lastEditor = 'Tu es la seule rédaction en chef de Sophia Office';
-  await expect(ines.getByRole('alert').filter({ hasText: lastEditor })).toBeVisible();
-  await ines.getByRole('button', { name: 'Annuler' }).first().click();
-  await ines.getByRole('button', { name: 'Supprimer mon compte' }).click();
-  await ines.getByRole('button', { name: 'Oui, supprimer mon compte' }).click();
-  await expect(ines.getByRole('alert').filter({ hasText: lastEditor })).toBeVisible();
+  const newsrooms = ines.getByRole('region', { name: 'MES RÉDACTIONS' });
+  await expect(newsrooms.getByText(lastEditor)).toBeVisible();
+  await expect(newsrooms.getByRole('button', { name: 'Quitter Sophia Office' })).toHaveCount(0);
+  const deletion = ines.getByRole('region', { name: 'SUPPRIMER MON COMPTE' });
+  await expect(deletion.getByText(lastEditor)).toBeVisible();
+  await expect(deletion.getByRole('button', { name: 'Supprimer mon compte' })).toBeDisabled();
   await expect(
-    ines.getByRole('link', { name: 'Gérer les membres de Sophia Office' }).first(),
+    newsrooms.getByRole('link', { name: 'Gérer les membres de Sophia Office' }),
   ).toBeVisible();
   expect((await call(ines, 'GET', '/me')).status).toBe(200);
 

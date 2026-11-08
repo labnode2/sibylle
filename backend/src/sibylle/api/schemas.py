@@ -110,6 +110,11 @@ class MemberSelf(MemberPublic):
 class MembershipEntry(BaseModel):
     org: OrgCard
     membership: MemberSelf
+    # The newsroom's open pronos the member has not bet on yet: a badge in the newsroom lists.
+    unanswered: int = 0
+    # The newsroom's only editor while others stay: they name another one before leaving or
+    # deleting their account (`last_editor`).
+    sole_editor: bool = False
 
 
 class Me(BaseModel):
@@ -121,6 +126,8 @@ class Me(BaseModel):
     theme: Theme
     reduce_motion: bool
     locale: str
+    # The welcome pop-up that explains the game has been closed.
+    welcomed: bool
     memberships: list[MembershipEntry]
 
     @classmethod
@@ -129,6 +136,8 @@ class Me(BaseModel):
         account: Account,
         memberships: list[tuple[Organisation, Membership]],
         in_play: dict[uuid.UUID, int],
+        unanswered: dict[uuid.UUID, int],
+        sole_editors: set[uuid.UUID],
     ) -> Self:
         return cls(
             id=account.id,
@@ -139,10 +148,13 @@ class Me(BaseModel):
             theme=account.theme,
             reduce_motion=account.reduce_motion,
             locale=account.locale,
+            welcomed=account.welcomed_at is not None,
             memberships=[
                 MembershipEntry(
                     org=OrgCard.of(org),
                     membership=MemberSelf.build(member, in_play=in_play.get(member.id, 0)),
+                    unanswered=unanswered.get(member.id, 0),
+                    sole_editor=member.id in sole_editors,
                 )
                 for org, member in memberships
             ],
@@ -237,6 +249,8 @@ class MePatch(BaseModel):
     theme: Theme | None = None
     reduce_motion: bool | None = None
     locale: Literal["fr"] | None = None
+    # The welcome pop-up has been closed; it does not come back.
+    welcomed: Literal[True] | None = None
 
 
 class AccountDeletion(BaseModel):

@@ -33,18 +33,33 @@ function SignInServiceDown({ error }: { error: unknown }) {
   );
 }
 
-/** « Nomme d'abord une autre rédaction en chef », with the way to do it. */
-function LastEditor({ error, me }: { error: unknown; me: Me }) {
+/** « Nomme d'abord une autre rédaction en chef », with the way to do it: shown up front for
+ *  the newsrooms whose only editor this is (`sole_editor`), and as an alert when the server
+ *  refuses all the same (someone left meanwhile). */
+function SoleEditor({
+  orgId,
+  org,
+  alert = false,
+}: {
+  orgId: string;
+  org: string;
+  alert?: boolean;
+}) {
   const { t } = useTranslation('settings');
-  if (!(error instanceof ApiError) || error.code !== 'last_editor') return null;
-  const orgId = error.fields.org_id;
-  const org = me.memberships.find((m) => m.org.id === orgId)?.org.title ?? '';
   return (
-    <div role="alert" className={styles.alert}>
+    <div role={alert ? 'alert' : undefined} className={styles.alert}>
       <p>{t('lastEditor', { org })}</p>
-      {orgId && <Link to={`/o/${orgId}/reglages/membres`}>{t('lastEditorLink', { org })}</Link>}
+      <Link to={`/o/${orgId}/reglages/membres`}>{t('lastEditorLink', { org })}</Link>
     </div>
   );
+}
+
+function LastEditor({ error, me }: { error: unknown; me: Me }) {
+  if (!(error instanceof ApiError) || error.code !== 'last_editor') return null;
+  const orgId = error.fields.org_id;
+  if (!orgId) return null;
+  const org = me.memberships.find((m) => m.org.id === orgId)?.org.title ?? '';
+  return <SoleEditor orgId={orgId} org={org} alert />;
 }
 
 function Display() {
@@ -110,7 +125,7 @@ function Newsrooms({ me }: { me: Me }) {
         </>
       ) : (
         <ul className={styles.newsrooms}>
-          {me.memberships.map(({ org, membership }) => (
+          {me.memberships.map(({ org, membership, sole_editor }) => (
             <li key={org.id} className={styles.newsroom}>
               <div className={styles.row}>
                 <Link to={`/o/${org.id}`} className={styles.org}>
@@ -122,7 +137,7 @@ function Newsrooms({ me }: { me: Me }) {
                     </span>
                   </span>
                 </Link>
-                {asking !== org.id && (
+                {asking !== org.id && !sole_editor && (
                   <Button
                     variant="secondary"
                     aria-label={t('newsrooms.leaveLabel', { org: org.title })}
@@ -135,6 +150,7 @@ function Newsrooms({ me }: { me: Me }) {
                   </Button>
                 )}
               </div>
+              {sole_editor && <SoleEditor orgId={org.id} org={org.title} />}
               {asking === org.id && (
                 <Card as="div" shadow={0} className={styles.confirm}>
                   <p className={styles.text}>{t('newsrooms.confirm', { org: org.title })}</p>
@@ -217,13 +233,18 @@ function DeleteAccount({ me }: { me: Me }) {
   const remove = useDeleteAccount();
   const navigate = useNavigate();
   const [asking, setAsking] = useState(false);
+  // The newsrooms whose only editor this is: someone else first, or the account stays.
+  const blocking = me.memberships.filter((entry) => entry.sole_editor);
   return (
     <section className={styles.section} aria-labelledby="settings-delete">
       <h2 id="settings-delete" className={styles.sectionTitle}>
         {t('delete.title')}
       </h2>
       <p className={styles.text}>{t('delete.text')}</p>
-      {asking ? (
+      {blocking.map(({ org }) => (
+        <SoleEditor key={org.id} orgId={org.id} org={org.title} />
+      ))}
+      {asking && blocking.length === 0 ? (
         <Card as="div" shadow={0} className={styles.confirm}>
           <p className={styles.text}>{t('delete.confirm')}</p>
           <LastEditor error={remove.error} me={me} />
@@ -248,6 +269,7 @@ function DeleteAccount({ me }: { me: Me }) {
       ) : (
         <Button
           variant="dangerSecondary"
+          disabled={blocking.length > 0}
           onClick={() => {
             remove.reset();
             setAsking(true);

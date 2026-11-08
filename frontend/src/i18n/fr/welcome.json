@@ -1,0 +1,44 @@
+{
+  "step": "ÉTAPE {{step}} SUR {{count}}",
+  "skip": "Passer",
+  "previous": "Précédent",
+  "next": "Suivant",
+  "done": "C'est parti !",
+  "replay": "Revoir les bases du jeu",
+  "intro": {
+    "title": "Bienvenue dans {{org}} !",
+    "text": "Sibylle, c'est la gazette des pronostics entre collègues : on parie sur ce qui va arriver (un match, une date, un chiffre) et on voit qui avait vu juste. Voici l'essentiel en quelques étapes."
+  },
+  "pronos": {
+    "title": "Un prono, une réponse",
+    "text": "Un·e journaliste pose une question avec une date de clôture. Tu choisis ta réponse et tu mises des lauriers, ou rien du tout. Ton choix est définitif !",
+    "more": "Le petit carré à côté d'une rédaction compte les pronos qui attendent ton pari."
+  },
+  "laurels": {
+    "title": "Des lauriers verts à miser",
+    "text": "Tes lauriers verts sont ceux que tu peux miser. Si tu vois juste, tu gagnes le gain fixe du prono et ta part de la cagnotte. Si tu te trompes, tu perds ta mise. Les jeux de la semaine, sur la une, en rapportent aussi.",
+    "more": "Tes lauriers en or, ce sont tes verts plus tes mises encore en jeu. Chaque lundi, ils te rapportent autant de pièces."
+  },
+  "coins": {
+    "title": "Des pièces pour ta carte de presse",
+    "text": "Avec tes pièces, tu achètes dans la collection des cadres, des animations et des couleurs pour ton avatar. Un achat ne touche ni à tes lauriers ni à ton classement."
+  },
+  "leaderboard": {
+    "title": "Le classement et les saisons",
+    "text": "Le classement compare les lauriers et les pronos gagnés, sur le mois, la saison ou depuis toujours. En fin de saison, chaque joueur reçoit une boule de cristal gravée, le podium un cadre doré, et tout le monde repart au solde de départ."
+  },
+  "role": {
+    "editor": {
+      "title": "À toi de lancer la rédaction",
+      "text": "Tu es rédaction en chef : tu publies des pronos et tu désignes leurs résultats. Invite tes collègues depuis l'onglet « La rédaction », avec un lien ou le code d'accès ; tu y nommes aussi les journalistes."
+    },
+    "journalist": {
+      "title": "Tu tiens la plume",
+      "text": "Tu es journaliste : tu publies des pronos et tu désignes leurs résultats une fois l'événement passé. Tu relis aussi les pronos que proposent les lecteurs et lectrices."
+    },
+    "reader": {
+      "title": "Une idée de prono ?",
+      "text": "Propose-la depuis l'onglet « Pronos » : un·e journaliste la relit avant de la publier. La rédaction en chef peut aussi te nommer journaliste."
+    }
+  }
+}

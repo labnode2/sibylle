@@ -9,9 +9,11 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router';
 import { ApiError } from '../api/client';
 import { useTopic } from '../api/realtime';
 import { deleteOrgKey, forgetOrg, reportsKey, useReports } from '../features/admin/api';
+import { meKey, useMe, useWelcomed } from '../features/auth/api';
 import { useWeeklyCoins, weeklyCoinsKey } from '../features/coins/api';
 import { WeeklyCoinsDialog } from '../features/coins/WeeklyCoinsDialog';
 import { InstalledPushDialog } from '../features/notifications/InstalledPushDialog';
+import { WelcomeDialog } from '../features/welcome/WelcomeDialog';
 import { orgKey, useOrg } from '../features/orgs/api';
 import { pronoKey } from '../features/pronos/api';
 import { NewsroomSwitcher } from '../features/orgs/NewsroomPage';
@@ -22,13 +24,25 @@ import { toast } from '../ui/Toaster';
 import { AppShell } from './AppShell';
 import styles from './shell.module.css';
 
-/** A newsroom's pop-ups, one at a time: Monday's good news first, then the installed app's offer
- *  to turn notifications on. */
-function Dialogs({ orgId, coins }: { orgId: string; coins: number }) {
-  const weekly = useWeeklyCoins(orgId);
+/** A newsroom's pop-ups, one at a time: the welcome that explains the game until it is closed,
+ *  then Monday's good news, then the installed app's offer to turn notifications on. */
+function Dialogs({ org, coins }: { org: Org; coins: number }) {
+  const me = useMe();
+  const welcomed = useWelcomed();
+  const weekly = useWeeklyCoins(org.id);
+  if (!me.data) return null;
+  if (!me.data.welcomed) {
+    return (
+      <WelcomeDialog
+        org={org.title}
+        role={org.my_membership.role}
+        onClose={() => welcomed.mutate()}
+      />
+    );
+  }
   return (
     <>
-      <WeeklyCoinsDialog orgId={orgId} coins={coins} />
+      <WeeklyCoinsDialog orgId={org.id} coins={coins} />
       {!weekly.isPending && !weekly.data && <InstalledPushDialog />}
     </>
   );
@@ -43,6 +57,10 @@ export function OrgLayout() {
   // Deleted by its editor, elsewhere: the newsroom is forgotten and its members told why they
   // are back home. The editor who deletes it here is told by the deletion itself.
   useTopic(`org:${orgId}`, (event) => {
+    // A prono that opens or closes changes the count of those waiting for my bet.
+    if (event.event === 'prono.created' || event.event === 'prono.state_changed') {
+      void client.invalidateQueries({ queryKey: meKey });
+    }
     if (event.event !== 'org.deleted') return;
     const title = client.getQueryData<Org>(orgKey(orgId))?.title;
     if (title && client.isMutating({ mutationKey: deleteOrgKey(orgId) }) === 0) {
@@ -97,7 +115,7 @@ export function OrgLayout() {
         newsroom={<NewsroomSwitcher org={org.data} />}
         reports={me.role === 'editor' ? (reports.data?.length ?? 0) : 0}
       />
-      <Dialogs orgId={orgId} coins={me.coins} />
+      <Dialogs org={org.data} coins={me.coins} />
     </>
   );
 }

@@ -1,0 +1,97 @@
+/* The welcome pop-up. On a phone, a sheet rising from the bottom, as wide as the screen; on a
+   computer, a card in the middle, like Monday's good news. */
+.dialog {
+  width: 100%;
+  max-width: 100%;
+  max-height: 92dvh;
+  margin: auto 0 0;
+  padding: 24px var(--gutter) calc(20px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  border: 0;
+  border-top: 2px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: center;
+}
+
+.dialog::backdrop {
+  background: rgb(21 22 45 / 55%);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.art {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: 64px;
+  margin-bottom: 12px;
+}
+
+.title {
+  margin: 8px 0 12px;
+  font: 700 22px/1.15 var(--font-text);
+}
+
+.text,
+.more {
+  margin: 0 0 8px;
+  max-width: 400px;
+  font: 400 15px/1.45 var(--font-text);
+  color: var(--ink-2);
+}
+
+.more {
+  font-size: 14px;
+  font-style: italic;
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dot,
+.dotOn {
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--ink);
+}
+
+.dotOn {
+  background: var(--ink);
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.actions > * {
+  flex: 1;
+}
+
+@media (min-width: 1024px) {
+  .dialog {
+    width: 480px;
+    max-height: calc(100dvh - 48px);
+    margin: auto;
+    padding: 28px;
+    border: 2px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--shadow);
+  }
+
+  .title {
+    font-size: 24px;
+  }
+}

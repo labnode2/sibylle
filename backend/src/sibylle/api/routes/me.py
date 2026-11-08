@@ -14,7 +14,7 @@ from sibylle.api.deps import SESSION_COOKIE, CurrentAccount, Db, clear_session_c
 from sibylle.api.schemas import AccountDeletion, Me, MePatch
 from sibylle.db.models import Account, Membership, Organisation
 from sibylle.domain.seasons import PARIS
-from sibylle.services import accounts, coins, export
+from sibylle.services import accounts, coins, export, orgs, pronos
 
 router = APIRouter(tags=["me"])
 
@@ -31,8 +31,15 @@ async def me_of(session: AsyncSession, account: Account) -> Me:
         .order_by(Membership.joined_at)
     )
     memberships = [(org, member) for org, member in rows.all()]
-    in_play = await coins.in_play(session, [member.id for _, member in memberships])
-    return Me.of(account, memberships, in_play)
+    members = [member for _, member in memberships]
+    in_play = await coins.in_play(session, [member.id for member in members])
+    return Me.of(
+        account,
+        memberships,
+        in_play,
+        await pronos.unanswered(session, members),
+        await orgs.sole_editors(session, members),
+    )
 
 
 @router.get("/me")

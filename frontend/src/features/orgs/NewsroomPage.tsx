@@ -9,12 +9,13 @@ import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
 import type { Org } from '../../api/types';
-import { Chip, CountBadge, Icon } from '../../ui/components';
+import { Button, Chip, CountBadge, Icon } from '../../ui/components';
 import { Streak } from '../../ui/Flame';
 import { FramedAvatar } from '../../ui/FramedAvatar';
 import { PixelImage } from '../../ui/PixelImage';
 import { useMembers, useReports, type Role } from '../admin/api';
 import { useMe } from '../auth/api';
+import { WelcomeDialog } from '../welcome/WelcomeDialog';
 import { useOrg } from './api';
 import styles from './newsroom.module.css';
 
@@ -37,6 +38,11 @@ export function NewsroomSwitcher({ org, align = 'end' }: { org: Org; align?: 'st
   const box = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const menuId = useId();
+  const memberships = me.data?.memberships ?? [];
+  // The open pronos without my bet in my other newsrooms: la une already lists this one's.
+  const elsewhere = memberships
+    .filter((entry) => entry.org.id !== org.id)
+    .reduce((sum, entry) => sum + entry.unanswered, 0);
 
   useEffect(() => {
     if (!open) return;
@@ -77,6 +83,11 @@ export function NewsroomSwitcher({ org, align = 'end' }: { org: Org; align?: 'st
           <span className={styles.label}>{t('newsroom.count', { count: org.member_count })}</span>
         </span>
         <span className={styles.cardLinkMore}>
+          <CountBadge
+            count={elsewhere}
+            label={t('unansweredElsewhere', { count: elsewhere })}
+            className={styles.cardLinkBadge}
+          />
           <Icon name="chevronDown" />
           <span className="visually-hidden">{t('une.switch')}</span>
         </span>
@@ -84,7 +95,7 @@ export function NewsroomSwitcher({ org, align = 'end' }: { org: Org; align?: 'st
       {open && (
         <div id={menuId} className={`${styles.menu} ${align === 'start' ? styles.menuStart : ''}`}>
           <ul className={styles.menuList} aria-label={t('switcher.title')}>
-            {me.data?.memberships.map(({ org: other }) => (
+            {memberships.map(({ org: other, unanswered }) => (
               <li key={other.id}>
                 <Link
                   to={`/o/${other.id}`}
@@ -99,6 +110,7 @@ export function NewsroomSwitcher({ org, align = 'end' }: { org: Org; align?: 'st
                     <OrgLogo org={other} size={24} />
                   </span>
                   <span className={styles.menuName}>{other.title}</span>
+                  <CountBadge count={unanswered} label={t('unanswered', { count: unanswered })} />
                   {other.id === org.id && <Icon name="check" />}
                 </Link>
               </li>
@@ -170,6 +182,7 @@ export function NewsroomPage() {
   const { orgId = '' } = useParams();
   const org = useOrg(orgId);
   const members = useMembers(orgId);
+  const [replay, setReplay] = useState(false);
   if (!org.data || !members.data) return <p role="status">{t('common:shell.loading')}</p>;
   const me = org.data.my_membership.id;
   const sorted = [...members.data].sort(
@@ -213,6 +226,17 @@ export function NewsroomPage() {
           ))}
         </ul>
       </section>
+
+      <Button variant="link" onClick={() => setReplay(true)}>
+        {t('welcome:replay')}
+      </Button>
+      {replay && (
+        <WelcomeDialog
+          org={org.data.title}
+          role={org.data.my_membership.role}
+          onClose={() => setReplay(false)}
+        />
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { api, unwrap } from '../../api/client';
 import { useTopic } from '../../api/realtime';
 import type { components } from '../../api/schema';
+import { meKey } from '../auth/api';
 import { orgKey } from '../orgs/api';
 
 export type PronoSummary = components['schemas']['PronoSummary'];
@@ -102,6 +103,8 @@ export function usePlaceBet(orgId: string, pronoId: string) {
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: pronoKey(orgId, pronoId) });
       void client.invalidateQueries({ queryKey: orgKey(orgId) });
+      // One prono fewer waiting for my bet in the newsroom lists.
+      void client.invalidateQueries({ queryKey: meKey });
     },
   });
 }

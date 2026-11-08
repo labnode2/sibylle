@@ -3,6 +3,7 @@
 import secrets
 import unicodedata
 import uuid
+from collections.abc import Sequence
 from typing import Any
 
 from sqlalchemy import func, select
@@ -330,6 +331,32 @@ async def may_go(session: AsyncSession, member: Membership) -> bool:
     if others:
         await _keeps_an_editor(session, member)
     return others > 0
+
+
+async def sole_editors(session: AsyncSession, members: Sequence[Membership]) -> set[uuid.UUID]:
+    """Among `members`, those who are their newsroom's only active editor while others stay:
+    they name another editor before leaving or deleting their account (`may_go`)."""
+    editors = [m for m in members if m.role == "editor" and m.status == "active"]
+    if not editors:
+        return set()
+    rows = await session.execute(
+        select(
+            Membership.org_id,
+            func.count().filter(Membership.role == "editor"),
+            func.count(),
+        )
+        .where(
+            Membership.org_id.in_([member.org_id for member in editors]),
+            Membership.status == "active",
+        )
+        .group_by(Membership.org_id)
+    )
+    counts = {org_id: (editor_count, total) for org_id, editor_count, total in rows.all()}
+    return {
+        member.id
+        for member in editors
+        if (counts.get(member.org_id) or (0, 0))[0] == 1 and counts[member.org_id][1] > 1
+    }
 
 
 async def change_role(

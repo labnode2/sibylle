@@ -71,6 +71,29 @@ def visible_to(member: Membership) -> Any:
     )
 
 
+async def unanswered(session: AsyncSession, members: Sequence[Membership]) -> dict[uuid.UUID, int]:
+    """For each member, the open pronos of their newsroom they have not bet on yet (open pronos
+    are visible to everyone). A member with none is left out."""
+    if not members:
+        return {}
+    my_bet = (
+        select(Bet.id)
+        .where(
+            Bet.prono_id == Prono.id,
+            Bet.membership_id == Membership.id,
+            Bet.superseded_at.is_(None),
+        )
+        .exists()
+    )
+    rows = await session.execute(
+        select(Membership.id, func.count(Prono.id))
+        .join(Prono, and_(Prono.org_id == Membership.org_id, Prono.state == State.OPEN.value))
+        .where(Membership.id.in_([member.id for member in members]), ~my_bet)
+        .group_by(Membership.id)
+    )
+    return {member_id: int(count) for member_id, count in rows.all()}
+
+
 async def get_prono(
     session: AsyncSession, member: Membership, prono_id: uuid.UUID, *, lock: bool = False
 ) -> Prono:

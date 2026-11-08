@@ -138,6 +138,8 @@ def update_account(account: Account, changes: dict[str, Any]) -> None:
     for field in ("theme", "reduce_motion", "locale"):
         if field in changes and changes[field] is not None:
             setattr(account, field, changes[field])
+    if changes.get("welcomed") and account.welcomed_at is None:
+        account.welcomed_at = clock.now()
 
 
 def verification_return() -> str:

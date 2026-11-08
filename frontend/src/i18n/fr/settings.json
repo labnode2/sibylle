@@ -36,7 +36,7 @@
   "lastEditorLink": "Gérer les membres de {{org}}",
   "password": {
     "title": "MOT DE PASSE",
-    "text": "Il se change sur la page de connexion de Sibylle, qui peut aussi déconnecter tes autres appareils.",
+    "text": "Le bouton ouvre la page sécurisée de Sibylle : tu y choisis ton nouveau mot de passe, puis tu reviens ici. Tu peux aussi y déconnecter tes autres appareils.",
     "change": "Changer mon mot de passe"
   },
   "data": {

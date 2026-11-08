@@ -50,6 +50,10 @@
     "title": "Mes rédactions",
     "more": "Rejoindre ou créer une rédaction"
   },
+  "unanswered_one": "{{count}} prono attend ton pari",
+  "unanswered_other": "{{count}} pronos attendent ton pari",
+  "unansweredElsewhere_one": "{{count}} prono attend ton pari dans tes autres rédactions",
+  "unansweredElsewhere_other": "{{count}} pronos attendent ton pari dans tes autres rédactions",
   "newsroom": {
     "title": "La rédaction",
     "members": "Les membres",

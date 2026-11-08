@@ -92,6 +92,7 @@ export async function newPerson(
   testInfo: TestInfo,
   firstName: string,
   startAt = '/',
+  options: SignUpOptions = {},
 ): Promise<Page> {
   const context = await browser.newContext({ ...testInfo.project.use });
   const page = await context.newPage();
@@ -99,9 +100,13 @@ export async function newPerson(
   await page.getByRole('link', { name: 'Créer un compte' }).click();
   const email = uniqueEmail(firstName.toLowerCase(), testInfo);
   emails.set(page, email);
-  await signUpOnKeycloak(page, testInfo, firstName, email);
+  await signUpOnKeycloak(page, testInfo, firstName, email, options);
   return page;
 }
+
+/** `welcome`: keep the pop-up that explains the game in the first newsroom (welcome.spec); the
+ *  other journeys close it for good straight after signing up, so that it stays out of their way. */
+export type SignUpOptions = { welcome?: boolean };
 
 /** Fills Keycloak's « Créer un compte » page, on screen, and comes back on Sibylle. */
 export async function signUpOnKeycloak(
@@ -109,6 +114,7 @@ export async function signUpOnKeycloak(
   testInfo: TestInfo,
   firstName: string,
   email: string,
+  { welcome = false }: SignUpOptions = {},
 ): Promise<void> {
   await expect(page.getByRole('heading', { name: 'Créer un compte' })).toBeVisible();
   await page.getByLabel('Prénom').fill(firstName);
@@ -117,6 +123,11 @@ export async function signUpOnKeycloak(
   await page.getByLabel('Mot de passe').fill(PASSWORD);
   await page.getByRole('button', { name: 'Créer mon compte' }).click();
   await backOnSibylle(page, testInfo);
+  if (!welcome) {
+    expect((await call(page, 'PATCH', '/me', { welcomed: true })).status).toBe(200);
+    // The app read the account before: it reads it again.
+    await page.reload();
+  }
 }
 
 export async function createNewsroom(page: Page, title: string, pseudo: string): Promise<void> {

@@ -1625,6 +1625,8 @@ export interface components {
             reduce_motion: boolean;
             /** Locale */
             locale: string;
+            /** Welcomed */
+            welcomed: boolean;
             /** Memberships */
             memberships: components["schemas"]["MembershipEntry"][];
         };
@@ -1640,6 +1642,8 @@ export interface components {
             reduce_motion?: boolean | null;
             /** Locale */
             locale?: "fr" | null;
+            /** Welcomed */
+            welcomed?: true | null;
         };
         /**
          * MemberListed
@@ -1762,6 +1766,16 @@ export interface components {
         MembershipEntry: {
             org: components["schemas"]["OrgCard"];
             membership: components["schemas"]["MemberSelf"];
+            /**
+             * Unanswered
+             * @default 0
+             */
+            unanswered: number;
+            /**
+             * Sole Editor
+             * @default false
+             */
+            sole_editor: boolean;
         };
         /** MessageIn */
         MessageIn: {
