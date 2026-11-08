@@ -148,9 +148,10 @@ sudo -u sibylle -H /opt/sibylle/deploy/update.sh
 sudo -u sibylle -H docker compose --project-directory /opt/sibylle/deploy -f /opt/sibylle/deploy/compose.prod.yml ps
 ```
 
-`db`, `api`, `worker` and `sibylle` must be `healthy`, with an empty ports column. Until NPM
-forwards the site (section 6), nothing reaches nginx from the Internet. A check on the VM, the way
-NPM reaches it:
+`db`, `api`, `worker` and `sibylle` must be `healthy`. The ports column only lists the ports the
+images declare (`8443/tcp`…): none is published, so there is no `->` in it. Until NPM forwards the
+site (section 6), nothing reaches nginx from the Internet. A check on the VM, the way NPM reaches
+it:
 
 ```bash
 sudo docker exec npm curl -s -H 'Host: sibylle.cc' http://sibylle:8443/api/health
@@ -185,7 +186,7 @@ hook() {
   curl -sS -H "Content-Type: application/json" -H "X-Hub-Signature-256: sha256=$signature" \
     --data-binary "$2" "http://172.30.0.1:9000/hooks/$1"
 }
-hook deploy "{\"id\":\"trial-1\",\"commit\":\"$(git -C /opt/sibylle rev-parse origin/main)\"}"
+hook deploy "{\"id\":\"trial-1\",\"commit\":\"$(sudo -u sibylle git -C /opt/sibylle rev-parse origin/main)\"}"
 hook deploy-status '{"id":"trial-1"}'
 ```
 
