@@ -41,6 +41,17 @@ test('a bet shows up live, then the prono closes', async ({ browser }, testInfo)
   await ines.getByLabel('LA QUESTION').fill('Qui gagnera le derby de dimanche ?');
   await ines.getByRole('textbox', { name: 'Choix 1' }).fill('OM');
   await ines.getByRole('textbox', { name: 'Choix 2' }).fill('OGC Nice');
+  // A result expected before the closing: its picker starts at the closing, and the field says
+  // why the prono is refused.
+  const closing = await ines.getByLabel('CLÔTURE DES PRONOS').inputValue();
+  const result = ines.getByLabel('RÉSULTAT ATTENDU (FACULTATIF)');
+  await expect(result).toHaveAttribute('min', closing);
+  await result.fill(`${closing.slice(0, 11)}08:00`);
+  await ines.getByRole('button', { name: 'Publier le prono' }).click();
+  await expect(
+    ines.getByText('Le résultat ne peut pas être attendu avant la clôture des pronos.'),
+  ).toBeVisible();
+  await result.fill('');
   await ines.getByRole('button', { name: 'Publier le prono' }).click();
   await expect(ines.getByRole('heading', { name: 'Qui gagnera le derby' })).toBeVisible();
   const pronoPath = new URL(ines.url()).pathname;

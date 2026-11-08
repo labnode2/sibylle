@@ -242,6 +242,7 @@ export function CreatePronoPage() {
           label={t('create.opensAt')}
           type="datetime-local"
           value={opensAt}
+          max={isOpenEnded ? undefined : closesAt}
           onChange={(event) => setOpensAt(event.target.value)}
           error={errors.field('opens_at')}
         />
@@ -250,6 +251,7 @@ export function CreatePronoPage() {
         label={t('create.resultAt')}
         type="datetime-local"
         value={resultAt}
+        min={isOpenEnded ? undefined : closesAt}
         onChange={(event) => setResultAt(event.target.value)}
         error={errors.field('result_expected_at')}
       />

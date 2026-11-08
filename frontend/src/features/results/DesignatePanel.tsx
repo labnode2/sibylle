@@ -230,6 +230,7 @@ function RelaunchForm({ orgId, prono }: { orgId: string; prono: PronoDetail }) {
         label={t('designate.relaunchResult')}
         type="datetime-local"
         value={resultAt}
+        min={closesAt}
         onChange={(event) => setResultAt(event.target.value)}
         error={errors.field('result_expected_at')}
       />
