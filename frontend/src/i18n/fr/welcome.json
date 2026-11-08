@@ -7,7 +7,7 @@
   "replay": "Revoir les bases du jeu",
   "intro": {
     "title": "Bienvenue dans {{org}} !",
-    "text": "Sibylle, c'est la gazette des pronostics entre collègues : on parie sur ce qui va arriver (un match, une date, un chiffre) et on voit qui avait vu juste. Voici l'essentiel en quelques étapes."
+    "text": "Sibylle, c'est la gazette des pronostics entre collègues et ami·es : on parie sur ce qui va arriver (un match, une date, un chiffre) et on voit qui avait vu juste. Voici l'essentiel en quelques étapes."
   },
   "pronos": {
     "title": "Un prono, une réponse",
@@ -16,7 +16,7 @@
   },
   "laurels": {
     "title": "Des lauriers verts à miser",
-    "text": "Tes lauriers verts sont ceux que tu peux miser. Si tu vois juste, tu gagnes le gain fixe du prono et ta part de la cagnotte. Si tu te trompes, tu perds ta mise. Les jeux de la semaine, sur la une, en rapportent aussi.",
+    "text": "Tes lauriers verts sont ceux que tu peux miser. Si tu vois juste, tu gagnes le gain fixe du prono et ta part de la cagnotte. Si tu te trompes, tu perds ta mise. Les jeux de la semaine en rapportent aussi.",
     "more": "Tes lauriers en or, ce sont tes verts plus tes mises encore en jeu. Chaque lundi, ils te rapportent autant de pièces."
   },
   "coins": {
