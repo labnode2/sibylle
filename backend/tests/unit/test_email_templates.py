@@ -32,6 +32,23 @@ def test_transactional_emails_render(template: str) -> None:
     assert "https://" not in mail.html.replace(LINK, "")
 
 
+def test_the_invitation_tells_the_role() -> None:
+    renderer = Renderer()
+    reader = renderer.render(
+        "invitation", "x@exemple.fr", {**CASES["invitation"][0], "role": "reader"}
+    )
+    assert "Tu y entreras" not in reader.text
+    journalist = renderer.render(
+        "invitation", "x@exemple.fr", {**CASES["invitation"][0], "role": "journalist"}
+    )
+    assert "Tu y entreras comme journaliste" in journalist.text
+    assert "<strong>journaliste</strong>" in journalist.html
+    editor = renderer.render(
+        "invitation", "x@exemple.fr", {**CASES["invitation"][0], "role": "editor"}
+    )
+    assert "Tu y entreras à la rédaction en chef" in editor.text
+
+
 def test_html_escapes_what_members_typed() -> None:
     payload = {**CASES["invitation"][0], "org_title": "<b>Rédac</b>"}
     mail = Renderer().render("invitation", "x@exemple.fr", payload)

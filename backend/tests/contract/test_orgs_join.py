@@ -29,13 +29,16 @@ async def signed_in(make_account: MakeAccount, client_for: ClientFor) -> httpx.A
     return await client_for(await make_account())
 
 
-async def invite_link(editor: httpx.AsyncClient, org_id: str, max_uses: int = 2) -> str:
+async def invite_link(
+    editor: httpx.AsyncClient, org_id: str, max_uses: int = 2, **fields: str
+) -> str:
     response = await editor.post(
         f"/api/orgs/{org_id}/invitations",
         json={
             "kind": "link",
             "max_uses": max_uses,
             "expires_at": (clock.now() + timedelta(days=7)).isoformat(),
+            **fields,
         },
     )
     assert response.status_code == 201, response.text
@@ -162,8 +165,10 @@ async def test_join_by_access_code(make_account: MakeAccount, client_for: Client
     cami = await signed_in(make_account, client_for)
     preview = (await cami.post("/api/join/preview", json={"code": org["access_code"]})).json()
     assert preview["places_left"] is None and preview["invited_by_pseudo"] is None
+    assert preview["role"] == "reader"
     joined = await cami.post("/api/join", json=join_body("Cami", code=org["access_code"].lower()))
     assert joined.status_code == 201
+    assert joined.json()["membership"]["role"] == "reader"
     wrong = await cami.post("/api/join/preview", json={"code": "NOPE-AAA"})
     assert wrong.json()["error"]["code"] == "invitation_invalid"
 
@@ -189,6 +194,49 @@ async def test_join_by_nominative_invitation(
     other = await signed_in(make_account, client_for)
     used = await other.post("/api/join", json=join_body("Autre", token=token))
     assert used.json()["error"]["code"] == "invitation_invalid"
+
+
+async def test_invitations_let_people_in_with_the_role_chosen(
+    make_account: MakeAccount, client_for: ClientFor
+) -> None:
+    ines = await signed_in(make_account, client_for)
+    org_id = (await create_org(ines))["org"]["id"]
+
+    # A link: the role shows in the editor's list and in the preview, and each person who
+    # joins with it gets it.
+    token = await invite_link(ines, org_id, role="journalist")
+    listed = (await ines.get(f"/api/orgs/{org_id}/invitations")).json()
+    assert [i["role"] for i in listed] == ["journalist"]
+    hugo = await signed_in(make_account, client_for)
+    preview = (await hugo.post("/api/join/preview", json={"token": token})).json()
+    assert preview["role"] == "journalist"
+    joined = await hugo.post("/api/join", json=join_body("Hugo", token=token))
+    assert joined.json()["membership"]["role"] == "journalist"
+
+    # By e-mail: the role travels in the mail too.
+    response = await ines.post(
+        f"/api/orgs/{org_id}/invitations",
+        json={"kind": "email", "email": "leo@exemple.fr", "role": "editor"},
+    )
+    assert response.json()["invitation"]["role"] == "editor"
+    [queued] = await notifications("invitation")
+    assert queued.payload["role"] == "editor"
+    leo = await signed_in(make_account, client_for)
+    by_mail = await leo.post(
+        "/api/join", json=join_body("Léo", token=token_from(queued.payload["link"]))
+    )
+    assert by_mail.json()["membership"]["role"] == "editor"
+
+    # Without a role, a reader; an unknown role is refused.
+    plain = await ines.post(
+        f"/api/orgs/{org_id}/invitations", json={"kind": "email", "email": "cami@exemple.fr"}
+    )
+    assert plain.json()["invitation"]["role"] == "reader"
+    unknown = await ines.post(
+        f"/api/orgs/{org_id}/invitations",
+        json={"kind": "email", "email": "x@exemple.fr", "role": "owner"},
+    )
+    assert unknown.status_code == 422
 
 
 async def test_one_account_in_two_newsrooms(
@@ -260,6 +308,14 @@ async def test_a_departed_member_comes_back_with_their_profile(
     assert back.status_code == 201
     membership = back.json()["membership"]
     assert (membership["id"], membership["pseudo"]) == (first["membership"]["id"], "Cami")
+
+    # Coming back with a journalist link: the same profile, as a journalist.
+    leave = await cami.delete(f"/api/orgs/{org['id']}/members/me")
+    assert leave.status_code == 204, leave.text
+    token = await invite_link(ines, org["id"], role="journalist")
+    again = await cami.post("/api/join", json=join_body("Cami", token=token))
+    assert again.json()["membership"]["id"] == first["membership"]["id"]
+    assert again.json()["membership"]["role"] == "journalist"
 
 
 async def test_outsiders_get_404_everywhere(

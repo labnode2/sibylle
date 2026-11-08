@@ -115,13 +115,15 @@ class Membership(Base):
 
 
 class Invitation(Base):
-    """A way into a newsroom: a link with a number of places, or a single-use e-mail invitation."""
+    """A way into a newsroom: a link with a number of places, or a single-use e-mail invitation;
+    either one lets people in with the role the editor chose."""
 
     __tablename__ = "invitations"
     __table_args__ = (
         CheckConstraint("kind IN ('link', 'email')", name="kind"),
         CheckConstraint("max_uses >= 1", name="max_uses"),
         CheckConstraint("kind = 'link' OR (email IS NOT NULL AND max_uses = 1)", name="email_kind"),
+        CheckConstraint("role IN ('reader', 'journalist', 'editor')", name="role"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
@@ -129,6 +131,7 @@ class Invitation(Base):
     kind: Mapped[str] = mapped_column(Text)
     token_hash: Mapped[str] = mapped_column(Text, unique=True)
     email: Mapped[str | None] = mapped_column(Text)
+    role: Mapped[str] = mapped_column(Text, default="reader", server_default="reader")
     max_uses: Mapped[int]
     use_count: Mapped[int] = mapped_column(default=0, server_default="0")
     expires_at: Mapped[datetime]

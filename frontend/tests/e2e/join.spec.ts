@@ -2,7 +2,7 @@
 // join, and never see another member's private data.
 import { expect, test, type Page } from '@playwright/test';
 
-import { createNewsroom, joinWith, newPerson, notes, openSettings } from './helpers';
+import { call, createNewsroom, joinWith, newPerson, notes, openSettings, orgIdOf } from './helpers';
 
 const PRIVATE_KEYS = ['first_name', 'last_name', 'email', 'keycloak_id'];
 
@@ -65,6 +65,36 @@ test('invite with a link and join a newsroom', async ({ browser }, testInfo) => 
   await expect(manon.getByRole('alert')).toContainText("Cette invitation n'est plus valable");
 
   expect(leaks).toEqual([]);
+});
+
+test('a link or an e-mail lets people in with the role the editor chose', async ({
+  browser,
+}, testInfo) => {
+  const ines = await newPerson(browser, testInfo, 'Inès');
+  await createNewsroom(ines, 'Sophia Office', 'Inès');
+  const orgId = orgIdOf(ines);
+  await openSettings(ines);
+  await ines.getByRole('link', { name: 'MEMBRES', exact: true }).click();
+
+  // The first role list is the link's, the second the e-mail's; the list of invitations shows
+  // each new one at once, with its role.
+  const roles = ines.getByRole('combobox', { name: "Rôle à l'arrivée" });
+  await roles.first().selectOption({ label: 'Comme journaliste' });
+  await ines.getByRole('button', { name: 'Créer le lien' }).click();
+  const path = new URL(await ines.getByLabel('LIEN À PARTAGER').inputValue()).pathname;
+  await expect(ines.getByText(/^JOURNALISTE · 0 SUR 10 PLACES/)).toBeVisible();
+  await roles.last().selectOption({ label: 'À la rédaction en chef' });
+  await ines.getByLabel('ADRESSE').fill('leo@exemple.fr');
+  await ines.getByRole('button', { name: "Envoyer l'invitation" }).click();
+  await expect(ines.getByText(/^RÉDACTION EN CHEF · 0 SUR 1 PLACES/)).toBeVisible();
+
+  // Hugo is told before joining, and joins as a journalist.
+  const hugo = await newPerson(browser, testInfo, 'Hugo', path);
+  await expect(hugo.getByText('TU Y ENTRES COMME JOURNALISTE')).toBeVisible();
+  await joinWith(hugo, 'Hugo');
+  await expect(hugo.getByRole('heading', { name: /^La une de / })).toBeVisible();
+  const detail = await call(hugo, 'GET', `/orgs/${orgId}`);
+  expect(detail.body.my_membership.role).toBe('journalist');
 });
 
 test('the newsroom card opens a menu to change newsroom or join another, and the welcome page lists them', async ({

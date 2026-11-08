@@ -47,12 +47,14 @@ async def create_invitation(
         raise AppError("not_found")
     if isinstance(body, LinkInvitationIn):
         invitation, token = await invitations.create_link(
-            session, member, max_uses=body.max_uses, expires_at=body.expires_at
+            session, member, max_uses=body.max_uses, expires_at=body.expires_at, role=body.role
         )
         return InvitationCreated(
             invitation=invitation_out(invitation), url=invitations.join_url(token)
         )
-    invitation = await invitations.create_email_invitation(session, member, org, body.email)
+    invitation = await invitations.create_email_invitation(
+        session, member, org, body.email, role=body.role
+    )
     return InvitationCreated(invitation=invitation_out(invitation), url=None)
 
 

@@ -92,6 +92,11 @@
   "invitations": {
     "title": "Les invitations",
     "link": "Lien d'invitation",
+    "roles": {
+      "reader": "LECTEUR·RICE",
+      "journalist": "JOURNALISTE",
+      "editor": "RÉDACTION EN CHEF"
+    },
     "uses": "{{used}} SUR {{max}} PLACES",
     "until": "JUSQU'AU {{date}}",
     "revoke": "Révoquer",

@@ -6,7 +6,7 @@ import { api, unwrap } from '../../api/client';
 import type { components } from '../../api/schema';
 import type { Me } from '../../api/types';
 import { meKey } from '../auth/api';
-import { orgKey } from '../orgs/api';
+import { invitationsKey, orgKey } from '../orgs/api';
 
 export type OrgPatch = components['schemas']['OrgPatch'];
 export type Invitation = components['schemas']['InvitationOut'];
@@ -14,7 +14,6 @@ export type ReportDetail = components['schemas']['ReportDetail'];
 export type Role = components['schemas']['MemberPublic']['role'];
 
 const membersKey = (orgId: string) => ['members', orgId] as const;
-const invitationsKey = (orgId: string) => ['invitations', orgId] as const;
 const sectionsKey = (orgId: string) => ['sections', orgId] as const;
 export const reportsKey = (orgId: string) => ['reports', orgId] as const;
 

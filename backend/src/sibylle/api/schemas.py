@@ -211,6 +211,7 @@ class InvitationOut(BaseModel):
     id: uuid.UUID
     kind: Literal["link", "email"]
     email: str | None
+    role: Role
     max_uses: int
     use_count: int
     places_left: int
@@ -230,6 +231,8 @@ class JoinPreview(BaseModel):
     member_count: int
     places_left: int | None
     invited_by_pseudo: str | None
+    # The role on joining: the invitation's, or reader with the access code.
+    role: Role
     charter: str
     already_member: bool
 
@@ -290,11 +293,13 @@ class LinkInvitationIn(BaseModel):
     kind: Literal["link"]
     max_uses: int = Field(ge=1, le=500)
     expires_at: AwareDatetime
+    role: Role = "reader"
 
 
 class EmailInvitationIn(BaseModel):
     kind: Literal["email"]
     email: Email
+    role: Role = "reader"
 
 
 InvitationIn = Annotated[LinkInvitationIn | EmailInvitationIn, Field(discriminator="kind")]

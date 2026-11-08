@@ -340,7 +340,7 @@ Cami veut montrer sa carte de presse sur son blog. Sous sa carte, elle active «
 **Organisations et invitations**
 
 - **FR-010**: Tout compte DOIT pouvoir créer une organisation et en devient la rédaction en chef.
-- **FR-011**: Le système DOIT permettre de rejoindre une organisation par un lien d'invitation (nombre de places et date d'expiration), par un code d'accès, ou par une invitation nominative envoyée par e-mail.
+- **FR-011**: Le système DOIT permettre de rejoindre une organisation par un lien d'invitation (nombre de places et date d'expiration), par un code d'accès, ou par une invitation nominative envoyée par e-mail. Le lien et l'invitation par e-mail portent le rôle choisi par la rédaction en chef en les créant (lecteur·rice par défaut, journaliste ou rédaction en chef) : la page pour rejoindre et l'e-mail le disent, et chaque personne qui entre par eux prend ce rôle, un ancien membre qui revient compris. Le code d'accès fait entrer comme lecteur·rice.
 - **FR-012**: En rejoignant, le membre DOIT choisir un pseudo unique dans l'organisation, un avatar parmi des modèles, et accepter la charte de l'organisation.
 - **FR-013**: Un compte DOIT pouvoir appartenir à plusieurs organisations ; pseudo, avatar, lauriers, statistiques et collection sont propres à chacune.
 - **FR-014**: Les organisations NE DOIVENT avoir aucune visibilité entre elles (pronos, membres, classements, notifications).
@@ -466,7 +466,7 @@ Cami veut montrer sa carte de presse sur son blog. Sous sa carte, elle active «
 - **Compte** : une personne ; e-mail, mot de passe, nom et prénom (privés), préférences.
 - **Organisation (rédaction)** : carte (logo, fond, titre), réglages de lauriers, charte, code d'accès, mot de la rédaction en chef.
 - **Membre** : le lien entre un compte et une organisation ; rôle, pseudo, avatar, cadre, solde, score de saison, pièces, collection, objets mis en avant, et l'adresse de sa carte publique, s'il l'a rendue publique.
-- **Invitation** : lien à places limitées et date d'expiration, ou invitation nominative par e-mail.
+- **Invitation** : lien à places limitées et date d'expiration, ou invitation nominative par e-mail, avec le rôle donné à l'arrivée.
 - **Rubrique** : catégorie de pronos propre à une organisation.
 - **Prono** : question, type, choix, dates, gain de base, état, résultat, historique des relances.
 - **Pari** : la réponse d'un membre à un prono, avec sa mise et son rang d'arrivée.

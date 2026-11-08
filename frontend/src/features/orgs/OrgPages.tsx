@@ -353,6 +353,7 @@ export function JoinPage() {
         >
           {t('join.submit')}
         </Button>
+        {data.role !== 'reader' && <p className={styles.hint}>{t(`join.role.${data.role}`)}</p>}
         <p className={styles.hint}>{t('join.later')}</p>
       </form>
     </section>

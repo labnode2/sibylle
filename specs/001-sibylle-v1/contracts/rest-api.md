@@ -60,10 +60,10 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 | DELETE | `/orgs/{org}` | Réd. chef | → `204` ; suppression douce : la rédaction disparaît aussitôt pour tous ses membres (`404` partout), et ni ses invitations ni son code ne laissent entrer ; rien n'est effacé, et `sibylle orgs restore <org>` la rend telle qu'elle était (`sibylle orgs deleted` liste les rédactions supprimées) |
 | POST | `/orgs/{org}/access-code` | Réd. chef | → `{access_code}` (nouveau code ; l'ancien ne marche plus) |
 | DELETE | `/orgs/{org}/access-code` | Réd. chef | → `204` (désactive) |
-| POST | `/join/preview` | Compte | `{token}` ou `{code}` → `{org: OrgCard, member_count, places_left, invited_by_pseudo, charter}` ou `409 invitation_invalid` |
-| POST | `/join` | Compte | `{token \| code, pseudo, avatar, charter_accepted: true}` → `201 {org, membership}` ; un ancien membre retrouve son profil |
+| POST | `/join/preview` | Compte | `{token}` ou `{code}` → `{org: OrgCard, member_count, places_left, invited_by_pseudo, role, charter, already_member}` (`role` : celui de l'invitation, `reader` par le code) ou `409 invitation_invalid` |
+| POST | `/join` | Compte | `{token \| code, pseudo, avatar, charter_accepted: true}` → `201 {org, membership}` ; chacun prend le rôle de l'invitation (`reader` par le code) ; un ancien membre retrouve son profil |
 | GET | `/orgs/{org}/invitations` | Réd. chef | → `[Invitation]` |
-| POST | `/orgs/{org}/invitations` | Réd. chef | `{kind: "link", max_uses, expires_at}` → `201 {invitation, url}` (l'URL n'est montrée qu'une fois) ; `{kind: "email", email}` → `201 {invitation}` et envoi |
+| POST | `/orgs/{org}/invitations` | Réd. chef | `{kind: "link", max_uses, expires_at, role?}` → `201 {invitation, url}` (l'URL n'est montrée qu'une fois) ; `{kind: "email", email, role?}` → `201 {invitation}` et envoi ; `role` : `reader` (par défaut), `journalist` ou `editor` |
 | DELETE | `/orgs/{org}/invitations/{id}` | Réd. chef | → `204` (révoque) |
 | GET | `/orgs/{org}/members` | Membre | → `[MemberPublic + {streak, balance}]` : `streak`, la chaîne de victoires en cours (research.md J8) ; `balance`, ses lauriers verts, ceux que montre sa carte de presse (la rédaction en chef les ajuste depuis cette liste) |
 | GET | `/orgs/{org}/members/{member}` | Membre | → `PressCard` (carte de presse : pseudo, avatar, cadre, rôle, arrivée, statistiques `{laurels, pronos_played, settled, wins, success_rate, streak, best_streak}` (`laurels` : les lauriers verts, le solde, le même nombre que dans l'en-tête du membre), trophées `{id, season, score, rank, podium}`, collection, `showcase`) ; tout membre de la rédaction peut la lire |

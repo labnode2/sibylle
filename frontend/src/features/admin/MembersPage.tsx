@@ -180,6 +180,7 @@ function Invitations({ orgId }: { orgId: string }) {
               <span className={styles.rowName}>
                 {invitation.kind === 'email' ? invitation.email : t('invitations.link')}
                 <span className={styles.hint}>
+                  {t(`invitations.roles.${invitation.role}`)} ·{' '}
                   {t('invitations.uses', {
                     used: invitation.use_count,
                     max: invitation.max_uses,

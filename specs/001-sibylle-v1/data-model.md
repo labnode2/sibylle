@@ -82,11 +82,11 @@ PK (`account_id`, `type`, `channel`) ; `type` ∈ `new_prono`, `closing_soon`, `
 | card_token | text | jeton de l'adresse publique `/carte/<card_token>`, unique, tiré à la première mise en public puis gardé ; facultatif |
 | joined_at, charter_accepted_at, left_at | timestamptz | |
 
-Règles : au moins un `editor` actif par organisation qui a des membres actifs ; un retour après départ réactive la même ligne (`status = active`) ; l'anonymisation remplace le pseudo par « Ancien membre » et l'avatar par le modèle par défaut.
+Règles : au moins un `editor` actif par organisation qui a des membres actifs ; un retour après départ réactive la même ligne (`status = active`), avec le rôle de l'invitation (`reader` par le code d'accès) ; l'anonymisation remplace le pseudo par « Ancien membre » et l'avatar par le modèle par défaut.
 
 ### invitations
 
-`id`, `org_id`, `kind` (`link`, `email`), `token_hash` (unique), `email` (pour `email` seulement), `max_uses` (≥ 1 ; 1 pour `email`), `use_count`, `expires_at` (obligatoire ; 7 jours par défaut pour `email`), `created_by` → memberships, `revoked_at`, `created_at`. Valide si non révoquée, non expirée et `use_count < max_uses` ; l'utilisation verrouille la ligne.
+`id`, `org_id`, `kind` (`link`, `email`), `token_hash` (unique), `email` (pour `email` seulement), `role` (`reader` par défaut, `journalist`, `editor` : le rôle donné à l'arrivée), `max_uses` (≥ 1 ; 1 pour `email`), `use_count`, `expires_at` (obligatoire ; 7 jours par défaut pour `email`), `created_by` → memberships, `revoked_at`, `created_at`. Valide si non révoquée, non expirée et `use_count < max_uses` ; l'utilisation verrouille la ligne.
 
 ### sections (rubrique)
 

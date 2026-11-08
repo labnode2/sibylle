@@ -1302,6 +1302,12 @@ export interface components {
             kind: "email";
             /** Email */
             email: string;
+            /**
+             * Role
+             * @default reader
+             * @enum {string}
+             */
+            role: "reader" | "journalist" | "editor";
         };
         /**
          * FrontPage
@@ -1469,6 +1475,11 @@ export interface components {
             kind: "link" | "email";
             /** Email */
             email: string | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "reader" | "journalist" | "editor";
             /** Max Uses */
             max_uses: number;
             /** Use Count */
@@ -1512,6 +1523,11 @@ export interface components {
             places_left: number | null;
             /** Invited By Pseudo */
             invited_by_pseudo: string | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "reader" | "journalist" | "editor";
             /** Charter */
             charter: string;
             /** Already Member */
@@ -1600,6 +1616,12 @@ export interface components {
              * Format: date-time
              */
             expires_at: string;
+            /**
+             * Role
+             * @default reader
+             * @enum {string}
+             */
+            role: "reader" | "journalist" | "editor";
         };
         /** Me */
         Me: {

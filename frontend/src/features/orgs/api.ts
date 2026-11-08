@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api, unwrap } from '../../api/client';
+import type { components } from '../../api/schema';
 import type { PixelImage } from '../../api/types';
 import { meKey } from '../auth/api';
 
@@ -55,11 +56,13 @@ export function useJoin() {
   });
 }
 
+export const invitationsKey = (orgId: string) => ['invitations', orgId] as const;
+
 export function useInvite(orgId: string) {
+  const client = useQueryClient();
   return useMutation({
     mutationFn: (
-      body:
-        { kind: 'link'; max_uses: number; expires_at: string } | { kind: 'email'; email: string },
+      body: components['schemas']['LinkInvitationIn'] | components['schemas']['EmailInvitationIn'],
     ) =>
       unwrap(
         api.POST('/api/orgs/{org_id}/invitations', {
@@ -67,5 +70,7 @@ export function useInvite(orgId: string) {
           body,
         }),
       ),
+    // The editor's list of invitations shows the new one at once.
+    onSuccess: () => client.invalidateQueries({ queryKey: invitationsKey(orgId) }),
   });
 }

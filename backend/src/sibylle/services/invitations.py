@@ -29,7 +29,12 @@ def places_left(invitation: Invitation) -> int:
 
 
 async def create_link(
-    session: AsyncSession, author: Membership, *, max_uses: int, expires_at: datetime
+    session: AsyncSession,
+    author: Membership,
+    *,
+    max_uses: int,
+    expires_at: datetime,
+    role: str = "reader",
 ) -> tuple[Invitation, str]:
     now = clock.now()
     if expires_at <= now or expires_at > now + LINK_MAX_LIFETIME:
@@ -39,6 +44,7 @@ async def create_link(
         org_id=author.org_id,
         kind="link",
         token_hash=token_hash(token),
+        role=role,
         max_uses=max_uses,
         expires_at=expires_at,
         created_by=author.id,
@@ -49,7 +55,7 @@ async def create_link(
 
 
 async def create_email_invitation(
-    session: AsyncSession, author: Membership, org: Organisation, email: str
+    session: AsyncSession, author: Membership, org: Organisation, email: str, role: str = "reader"
 ) -> Invitation:
     token = new_token()
     invitation = Invitation(
@@ -57,6 +63,7 @@ async def create_email_invitation(
         kind="email",
         token_hash=token_hash(token),
         email=email.strip().lower(),
+        role=role,
         max_uses=1,
         expires_at=clock.now() + EMAIL_INVITATION_LIFETIME,
         created_by=author.id,
@@ -72,6 +79,7 @@ async def create_email_invitation(
             "to": invitation.email,
             "inviter_pseudo": author.pseudo,
             "org_title": org.title,
+            "role": role,
             "link": join_url(token),
         },
     )
@@ -82,6 +90,11 @@ async def create_email_invitation(
 class Entry:
     org: Organisation
     invitation: Invitation | None
+
+    @property
+    def role(self) -> str:
+        """The role on joining: the invitation's, or reader with the access code."""
+        return self.invitation.role if self.invitation is not None else "reader"
 
 
 async def resolve(
@@ -134,6 +147,7 @@ async def preview(
         "member_count": await orgs.member_count(session, entry.org.id),
         "places_left": places_left(entry.invitation) if entry.invitation else None,
         "invited_by_pseudo": inviter,
+        "role": entry.role,
         "charter": entry.org.charter,
         "already_member": existing is not None and existing.status == "active",
     }
@@ -153,14 +167,16 @@ async def join(
     if existing is not None and existing.status != "left":
         raise AppError("invalid_state")
     if existing is not None:
-        # A former member comes back with their pseudo, avatar and history (FR-123).
+        # A former member comes back with their pseudo, avatar and history (FR-123), with the
+        # role of the invitation (they left as a reader).
         existing.status = "active"
         existing.left_at = None
         existing.charter_accepted_at = clock.now()
+        existing.role = entry.role
         member = existing
     else:
         member = await orgs.add_member(
-            session, entry.org, account, role="reader", pseudo=pseudo, avatar=avatar
+            session, entry.org, account, role=entry.role, pseudo=pseudo, avatar=avatar
         )
     if entry.invitation is not None:
         entry.invitation.use_count += 1
