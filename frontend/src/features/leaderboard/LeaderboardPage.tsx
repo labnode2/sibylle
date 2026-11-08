@@ -1,5 +1,6 @@
-// The newsroom's rankings: laurels or pronos won, over the month, the season or all time
-// (canvas G-Classement). Settlements and the end of a season refresh it live.
+// The newsroom's rankings: green laurels, over the season or all time, or pronos won, over the
+// month, the season or all time (canvas G-Classement). Settlements and the end of a season
+// refresh it live.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
@@ -12,7 +13,11 @@ import { useCurrentSeason, useLeaderboard, type Metric, type Period } from './ap
 import styles from './leaderboard.module.css';
 
 const METRICS: Metric[] = ['laurels', 'wins'];
-const PERIODS: Period[] = ['month', 'season', 'all_time'];
+// The laurels are what each one has, not a gain over a span: no month for them.
+const PERIODS: Record<Metric, Period[]> = {
+  laurels: ['season', 'all_time'],
+  wins: ['month', 'season', 'all_time'],
+};
 
 /** "2026-11" → "NOVEMBRE 2026", "2026-autumn" → "AUTOMNE 2026", "all_time" → "DEPUIS TOUJOURS". */
 function usePeriodTitle(label: string | undefined): string {
@@ -62,7 +67,8 @@ export function LeaderboardPage() {
   const { t } = useTranslation('leaderboard');
   const { orgId = '' } = useParams();
   const [metric, setMetric] = useState<Metric>('laurels');
-  const [period, setPeriod] = useState<Period>('season');
+  const [chosen, setPeriod] = useState<Period>('season');
+  const period = PERIODS[metric].includes(chosen) ? chosen : 'season';
   const board = useLeaderboard(orgId, metric, period);
   const season = useCurrentSeason(orgId);
   const title = usePeriodTitle(board.data?.period_label);
@@ -90,7 +96,12 @@ export function LeaderboardPage() {
 
       <div className={styles.controls}>
         <Toggle label={t('metricLabel')} options={METRICS} value={metric} onChange={setMetric} />
-        <Toggle label={t('periodLabel')} options={PERIODS} value={period} onChange={setPeriod} />
+        <Toggle
+          label={t('periodLabel')}
+          options={PERIODS[metric]}
+          value={period}
+          onChange={setPeriod}
+        />
       </div>
 
       <Card shadow={0} className={styles.board}>

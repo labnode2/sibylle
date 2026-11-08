@@ -86,7 +86,7 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 
 | Méthode | Route | Qui | Corps → Réponse |
 |---|---|---|---|
-| GET | `/orgs/{org}/front-page` | Membre | → `FrontPage` : `{headline, open, open_count, to_designate (journalistes seulement), latest_results, leaderboard_top (les cinq premiers du mois, puis la ligne du membre s'il n'en est pas ; chaque ligne avec sa streak), leaderboard_period ("2026-11"), editor_note}` ; `headline` et `open` sont des `FrontProno` = `PronoSummary` + `{options, distribution}` (la jauge de la une) ; l'encadré des jeux lit `GET /orgs/{org}/games` |
+| GET | `/orgs/{org}/front-page` | Membre | → `FrontPage` : `{headline, open, open_count, to_designate (journalistes seulement), latest_results, leaderboard_top (les cinq premiers de la saison par lauriers verts, puis la ligne du membre s'il n'en est pas ; chaque ligne avec sa streak), leaderboard_period ("2026-autumn"), editor_note}` ; `headline` et `open` sont des `FrontProno` = `PronoSummary` + `{options, distribution}` (la jauge de la une) ; l'encadré des jeux lit `GET /orgs/{org}/games` |
 | GET | `/orgs/{org}/pronos` | Membre | `?state=&section=&cursor=` → `[PronoSummary]` |
 | POST | `/orgs/{org}/pronos` | Membre | `PronoInput` → `201 PronoDetail` ; état `open`/`scheduled` pour un·e journaliste, `proposed` pour un·e lecteur·rice |
 | GET | `/orgs/{org}/pronos/{id}` | Membre | → `PronoDetail` |
@@ -121,7 +121,7 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 
 | Méthode | Route | Qui | Corps → Réponse |
 |---|---|---|---|
-| GET | `/orgs/{org}/leaderboard` | Membre | `?metric=laurels\|wins&period=month\|season\|all_time` → `{period_label, rows: [{rank, member: MemberPublic, value, is_me, streak}]}` ; `streak` : la chaîne de victoires en cours, quelle que soit la période |
+| GET | `/orgs/{org}/leaderboard` | Membre | `?metric=laurels\|wins&period=month\|season\|all_time` (pas de `month` pour `laurels` : `422`, `period: not_for_metric`) → `{period_label, rows: [{rank, member: MemberPublic, value, is_me, streak}]}` ; `streak` : la chaîne de victoires en cours, quelle que soit la période |
 | GET | `/orgs/{org}/seasons/current` | Membre | → `{year, name, starts_at, ends_at}` |
 | GET | `/orgs/{org}/reports` | Réd. chef | `?state=open` → `[Report]` |
 | POST | `/orgs/{org}/reports/{id}/handle` | Réd. chef | `{state: "resolved" \| "dismissed", note?}` → `Report` |

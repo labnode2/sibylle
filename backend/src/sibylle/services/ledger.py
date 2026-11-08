@@ -3,20 +3,19 @@
 import uuid
 from dataclasses import dataclass
 
-from sqlalchemy import func, select
+from sqlalchemy import exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle import clock
 from sibylle.api.errors import AppError
-from sibylle.db.models import LedgerEntry, Membership, Prono, Season
+from sibylle.db.models import Bet, LedgerEntry, Membership, Prono, Season, SeasonClosure
 from sibylle.domain.ledger import Effect, LedgerKind, reversal
-from sibylle.domain.seasons import season_bounds, season_of
+from sibylle.domain.seasons import SeasonKey, season_bounds, season_of
 from sibylle.realtime import bus
 
 
-async def current_season_id(session: AsyncSession) -> int:
-    """The id of the season we are in, adding it to the table if it is not there yet."""
-    key = season_of(clock.now())
+async def season_id_of(session: AsyncSession, key: SeasonKey) -> int:
+    """The id of a season, adding it to the table if it is not there yet."""
     season_id = await session.scalar(
         select(Season.id).where(Season.year == key.year, Season.name == key.name)
     )
@@ -26,6 +25,26 @@ async def current_season_id(session: AsyncSession) -> int:
         session.add(season)
         await session.flush()
         season_id = season.id
+    return season_id
+
+
+async def current_season_id(session: AsyncSession) -> int:
+    """The id of the season we are in, adding it to the table if it is not there yet."""
+    return await season_id_of(session, season_of(clock.now()))
+
+
+async def _bet_season_id(session: AsyncSession, org_id: uuid.UUID, bet_id: uuid.UUID) -> int | None:
+    """Where a bet's laurels go: the season it was placed in, until the newsroom closes that
+    season; then the oldest season the newsroom has not closed yet. A season closes only once
+    its bets are settled (seasons.due), so only an open-ended prono's bet comes here late."""
+    placed_at = select(Bet.placed_at).where(Bet.id == bet_id).scalar_subquery()
+    closed = exists().where(SeasonClosure.org_id == org_id, SeasonClosure.season_id == Season.id)
+    season_id: int | None = await session.scalar(
+        select(Season.id)
+        .where(Season.ends_at > placed_at, ~closed)
+        .order_by(Season.starts_at)
+        .limit(1)
+    )
     return season_id
 
 
@@ -53,13 +72,20 @@ async def append(
     reverses_entry_id: int | None = None,
     reason: str | None = None,
     actor_membership_id: uuid.UUID | None = None,
+    season_id: int | None = None,
 ) -> LedgerEntry:
-    """Writes one entry and moves the member's caches in the same transaction."""
+    """Writes one entry and moves the member's caches in the same transaction. The entry goes
+    to `season_id` when given, to its bet's season for a bet, otherwise to the current season."""
     member = await lock_member(session, membership_id)
+    current = await current_season_id(session)
+    if season_id is None and bet_id is not None and effect.kind is not LedgerKind.STAKE:
+        season_id = await _bet_season_id(session, member.org_id, bet_id)
+    if season_id is None:
+        season_id = current
     entry = LedgerEntry(
         org_id=member.org_id,
         membership_id=member.id,
-        season_id=await current_season_id(session),
+        season_id=season_id,
         kind=effect.kind.value,
         amount=effect.amount,
         score_delta=effect.score_delta,
@@ -72,7 +98,8 @@ async def append(
     )
     session.add(entry)
     member.balance += effect.amount
-    member.season_score += effect.score_delta
+    if season_id == current:
+        member.season_score += effect.score_delta
     await session.flush()
     await bus.publish(
         session,

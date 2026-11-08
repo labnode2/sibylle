@@ -87,7 +87,7 @@ Après le match, un·e journaliste désigne la bonne réponse. Les gagnants reç
 
 ### User Story 4 - Classements, saisons et trophées (Priority: P2)
 
-Cami consulte le classement de sa rédaction : par lauriers (son score) ou par pronos gagnés, sur le mois, la saison ou depuis toujours. Le 20 décembre au soir, la saison d'automne se termine : chaque membre qui a joué reçoit une boule de cristal gravée, le podium a un cadre doré, et tout le monde repart au solde de départ.
+Cami consulte le classement de sa rédaction : par lauriers verts (les mêmes que dans son portefeuille), sur la saison ou depuis toujours, ou par pronos gagnés, sur le mois, la saison ou depuis toujours. Le 20 décembre au soir, la saison d'automne se termine ; une fois tous ses paris réglés, chaque membre qui a joué reçoit une boule de cristal gravée de ses lauriers en or, le podium a un cadre doré, et tout le monde repart au solde de départ.
 
 **Why this priority**: le classement donne envie de revenir ; les saisons évitent qu'un écart creusé tôt décourage les autres.
 
@@ -95,10 +95,10 @@ Cami consulte le classement de sa rédaction : par lauriers (son score) ou par p
 
 **Acceptance Scenarios**:
 
-1. **Given** des pronos réglés, **When** Cami ouvre le classement, **Then** elle voit les deux classements (lauriers, pronos gagnés) sur les trois périodes, avec tous les membres, elle comprise.
-2. **Given** un achat de 400 pièces dans la collection, **When** le classement est recalculé, **Then** ses pièces ont baissé de 400, mais ses lauriers et son score n'ont pas changé.
-3. **Given** la fin d'une saison, **When** elle est clôturée, **Then** chaque membre ayant parié au moins une fois dans la saison reçoit un trophée gravé de l'année, de la saison et de son score, les trois premiers ont un cadre doré, puis chaque solde repart au solde de départ.
-4. **Given** plusieurs saisons passées, **When** Cami regarde le classement « depuis toujours », **Then** il additionne les lauriers gravés sur ses trophées et son score de la saison en cours.
+1. **Given** des pronos réglés, **When** Cami ouvre le classement, **Then** elle voit le classement des lauriers verts sur la saison et depuis toujours, et celui des pronos gagnés sur les trois périodes, avec tous les membres, elle comprise.
+2. **Given** un achat de 400 pièces dans la collection, **When** le classement est recalculé, **Then** ses pièces ont baissé de 400, mais ses lauriers n'ont pas changé.
+3. **Given** la fin d'une saison et tous ses paris réglés, **When** elle est clôturée, **Then** chaque membre ayant parié au moins une fois dans la saison reçoit un trophée gravé de l'année, de la saison et de ses lauriers en or, les trois premiers ont un cadre doré, puis les lauriers en or de chacun repartent au solde de départ.
+4. **Given** plusieurs saisons passées, **When** Cami regarde le classement « depuis toujours », **Then** il additionne les lauriers en or gravés sur ses trophées et ses lauriers verts actuels.
 
 ---
 
@@ -391,10 +391,10 @@ Cami veut montrer sa carte de presse sur son blog. Sous sa carte, elle active «
 
 **Classements et saisons**
 
-- **FR-070**: Le système DOIT proposer deux classements (lauriers, pronos gagnés) sur trois périodes (mois, saison, depuis toujours), avec tous les membres actifs.
+- **FR-070**: Le système DOIT proposer deux classements avec tous les membres actifs : les lauriers verts, les mêmes que dans le portefeuille (solde de départ, pronos, jeux et ajustements compris), sur la saison (les lauriers actuels) et depuis toujours ; les pronos gagnés, sur trois périodes (mois, saison, depuis toujours).
 - **FR-071**: Les saisons DOIVENT être : printemps du 21 mars au 20 juin, été du 21 juin au 22 septembre, automne du 23 septembre au 20 décembre, hiver du 21 décembre au 20 mars (heure de Paris).
-- **FR-072**: À la fin d'une saison, chaque membre ayant parié au moins une fois dans la saison DOIT recevoir un trophée gravé (année, saison, score) ; les trois premiers ont un cadre doré ; puis chaque solde repart au solde de départ et chaque score à zéro.
-- **FR-073**: Le classement des lauriers « depuis toujours » DOIT additionner les scores gravés sur les trophées et le score de la saison en cours.
+- **FR-072**: Une saison DOIT se clôturer une fois finie et tous les paris placés pendant elle réglés (les pronos sans date de clôture exceptés : leurs mises encore en jeu comptent dans les lauriers en or) ; une saison qui attend retient les suivantes. Les lauriers d'un pari comptent dans la saison où il a été placé, même réglé après sa fin. À la clôture, chaque membre ayant parié au moins une fois dans la saison DOIT recevoir un trophée gravé (année, saison, lauriers en or à la fin de la saison) ; les trois premiers ont un cadre doré ; puis les lauriers en or de chacun repartent au solde de départ, ce qui a été joué dans la saison suivante entre-temps restant acquis.
+- **FR-073**: Le classement des lauriers « depuis toujours » DOIT additionner les lauriers en or gravés sur les trophées et les lauriers verts actuels.
 - **FR-074**: La chaîne de victoires d'un membre DOIT compter ses pronos gagnés d'affilée, du plus récent vers le plus ancien, dans l'ordre où les pronos ont été réglés pour la première fois. Un prono perdu la remet à zéro ; un prono annulé ou qu'il n'a pas joué ne la change pas ; une correction de résultat la recalcule. Elle ne repart pas à zéro en fin de saison. Le record est la plus longue chaîne du membre dans la rédaction.
 - **FR-075**: À partir de 2 victoires d'affilée, une flamme en pixel art animée et le nombre de victoires DOIVENT suivre le pseudo du membre dans le classement, dans le haut du classement de la une, dans la liste des membres et sur la carte de presse, qui DOIT aussi montrer le record dès qu'il atteint 2. La flamme reste immobile quand les animations sont coupées.
 
@@ -496,7 +496,7 @@ Cami veut montrer sa carte de presse sur son blog. Sous sa carte, elle active «
 ## Assumptions
 
 - Propositions du cahier des charges retenues : réinitialisation du mot de passe par lien e-mail ; une annulation rend les mises ; les notifications push passent par l'appli installée ; l'ordre de la une ci-dessus.
-- Le trophée grave le score de la saison (et non le solde), pour que le classement « depuis toujours » reste cohérent avec le classement des lauriers.
+- Le trophée grave les lauriers en or de la fin de saison (le solde de départ compris), pour que le classement « depuis toujours » reste cohérent avec le classement des lauriers verts.
 - Les rappels de désignation partent à la date de résultat attendu, puis à J+1, J+3, J+7, puis chaque semaine ; sans date de résultat attendu, ils partent le lendemain de la clôture.
 - Une correction de résultat peut rendre un solde négatif ; le membre ne peut plus miser tant qu'il l'est.
 - Pixel mystère : une fois un jeu terminé, le dessin suivant préparé par la rédaction démarre le lendemain matin.

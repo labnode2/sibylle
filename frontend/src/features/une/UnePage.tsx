@@ -44,12 +44,6 @@ const closing = (value: string) =>
     minute: '2-digit',
   }).toUpperCase();
 
-/** "2026-11" → "NOVEMBRE". */
-const monthName = (period: string) => {
-  const [year, month] = period.split('-').map(Number);
-  return formatDate(new Date(year!, month! - 1, 15), { month: 'long' }).toUpperCase();
-};
-
 /** The answers and their shares, the favourite first: options, or the split of the values. */
 function shares(prono: FrontProno): { label: string; pct: number }[] {
   const rows = prono.options.length
@@ -200,12 +194,17 @@ function ResultBrief({ orgId, latest }: { orgId: string; latest: LatestResult })
 
 function Ranking({ orgId, front }: { orgId: string; front: FrontPage }) {
   const { t } = useTranslation('une');
+  // "2026-autumn" → "SAISON D'AUTOMNE 2026".
+  const [year, name] = front.leaderboard_period.split('-');
   return (
     <section className={styles.ranking} aria-labelledby="une-ranking">
       <SectionHead
         id="une-ranking"
         title={t('leaderboard')}
-        meta={monthName(front.leaderboard_period)}
+        meta={t('leaderboard:seasonTitle', {
+          season: t(`leaderboard:season.${name}`),
+          year,
+        }).toUpperCase()}
       />
       <ol className={styles.top}>
         {front.leaderboard_top.map((row, index) => (

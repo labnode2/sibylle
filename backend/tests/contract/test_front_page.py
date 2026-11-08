@@ -108,17 +108,17 @@ async def test_the_front_page_in_order(
     [result] = page["latest_results"]
     assert (result["prono"]["question"], result["result"]) == ("Nice ou Monaco ?", "Nice")
     assert (result["my_outcome"], result["my_payout"]) == ("won", 40)
-    # The month's first five.
+    # The season's first five, by green laurels.
     assert [
         (r["rank"], r["member"]["pseudo"], r["value"], r["is_me"]) for r in page["leaderboard_top"]
     ] == [
-        (1, "Cami", 30, True),
-        (2, "Hugo", 0, False),
-        (2, "Manon", 0, False),
-        (2, "Zoé", 0, False),
-        (5, "Léo", -10, False),
+        (1, "Cami", 130, True),
+        (2, "Hugo", 100, False),
+        (2, "Manon", 100, False),
+        (2, "Zoé", 100, False),
+        (5, "Léo", 90, False),
     ]
-    assert page["leaderboard_period"] == "2026-11"
+    assert page["leaderboard_period"] == "2026-autumn"
     assert page["editor_note"] == "Pot de départ vendredi à 18 h."
     assert list(page) == [
         "headline",

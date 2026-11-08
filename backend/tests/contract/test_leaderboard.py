@@ -13,7 +13,7 @@ from tests.contract.test_results import option, url
 from sibylle import clock
 from sibylle.db.models import Membership
 from sibylle.db.session import transaction
-from sibylle.domain.ledger import purchase
+from sibylle.domain.ledger import adjustment
 from sibylle.services import ledger
 from sibylle.worker.jobs import advance_pronos, close_finished_seasons
 
@@ -36,7 +36,7 @@ async def board(
 
 async def label(client: httpx.AsyncClient, org_id: object, period: str) -> str:
     response = await client.get(
-        f"/api/orgs/{org_id}/leaderboard", params={"metric": "laurels", "period": period}
+        f"/api/orgs/{org_id}/leaderboard", params={"metric": "wins", "period": period}
     )
     value: str = response.json()["period_label"]
     return value
@@ -53,7 +53,7 @@ async def settle(
     assert response.status_code == 200, response.text
 
 
-async def test_six_rankings_across_months_and_seasons(
+async def test_the_rankings_across_months_and_seasons(
     make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
 ) -> None:
     org = await make_org(early_bird_pct=0)
@@ -65,7 +65,7 @@ async def test_six_rankings_across_months_and_seasons(
     paul = await person(org, "reader", "Paul")
     zoe = await person(org, "reader", "Zoé")
 
-    # November: Cami wins against Léo and Paul (+20 base, +10 profit on the pot).
+    # November: Cami wins against Léo and Paul (+20 base, the pot of 20).
     november = await publish(hugo.client, org_id)
     await place(cami.client, org_id, november["id"], option_id=option(november, "Nice"), stake=10)
     await place(leo.client, org_id, november["id"], option_id=option(november, "Monaco"), stake=5)
@@ -90,18 +90,12 @@ async def test_six_rankings_across_months_and_seasons(
     await place(cami.client, org_id, december["id"], option_id=option(december, "Nul"), stake=0)
     await settle(hugo.client, org_id, december, "Nice")
 
-    # A purchase lowers Cami's balance, not her score.
+    # The laurels are the green ones of the wallet: the editor's adjustment counts too.
     async with transaction() as session:
-        await ledger.append(session, cami.member.id, purchase(30))
+        await ledger.append(session, cami.member.id, adjustment(-30), reason="Erreur")
 
-    assert await board(cami.client, org.id, "laurels", "month") == [
-        (1, "Léo", 30, False),
-        (2, "Cami", 0, True),
-        (2, "Hugo", 0, False),
-        (4, "Manon", -10, False),
-    ]
-    season = [(1, "Cami", 30, True), (2, "Léo", 25, False), (3, "Hugo", 0, False)]
-    season.append((4, "Manon", -10, False))
+    season = [(1, "Léo", 125, False), (2, "Cami", 100, True), (2, "Hugo", 100, False)]
+    season.append((4, "Manon", 90, False))
     assert await board(cami.client, org.id, "laurels", "season") == season
     assert await board(cami.client, org.id, "laurels", "all_time") == season
     assert await board(cami.client, org.id, "wins", "month") == [
@@ -124,11 +118,16 @@ async def test_six_rankings_across_months_and_seasons(
     assert (current["year"], current["name"]) == (2026, "autumn")
     assert datetime.fromisoformat(current["ends_at"]) == datetime(2026, 12, 21, tzinfo=PARIS)
 
-    # Winter: the season starts from zero, all time keeps the engraved scores.
+    # Winter: everyone starts again from 100; all time adds the engraved gold laurels.
     fake_clock.set(datetime(2026, 12, 21, 0, 0, 30, tzinfo=PARIS))
     assert await close_finished_seasons() == 1
-    assert [row[2] for row in await board(cami.client, org.id, "laurels", "season")] == [0] * 4
-    assert await board(cami.client, org.id, "laurels", "all_time") == season
+    assert [row[2] for row in await board(cami.client, org.id, "laurels", "season")] == [100] * 4
+    assert await board(cami.client, org.id, "laurels", "all_time") == [
+        (1, "Léo", 225, False),
+        (2, "Cami", 200, True),
+        (3, "Manon", 190, False),
+        (4, "Hugo", 100, False),
+    ]
     assert await board(cami.client, org.id, "wins", "all_time") == [
         (1, "Cami", 1, True),
         (1, "Léo", 1, False),
@@ -136,26 +135,31 @@ async def test_six_rankings_across_months_and_seasons(
         (3, "Manon", 0, False),
     ]
     # December still counts Léo's win from before the closure.
-    assert (await board(cami.client, org.id, "laurels", "month"))[0] == (1, "Léo", 30, False)
+    assert (await board(cami.client, org.id, "wins", "month"))[0] == (1, "Léo", 1, False)
     current = (await cami.client.get(f"/api/orgs/{org_id}/seasons/current")).json()
     assert (current["year"], current["name"]) == (2026, "winter")
 
-    # A winter win adds to the engraved score.
+    # A winter win adds to the engraved laurels.
     winter = await publish(hugo.client, org_id)
     await place(manon.client, org_id, winter["id"], option_id=option(winter, "Nice"), stake=0)
     await settle(hugo.client, org_id, winter, "Nice")
     assert await board(cami.client, org.id, "laurels", "all_time") == [
-        (1, "Cami", 30, True),
-        (2, "Léo", 25, False),
-        (3, "Manon", 10, False),
-        (4, "Hugo", 0, False),
+        (1, "Léo", 225, False),
+        (2, "Manon", 210, False),
+        (3, "Cami", 200, True),
+        (4, "Hugo", 100, False),
     ]
 
 
 async def test_invalid_metric_or_period(make_org: MakeOrg, person: MakePerson) -> None:
     org = await make_org()
     cami = await person(org)
-    for params in ({"metric": "score", "period": "month"}, {"metric": "wins", "period": "week"}):
+    for params in (
+        {"metric": "score", "period": "month"},
+        {"metric": "wins", "period": "week"},
+        # The laurels are what a member has: no month for them.
+        {"metric": "laurels", "period": "month"},
+    ):
         response = await cami.client.get(f"/api/orgs/{org.id}/leaderboard", params=params)
         assert response.status_code == 422, response.text
 

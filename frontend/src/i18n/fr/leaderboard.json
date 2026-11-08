@@ -21,7 +21,7 @@
   },
   "seasonTitle": "Saison {{season}} {{year}}",
   "caption": {
-    "laurels": "LAURIERS GAGNÉS · {{period}}",
+    "laurels": "LAURIERS VERTS · {{period}}",
     "wins": "PRONOS GAGNÉS · {{period}}"
   },
   "column": {
@@ -34,7 +34,7 @@
   "wins_one": "{{value}} prono",
   "wins_other": "{{value}} pronos",
   "note": {
-    "laurels": "Le score : gains des pronos moins mises perdues. Les achats et les mini-jeux n'y comptent pas.",
+    "laurels": "Les lauriers verts, les mêmes que dans ton portefeuille : le solde de départ, plus ce que rapportent les pronos et les jeux, moins les mises. Depuis toujours, on y ajoute les lauriers en or gravés à la fin de chaque saison.",
     "wins": "Le nombre de pronos gagnés, comptés au jour du résultat."
   }
 }

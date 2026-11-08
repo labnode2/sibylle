@@ -62,16 +62,21 @@ async def test_the_press_card(
 
     won = await publish(hugo.client, org_id, question="Nice ou Monaco ?")
     lost = await publish(hugo.client, org_id, question="Le pot aura-t-il lieu ?")
+    # Open-ended: still waiting at the end of the season, without holding its closure back.
     pending = await publish(
         hugo.client,
         org_id,
-        question="Qui gagne le baby-foot ?",
-        closes_at=(clock.now() + timedelta(days=10)).isoformat(),
+        kind="date",
+        options=[],
+        question="Quand la machine sera-t-elle réparée ?",
+        open_ended=True,
+        closes_at=None,
     )
     await place(cami.client, org_id, won["id"], option_id=option(won, "Nice"), stake=10)
     await place(leo.client, org_id, won["id"], option_id=option(won, "Monaco"), stake=10)
     await place(cami.client, org_id, lost["id"], option_id=option(lost, "Nul"), stake=0)
-    await place(cami.client, org_id, pending["id"], option_id=option(pending, "Nice"), stake=0)
+    day = (clock.now() + timedelta(days=90)).date().isoformat()
+    await place(cami.client, org_id, pending["id"], date_value=day, stake=0)
     fake_clock.advance(timedelta(days=4))
     await advance_pronos()
     for prono, answer in ((won, "Nice"), (lost, "Monaco")):
@@ -108,7 +113,8 @@ async def test_the_press_card(
         "best_streak": 1,
     }
     assert [(t["season"], t["score"], t["rank"], t["podium"]) for t in card["trophies"]] == [
-        ({"year": 2026, "name": "autumn"}, 30, 1, True)
+        # The gold laurels at the end of the season.
+        ({"year": 2026, "name": "autumn"}, 130, 1, True)
     ]
     assert [(c["item"]["key"], c["source"]) for c in card["collection"]] == [
         ("color-33", "purchase")

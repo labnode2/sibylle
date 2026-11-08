@@ -74,7 +74,7 @@
     "role": "Rôle de {{pseudo}}",
     "adjust": "Ajuster les lauriers",
     "amount": "LAURIERS À AJOUTER OU À RETIRER",
-    "amountHint": "−15 pour en retirer 15. Le classement ne change pas.",
+    "amountHint": "−15 pour en retirer 15. Le classement en tient compte.",
     "balance_one": "AUJOURD'HUI : {{count}} LAURIER VERT",
     "balance_other": "AUJOURD'HUI : {{count}} LAURIERS VERTS",
     "after_one": "APRÈS : {{count}} LAURIER VERT",

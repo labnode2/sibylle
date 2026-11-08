@@ -13,6 +13,8 @@ from tests.contract.test_results import option, url
 from sibylle import clock
 from sibylle.db.models import LedgerEntry, Membership, Season, SeasonClosure, Trophy
 from sibylle.db.session import transaction
+from sibylle.domain.ledger import adjustment
+from sibylle.services import ledger
 from sibylle.services.ledger import check_caches
 from sibylle.worker.jobs import advance_pronos, close_finished_seasons
 
@@ -34,7 +36,7 @@ async def resolve(
 
 
 async def trophies(season: tuple[int, str]) -> dict[str, tuple[int, int, bool]]:
-    """Pseudo → (score, rank, podium) for one season."""
+    """Pseudo → (gold laurels engraved, rank, podium) for one season."""
     year, name = season
     async with transaction() as session:
         rows = await session.execute(
@@ -102,11 +104,12 @@ async def test_the_end_of_the_season(
 
     fake_clock.set(WINTER_2026)
     assert await close_finished_seasons() == 1
+    # The gold laurels, the starting balance included.
     assert await trophies((2026, "autumn")) == {
-        "Cami": (50, 1, True),
-        "Léo": (0, 2, True),
-        "Manon": (-10, 3, True),
-        "Paul": (-20, 4, False),
+        "Cami": (150, 1, True),
+        "Léo": (100, 2, True),
+        "Manon": (90, 3, True),
+        "Paul": (80, 4, False),
     }
     assert await counters(org.id) == {
         name: (100, 0) for name in ("Hugo", "Cami", "Léo", "Manon", "Paul", "Zoé")
@@ -148,6 +151,9 @@ async def test_two_runs_at_once_close_the_season_once(
     cami = await person(org, "reader", "Cami")
     prono = await publish(hugo.client, str(org.id))
     await place(cami.client, str(org.id), prono["id"], option_id=option(prono, "Nice"), stake=10)
+    fake_clock.advance(timedelta(days=4))
+    await advance_pronos()
+    await resolve(hugo, org.id, prono, "Nice")
 
     fake_clock.set(WINTER_2026)
     assert sorted(await asyncio.gather(close_finished_seasons(), close_finished_seasons())) == [
@@ -159,66 +165,105 @@ async def test_two_runs_at_once_close_the_season_once(
     assert set((await counters(org.id)).values()) == {(100, 0)}
 
 
-async def test_a_prono_staked_in_autumn_and_settled_in_winter_counts_in_winter(
+async def test_the_season_waits_for_the_results_of_its_bets(
     make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
 ) -> None:
+    """A bet of the season still waiting for its result holds the closure back. Once settled, it
+    counts in the season it was placed in; what is played in winter meanwhile stays out of the
+    trophy and out of the reset."""
     fake_clock.set(datetime(2026, 12, 19, 12, tzinfo=PARIS))
     org = await make_org(early_bird_pct=0)
     hugo = await person(org, "journalist", "Hugo")
     cami = await person(org, "reader", "Cami")
     leo = await person(org, "reader", "Léo")
-    prono = await publish(
+    autumn = await publish(
         hugo.client,
         str(org.id),
         closes_at=datetime(2026, 12, 23, 12, tzinfo=PARIS).isoformat(),
     )
-    await place(cami.client, str(org.id), prono["id"], option_id=option(prono, "Nice"), stake=10)
-    await place(leo.client, str(org.id), prono["id"], option_id=option(prono, "Monaco"), stake=10)
+    await place(cami.client, str(org.id), autumn["id"], option_id=option(autumn, "Nice"), stake=10)
+    await place(leo.client, str(org.id), autumn["id"], option_id=option(autumn, "Monaco"), stake=10)
 
-    # Autumn ends with both stakes still in the pot: nothing scored, both on the podium at 0.
     fake_clock.set(WINTER_2026)
-    assert await close_finished_seasons() == 1
-    assert await trophies((2026, "autumn")) == {"Cami": (0, 1, True), "Léo": (0, 1, True)}
+    assert await close_finished_seasons() == 0
+    # Meanwhile, in winter, Cami stakes 5 on a new prono and receives 7 laurels.
+    winter = await publish(
+        hugo.client,
+        str(org.id),
+        closes_at=datetime(2027, 1, 10, 12, tzinfo=PARIS).isoformat(),
+    )
+    await place(cami.client, str(org.id), winter["id"], option_id=option(winter, "Nul"), stake=5)
+    async with transaction() as session:
+        await ledger.append(session, cami.member.id, adjustment(7), reason="Cadeau")
 
     fake_clock.set(datetime(2026, 12, 24, 12, tzinfo=PARIS))
     await advance_pronos()
-    await resolve(hugo, org.id, prono, "Nice")
-    assert (await counters(org.id))["Cami"] == (100 + 20 + 20, 30)
-
-    # Nobody bets in winter, yet the winter scores are engraved.
-    fake_clock.set(SPRING_2027)
+    await resolve(hugo, org.id, autumn, "Nice")
+    assert (await counters(org.id))["Cami"][0] == 100 - 10 + 20 + 20 - 5 + 7
     assert await close_finished_seasons() == 1
-    assert await trophies((2026, "winter")) == {"Cami": (30, 1, True), "Léo": (-10, 2, True)}
+    assert await trophies((2026, "autumn")) == {"Cami": (130, 1, True), "Léo": (90, 2, True)}
+    # Everyone back to 100 gold laurels, plus what winter brought: Cami's 5 are still in play.
+    balances = {name: balance for name, (balance, _) in (await counters(org.id)).items()}
+    assert balances == {"Hugo": 100, "Cami": 100 - 5 + 7, "Léo": 100}
     async with transaction() as session:
         assert await check_caches(session, org.id) == []
 
 
-async def test_scores_moved_after_midnight_stay_in_the_new_season(
+async def test_an_open_ended_prono_does_not_hold_the_season_back(
     make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
 ) -> None:
-    """A prono settled between the end of the season and the closure belongs to the new season:
-    the trophy engraves the old season only, and the new season keeps its score."""
-    fake_clock.set(datetime(2026, 12, 15, 12, tzinfo=PARIS))
+    """Its stake, still in play, is engraved with the gold laurels and stays in play; the
+    result, when it comes, goes to the season then open."""
     org = await make_org(early_bird_pct=0)
     hugo = await person(org, "journalist", "Hugo")
     cami = await person(org, "reader", "Cami")
-    first = await publish(hugo.client, str(org.id))
-    second = await publish(hugo.client, str(org.id))
-    await place(cami.client, str(org.id), first["id"], option_id=option(first, "Nice"), stake=0)
-    await place(cami.client, str(org.id), second["id"], option_id=option(second, "Nice"), stake=0)
-    fake_clock.set(datetime(2026, 12, 19, 12, tzinfo=PARIS))
-    await advance_pronos()
-    await resolve(hugo, org.id, first, "Nice")
+    prono = await publish(
+        hugo.client, str(org.id), kind="date", options=[], open_ended=True, closes_at=None
+    )
+    day = (clock.now() + timedelta(days=60)).date().isoformat()
+    await place(cami.client, str(org.id), prono["id"], date_value=day, stake=10)
 
-    # The worker was down at midnight; the second prono is settled before the closure runs.
     fake_clock.set(WINTER_2026)
-    await resolve(hugo, org.id, second, "Nice")
-    assert (await counters(org.id))["Cami"] == (140, 40)
     assert await close_finished_seasons() == 1
-    assert await trophies((2026, "autumn")) == {"Cami": (20, 1, True)}
-    assert (await counters(org.id))["Cami"] == (100, 20)
+    assert await trophies((2026, "autumn")) == {"Cami": (100, 1, True)}
+    assert (await counters(org.id))["Cami"] == (90, 0)
+
+    resolved = await hugo.client.post(
+        url(org.id, prono["id"], "resolve"), json={"result_date": day}
+    )
+    assert resolved.status_code == 200, resolved.text
+    assert (await counters(org.id))["Cami"] == (90 + 20 + 10, 20)
     async with transaction() as session:
         assert await check_caches(session, org.id) == []
+
+
+async def test_a_season_held_back_holds_back_the_next_ones(
+    make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
+) -> None:
+    org = await make_org()
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    prono = await publish(hugo.client, str(org.id))
+    await place(cami.client, str(org.id), prono["id"], option_id=option(prono, "Nice"), stake=10)
+
+    # Spring: autumn still waits for its result, and winter waits behind it.
+    fake_clock.set(SPRING_2027)
+    assert await close_finished_seasons() == 0
+    await advance_pronos()
+    await resolve(hugo, org.id, prono, "Nice")
+    assert await close_finished_seasons() == 2
+    async with transaction() as session:
+        closed = (
+            await session.execute(
+                select(Season.year, Season.name)
+                .join(SeasonClosure, SeasonClosure.season_id == Season.id)
+                .where(SeasonClosure.org_id == org.id)
+                .order_by(Season.starts_at)
+            )
+        ).all()
+        assert await check_caches(session, org.id) == []
+    assert [tuple(row) for row in closed] == [(2026, "autumn"), (2026, "winter")]
+    assert set((await counters(org.id)).values()) == {(100, 0)}
 
 
 async def test_a_settlement_at_the_moment_of_closing_does_not_deadlock(

@@ -63,8 +63,9 @@ async def _latest_results(session: AsyncSession, member: Membership) -> list[dic
 async def _leaderboard_top(
     session: AsyncSession, member: Membership
 ) -> tuple[str, list[dict[str, Any]]]:
-    """The month's first five, then the member's own line when they are not among them."""
-    board = await leaderboard.board(session, member.org_id, Metric.LAURELS, Period.MONTH)
+    """The season's first five by laurels, then the member's own line when they are not among
+    them."""
+    board = await leaderboard.board(session, member.org_id, Metric.LAURELS, Period.SEASON)
     lines = board.lines[:TOP]
     if all(line.member.id != member.id for line in lines):
         lines += [line for line in board.lines[TOP:] if line.member.id == member.id]

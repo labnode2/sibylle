@@ -189,7 +189,7 @@ Une relance remet `state = open`, change `closes_at` (et `result_expected_at`), 
 |---|---|---|
 | id | bigint | PK, identité |
 | org_id, membership_id | uuid | |
-| season_id | smallint | saison au moment de l'écriture |
+| season_id | smallint | saison de l'écriture : celle du pari pour un pari, tant que la rédaction ne l'a pas clôturée (sinon la plus ancienne qu'elle n'a pas clôturée) ; la saison suivante pour une remise au solde de départ ; la saison en cours sinon |
 | kind | text | voir ci-dessous |
 | amount | integer | effet sur le solde (signé) |
 | score_delta | integer | effet sur le score (signé) |
@@ -223,7 +223,7 @@ PK (`org_id`, `season_id`), `closed_at`. Écrite dans la même transaction que l
 
 ### trophies (trophée)
 
-`id`, `membership_id`, `season_id`, `score`, `rank` (classement de fin de saison, ex aequo au même rang), `podium` (rang ≤ 3), `created_at` ; unique (`membership_id`, `season_id`). Créé pour chaque membre qui a au moins un pari placé dans la saison.
+`id`, `membership_id`, `season_id`, `score` (les lauriers en or à la fin de la saison), `rank` (classement de fin de saison, ex aequo au même rang), `podium` (rang ≤ 3), `created_at` ; unique (`membership_id`, `season_id`). Créé pour chaque membre qui a au moins un pari placé dans la saison.
 
 ## Collection
 

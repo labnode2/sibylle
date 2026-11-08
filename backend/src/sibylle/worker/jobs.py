@@ -71,22 +71,29 @@ async def designation_reminders() -> int:
 
 @job("close_finished_seasons", minute="*")
 async def close_finished_seasons(org_id: uuid.UUID | None = None) -> int:
-    """Closes each newsroom's season once it is over; returns how many closures were done.
+    """Closes each newsroom's season once it is over and its bets have their results; returns
+    how many closures were done.
 
     Checked every minute rather than once at midnight, so that a worker restarted after
-    midnight still closes the season straight away. `org_id` keeps one newsroom only
+    midnight, or a last result designated days later, still closes the season straight away.
+    Seasons held back close one after the other, oldest first. `org_id` keeps one newsroom only
     (`sibylle seasons close --org`, for tests on a shared database).
     """
     from sibylle.services import seasons
 
     async with transaction() as session:
         await seasons.ensure_seasons(session)
-        due = await seasons.due(session, org_id)
     closed = 0
-    for org_id, season_id in due:
+    while True:
         async with transaction() as session:
-            closed += await seasons.close(session, org_id, season_id)
-    return closed
+            due = await seasons.due(session, org_id)
+        done = 0
+        for org, season_id in due:
+            async with transaction() as session:
+                done += await seasons.close(session, org, season_id)
+        closed += done
+        if not done:
+            return closed
 
 
 @job("grant_weekly_coins", minute="*")

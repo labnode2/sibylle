@@ -1,4 +1,5 @@
-"""The rankings, computed on demand with SQL sums over the ledger, the bets and the trophies."""
+"""The rankings, computed on demand: the green laurels (plus the trophies for all time), or the
+pronos won counted over the bets."""
 
 import uuid
 from dataclasses import dataclass
@@ -7,10 +8,18 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle import clock
-from sibylle.db.models import Bet, LedgerEntry, Membership, SeasonClosure, Trophy
-from sibylle.domain.leaderboard import Metric, Period, all_time, is_ranked, rank, window
+from sibylle.api.errors import AppError
+from sibylle.db.models import Bet, Membership, Trophy
+from sibylle.domain.leaderboard import (
+    Metric,
+    Period,
+    all_time,
+    is_ranked,
+    periods_of,
+    rank,
+    window,
+)
 from sibylle.domain.seasons import PARIS, season_of
-from sibylle.services.ledger import current_season_id
 
 
 @dataclass(frozen=True)
@@ -30,34 +39,24 @@ class Board:
 async def _laurels(
     session: AsyncSession, org_id: uuid.UUID, period: Period
 ) -> dict[uuid.UUID, int]:
-    query = (
-        select(LedgerEntry.membership_id, func.sum(LedgerEntry.score_delta))
-        .where(LedgerEntry.org_id == org_id)
-        .group_by(LedgerEntry.membership_id)
-    )
-    if period is Period.MONTH:
-        month = window(period, clock.now())
-        query = query.where(
-            LedgerEntry.created_at >= month.start, LedgerEntry.created_at < month.end
+    """The green laurels, the same as in the wallet; all time adds the gold laurels engraved on
+    the trophies of the closed seasons."""
+    values = {
+        member: balance
+        for member, balance in await session.execute(
+            select(Membership.id, Membership.balance).where(Membership.org_id == org_id)
         )
-    elif period is Period.SEASON:
-        query = query.where(LedgerEntry.season_id == await current_season_id(session))
-    else:
-        # The closed seasons count through their trophies, the others through the ledger.
-        closed = select(SeasonClosure.season_id).where(SeasonClosure.org_id == org_id)
-        query = query.where(LedgerEntry.season_id.not_in(closed))
-    values = {member: int(score) for member, score in await session.execute(query)}
-    if period is not Period.ALL_TIME:
+    }
+    if period is Period.SEASON:
         return values
-
     engraved: dict[uuid.UUID, list[int]] = {}
     trophies = await session.execute(
         select(Trophy.membership_id, Trophy.score)
         .join(Membership, Membership.id == Trophy.membership_id)
         .where(Membership.org_id == org_id)
     )
-    for member, score in trophies:
-        engraved.setdefault(member, []).append(score)
+    for member, laurels in trophies:
+        engraved.setdefault(member, []).append(laurels)
     return {
         member: all_time(engraved.get(member, []), values.get(member, 0))
         for member in values.keys() | engraved.keys()
@@ -94,6 +93,8 @@ async def values(
     session: AsyncSession, org_id: uuid.UUID, metric: Metric, period: Period
 ) -> dict[uuid.UUID, int]:
     """Each member's value; a member with nothing yet is missing (counts 0)."""
+    if period not in periods_of(metric):
+        raise AppError("validation_error", {"period": "not_for_metric"})
     if metric is Metric.LAURELS:
         return await _laurels(session, org_id, period)
     return await _wins(session, org_id, period)

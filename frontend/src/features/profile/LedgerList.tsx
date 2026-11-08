@@ -60,11 +60,6 @@ export function LedgerList({ orgId }: { orgId: string }) {
                   {t('ledger.amount', { value: signed(entry.amount) })}
                 </span>
               )}
-              {entry.score_delta !== 0 && (
-                <span className={styles.score}>
-                  {t('ledger.score', { value: signed(entry.score_delta) })}
-                </span>
-              )}
             </div>
           </li>
         ))}

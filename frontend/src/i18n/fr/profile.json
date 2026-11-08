@@ -33,7 +33,7 @@
   },
   "trophies": {
     "season": "{{season}} {{year}}",
-    "score": "{{score}} LAURIERS · {{rank}}E"
+    "score": "{{score}} LAURIERS EN OR · {{rank}}E"
   },
   "collection": {
     "title": "La collection",
@@ -72,8 +72,7 @@
   },
   "ledger": {
     "title": "Mon relevé",
-    "amount": "{{value}} AU SOLDE",
-    "score": "{{value}} AU SCORE",
+    "amount": "{{value}} LAURIERS VERTS",
     "more": "Plus ancien",
     "kind": {
       "starting_balance": "SOLDE DE DÉPART",
