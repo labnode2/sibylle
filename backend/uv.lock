@@ -1630,7 +1630,7 @@ wheels = [
 
 [[package]]
 name = "sibylle"
-version = "2.0.1"
+version = "1.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "aiosmtplib" },

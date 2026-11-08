@@ -1,6 +1,6 @@
 [project]
 name = "sibylle"
-version = "2.0.1"
+version = "1.0.1"
 description = "Sibylle : le serveur du jeu de pronostics des rédactions"
 requires-python = ">=3.14"
 dependencies = [
