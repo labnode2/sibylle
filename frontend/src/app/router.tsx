@@ -41,7 +41,8 @@ import { PressCardPage } from '../features/profile/PressCardPage';
 import { PublicCardPage } from '../features/profile/PublicCardPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { UnePage } from '../features/une/UnePage';
-import { ButtonLink, Icon, Masthead } from '../ui/components';
+import { Button, ButtonLink, Icon, Masthead } from '../ui/components';
+import { reloadLatest } from './updates';
 import { OfflineBanner } from './AppShell';
 import { OrgLayout } from './OrgLayout';
 import styles from './shell.module.css';
@@ -95,6 +96,8 @@ function RouteError() {
       ) : (
         <div className={styles.centered}>
           <p role="alert">{t('shell.error')}</p>
+          {/* Often a tab left open across a deploy: the new version usually fixes it. */}
+          <Button onClick={() => void reloadLatest()}>{t('shell.reload')}</Button>
         </div>
       )}
     </PublicPage>

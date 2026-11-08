@@ -55,7 +55,8 @@
     "notFound": "Cette page n'existe pas.",
     "backHome": "Retour à la une",
     "settings": "Mes réglages",
-    "error": "Une erreur est survenue. Réessaie dans un instant."
+    "error": "Une erreur est survenue. Réessaie dans un instant.",
+    "reload": "Recharger la page"
   },
   "fields": {
     "invalid": "Ce champ n'est pas valide.",

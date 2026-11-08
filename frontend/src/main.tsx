@@ -19,6 +19,7 @@ import { RouterProvider } from 'react-router/dom';
 
 import { Providers } from './app/providers';
 import { router } from './app/router';
+import { watchForUpdates } from './app/updates';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -31,5 +32,12 @@ createRoot(document.getElementById('root')!).render(
 // A public press card, often inside another site's iframe, has nothing to keep offline: no
 // service worker, which would otherwise download the whole app into that site's storage.
 if (import.meta.env.PROD && !window.location.pathname.startsWith('/carte/')) {
-  void import('virtual:pwa-register').then(({ registerSW }) => registerSW({ immediate: true }));
+  void import('virtual:pwa-register').then(({ registerSW }) =>
+    registerSW({
+      immediate: true,
+      onRegisteredSW: (_url, registration) => {
+        if (registration) watchForUpdates(registration, router);
+      },
+    }),
+  );
 }

@@ -31,15 +31,18 @@ export default i18n;
 
 const formats = new Map<string, Intl.DateTimeFormat>();
 
-/** Dates and times are always shown in Paris time. */
+/** Dates and times are always shown in Paris time. A date that is not one (a value the
+ *  interface does not expect) shows as nothing rather than breaking the page. */
 export function formatDate(value: string | Date, options: Intl.DateTimeFormatOptions): string {
+  const date = typeof value === 'string' ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) return '';
   const key = JSON.stringify(options);
   let format = formats.get(key);
   if (!format) {
     format = new Intl.DateTimeFormat(LOCALE, { timeZone: TIME_ZONE, ...options });
     formats.set(key, format);
   }
-  return format.format(typeof value === 'string' ? new Date(value) : value);
+  return format.format(date);
 }
 
 const numbers = new Intl.NumberFormat(LOCALE);
