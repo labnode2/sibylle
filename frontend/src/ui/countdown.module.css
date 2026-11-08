@@ -1,0 +1,45 @@
+/* Countdown: white box, 2 px rule, hard shadow. */
+.countdown {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.countdown > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 14px;
+}
+
+.countdown > div + div {
+  border-left: 1px solid var(--ink);
+}
+
+.value {
+  font: 800 34px/1 var(--font-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.unit {
+  font: 500 11px/1 var(--font-mono);
+  color: var(--ink-2);
+}
+
+@media (min-width: 1024px) {
+  .large {
+    max-width: 560px;
+  }
+
+  .large > div {
+    gap: 6px;
+    padding: 14px 18px;
+  }
+
+  .large .value {
+    font-size: 44px;
+  }
+
+  .large .unit {
+    font-size: 12px;
+  }
+}

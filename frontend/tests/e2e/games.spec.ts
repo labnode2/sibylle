@@ -94,10 +94,15 @@ test('Pixel mystère: drawn, guessed in order, ended both ways', async ({ browse
   // Cami, from la une: a wrong guess, then the word without its accent.
   const box = camiPage.getByRole('region', { name: 'Jeux de la semaine' });
   await camiPage.reload();
-  await expect(box).toContainText('UN MOT DE 4 LETTRES · LANCÉ PAR LA RÉDACTION');
+  // The line counts down to the end of the drawing.
+  await expect(box).toContainText(/UN MOT DE 4 LETTRES · FIN DANS \d+ (J \d+ H|H \d+ MIN|MIN)/);
   await box.getByRole('link', { name: /Pixel mystère/ }).click();
   await expect(camiPage.getByRole('heading', { name: 'Pixel mystère' })).toBeVisible();
   await expect(camiPage.getByRole('img', { name: /37 pixels dévoilés sur 256/ })).toBeVisible();
+  await expect(
+    camiPage.getByRole('timer', { name: 'Temps restant avant la fin du dessin' }),
+  ).toBeVisible();
+  await expect(camiPage.getByText(/^FIN LE .+, SAUF SI TOUT LE MONDE TROUVE AVANT$/)).toBeVisible();
   await camiPage.getByLabel('TA PROPOSITION').fill('thé');
   await camiPage.getByRole('button', { name: 'Proposer' }).click();
   await expect(notes(camiPage)).toContainText("« thé » : ce n'est pas ça.");

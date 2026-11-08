@@ -2,7 +2,7 @@
 // played what, the stake and the reactions; beside them, the players, the rules and, under the
 // rules, the discussion. Bets and messages of the others arrive live through `prono:<id>`. Once
 // settled, the special edition (canvas G-Résultat) heads the page.
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useParams } from 'react-router';
 
@@ -18,6 +18,7 @@ import {
   Tip,
   TopBar,
 } from '../../ui/components';
+import { Countdown } from '../../ui/Countdown';
 import { AvatarStack, PixelImage } from '../../ui/PixelImage';
 import { toast } from '../../ui/Toaster';
 import { useFormErrors } from '../forms';
@@ -38,15 +39,6 @@ const SHOWN_AVATARS = 3;
 // « Les pronostiqueurs »: the first six, then « Et 25 autres ».
 const SHOWN_PEOPLE = 6;
 
-function useNow(every: number): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), every);
-    return () => clearInterval(timer);
-  }, [every]);
-  return now;
-}
-
 const longDate = (value: string) =>
   formatDate(value, {
     weekday: 'long',
@@ -55,29 +47,6 @@ const longDate = (value: string) =>
     hour: '2-digit',
     minute: '2-digit',
   });
-
-function Countdown({ closesAt }: { closesAt: string }) {
-  const { t } = useTranslation('pronos');
-  const now = useNow(15_000);
-  const left = Math.max(0, new Date(closesAt).getTime() - now);
-  const units = [
-    { value: Math.floor(left / 86_400_000), label: t('detail.days') },
-    { value: Math.floor(left / 3_600_000) % 24, label: t('detail.hours') },
-    { value: Math.floor(left / 60_000) % 60, label: t('detail.minutes') },
-  ];
-  return (
-    <div role="timer" aria-label={t('detail.countdown')}>
-      <Card as="div" className={styles.countdown}>
-        {units.map((unit) => (
-          <div key={unit.label}>
-            <span className={styles.countdownValue}>{String(unit.value).padStart(2, '0')}</span>
-            <span className={styles.countdownUnit}>{unit.label}</span>
-          </div>
-        ))}
-      </Card>
-    </div>
-  );
-}
 
 function StateNotice({ prono, newsroom }: { prono: PronoDetail; newsroom: boolean }) {
   const { t } = useTranslation('pronos');
@@ -364,7 +333,9 @@ export function PronoPage() {
           )}
           {prono.link_url && <ExternalLink href={prono.link_url}>{t('detail.link')}</ExternalLink>}
 
-          {prono.state === 'open' && prono.closes_at && <Countdown closesAt={prono.closes_at} />}
+          {prono.state === 'open' && prono.closes_at && (
+            <Countdown until={prono.closes_at} label={t('detail.countdown')} large />
+          )}
           {prono.state === 'open' && prono.open_ended && (
             <p className={styles.meta}>{t('detail.openEnded')}</p>
           )}

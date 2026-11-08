@@ -137,6 +137,18 @@ def revealed_count(size: int, started_at: datetime, now: datetime) -> int:
     return min(size * size, batches * batch_size(size))
 
 
+def reveal_end(size: int, started_at: datetime) -> datetime:
+    """The morning the last pixels show, which ends the drawing (unless everyone finds it
+    first): the opening shows the first batch, each 08:00 after it the next one."""
+    mornings = math.ceil(size * size / batch_size(size)) - 1
+    if mornings <= 0:
+        return started_at
+    first_day = started_at.astimezone(PARIS).date()
+    if _morning(first_day) <= started_at:
+        first_day += timedelta(days=1)
+    return _morning(first_day + timedelta(days=mornings - 1))
+
+
 def masked(pixels: bytes, order: bytes, count: int) -> bytes:
     """The drawing with only its first `count` pixels in the reveal order; the others HIDDEN."""
     shown = bytearray([HIDDEN]) * len(pixels)

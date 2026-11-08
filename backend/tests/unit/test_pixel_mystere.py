@@ -15,6 +15,7 @@ from sibylle.domain.minigames import (
     normalize_word,
     order_indices,
     pixel_gain,
+    reveal_end,
     reveal_order,
     revealed_count,
 )
@@ -47,6 +48,17 @@ def test_the_first_batch_at_the_opening_then_one_each_morning_at_eight() -> None
     # The seventh batch shows everything, and no more.
     assert shown(datetime(2026, 11, 10, 8, 0, tzinfo=PARIS)) == 256
     assert shown(datetime(2026, 11, 20, 8, 0, tzinfo=PARIS)) == 256
+
+
+def test_the_drawing_ends_the_morning_its_last_pixels_show() -> None:
+    end = reveal_end(16, WEDNESDAY)
+    assert end == datetime(2026, 11, 10, 8, 0, tzinfo=PARIS)
+    assert revealed_count(16, WEDNESDAY, end - timedelta(minutes=1)) < 256
+    assert revealed_count(16, WEDNESDAY, end) == 256
+    # Opened at 08:00 sharp: that morning is the opening, the next ones count.
+    eight = datetime(2026, 11, 5, 8, 0, tzinfo=PARIS)
+    assert reveal_end(32, eight) == datetime(2026, 11, 11, 8, 0, tzinfo=PARIS)
+    assert revealed_count(32, eight, reveal_end(32, eight)) == 1024
 
 
 def test_eight_o_clock_stays_eight_o_clock_when_the_clocks_change() -> None:

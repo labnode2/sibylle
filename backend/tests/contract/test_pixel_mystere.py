@@ -166,6 +166,9 @@ async def test_the_game_ends_when_every_pixel_shows(
     leo = await person(org, "reader", "Léo")
     await post(hugo, org.id)
     await guess(cami, org.id, "café")
+    # The countdown runs to the morning the last pixels show.
+    ends_at = (await status(leo, org.id))["ends_at"]
+    assert datetime.fromisoformat(ends_at) == datetime(2026, 11, 8, 8, 0, tzinfo=PARIS)
 
     counts = []
     for day in range(3, 9):
@@ -176,6 +179,7 @@ async def test_the_game_ends_when_every_pixel_shows(
     assert counts == [74, 111, 148, 185, 222, 256]
     ended = await status(leo, org.id)
     assert (ended["state"], ended["word"], ended["found_by_me"]) == ("finished", "Café", False)
+    assert ended["ends_at"] is None
     assert base64.b64decode(ended["revealed"]) == PIXELS
     assert (await guess(leo, org.id, "café")).status_code == 409
 

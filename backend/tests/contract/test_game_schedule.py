@@ -320,6 +320,9 @@ async def test_a_week_without_pixel_stops_the_drawing_on_monday(
     sunday = await pixel(cami, org.id)
     assert sunday is not None
     assert (sunday["state"], sunday["revealed_count"]) == ("active", 148)
+    # Its countdown runs to Monday, not to its last morning.
+    monday = datetime(2026, 11, 9, 0, 0, tzinfo=PARIS)
+    assert datetime.fromisoformat(sunday["ends_at"]) == monday
 
     # Monday 00:00: no more guesses, and the worker's next minute ends the drawing.
     fake_clock.set(datetime(2026, 11, 9, 0, 0, tzinfo=PARIS))

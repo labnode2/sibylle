@@ -938,6 +938,8 @@ class PixelStatus(BaseModel):
     mine: bool
     state: Literal["active", "finished"]
     word: str | None
+    # When an active drawing ends unless everyone finds it first; null once finished.
+    ends_at: datetime | None
 
 
 class Games(BaseModel):

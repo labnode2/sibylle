@@ -1,27 +1,31 @@
 // « Les jeux de la semaine » on la une (canvas B-Accueil, B-Web-Accueil): each game of the week
 // is a line to tap, its picture on the left (the season's ball for the race, the drawing as far
 // as it shows for Pixel mystère), my record and attempts left, or the word's length. Only the
-// games the editor kept for the week show (US12), and nothing at all when there are none.
+// games the editor kept for the week show (US12), and nothing at all when there are none. The
+// drawing under way says how long it has left.
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import { formatNumber } from '../../i18n';
+import { shortTimeLeft, useNow } from '../../ui/Countdown';
 import { CrystalBall } from '../../ui/CrystalBall';
 import { useGames, type Games } from './api';
 import styles from './games.module.css';
 import { MysteryDrawing } from './pixel-mystere/MysteryDrawing';
 
-function pixelLine(t: TFunction<'games'>, pixel: Games['pixel']): string {
+function pixelLine(t: TFunction<'games'>, pixel: Games['pixel'], now: number): string {
   if (!pixel) return t('box.pixelNone');
   if (pixel.state === 'finished') return t('box.pixelFinished', { word: pixel.word });
   if (pixel.found_by_me && pixel.word) return t('box.pixelFound', { word: pixel.word });
-  return t('box.pixelLine', { count: pixel.letters });
+  const left = pixel.ends_at ? shortTimeLeft(t, pixel.ends_at, now) : '';
+  return t('box.pixelLine', { count: pixel.letters, left });
 }
 
 export function WeeklyGames({ orgId, size = 32 }: { orgId: string; size?: 32 | 48 }) {
   const { t } = useTranslation('games');
   const games = useGames(orgId);
+  const now = useNow(60_000);
   if (!games.data || games.data.scheduled.length === 0) return null;
   const { runner, pixel, scheduled } = games.data;
   const thumb = { width: size, height: size };
@@ -61,7 +65,7 @@ export function WeeklyGames({ orgId, size = 32 }: { orgId: string; size?: 32 | 4
             )}
             <span className={styles.gameText}>
               <span className={styles.gameTitle}>{t('box.pixel')}</span>
-              <span className={styles.gameLine}>{pixelLine(t, pixel)}</span>
+              <span className={styles.gameLine}>{pixelLine(t, pixel, now)}</span>
             </span>
           </Link>
         </li>

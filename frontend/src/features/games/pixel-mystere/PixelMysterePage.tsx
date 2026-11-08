@@ -1,13 +1,15 @@
 // Pixel mystère: the drawing as far as it shows, its number of letters, my guesses left today,
 // who found and in what order, the word at the end; and for journalists, a drawing to post with
 // the pixel editor and the drawings waiting their turn. In a week the editor left it out of
-// (US12), a word saying so, and the last drawing with its word once it ended.
+// (US12), a word saying so, and the last drawing with its word once it ended. A drawing under
+// way counts down to its end.
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
-import { formatNumber } from '../../../i18n';
+import { formatDate, formatNumber } from '../../../i18n';
 import { Button, Field, Icon } from '../../../ui/components';
+import { Countdown } from '../../../ui/Countdown';
 import { PixelImage } from '../../../ui/PixelImage';
 import { toast } from '../../../ui/Toaster';
 import { useFormErrors } from '../../forms';
@@ -92,6 +94,22 @@ function Puzzle({ orgId, status, on }: { orgId: string; status: PixelStatus; on:
             total: formatNumber(total),
           })}
         </p>
+        {status.state === 'active' && status.ends_at && (
+          <>
+            <Countdown until={status.ends_at} label={t('pixel.countdown')} />
+            <p className={styles.label}>
+              {t('pixel.endsAt', {
+                date: formatDate(status.ends_at, {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }).toUpperCase(),
+              })}
+            </p>
+          </>
+        )}
         {status.word && <p className={styles.word}>{t('pixel.word', { word: status.word })}</p>}
         {message && <p className={styles.text}>{message}</p>}
         {status.state === 'active' && !status.mine && !status.found_by_me && (

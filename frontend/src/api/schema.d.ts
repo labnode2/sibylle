@@ -2086,6 +2086,8 @@ export interface components {
             state: "active" | "finished";
             /** Word */
             word: string | null;
+            /** Ends At */
+            ends_at: string | null;
         };
         /**
          * PressCard

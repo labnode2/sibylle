@@ -72,6 +72,16 @@
     "after_closing": "L'ouverture doit venir avant la clôture des pronos.",
     "before_closing": "Le résultat ne peut pas être attendu avant la clôture des pronos."
   },
+  "countdown": {
+    "days": "JOURS",
+    "hours": "HEURES",
+    "minutes": "MINUTES",
+    "short": {
+      "days": "{{days}} J {{hours}} H",
+      "hours": "{{hours}} H {{minutes}} MIN",
+      "minutes": "{{minutes}} MIN"
+    }
+  },
   "tip": {
     "more": "En savoir plus"
   },

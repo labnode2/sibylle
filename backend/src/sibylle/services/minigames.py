@@ -18,7 +18,7 @@ the drawing in play ends with its word given.
 import base64
 import secrets
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import func, select, true
@@ -50,6 +50,7 @@ from sibylle.domain.minigames import (
     pixel_gain,
     plausible,
     rank_runner,
+    reveal_end,
     reveal_order,
     revealed_count,
     runner_gains,
@@ -310,6 +311,21 @@ def _total(puzzle: PixelPuzzle) -> int:
     return int(puzzle.drawing["size"]) ** 2
 
 
+async def _ends_at(session: AsyncSession, puzzle: PixelPuzzle) -> datetime:
+    """When an active drawing ends unless everyone finds it first: the morning its last pixels
+    show, or before that the Monday of a week without Pixel mystère."""
+    assert puzzle.started_at is not None
+    end = reveal_end(int(puzzle.drawing["size"]), puzzle.started_at)
+    week = week_start(clock.now())
+    while True:
+        week += timedelta(days=7)
+        monday = datetime(week.year, week.month, week.day, tzinfo=PARIS)
+        if monday >= end:
+            return end
+        if not await _on(session, puzzle.org_id, "pixel", week):
+            return monday
+
+
 async def pixel_status(
     session: AsyncSession, member: Membership, *, on: bool | None = None
 ) -> dict[str, Any] | None:
@@ -344,6 +360,7 @@ async def pixel_status(
         "mine": mine,
         "state": puzzle.state,
         "word": puzzle.word if open_book else None,
+        "ends_at": await _ends_at(session, puzzle) if puzzle.state == "active" else None,
     }
 
 

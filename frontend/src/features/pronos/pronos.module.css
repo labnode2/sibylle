@@ -47,33 +47,6 @@
   color: var(--ink-2);
 }
 
-/* Countdown: white box, 2 px rule, hard shadow. */
-.countdown {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.countdown > div {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 10px 14px;
-}
-
-.countdown > div + div {
-  border-left: 1px solid var(--ink);
-}
-
-.countdownValue {
-  font: 800 34px/1 var(--font-text);
-  font-variant-numeric: tabular-nums;
-}
-
-.countdownUnit {
-  font: 500 11px/1 var(--font-mono);
-  color: var(--ink-2);
-}
-
 .label {
   font: 600 11px/1 var(--font-mono);
   letter-spacing: 0.06em;
@@ -360,23 +333,6 @@
   .question :global(.key-phrase) {
     text-decoration-thickness: 4px;
     text-underline-offset: 9px;
-  }
-
-  .countdown {
-    max-width: 560px;
-  }
-
-  .countdown > div {
-    gap: 6px;
-    padding: 14px 18px;
-  }
-
-  .countdownValue {
-    font-size: 44px;
-  }
-
-  .countdownUnit {
-    font-size: 12px;
   }
 
   .ballot {
