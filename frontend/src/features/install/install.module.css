@@ -1,0 +1,167 @@
+/* « Installer l'appli » and its guide. */
+
+/* On a phone's une, beside the newsroom's card, in the same frame and the same two lines. */
+.card {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 4px 12px 4px 10px;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  box-shadow: 3px 3px 0 var(--shadow);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.cardText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font: 700 14px/1.1 var(--font-text);
+}
+
+.cardSub {
+  font: 600 11px/1.3 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.card:hover .label,
+.inline:hover .label {
+  text-decoration: underline;
+}
+
+.card:active {
+  box-shadow: none;
+  transform: translate(3px, 3px);
+}
+
+/* In the computer's date bar, in its own letters. */
+.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--indigo);
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+/* The guide. On a phone, a sheet rising from the bottom, as wide as the screen; on a computer,
+   a card in the middle. */
+.dialog {
+  width: 100%;
+  max-width: 100%;
+  max-height: 92dvh;
+  margin: auto 0 0;
+  padding: 24px var(--gutter) calc(20px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  border: 0;
+  border-top: 2px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: center;
+}
+
+.dialog::backdrop {
+  background: rgb(21 22 45 / 55%);
+}
+
+.art {
+  display: flex;
+  justify-content: center;
+  min-height: 56px;
+  margin-bottom: 12px;
+}
+
+.title {
+  margin: 8px 0 8px;
+  font: 700 22px/1.15 var(--font-text);
+}
+
+.text {
+  margin: 0 auto 16px;
+  max-width: 400px;
+  font: 400 15px/1.45 var(--font-text);
+  color: var(--ink-2);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--ink);
+  font: 400 15px/1.4 var(--font-text);
+}
+
+.stepNumber {
+  flex: none;
+  width: 1.2em;
+  font: 700 13px/1 var(--font-mono);
+  color: var(--ink-2);
+}
+
+.stepIcon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--ink);
+  background: var(--grey);
+}
+
+.note {
+  margin: 14px auto 0;
+  max-width: 420px;
+  font: 500 12px/1.5 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.actions > * {
+  flex: 1;
+  max-width: 320px;
+}
+
+@media (min-width: 1024px) {
+  .dialog {
+    width: 480px;
+    max-height: calc(100dvh - 48px);
+    margin: auto;
+    padding: 28px;
+    border: 2px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--shadow);
+  }
+
+  .title {
+    font-size: 24px;
+  }
+}

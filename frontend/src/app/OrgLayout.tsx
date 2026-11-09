@@ -1,5 +1,5 @@
-// A newsroom's frame: loads it, then fills the shell's desktop slots (laurels and coins, pseudo,
-// the newsroom's small card), and shows the good news of Monday's coins, then the installed
+// A newsroom's frame: loads it, then fills the shell's desktop slots (« Installer l'appli » in a
+// browser's tab, laurels and coins, pseudo, the newsroom's small card), and shows the good news of Monday's coins, then the installed
 // app's offer of notifications. When the editor deletes the newsroom, everyone on its pages goes
 // back home.
 import { useQueryClient } from '@tanstack/react-query';
@@ -12,6 +12,7 @@ import { deleteOrgKey, forgetOrg, reportsKey, useReports } from '../features/adm
 import { meKey, useMe, useWelcomed } from '../features/auth/api';
 import { useWeeklyCoins, weeklyCoinsKey } from '../features/coins/api';
 import { WeeklyCoinsDialog } from '../features/coins/WeeklyCoinsDialog';
+import { InstallButton } from '../features/install/InstallButton';
 import { InstalledPushDialog } from '../features/notifications/InstalledPushDialog';
 import { WelcomeDialog } from '../features/welcome/WelcomeDialog';
 import { orgKey, useOrg } from '../features/orgs/api';
@@ -99,6 +100,7 @@ export function OrgLayout() {
       <AppShell
         account={
           <>
+            <InstallButton variant="inline" />
             <Wallet balance={me.balance} gold={me.gold} coins={me.coins} />
             <span aria-hidden="true">·</span>
             <Link

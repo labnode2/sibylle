@@ -1,0 +1,26 @@
+{
+  "button": "Installer l'appli",
+  "card": {
+    "title": "Installer",
+    "sub": "l'appli"
+  },
+  "guide": {
+    "title": "Installer Sibylle",
+    "text": "Sibylle s'ouvre ensuite depuis son icône, en plein écran, comme une appli.",
+    "close": "J'ai compris"
+  },
+  "ios": {
+    "kicker": "SUR IPHONE ET IPAD",
+    "share": "Touche le bouton Partager, le carré avec une flèche : dans la barre de Safari, ou dans son menu « … ».",
+    "home": "Fais défiler et choisis « Sur l'écran d'accueil ».",
+    "add": "Touche « Ajouter » : l'icône de Sibylle rejoint tes applis.",
+    "note": "Ouvre ensuite Sibylle depuis son icône : c'est là que les notifications s'activent."
+  },
+  "android": {
+    "kicker": "SUR ANDROID",
+    "menu": "Ouvre le menu ⋮ de Chrome, en haut à droite.",
+    "install": "Choisis « Installer et créer un raccourci ».",
+    "confirm": "Touche « Installer », puis confirme : l'icône de Sibylle rejoint tes applis.",
+    "note": "Avec un autre navigateur, cherche « Installer » ou « Ajouter à l'écran d'accueil » dans son menu."
+  }
+}

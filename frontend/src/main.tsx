@@ -20,6 +20,10 @@ import { RouterProvider } from 'react-router/dom';
 import { Providers } from './app/providers';
 import { router } from './app/router';
 import { watchForUpdates } from './app/updates';
+import { listenForInstall } from './features/install/install';
+
+// The browser's install offer can come before the first render: kept for « Installer l'appli ».
+listenForInstall();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

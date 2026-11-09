@@ -49,7 +49,7 @@ export function keyBytes(key: string): Uint8Array<ArrayBuffer> {
   return bytes;
 }
 
-function isIos(): boolean {
+export function isIos(): boolean {
   return (
     /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)

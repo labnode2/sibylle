@@ -23,6 +23,11 @@ export const ICONS = {
   copy: 'M4 1h7v1h-7zM4 2h1v1h-1zM10 2h1v1h-1zM1 3h7v1h-7zM10 3h1v1h-1zM1 4h1v1h-1zM7 4h1v1h-1zM10 4h1v1h-1zM1 5h1v1h-1zM7 5h1v1h-1zM10 5h1v1h-1zM1 6h1v1h-1zM7 6h1v1h-1zM10 6h1v1h-1zM1 7h1v1h-1zM7 7h4v1h-4zM1 8h1v1h-1zM7 8h1v1h-1zM1 9h7v1h-7z',
   download:
     'M5 0h2v4h-2zM3 4h6v1h-6zM4 5h4v1h-4zM5 6h2v1h-2zM0 8h2v2h-2zM10 8h2v2h-2zM0 10h12v1h-12z',
+  // Safari's « Partager »: an arrow rising out of an open box.
+  share:
+    'M5 0h2v1h-2zM4 1h4v1h-4zM3 2h6v1h-6zM5 3h2v5h-2zM1 4h3v1h-3zM8 4h3v1h-3zM1 5h1v6h-1zM10 5h1v6h-1zM1 11h10v1h-10z',
+  // A browser's menu: three dots, one above the other.
+  menu: 'M5 1h2v2h-2zM5 5h2v2h-2zM5 9h2v2h-2z',
 } as const;
 
 export type IconName = keyof typeof ICONS;

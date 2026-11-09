@@ -32,6 +32,10 @@
 /* The newsroom's small card under the title, on a phone: it opens the menu of the newsrooms. */
 .editionBar {
   display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 10px;
   padding: 4px 0 14px;
   border-bottom: 1px solid var(--ink);
 }

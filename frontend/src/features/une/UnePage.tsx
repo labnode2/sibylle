@@ -4,7 +4,8 @@
 // other briefs. On a computer the title and the navigation come from the frame; the prono runs
 // large beside the ranking and the games, and « En bref » closes the page. The blocks keep the
 // spec's order (FR-080): pronos, what waits for a result (journalists), results, ranking, games,
-// the editor's note. A week without a game (US12) has no games block at all.
+// the editor's note. A week without a game (US12) has no games block at all. In a browser's tab,
+// « Installer l'appli » sits beside the newsroom's card.
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
@@ -25,6 +26,7 @@ import { Streak } from '../../ui/Flame';
 import { PixelImage } from '../../ui/PixelImage';
 import { useGames } from '../games/api';
 import { WeeklyGames } from '../games/WeeklyGames';
+import { InstallButton } from '../install/InstallButton';
 import { NewsroomSwitcher } from '../orgs/NewsroomPage';
 import { useOrg } from '../orgs/api';
 import type { PronoSummary } from '../pronos/api';
@@ -278,6 +280,7 @@ export function UnePage() {
       </div>
       <div className={`only-mobile ${styles.editionBar}`}>
         <NewsroomSwitcher org={org.data} align="start" />
+        <InstallButton />
       </div>
 
       {!front ? (
