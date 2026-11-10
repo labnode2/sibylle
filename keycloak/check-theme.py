@@ -242,9 +242,9 @@ def main() -> None:
     expect("sign-in page", login, "login-login", "Connexion")
     files_of(login)
     check(
-        "sign-in page: EMILE in big",
-        '<p class="emile" id="kc-emile">EMILE</p>' in login.body,
-        "no EMILE above the form",
+        "sign-in page: no EMILE",
+        "EMILE" not in login.body and "kc-emile" not in login.body,
+        "EMILE is still on the sign-in page",
     )
     wrong = person.open(
         login.form("kc-form-login"), {"username": "camille@sibylle.test", "password": "pas-le-bon"}

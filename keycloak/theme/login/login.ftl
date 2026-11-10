@@ -1,6 +1,5 @@
 <#-- Connexion (frontend/src/features/auth/AuthPages.tsx, LoginPage): the e-mail, the password and
-     the button, then « Créer un compte » and « Mot de passe oublié ? ». « EMILE » stands in big above
-     the form. A wrong password shows as
+     the button, then « Créer un compte » and « Mot de passe oublié ? ». A wrong password shows as
      the frame's note, both fields marked. -->
 <#import "template.ftl" as layout>
 <#import "field.ftl" as field>
@@ -9,7 +8,6 @@
     <#if section = "header">
         ${msg("loginAccountTitle")}
     <#elseif section = "form">
-        <p class="emile" id="kc-emile">EMILE</p>
         <#if realm.password>
             <#assign invalid = messagesPerField.existsError('username', 'password')>
             <form id="kc-form-login" class="form" action="${url.loginAction}" method="post" novalidate>
