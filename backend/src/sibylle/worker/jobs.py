@@ -153,6 +153,51 @@ async def purge_sign_in_attempts() -> int:
         return len(expired.all())
 
 
+@job("check_ledger_caches", hour=3, minute=40)
+async def check_ledger_caches(org_id: uuid.UUID | None = None) -> int:
+    """Compares, each night and for each newsroom, every member's cached balance and season
+    score with the sums of the laurels ledger, and their coins with the sum of their coin
+    entries; logs each mismatch and returns how many there were. It repairs nothing: a drift is
+    a bug to look into. `org_id` keeps one newsroom only."""
+    from sibylle.db.models import Organisation
+    from sibylle.services import coins, ledger
+
+    async with transaction() as session:
+        query = select(Organisation.id).order_by(Organisation.id)
+        if org_id is not None:
+            query = query.where(Organisation.id == org_id)
+        orgs = (await session.scalars(query)).all()
+    found = 0
+    for org in orgs:
+        async with transaction() as session:
+            laurels = await ledger.check_caches(session, org)
+            coin_drifts = await coins.check_caches(session, org)
+        for drift in laurels:
+            log.error(
+                "laurels cache differs from the ledger",
+                extra={
+                    "org_id": str(org),
+                    "membership_id": str(drift.membership_id),
+                    "balance": drift.balance,
+                    "ledger_balance": drift.ledger_balance,
+                    "season_score": drift.season_score,
+                    "ledger_season_score": drift.ledger_season_score,
+                },
+            )
+        for coin_drift in coin_drifts:
+            log.error(
+                "coins cache differs from the coin entries",
+                extra={
+                    "org_id": str(org),
+                    "membership_id": str(coin_drift.membership_id),
+                    "coins": coin_drift.coins,
+                    "ledger_coins": coin_drift.ledger_coins,
+                },
+            )
+        found += len(laurels) + len(coin_drifts)
+    return found
+
+
 @job("advance_pronos", minute="*")
 async def advance_pronos() -> int:
     """Opens the scheduled pronos and closes the open ones whose time has come."""

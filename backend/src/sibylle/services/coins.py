@@ -2,6 +2,7 @@
 
 import uuid
 from collections.abc import Collection
+from dataclasses import dataclass
 from datetime import date, datetime
 
 from sqlalchemy import func, select, true
@@ -162,3 +163,25 @@ async def mark_seen(session: AsyncSession, member: Membership, week: date) -> No
     if member.coins_seen_week is None or member.coins_seen_week < week:
         member.coins_seen_week = week
         await session.flush()
+
+
+@dataclass(frozen=True)
+class CoinsMismatch:
+    membership_id: uuid.UUID
+    coins: int
+    ledger_coins: int
+
+
+async def check_caches(session: AsyncSession, org_id: uuid.UUID) -> list[CoinsMismatch]:
+    """Members whose cached coins differ from the sum of their coin entries."""
+    rows = await session.execute(
+        select(Membership.id, Membership.coins, func.coalesce(func.sum(CoinEntry.amount), 0))
+        .outerjoin(CoinEntry, CoinEntry.membership_id == Membership.id)
+        .where(Membership.org_id == org_id)
+        .group_by(Membership.id)
+    )
+    return [
+        CoinsMismatch(member_id, coins, ledger_coins)
+        for member_id, coins, ledger_coins in rows
+        if coins != ledger_coins
+    ]
