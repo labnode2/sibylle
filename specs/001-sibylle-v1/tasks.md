@@ -557,7 +557,7 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 - [ ] T146 [P] Ajouter à `backend/src/sibylle/worker/jobs.py` la tâche nocturne `check_ledger_caches`, qui compare `balance` et `season_score` aux sommes du registre, et `coins` à celle de `coin_entries`, pour chaque rédaction et journalise tout écart.
 - [X] T147 [P] Écrire `frontend/tests/e2e/a11y.spec.ts` (axe-core sur la une, un prono, le classement, la carte de presse, les réglages et les préférences, en thème clair et sombre, à 390 px et à 1 280 px) et corriger dans `frontend/src/` les écarts au niveau AA des WCAG 2.2.
 - [X] T148 [P] Écrire `frontend/tests/e2e/no-third-party.spec.ts` : sur un parcours complet, aucune requête vers un autre domaine que celui de l'appli (SC-005).
-- [ ] T149 [P] Écrire `backend/tests/load/run_load.py` : 100 membres, 20 pronos ouverts, paris simultanés et WebSockets ouvertes ; vérifier un p95 des routes sous 200 ms et une diffusion d'un pari en moins de 2 s (SC-002, SC-004).
+- [X] T149 [P] Écrire `backend/tests/load/run_load.py` : 100 membres, 20 pronos ouverts, paris simultanés et WebSockets ouvertes ; vérifier un p95 des routes sous 200 ms et une diffusion d'un pari en moins de 2 s (SC-002, SC-004).
 - [x] T150 Relire chaque écran à 390 px et à 1 280 px en le comparant aux pages « Mobile » et « Ordinateur » du canvas, et corriger `frontend/src/app/AppShell.tsx`, `frontend/src/styles/gazette.css` et les écrans concernés.
 - [ ] T151 Dérouler `specs/001-sibylle-v1/quickstart.md` de bout en bout (V1 à V10 ; V8 sur le vrai domaine avec Android, iOS 16.4 ou plus et un ordinateur), faire passer `make check`, et corriger le quickstart si une commande a changé.
 

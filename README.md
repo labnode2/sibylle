@@ -38,6 +38,9 @@ make check   # formatage, analyse, types, tests du serveur et de l'interface
 make e2e     # parcours de bout en bout dans le navigateur (Playwright)
 ```
 
+Test de charge (100 membres, 20 pronos ouverts, SC-002 et SC-004), pendant que `make dev` tourne :
+`cd backend && uv run python tests/load/run_load.py` (options dans l'en-tête du script).
+
 ## Mise en production
 
 Pas encore prête : les images Docker, nginx et certbot, le tunnel frpc et les sauvegardes sont
