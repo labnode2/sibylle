@@ -548,3 +548,15 @@ textarea.field-input {
 [data-password-toggle] {
   display: none;
 }
+
+/* « EMILE », in big, above the sign-in form (login.ftl). */
+.emile {
+  margin: 0 0 var(--gutter);
+  font-family: var(--font-title);
+  font-size: clamp(4rem, 22vw, 9rem);
+  line-height: 0.9;
+  text-align: center;
+  letter-spacing: 0.04em;
+  color: var(--indigo);
+  overflow-wrap: anywhere;
+}
