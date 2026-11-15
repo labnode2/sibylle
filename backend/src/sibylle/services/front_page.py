@@ -7,7 +7,6 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle.db.models import Bet, Membership, Organisation, Prono, PronoOption
-from sibylle.domain.leaderboard import Metric, Period
 from sibylle.domain.lifecycle import State
 from sibylle.domain.permissions import Action, can
 from sibylle.services import leaderboard, pronos, streaks
@@ -65,7 +64,7 @@ async def _leaderboard_top(
 ) -> tuple[str, list[dict[str, Any]]]:
     """The season's first five by laurels, then the member's own line when they are not among
     them."""
-    board = await leaderboard.board(session, member.org_id, Metric.LAURELS, Period.SEASON)
+    board = await leaderboard.green_season_board(session, member.org_id)
     lines = board.lines[:TOP]
     if all(line.member.id != member.id for line in lines):
         lines += [line for line in board.lines[TOP:] if line.member.id == member.id]

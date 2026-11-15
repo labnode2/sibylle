@@ -4,7 +4,7 @@
   "metricLabel": "Classer par",
   "periodLabel": "Période",
   "option": {
-    "laurels": "LAURIERS",
+    "laurels": "LAURIERS D'OR",
     "wins": "PRONOS GAGNÉS",
     "month": "MOIS",
     "season": "SAISON",
@@ -21,20 +21,20 @@
   },
   "seasonTitle": "Saison {{season}} {{year}}",
   "caption": {
-    "laurels": "LAURIERS VERTS · {{period}}",
+    "laurels": "LAURIERS D'OR · {{period}}",
     "wins": "PRONOS GAGNÉS · {{period}}"
   },
   "column": {
     "rank": "Rang",
     "member": "Membre",
-    "laurels": "Lauriers",
+    "laurels": "Lauriers d'or",
     "wins": "Pronos gagnés"
   },
   "you": "TOI",
   "wins_one": "{{value}} prono",
   "wins_other": "{{value}} pronos",
   "note": {
-    "laurels": "Les lauriers verts, les mêmes que dans ton portefeuille : le solde de départ, plus ce que rapportent les pronos et les jeux, moins les mises. Depuis toujours, on y ajoute les lauriers en or gravés à la fin de chaque saison.",
+    "laurels": "Les lauriers d'or gravés sur les trophées des saisons terminées. Les lauriers verts du portefeuille ne comptent pas : le classement se joue à la fin de chaque saison.",
     "wins": "Le nombre de pronos gagnés, comptés au jour du résultat."
   }
 }

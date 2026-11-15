@@ -4,11 +4,12 @@ from zoneinfo import ZoneInfo
 import pytest
 
 from sibylle.domain.leaderboard import (
+    Metric,
     Period,
     Window,
-    all_time,
     is_ranked,
     on_podium,
+    periods_of,
     rank,
     window,
 )
@@ -67,9 +68,9 @@ def test_only_active_members_are_ranked() -> None:
     assert not is_ranked("anonymized")
 
 
-def test_all_time_adds_the_engraved_scores_to_the_open_seasons() -> None:
-    assert all_time([50, -10, 30], 12) == 82
-    assert all_time([], 0) == 0
+def test_gold_laurels_are_ranked_all_time_only() -> None:
+    assert periods_of(Metric.LAURELS) == (Period.ALL_TIME,)
+    assert periods_of(Metric.WINS) == (Period.MONTH, Period.SEASON, Period.ALL_TIME)
 
 
 def test_the_podium_is_the_first_three_ranks() -> None:

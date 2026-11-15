@@ -1,13 +1,12 @@
-"""The rankings: green laurels, over the season or all time, or pronos won, over the month, the
-season or all time.
+"""The rankings: gold laurels, all time, or pronos won, over the month, the season or all time.
 
-The laurels are the green ones, the same as in the wallet: the season's are the current ones,
-and all time adds up the gold laurels engraved on the trophies of the closed seasons and the
-current ones. The month and the season of the pronos won are taken in Paris time. Members who
+The laurels are the gold ones, engraved on the trophies of the closed seasons: they only exist
+once a season is closed, so they are ranked all time only. The green laurels of the wallet are
+not a ranking. The month and the season of the pronos won are taken in Paris time. Members who
 left the newsroom, or whose account was deleted, are not ranked.
 """
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
@@ -27,9 +26,9 @@ class Period(StrEnum):
 
 
 def periods_of(metric: Metric) -> tuple[Period, ...]:
-    """The laurels are what a member has, not a gain over a span: no month for them."""
+    """The gold laurels are engraved when a season closes: only all time makes sense for them."""
     if metric is Metric.LAURELS:
-        return (Period.SEASON, Period.ALL_TIME)
+        return (Period.ALL_TIME,)
     return (Period.MONTH, Period.SEASON, Period.ALL_TIME)
 
 
@@ -57,10 +56,6 @@ def window(period: Period, now: datetime) -> Window:
 
 def is_ranked(status: str) -> bool:
     return status == "active"
-
-
-def all_time(engraved: Iterable[int], current: int) -> int:
-    return sum(engraved) + current
 
 
 @dataclass(frozen=True)

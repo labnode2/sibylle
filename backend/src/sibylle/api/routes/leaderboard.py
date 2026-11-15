@@ -20,7 +20,7 @@ async def get_leaderboard(
     member: CurrentMember,
     session: Db,
     metric: Metric = Metric.LAURELS,
-    period: Period = Period.SEASON,
+    period: Period = Period.ALL_TIME,
 ) -> Leaderboard:
     board = await leaderboard.board(session, org_id, metric, period)
     chains = await streaks.current(session, org_id)

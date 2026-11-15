@@ -1,4 +1,4 @@
-// The newsroom's rankings: green laurels, over the season or all time, or pronos won, over the
+// The newsroom's rankings: gold laurels, all time, or pronos won, over the
 // month, the season or all time (canvas G-Classement). Settlements and the end of a season
 // refresh it live.
 import { useState } from 'react';
@@ -13,9 +13,9 @@ import { useCurrentSeason, useLeaderboard, type Metric, type Period } from './ap
 import styles from './leaderboard.module.css';
 
 const METRICS: Metric[] = ['laurels', 'wins'];
-// The laurels are what each one has, not a gain over a span: no month for them.
+// The gold laurels are engraved when a season closes: all time only.
 const PERIODS: Record<Metric, Period[]> = {
-  laurels: ['season', 'all_time'],
+  laurels: ['all_time'],
   wins: ['month', 'season', 'all_time'],
 };
 
@@ -67,8 +67,8 @@ export function LeaderboardPage() {
   const { t } = useTranslation('leaderboard');
   const { orgId = '' } = useParams();
   const [metric, setMetric] = useState<Metric>('laurels');
-  const [chosen, setPeriod] = useState<Period>('season');
-  const period = PERIODS[metric].includes(chosen) ? chosen : 'season';
+  const [chosen, setPeriod] = useState<Period>('all_time');
+  const period = PERIODS[metric].includes(chosen) ? chosen : 'all_time';
   const board = useLeaderboard(orgId, metric, period);
   const season = useCurrentSeason(orgId);
   const title = usePeriodTitle(board.data?.period_label);
@@ -137,7 +137,7 @@ export function LeaderboardPage() {
                   </th>
                   <td className={styles.value}>
                     {metric === 'laurels' ? (
-                      <Laurel value={row.value} />
+                      <Laurel value={row.value} tone="gold" />
                     ) : (
                       t('wins', { count: row.value, value: formatNumber(row.value) })
                     )}
