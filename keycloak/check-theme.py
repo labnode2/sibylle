@@ -122,6 +122,24 @@ class Browser:
         return self.open(f"{REALM}/protocol/openid-connect/auth?{query}")
 
 
+def eye_of(name: str, page: Page, field: str) -> bool:
+    """The password field has its eye, hidden until sibylle.js shows it."""
+    toggle = re.search(
+        rf'<button type="button" class="password-toggle"[^>]*'
+        rf'data-password-shows="{re.escape(field)}"[^>]*>',
+        page.body,
+    )
+    return check(
+        f"{name}: the eye of the password",
+        bool(toggle)
+        and 'aria-pressed="false"' in toggle.group(0)
+        and 'aria-label="Afficher le mot de passe"' in toggle.group(0)
+        and 'data-label-hide="Masquer le mot de passe"' in toggle.group(0)
+        and " hidden>" in toggle.group(0),
+        f"button {toggle.group(0) if toggle else None!r}",
+    )
+
+
 def expect(name: str, page: Page, page_id: str, title: str) -> bool:
     return check(
         name,
@@ -241,6 +259,7 @@ def main() -> None:
     login = person.sign_in_page()
     expect("sign-in page", login, "login-login", "Connexion")
     files_of(login)
+    eye_of("sign-in page", login, "password")
     check(
         "sign-in page: no EMILE",
         "EMILE" not in login.body and "kc-emile" not in login.body,
@@ -259,6 +278,7 @@ def main() -> None:
     # Créer un compte: the errors of an empty form, then a new account.
     signup = person.open(login.link("Créer un compte"))
     expect("sign-up page", signup, "login-register", "Créer un compte")
+    eye_of("sign-up page", signup, "password")
     check(
         "sign-up page: one password field, its copy made on submit",
         'data-confirmed-by="password-confirm"' in signup.body and "<noscript>" in signup.body,
@@ -305,6 +325,7 @@ def main() -> None:
     if link:
         new = reader.open(link)
         expect("new password page", new, "login-login-update-password", "Nouveau mot de passe")
+        eye_of("new password page", new, "password-new")
         short = reader.open(
             new.form("kc-passwd-update-form"),
             {"password-new": "court", "password-confirm": "court"},

@@ -7,9 +7,26 @@
 <#macro input name label id=name type="text" value="" autocomplete="" hint="" error="" invalid=false autofocus=false required=true disabled=false dir="" data={}>
     <div class="field">
         <label for="${id}" class="field-label">${label}</label>
-        <input id="${id}" name="${name}" type="${type}" class="field-input" value="${value}"<#if autocomplete?has_content> autocomplete="${autocomplete}"</#if><#if autofocus> autofocus</#if><#if required> required</#if><#if disabled> disabled</#if><#if dir?has_content> dir="${dir}"</#if><#list data as key, val> data-${key}="${val}"</#list><@describedBy id=id hint=hint error=error invalid=invalid/>>
+        <#local field><input id="${id}" name="${name}" type="${type}" class="field-input" value="${value}"<#if autocomplete?has_content> autocomplete="${autocomplete}"</#if><#if autofocus> autofocus</#if><#if required> required</#if><#if disabled> disabled</#if><#if dir?has_content> dir="${dir}"</#if><#list data as key, val> data-${key}="${val}"</#list><@describedBy id=id hint=hint error=error invalid=invalid/>></#local>
+        <#if type == "password">
+            <div class="password">
+                ${field}
+                <@passwordToggle id=id/>
+            </div>
+        <#else>
+            ${field}
+        </#if>
         <@notes id=id hint=hint error=error/>
     </div>
+</#macro>
+
+<#-- The eye beside a password, which shows what is typed or hides it again. It stays hidden
+     until sibylle.js runs: without JavaScript, the field is a plain password. -->
+<#macro passwordToggle id>
+    <button type="button" class="password-toggle" aria-controls="${id}" aria-pressed="false" aria-label="${msg("sibylle.showPassword")}" data-password-shows="${id}" data-label-show="${msg("sibylle.showPassword")}" data-label-hide="${msg("sibylle.hidePassword")}" hidden>
+        <svg class="password-eye" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="password-eye-off" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M9.9 5.2A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-2.6 3.5M6.6 6.6C3.6 8.5 2 12 2 12s3.5 7 10 7a10 10 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg>
+    </button>
 </#macro>
 
 <#-- A new password, typed once as in the app. Keycloak also wants it in password-confirm:

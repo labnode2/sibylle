@@ -39,6 +39,9 @@ A new password is typed once, as in the app. Keycloak also wants it in `password
 `resources/js/sibylle.js` copies it there on submit. Without JavaScript, the page shows that
 second field.
 
+Each password has an eye on its right (`field.ftl`, `passwordToggle`) that shows what is typed
+or hides it again. `sibylle.js` shows it; without JavaScript, the field stays a plain password.
+
 These are the e-mails:
 
 - `email-verification`, the address check;

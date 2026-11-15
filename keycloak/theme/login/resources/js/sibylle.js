@@ -1,5 +1,5 @@
-// What Sibylle's sign-in pages do in the browser: the crystal ball of the masthead, the new
-// password that Keycloak wants twice, and one submit per form. crystal-ball.js is a copy of
+// What Sibylle's sign-in pages do in the browser: the crystal ball of the masthead, the eye of
+// the passwords, the new password that Keycloak wants twice, and one submit per form. crystal-ball.js is a copy of
 // crystal-ball-kit/src/crystal-ball.js (keycloak/check-theme.sh checks that it stays the same).
 import { animate, variantFor } from './crystal-ball.js';
 
@@ -10,9 +10,44 @@ for (const canvas of document.querySelectorAll('canvas[data-crystal-ball]')) {
   canvas.addEventListener('mouseenter', () => player.play());
 }
 
+// The eye beside each password (field.ftl, passwordToggle), shown only here: without JavaScript
+// the field stays a plain password. It shows what is typed, or hides it again; a click leaves
+// the focus and the cursor in the field.
+for (const toggle of document.querySelectorAll('button[data-password-shows]')) {
+  const input = document.getElementById(toggle.dataset.passwordShows);
+  if (!(input instanceof HTMLInputElement)) continue;
+  toggle.hidden = false;
+  // The mouse does not take the focus from the field; the keyboard keeps it on the eye.
+  toggle.addEventListener('mousedown', (event) => {
+    if (document.activeElement === input) event.preventDefault();
+  });
+  toggle.addEventListener('click', () => {
+    const shown = input.type === 'password';
+    const typing = document.activeElement === input;
+    const { selectionStart, selectionEnd, selectionDirection } = input;
+    showPassword(toggle, input, shown);
+    if (typing) {
+      input.focus();
+      input.setSelectionRange(selectionStart, selectionEnd, selectionDirection ?? undefined);
+    }
+  });
+}
+
+function showPassword(toggle, input, shown) {
+  input.type = shown ? 'text' : 'password';
+  toggle.setAttribute('aria-pressed', String(shown));
+  toggle.setAttribute('aria-label', shown ? toggle.dataset.labelHide : toggle.dataset.labelShow);
+}
+
 document.addEventListener('submit', (event) => {
   const form = event.target;
   if (!(form instanceof HTMLFormElement) || event.defaultPrevented) return;
+
+  // A password shown is sent as a password, so that the browser offers to keep it.
+  for (const toggle of form.querySelectorAll('button[data-password-shows]')) {
+    const input = document.getElementById(toggle.dataset.passwordShows);
+    if (input instanceof HTMLInputElement) showPassword(toggle, input, false);
+  }
 
   // A new password is typed once, as in the app; Keycloak compares it with the field named by
   // data-confirmed-by, sent here with the same value. Without JavaScript the page shows that
