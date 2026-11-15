@@ -370,7 +370,16 @@ export type Tab = {
   end?: boolean;
   /** A count beside the tab (open reports), and what it counts for screen readers. */
   badge?: { count: number; label: string };
+  /** A red dot on the icon when something is unread; `ariaLabel` then names the tab and the count
+   *  for screen readers. */
+  dot?: boolean;
+  ariaLabel?: string;
 };
+
+/** The small red dot of something unread, on the corner of an icon. */
+export function UnreadDot({ className }: { className?: string }) {
+  return <span className={cx(styles.dot, className)} data-testid="unread-dot" aria-hidden="true" />;
+}
 
 /** A small count in ink, such as the open reports beside « La rédaction »; screen readers hear
  *  `label` instead of the bare number. */
@@ -402,10 +411,12 @@ export function TabBar({ tabs, label }: { tabs: Tab[]; label: string }) {
           key={tab.to}
           to={tab.to}
           end={tab.end}
+          aria-label={tab.ariaLabel}
           className={({ isActive }) => cx(styles.tab, isActive && styles.tabActive)}
         >
           <span className={styles.tabIcon}>
             <Icon name={tab.icon} size={24} />
+            {tab.dot && <UnreadDot />}
             {tab.badge && <CountBadge {...tab.badge} className={styles.tabBadge} />}
           </span>
           <span className={styles.tabLabel}>{tab.label}</span>

@@ -5,8 +5,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Request
 
-from sibylle.api.deps import CurrentAccount, Db
+from sibylle.api.deps import CurrentAccount, CurrentMember, Db
 from sibylle.api.schemas import (
+    NotificationList,
+    NotificationOut,
     NotificationPrefItem,
     PushSubscriptionIn,
     PushSubscriptionOut,
@@ -66,3 +68,42 @@ async def subscribe(
 @router.delete("/me/push-subscriptions/{subscription_id}", status_code=204)
 async def unsubscribe(subscription_id: uuid.UUID, account: CurrentAccount, session: Db) -> None:
     await notifications.unsubscribe(session, account, subscription_id)
+
+
+org_router = APIRouter(prefix="/orgs/{org_id}/notifications", tags=["notifications"])
+
+
+@org_router.get("")
+async def list_notifications(
+    org_id: uuid.UUID, member: CurrentMember, session: Db
+) -> NotificationList:
+    """The member's notifications in this newsroom, newest first, with how many are unread."""
+    rows = await notifications.listing(session, member.account_id, org_id)
+    return NotificationList(
+        unread=await notifications.unread_count(session, member.account_id, org_id),
+        items=[
+            NotificationOut.model_validate(
+                {
+                    "id": row.id,
+                    "type": row.type,
+                    "prono_id": row.payload["prono_id"],
+                    "question": row.payload["question"],
+                    "created_at": row.created_at,
+                    "read_at": row.read_at,
+                }
+            )
+            for row in rows
+        ],
+    )
+
+
+@org_router.post("/read", status_code=204)
+async def read_all(org_id: uuid.UUID, member: CurrentMember, session: Db) -> None:
+    await notifications.mark_read(session, member.account_id, org_id)
+
+
+@org_router.post("/{notification_id}/read", status_code=204)
+async def read_one(
+    org_id: uuid.UUID, notification_id: uuid.UUID, member: CurrentMember, session: Db
+) -> None:
+    await notifications.mark_read(session, member.account_id, org_id, notification_id)

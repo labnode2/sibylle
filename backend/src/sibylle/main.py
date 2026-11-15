@@ -115,5 +115,6 @@ def create_app() -> FastAPI:
         uploads,
     ):
         app.include_router(module.router, prefix="/api")
+    app.include_router(notifications.org_router, prefix="/api")
     app.include_router(ws.router, prefix="/api")
     return app

@@ -7,7 +7,16 @@ import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useMatch, useMatches, useParams } from 'react-router';
 
 import { formatDate } from '../i18n';
-import { CountBadge, Logo, Masthead, Rule, TabBar, type Tab } from '../ui/components';
+import {
+  CountBadge,
+  Icon,
+  Logo,
+  Masthead,
+  Rule,
+  TabBar,
+  UnreadDot,
+  type Tab,
+} from '../ui/components';
 import styles from './shell.module.css';
 
 function subscribeOnline(callback: () => void) {
@@ -47,12 +56,14 @@ export type ShellSlots = {
   issue?: number;
   /** For the editor, the open reports, counted beside « La rédaction ». */
   reports?: number;
+  /** The notifications not read yet: the bell's red dot shows while it is above zero. */
+  unread?: number;
 };
 
 /** A route's `handle`: `bare` pages (an editor, a form with its own header) have no tabs. */
 export type RouteHandle = { bare?: boolean };
 
-export function AppShell({ account, newsroom, issue, reports = 0 }: ShellSlots) {
+export function AppShell({ account, newsroom, issue, reports = 0, unread = 0 }: ShellSlots) {
   const { t } = useTranslation();
   const { orgId = '' } = useParams();
   const base = `/o/${orgId}`;
@@ -69,6 +80,14 @@ export function AppShell({ account, newsroom, issue, reports = 0 }: ShellSlots) 
       badge: { count: reports, label: t('tabs.reports', { count: reports }) },
     },
     { to: `${base}/profil`, label: t('tabs.profile'), long: t('tabs.profileLong'), icon: 'user' },
+    {
+      to: `${base}/notifications`,
+      label: t('notifications:bell.tab'),
+      long: t('notifications:bell.tab'),
+      icon: 'bell',
+      dot: unread > 0,
+      ariaLabel: t('notifications:bell.label', { count: unread }),
+    },
   ];
   const today = formatDate(new Date(), {
     weekday: 'long',
@@ -83,9 +102,18 @@ export function AppShell({ account, newsroom, issue, reports = 0 }: ShellSlots) 
           key={tab.to}
           to={tab.to}
           end={tab.end}
+          aria-label={tab.ariaLabel}
           className={({ isActive }) => `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`}
         >
-          <span>{tab.long}</span>
+          {tab.icon === 'bell' ? (
+            // The desktop's bell: an icon with its dot, in the navigation.
+            <span className={styles.bell}>
+              <Icon name="bell" size={20} />
+              {tab.dot && <UnreadDot />}
+            </span>
+          ) : (
+            <span>{tab.long}</span>
+          )}
           {tab.badge && <CountBadge {...tab.badge} />}
         </NavLink>
       ))}

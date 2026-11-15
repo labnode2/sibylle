@@ -9,7 +9,7 @@ from collections.abc import Iterable, Sequence
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import delete, or_, select
+from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -36,6 +36,7 @@ from sibylle.domain.notifications import (
     reminder_step,
 )
 from sibylle.domain.permissions import Action, can
+from sibylle.realtime import bus
 
 
 async def enqueue(
@@ -79,7 +80,25 @@ async def enqueue_many(session: AsyncSession, rows: Sequence[dict[str, Any]]) ->
         .on_conflict_do_nothing(index_elements=["dedupe_key"])
         .returning(Notification.id)
     )
-    return len(result.all())
+    added = result.all()
+    # The bell of whoever is on the app moves at once (the event leaves with the commit).
+    for account_id, org_id in {
+        (row["account_id"], row.get("org_id")) for row in rows if row.get("account_id")
+    }:
+        if org_id is not None:
+            await _changed(session, account_id, org_id, "notification.created")
+    return len(added)
+
+
+async def _changed(
+    session: AsyncSession, account_id: uuid.UUID, org_id: uuid.UUID, event: str
+) -> None:
+    await bus.publish(
+        session,
+        event,
+        {"org_id": str(org_id)},
+        topics=[f"me:{account_id}"],
+    )
 
 
 # Who gets what
@@ -329,6 +348,68 @@ async def still_relevant(session: AsyncSession, notification: Notification) -> b
                 and report.state == "open"
                 and can(member.role, Action.HANDLE_REPORTS)
             )
+
+
+# The member's list, in a newsroom
+
+
+def _listed(account_id: uuid.UUID, org_id: uuid.UUID) -> list[Any]:
+    """What the app's list shows: the newsroom's notifications of this account (not the e-mails
+    to an address without an account, not those that were skipped)."""
+    return [
+        Notification.account_id == account_id,
+        Notification.org_id == org_id,
+        Notification.type.in_([type.value for type in NotificationType]),
+        Notification.state != "skipped",
+    ]
+
+
+async def listing(
+    session: AsyncSession, account_id: uuid.UUID, org_id: uuid.UUID, limit: int = 50
+) -> list[Notification]:
+    """The most recent first."""
+    return list(
+        (
+            await session.scalars(
+                select(Notification)
+                .where(*_listed(account_id, org_id))
+                .order_by(Notification.created_at.desc(), Notification.id)
+                .limit(limit)
+            )
+        ).all()
+    )
+
+
+async def unread_count(session: AsyncSession, account_id: uuid.UUID, org_id: uuid.UUID) -> int:
+    return (
+        await session.scalar(
+            select(func.count())
+            .select_from(Notification)
+            .where(*_listed(account_id, org_id), Notification.read_at.is_(None))
+        )
+    ) or 0
+
+
+async def mark_read(
+    session: AsyncSession,
+    account_id: uuid.UUID,
+    org_id: uuid.UUID,
+    notification_id: uuid.UUID | None = None,
+) -> None:
+    """One notification (404 when it is not this member's in this newsroom), or all of them."""
+    query = update(Notification).where(*_listed(account_id, org_id), Notification.read_at.is_(None))
+    if notification_id is not None:
+        found = await session.scalar(
+            select(Notification.id).where(
+                *_listed(account_id, org_id), Notification.id == notification_id
+            )
+        )
+        if found is None:
+            raise AppError("not_found")
+        query = query.where(Notification.id == notification_id)
+    result = await session.execute(query.values(read_at=clock.now()))
+    if result.rowcount:  # type: ignore[attr-defined]
+        await _changed(session, account_id, org_id, "notification.read")
 
 
 # Switches

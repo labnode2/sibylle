@@ -13,6 +13,7 @@ import { meKey, useMe, useWelcomed } from '../features/auth/api';
 import { useWeeklyCoins, weeklyCoinsKey } from '../features/coins/api';
 import { WeeklyCoinsDialog } from '../features/coins/WeeklyCoinsDialog';
 import { InstallButton } from '../features/install/InstallButton';
+import { notificationListKey, useUnreadCount } from '../features/notifications/api';
 import { InstalledPushDialog } from '../features/notifications/InstalledPushDialog';
 import { WelcomeDialog } from '../features/welcome/WelcomeDialog';
 import { orgKey, useOrg } from '../features/orgs/api';
@@ -72,6 +73,8 @@ export function OrgLayout() {
   });
   // The editor's open reports, counted beside « La rédaction » (the others may not read them).
   const reports = useReports(orgId, org.data?.my_membership.role === 'editor');
+  // The bell's red dot: the unread count, kept up to date by the server's events.
+  const unread = useUnreadCount(orgId);
   // A result, a refund or a correction moves the balance: the header follows.
   useTopic('me', (event) => {
     if (event.event === 'balance.changed' && event.data.org_id === orgId) {
@@ -81,6 +84,13 @@ export function OrgLayout() {
     if (event.event === 'coins.granted' && event.data.org_id === orgId) {
       void client.invalidateQueries({ queryKey: orgKey(orgId) });
       void client.invalidateQueries({ queryKey: weeklyCoinsKey(orgId) });
+    }
+    // A notification arrived, or was read on another device: the bell follows without a reload.
+    if (
+      (event.event === 'notification.created' || event.event === 'notification.read') &&
+      event.data.org_id === orgId
+    ) {
+      void client.invalidateQueries({ queryKey: notificationListKey(orgId) });
     }
     // A new report for the editor; a handled one for its author, on the prono's page.
     if (event.event === 'report.created') {
@@ -115,6 +125,7 @@ export function OrgLayout() {
         }
         issue={org.data.edition_number}
         newsroom={<NewsroomSwitcher org={org.data} />}
+        unread={unread}
         reports={me.role === 'editor' ? (reports.data?.length ?? 0) : 0}
       />
       <Dialogs org={org.data} coins={me.coins} />

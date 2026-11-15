@@ -28,6 +28,8 @@ export const ICONS = {
     'M5 0h2v1h-2zM4 1h4v1h-4zM3 2h6v1h-6zM5 3h2v5h-2zM1 4h3v1h-3zM8 4h3v1h-3zM1 5h1v6h-1zM10 5h1v6h-1zM1 11h10v1h-10z',
   // A browser's menu: three dots, one above the other.
   menu: 'M5 1h2v2h-2zM5 5h2v2h-2zM5 9h2v2h-2z',
+  // The notifications' bell.
+  bell: 'M5 0h2v1h-2zM4 1h4v1h-4zM3 2h6v3h-6zM3 5h6v2h-6zM2 7h8v1h-8zM1 8h10v1h-10zM5 10h2v1h-2z',
 } as const;
 
 export type IconName = keyof typeof ICONS;

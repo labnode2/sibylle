@@ -108,6 +108,11 @@
   border-bottom: 2px solid var(--ink);
 }
 
+.bell {
+  position: relative;
+  display: inline-flex;
+}
+
 .slot {
   display: flex;
   align-items: center;

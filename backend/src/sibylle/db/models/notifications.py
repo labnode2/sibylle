@@ -37,6 +37,8 @@ class Notification(Base):
     next_attempt_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
     sent_at: Mapped[datetime | None]
     created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
+    # When the member opened it in the app's list; NULL while unread (the bell's red dot).
+    read_at: Mapped[datetime | None]
 
 
 class NotificationPref(Base):

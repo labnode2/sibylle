@@ -145,3 +145,35 @@
   gap: 12px;
   margin-top: 20px;
 }
+
+/* The bell's list. */
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.line {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 12px 0 12px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+  border-left: 4px solid transparent;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lineUnread {
+  border-left-color: var(--danger);
+  font-weight: 700;
+}

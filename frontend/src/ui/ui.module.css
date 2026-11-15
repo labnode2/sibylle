@@ -434,6 +434,19 @@
   font-size: 10px;
 }
 
+/* The red dot of something unread, on the corner of an icon. */
+.dot {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--danger);
+  border: 2px solid var(--paper);
+  box-sizing: content-box;
+}
+
 /* Laurels and coins: value in Geist Mono, then the sprite. */
 .laurel {
   display: inline-flex;

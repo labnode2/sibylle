@@ -870,6 +870,22 @@ class NotificationPrefItem(BaseModel):
     enabled: bool
 
 
+class NotificationOut(BaseModel):
+    """A line of the bell's list: what happened, on which prono, and whether it was read."""
+
+    id: uuid.UUID
+    type: NotificationKind
+    prono_id: uuid.UUID
+    question: str
+    created_at: datetime
+    read_at: datetime | None
+
+
+class NotificationList(BaseModel):
+    unread: int
+    items: list[NotificationOut]
+
+
 class VapidKey(BaseModel):
     """The server's public key for `pushManager.subscribe`; null when push is not set up."""
 
