@@ -7,6 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle.db.models import Bet, Membership, Organisation, Prono, PronoOption
+from sibylle.domain.leaderboard import Metric, Period
 from sibylle.domain.lifecycle import State
 from sibylle.domain.permissions import Action, can
 from sibylle.services import leaderboard, pronos, streaks
@@ -62,9 +63,9 @@ async def _latest_results(session: AsyncSession, member: Membership) -> list[dic
 async def _leaderboard_top(
     session: AsyncSession, member: Membership
 ) -> tuple[str, list[dict[str, Any]]]:
-    """The season's first five by laurels, then the member's own line when they are not among
-    them."""
-    board = await leaderboard.green_season_board(session, member.org_id)
+    """The first five by gold laurels, as in the full ranking, then the member's own line when
+    they are not among them."""
+    board = await leaderboard.board(session, member.org_id, Metric.LAURELS, Period.ALL_TIME)
     lines = board.lines[:TOP]
     if all(line.member.id != member.id for line in lines):
         lines += [line for line in board.lines[TOP:] if line.member.id == member.id]

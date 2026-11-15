@@ -34,7 +34,7 @@
   "wins_one": "{{value}} prono",
   "wins_other": "{{value}} pronos",
   "note": {
-    "laurels": "Les lauriers d'or gravés sur les trophées des saisons terminées. Les lauriers verts du portefeuille ne comptent pas : le classement se joue à la fin de chaque saison.",
+    "laurels": "Les lauriers d'or : ce que chacun peut miser, plus ce qu'il a misé sur des pronos pas encore réglés. Les lauriers verts seuls ne comptent pas.",
     "wins": "Le nombre de pronos gagnés, comptés au jour du résultat."
   }
 }

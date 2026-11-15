@@ -1,9 +1,8 @@
 """The rankings: gold laurels, all time, or pronos won, over the month, the season or all time.
 
-The laurels are the gold ones, engraved on the trophies of the closed seasons: they only exist
-once a season is closed, so they are ranked all time only. The green laurels of the wallet are
-not a ranking. The month and the season of the pronos won are taken in Paris time. Members who
-left the newsroom, or whose account was deleted, are not ranked.
+The laurels are the gold ones (the balance plus the stakes in play), a total as of now: they are
+ranked all time only. The month and the season of the pronos won are taken in Paris time.
+Members who left the newsroom, or whose account was deleted, are not ranked.
 """
 
 from collections.abc import Sequence
@@ -26,7 +25,7 @@ class Period(StrEnum):
 
 
 def periods_of(metric: Metric) -> tuple[Period, ...]:
-    """The gold laurels are engraved when a season closes: only all time makes sense for them."""
+    """The gold laurels are a total as of now: only all time makes sense for them."""
     if metric is Metric.LAURELS:
         return (Period.ALL_TIME,)
     return (Period.MONTH, Period.SEASON, Period.ALL_TIME)

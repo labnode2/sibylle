@@ -1,5 +1,5 @@
-"""The rankings, computed on demand: the gold laurels engraved on the trophies, or the pronos won
-counted over the bets. The green laurels of the season only feed la une (`green_season_board`)."""
+"""The rankings, computed on demand: the gold laurels (the balance plus the stakes in play, as the
+wallet shows them), or the pronos won counted over the bets. La une shows the same laurels board."""
 
 import uuid
 from dataclasses import dataclass
@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle import clock
 from sibylle.api.errors import AppError
-from sibylle.db.models import Bet, Membership, Trophy
+from sibylle.db.models import Bet, Membership
+from sibylle.domain.coins import gold
 from sibylle.domain.leaderboard import (
     Metric,
     Period,
@@ -19,6 +20,7 @@ from sibylle.domain.leaderboard import (
     window,
 )
 from sibylle.domain.seasons import PARIS, season_of
+from sibylle.services import coins
 
 
 @dataclass(frozen=True)
@@ -36,14 +38,15 @@ class Board:
 
 
 async def _laurels(session: AsyncSession, org_id: uuid.UUID) -> dict[uuid.UUID, int]:
-    """The gold laurels engraved on the trophies of the closed seasons."""
-    engraved = await session.execute(
-        select(Trophy.membership_id, func.sum(Trophy.score))
-        .join(Membership, Membership.id == Trophy.membership_id)
-        .where(Membership.org_id == org_id)
-        .group_by(Trophy.membership_id)
-    )
-    return {member: int(total) for member, total in engraved}
+    """The gold laurels, as the wallet shows them: the balance plus the stakes still in play."""
+    balances = {
+        member: balance
+        for member, balance in await session.execute(
+            select(Membership.id, Membership.balance).where(Membership.org_id == org_id)
+        )
+    }
+    stakes = await coins.in_play(session, list(balances))
+    return {member: gold(balance, stakes.get(member, 0)) for member, balance in balances.items()}
 
 
 async def _wins(session: AsyncSession, org_id: uuid.UUID, period: Period) -> dict[uuid.UUID, int]:
@@ -101,14 +104,3 @@ async def board(session: AsyncSession, org_id: uuid.UUID, metric: Metric, period
     """Every active member, the best first; a member with nothing yet counts 0."""
     by_member = await values(session, org_id, metric, period)
     return await _board(session, org_id, by_member, _label(period))
-
-
-async def green_season_board(session: AsyncSession, org_id: uuid.UUID) -> Board:
-    """The season's green laurels (the wallet's balance), for la une."""
-    balances = {
-        member: balance
-        for member, balance in await session.execute(
-            select(Membership.id, Membership.balance).where(Membership.org_id == org_id)
-        )
-    }
-    return await _board(session, org_id, balances, _label(Period.SEASON))

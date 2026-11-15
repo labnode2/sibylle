@@ -1,4 +1,4 @@
-// The laurels ranking counts the gold laurels only, all time: its title and its note say so.
+// The laurels ranking counts the gold laurels, all time: its title and its note say so.
 import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';

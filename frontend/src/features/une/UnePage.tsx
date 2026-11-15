@@ -196,17 +196,12 @@ function ResultBrief({ orgId, latest }: { orgId: string; latest: LatestResult })
 
 function Ranking({ orgId, front }: { orgId: string; front: FrontPage }) {
   const { t } = useTranslation('une');
-  // "2026-autumn" → "SAISON D'AUTOMNE 2026".
-  const [year, name] = front.leaderboard_period.split('-');
   return (
     <section className={styles.ranking} aria-labelledby="une-ranking">
       <SectionHead
         id="une-ranking"
         title={t('leaderboard')}
-        meta={t('leaderboard:seasonTitle', {
-          season: t(`leaderboard:season.${name}`),
-          year,
-        }).toUpperCase()}
+        meta={t('leaderboard:period.all_time')}
       />
       <ol className={styles.top}>
         {front.leaderboard_top.map((row, index) => (
@@ -225,7 +220,7 @@ function Ranking({ orgId, front }: { orgId: string; front: FrontPage }) {
             </Link>
             <Streak value={row.streak} />
             <span className={styles.topValue}>
-              <Laurel value={row.value} />
+              <Laurel value={row.value} tone="gold" />
             </span>
           </li>
         ))}

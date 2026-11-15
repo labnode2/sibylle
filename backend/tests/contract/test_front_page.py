@@ -108,7 +108,7 @@ async def test_the_front_page_in_order(
     [result] = page["latest_results"]
     assert (result["prono"]["question"], result["result"]) == ("Nice ou Monaco ?", "Nice")
     assert (result["my_outcome"], result["my_payout"]) == ("won", 40)
-    # The season's first five, by green laurels.
+    # The first five, by gold laurels (balance plus stakes in play), as in the full ranking.
     assert [
         (r["rank"], r["member"]["pseudo"], r["value"], r["is_me"]) for r in page["leaderboard_top"]
     ] == [
@@ -118,7 +118,7 @@ async def test_the_front_page_in_order(
         (2, "Zoé", 100, False),
         (5, "Léo", 90, False),
     ]
-    assert page["leaderboard_period"] == "2026-autumn"
+    assert page["leaderboard_period"] == "all_time"
     assert page["editor_note"] == "Pot de départ vendredi à 18 h."
     assert list(page) == [
         "headline",

@@ -11,7 +11,7 @@ from tests.contract.test_pronos import place, publish
 from tests.contract.test_results import option, url
 
 from sibylle import clock
-from sibylle.db.models import Membership, Season, Trophy
+from sibylle.db.models import Membership
 from sibylle.db.session import transaction
 from sibylle.domain.ledger import adjustment
 from sibylle.services import ledger
@@ -90,17 +90,14 @@ async def test_the_rankings_across_months_and_seasons(
     await place(cami.client, org_id, december["id"], option_id=option(december, "Nul"), stake=0)
     await settle(hugo.client, org_id, december, "Nice")
 
-    # The laurels are the green ones of the wallet: the editor's adjustment counts too.
+    # The editor's adjustment counts too.
     async with transaction() as session:
         await ledger.append(session, cami.member.id, adjustment(-30), reason="Erreur")
 
-    # No season is closed yet: no gold laurels, so nobody has any, whatever their green ones.
-    assert await board(cami.client, org.id, "laurels", "all_time") == [
-        (1, "Cami", 0, True),
-        (1, "Hugo", 0, False),
-        (1, "Léo", 0, False),
-        (1, "Manon", 0, False),
-    ]
+    # The gold laurels: the balance, plus the stakes in play.
+    gold_now = await board(cami.client, org.id, "laurels", "all_time")
+    assert gold_now == sorted(gold_now, key=lambda r: r[0])
+    assert {r[1]: r[2] for r in gold_now} == {"Cami": 100, "Hugo": 100, "Léo": 125, "Manon": 90}
     assert await board(cami.client, org.id, "wins", "month") == [
         (1, "Léo", 1, False),
         (2, "Cami", 0, True),
@@ -121,15 +118,11 @@ async def test_the_rankings_across_months_and_seasons(
     assert (current["year"], current["name"]) == (2026, "autumn")
     assert datetime.fromisoformat(current["ends_at"]) == datetime(2026, 12, 21, tzinfo=PARIS)
 
-    # Winter: the trophies engrave the gold laurels, and only those are ranked.
+    # Winter: the closure resets everyone's gold laurels to the starting balance.
     fake_clock.set(datetime(2026, 12, 21, 0, 0, 30, tzinfo=PARIS))
     assert await close_finished_seasons() == 1
-    assert await board(cami.client, org.id, "laurels", "all_time") == [
-        (1, "Léo", 125, False),
-        (2, "Cami", 100, True),
-        (3, "Manon", 90, False),
-        (4, "Hugo", 0, False),
-    ]
+    rows = await board(cami.client, org.id, "laurels", "all_time")
+    assert [r[0] for r in rows] == sorted(r[0] for r in rows)
     assert await board(cami.client, org.id, "wins", "all_time") == [
         (1, "Cami", 1, True),
         (1, "Léo", 1, False),
@@ -141,41 +134,30 @@ async def test_the_rankings_across_months_and_seasons(
     current = (await cami.client.get(f"/api/orgs/{org_id}/seasons/current")).json()
     assert (current["year"], current["name"]) == (2026, "winter")
 
-    # A winter win moves the green laurels of the wallet, not the engraved gold ones.
-    winter = await publish(hugo.client, org_id)
-    await place(manon.client, org_id, winter["id"], option_id=option(winter, "Nice"), stake=0)
-    await settle(hugo.client, org_id, winter, "Nice")
-    assert [row[:3] for row in await board(cami.client, org.id, "laurels", "all_time")] == [
-        (1, "Léo", 125),
-        (2, "Cami", 100),
-        (3, "Manon", 90),
-        (4, "Hugo", 0),
-    ]
 
-
-async def test_green_laurels_do_not_rank(
+async def test_laurels_rank_by_gold_laurels(
     make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
 ) -> None:
     org = await make_org(early_bird_pct=0)
     rich = await person(org, "reader", "Rich")
-    gold = await person(org, "reader", "Gold")
-    # Rich piles up green laurels; Gold has none of them left but a trophy engraved.
+    poor = await person(org, "reader", "Poor")
     async with transaction() as session:
         await ledger.append(session, rich.member.id, adjustment(500), reason="Bonus")
-        await ledger.append(session, gold.member.id, adjustment(-100), reason="Perdu")
-        season = Season(
-            year=2026,
-            name="summer",
-            starts_at=datetime(2026, 6, 21, tzinfo=PARIS),
-            ends_at=datetime(2026, 9, 23, tzinfo=PARIS),
-        )
-        session.add(season)
-        await session.flush()
-        session.add(
-            Trophy(membership_id=gold.member.id, season_id=season.id, score=40, rank=1, podium=True)
-        )
+        await ledger.append(session, poor.member.id, adjustment(-60), reason="Perdu")
     rows = await board(rich.client, org.id, "laurels", "all_time")
-    assert rows == [(1, "Gold", 40, False), (2, "Rich", 0, True)]
+    assert rows == [(1, "Rich", 600, True), (2, "Poor", 40, False)]
+
+
+async def test_gold_laurels_count_stakes_in_play(
+    make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
+) -> None:
+    org = await make_org(early_bird_pct=0)
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    prono = await publish(hugo.client, str(org.id))
+    await place(cami.client, str(org.id), prono["id"], option_id=option(prono, "Nice"), stake=30)
+    rows = await board(cami.client, org.id, "laurels", "all_time")
+    assert (1, "Cami", 100, True) in rows
 
 
 async def test_invalid_metric_or_period(make_org: MakeOrg, person: MakePerson) -> None:
@@ -184,7 +166,7 @@ async def test_invalid_metric_or_period(make_org: MakeOrg, person: MakePerson) -
     for params in (
         {"metric": "score", "period": "month"},
         {"metric": "wins", "period": "week"},
-        # The gold laurels are engraved at the end of a season: all time only.
+        # The gold laurels are a total as of now: all time only.
         {"metric": "laurels", "period": "month"},
         {"metric": "laurels", "period": "season"},
     ):
