@@ -268,3 +268,36 @@ async def test_pixels_and_gain_follow_the_time_gone(
     again = await guess(leo, org.id, "café")
     assert (again.json()["rank"], again.json()["laurels"]) == (2, 26)
     assert (await status(hugo, org.id))["gain_now"] is None
+
+
+async def test_the_author_is_paid_25_at_the_start_then_5_a_find(
+    make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
+) -> None:
+    org = await make_org()
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    leo = await person(org, "reader", "Léo")
+    before = await balance(hugo)
+    await post(hugo, org.id)
+    assert await balance(hugo) == before + 25
+    assert (await status(hugo, org.id))["author_earned"] == 25
+    assert (await status(cami, org.id))["author_earned"] is None
+
+    # A wrong word and the author's own answer pay nothing.
+    await guess(cami, org.id, "thé")
+    assert (await guess(hugo, org.id, "café")).status_code == 403
+    assert await balance(hugo) == before + 25
+
+    assert (await guess(cami, org.id, "café")).json()["correct"] is True
+    assert await balance(hugo) == before + 30
+    # A replayed answer is refused and pays nothing more.
+    assert (await guess(cami, org.id, "café")).status_code == 409
+    assert await balance(hugo) == before + 30
+    await guess(leo, org.id, "café")
+    assert await balance(hugo) == before + 35
+    assert (await status(hugo, org.id))["author_earned"] == 35
+
+    # Ending the game and the morning job pay no second bonus.
+    fake_clock.set(clock.now() + timedelta(days=8))
+    await reveal_pixel_puzzles()
+    assert await balance(hugo) == before + 35

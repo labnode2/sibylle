@@ -29,6 +29,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sibylle import clock
 from sibylle.api.errors import AppError
 from sibylle.db.models import (
+    LedgerEntry,
     Membership,
     MinigamePayout,
     Organisation,
@@ -39,8 +40,10 @@ from sibylle.db.models import (
     WordleGame,
 )
 from sibylle.domain.game_schedule import Game
-from sibylle.domain.ledger import minigame
+from sibylle.domain.ledger import minigame, pixel_author_bonus, pixel_author_find
 from sibylle.domain.minigames import (
+    PIXEL_AUTHOR_BONUS,
+    PIXEL_AUTHOR_PER_FIND,
     PIXEL_GUESSES_PER_DAY,
     RUN_MAX,
     RUNNER_ATTEMPTS,
@@ -349,6 +352,18 @@ async def _ends_at(session: AsyncSession, puzzle: PixelPuzzle) -> datetime:
             return monday
 
 
+async def _author_earned(session: AsyncSession, puzzle: PixelPuzzle) -> int:
+    """What a drawing has paid its author so far: the bonus and the finds."""
+    total = await session.scalar(
+        select(func.coalesce(func.sum(LedgerEntry.amount), 0)).where(
+            LedgerEntry.membership_id == puzzle.author_membership_id,
+            LedgerEntry.kind.in_(("pixel_author_bonus", "pixel_author_find")),
+            LedgerEntry.reason.like(f"pixel-%:{puzzle.id}%"),
+        )
+    )
+    return int(total or 0)
+
+
 async def pixel_status(
     session: AsyncSession, member: Membership, *, on: bool | None = None, home: bool = False
 ) -> dict[str, Any] | None:
@@ -391,6 +406,7 @@ async def pixel_status(
         "gain_ends_at": reveal_end(puzzle.started_at)
         if puzzle.state == "active" and puzzle.started_at
         else None,
+        "author_earned": await _author_earned(session, puzzle) if mine else None,
         "gain_now": _gain_now(puzzle)
         if puzzle.state == "active" and not found and not mine
         else None,
@@ -402,6 +418,13 @@ async def _activate(session: AsyncSession, puzzle: PixelPuzzle, now: datetime) -
     puzzle.started_at = now
     puzzle.revealed_count = revealed_count(int(puzzle.drawing["size"]), now, now)
     await session.flush()
+    # Only a queued drawing is activated, under the newsroom's lock: the bonus is paid once.
+    await ledger.append(
+        session,
+        puzzle.author_membership_id,
+        pixel_author_bonus(PIXEL_AUTHOR_BONUS),
+        reason=f"pixel-bonus:{puzzle.id}",
+    )
     await bus.publish(
         session,
         "games.pixel.revealed",
@@ -561,6 +584,13 @@ async def guess(session: AsyncSession, member: Membership, word: str) -> dict[st
     laurels = _gain_now(puzzle)
     session.add(PixelFind(puzzle_id=puzzle.id, membership_id=member.id, rank=rank, laurels=laurels))
     await ledger.append(session, member.id, minigame(laurels), reason=f"pixel:{puzzle.word}")
+    # One find per member (checked above, puzzle locked): the author is paid once for each.
+    await ledger.append(
+        session,
+        puzzle.author_membership_id,
+        pixel_author_find(PIXEL_AUTHOR_PER_FIND),
+        reason=f"pixel-find:{puzzle.id}:{rank}",
+    )
     await bus.publish(
         session,
         "games.pixel.found",

@@ -82,6 +82,9 @@ REVEAL_DAYS = 7
 PIXEL_DURATION = timedelta(days=REVEAL_DAYS)
 PIXEL_START_GAIN = 50
 PIXEL_OTHER_GAIN = 3
+# What a drawing pays its author: once when it goes live, then at each find.
+PIXEL_AUTHOR_BONUS = 25
+PIXEL_AUTHOR_PER_FIND = 5
 # The next drawing starts at this hour (Paris), the day after the last one ended.
 REVEAL_HOUR = 8
 # The value of a pixel not shown yet, in the drawing sent to the players.

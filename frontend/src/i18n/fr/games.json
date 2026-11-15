@@ -61,6 +61,7 @@
     "gainNow": "TROUVE MAINTENANT : +{{laurels}}",
     "word": "LE MOT : {{word}}",
     "mine": "C'est ton dessin : tu regardes la rédaction chercher.",
+    "authorEarned": "TON DESSIN T'A RAPPORTÉ : {{laurels}}",
     "found": "Tu as trouvé !",
     "finished": "Partie terminée : le prochain dessin démarre un matin à 8 h.",
     "finds": "ONT TROUVÉ",

@@ -972,6 +972,8 @@ class PixelStatus(BaseModel):
     started_at: datetime | None
     gain_ends_at: datetime | None
     gain_now: int | None
+    # What the drawing has paid its author so far; null for everyone else.
+    author_earned: int | None
 
 
 class WordleTry(BaseModel):

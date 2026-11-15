@@ -20,6 +20,8 @@ class LedgerKind(StrEnum):
     REVERSAL = "reversal"
     PURCHASE = "purchase"
     MINIGAME = "minigame"
+    PIXEL_AUTHOR_BONUS = "pixel_author_bonus"
+    PIXEL_AUTHOR_FIND = "pixel_author_find"
     ADJUSTMENT = "adjustment"
     SEASON_RESET = "season_reset"
 
@@ -82,6 +84,16 @@ def purchase(price: int) -> Effect:
 
 def minigame(gain: int) -> Effect:
     return Effect(LedgerKind.MINIGAME, _at_least(gain, 1, "mini-game gain"), 0)
+
+
+def pixel_author_bonus(gain: int) -> Effect:
+    """Paid to a drawing's author when it goes live."""
+    return Effect(LedgerKind.PIXEL_AUTHOR_BONUS, _at_least(gain, 1, "author bonus"), 0)
+
+
+def pixel_author_find(gain: int) -> Effect:
+    """Paid to a drawing's author each time someone finds the word."""
+    return Effect(LedgerKind.PIXEL_AUTHOR_FIND, _at_least(gain, 1, "author find gain"), 0)
 
 
 def adjustment(amount: int) -> Effect:

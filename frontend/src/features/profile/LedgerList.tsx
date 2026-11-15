@@ -31,6 +31,10 @@ function Detail({ orgId, entry }: { orgId: string; entry: LedgerEntry }) {
   const pixel = entry.kind === 'minigame' && /^pixel:(.+)$/.exec(entry.reason ?? '');
   if (pixel)
     return <span className={styles.ledgerDetail}>{t('ledger.pixel', { word: pixel[1] })}</span>;
+  if (entry.kind === 'pixel_author_bonus')
+    return <span className={styles.ledgerDetail}>{t('ledger.pixelBonus')}</span>;
+  if (entry.kind === 'pixel_author_find')
+    return <span className={styles.ledgerDetail}>{t('ledger.pixelFind')}</span>;
   return entry.reason ? <span className={styles.ledgerDetail}>« {entry.reason} »</span> : null;
 }
 

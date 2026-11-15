@@ -121,6 +121,11 @@ function Puzzle({ orgId, status, on }: { orgId: string; status: PixelStatus; on:
           <p className={styles.label}>{t('pixel.gainNow', { laurels: gain })}</p>
         )}
         {status.word && <p className={styles.word}>{t('pixel.word', { word: status.word })}</p>}
+        {status.author_earned != null && (
+          <p className={styles.label}>
+            {t('pixel.authorEarned', { laurels: formatNumber(status.author_earned) })}
+          </p>
+        )}
         {message && <p className={styles.text}>{message}</p>}
         {status.state === 'active' && !status.mine && !status.found_by_me && (
           <GuessForm guess={guess} status={status} />

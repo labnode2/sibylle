@@ -51,6 +51,7 @@ function pixel(overrides: Partial<NonNullable<Games['pixel']>>): Games {
       started_at: null,
       gain_ends_at: null,
       gain_now: null,
+      author_earned: null,
       ...overrides,
     },
   };

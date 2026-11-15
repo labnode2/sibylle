@@ -2237,6 +2237,8 @@ export interface components {
             gain_ends_at: string | null;
             /** Gain Now */
             gain_now: number | null;
+            /** Author Earned */
+            author_earned: number | null;
         };
         /**
          * PressCard
