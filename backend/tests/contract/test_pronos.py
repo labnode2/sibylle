@@ -328,3 +328,37 @@ async def test_outsiders_get_404(make_org: MakeOrg, person: MakePerson) -> None:
     # A prono of another newsroom does not exist under this one either.
     wrong_org = await outsider.client.get(f"/api/orgs/{other.id}/pronos/{prono['id']}")
     assert wrong_org.status_code == 404
+
+
+async def test_the_bets_of_a_prono_are_seen_by_its_newsroom_only(
+    make_org: MakeOrg, person: MakePerson
+) -> None:
+    org, other = await make_org(), await make_org()
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    stranger = await person(other, "journalist", "Zoe")
+    prono = await publish(hugo.client, str(org.id))
+    elsewhere = await publish(stranger.client, str(other.id))
+    nice = prono["options"][0]["id"]
+    await place(hugo.client, str(org.id), prono["id"], option_id=nice, stake=10)
+    await place(
+        stranger.client, str(other.id), elsewhere["id"], option_id=elsewhere["options"][0]["id"]
+    )
+
+    # Open: a reader of the newsroom sees who bet what, and only on this prono.
+    detail = (await cami.client.get(f"/api/orgs/{org.id}/pronos/{prono['id']}")).json()
+    assert [(b["member"]["pseudo"], b["answer"], b["stake"]) for b in detail["bets"]] == [
+        ("Hugo", "Nice", 10)
+    ]
+    assert_no_private_data(detail)
+    # Nothing of the other newsroom's bets, whichever way it is asked for.
+    assert "Zoe" not in str(detail)
+    assert (
+        await cami.client.get(f"/api/orgs/{org.id}/pronos/{elsewhere['id']}")
+    ).status_code == 404
+    assert (
+        await cami.client.get(f"/api/orgs/{other.id}/pronos/{elsewhere['id']}")
+    ).status_code == 404
+    assert (
+        await stranger.client.get(f"/api/orgs/{org.id}/pronos/{prono['id']}")
+    ).status_code == 404

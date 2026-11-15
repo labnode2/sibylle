@@ -32,6 +32,7 @@ import { usePlaceBet, useProno, type Bet, type PronoDetail } from './api';
 import { Discussion } from './Discussion';
 import { ProposalDecision } from './ProposalsPanel';
 import { ReactionBar } from './ReactionBar';
+import { WhoVoted } from './WhoVoted';
 import styles from './pronos.module.css';
 
 const STAKE_STEP = 10;
@@ -374,6 +375,9 @@ export function PronoPage() {
             </section>
           )}
           {!choosing && <Distribution prono={prono} />}
+          {prono.state !== 'proposed' && prono.state !== 'rejected' && (
+            <WhoVoted orgId={orgId} prono={prono} />
+          )}
 
           {canBet && prono.kind === 'number' && (
             <label className={styles.fieldset}>

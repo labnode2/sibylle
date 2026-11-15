@@ -835,3 +835,19 @@
   justify-content: space-between;
   gap: 8px 12px;
 }
+
+.voteHead {
+  display: flex;
+  justify-content: space-between;
+  margin: 12px 0 0;
+  font: 700 13px/1.2 var(--font-mono);
+}
+
+.voter {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  border-top: 1px solid var(--rule);
+}
