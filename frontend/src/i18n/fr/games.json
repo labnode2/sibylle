@@ -7,7 +7,7 @@
     "leader": "En tête : {{pseudo}} ({{score}})",
     "pixel": "Pixel mystère",
     "pixelLine": "UN MOT DE {{count}} LETTRES · FIN DANS {{left}}",
-    "pixelFound": "TROUVÉ · LE MOT : {{word}}",
+    "pixelSolved": "RÉSOLU",
     "pixelFinished": "LE MOT ÉTAIT « {{word}} »",
     "pixelNone": "PAS DE DESSIN EN COURS",
     "see": "Voir"

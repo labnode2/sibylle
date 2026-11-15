@@ -15,7 +15,14 @@ import { toast } from '../../../ui/Toaster';
 import { useFormErrors } from '../../forms';
 import { useOrg } from '../../orgs/api';
 import { PixelEditor } from '../../pixel-editor/PixelEditor';
-import { useGames, useGuess, usePixelQueue, usePostPuzzle, type PixelStatus } from '../api';
+import {
+  useGames,
+  useGuess,
+  usePixel,
+  usePixelQueue,
+  usePostPuzzle,
+  type PixelStatus,
+} from '../api';
 import styles from '../games.module.css';
 import { MysteryDrawing } from './MysteryDrawing';
 
@@ -241,10 +248,12 @@ export function PixelMysterePage() {
   const { t } = useTranslation('games');
   const { orgId = '' } = useParams();
   const games = useGames(orgId);
+  const pixel = usePixel(orgId);
   const org = useOrg(orgId);
-  if (!games.data || !org.data) return <p role="status">{t('common:shell.loading')}</p>;
+  if (!games.data || pixel.data === undefined || !org.data)
+    return <p role="status">{t('common:shell.loading')}</p>;
   const me = org.data.my_membership;
-  const status = games.data.pixel;
+  const status = pixel.data;
   const on = games.data.scheduled.includes('pixel');
 
   return (

@@ -1,0 +1,78 @@
+// « Les jeux de la semaine » on la une: a Pixel mystère found shows as the newsroom sees it,
+// masked and without its word, with a « RÉSOLU » tag; its author sees it masked too.
+import { cleanup, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import '../../src/i18n';
+import type { Games } from '../../src/features/games/api';
+import { WeeklyGames } from '../../src/features/games/WeeklyGames';
+
+const games: { current: Games } = { current: undefined as unknown as Games };
+vi.mock('../../src/features/games/api', () => ({ useGames: () => ({ data: games.current }) }));
+// The crystal ball and the drawing draw on a canvas, which jsdom does not have.
+vi.mock('../../src/ui/CrystalBall', () => ({ CrystalBall: () => null }));
+vi.mock('../../src/features/games/pixel-mystere/MysteryDrawing', () => ({
+  MysteryDrawing: ({ revealed }: { revealed: string }) => (
+    <span data-testid="drawing" data-revealed={revealed} />
+  ),
+}));
+
+afterEach(cleanup);
+
+// Two pixels of 16 × 16 shown, the rest hidden (255).
+const MASKED = btoa(String.fromCharCode(13, 13, ...Array<number>(254).fill(255)));
+
+function pixel(overrides: Partial<NonNullable<Games['pixel']>>): Games {
+  return {
+    scheduled: ['pixel'],
+    runner: null,
+    pixel: {
+      puzzle_id: '00000000-0000-0000-0000-000000000001',
+      size: 16,
+      revealed: MASKED,
+      revealed_count: 2,
+      letters: 4,
+      guesses_left_today: 0,
+      finds: [],
+      found_by_me: false,
+      mine: false,
+      state: 'active',
+      word: null,
+      ends_at: null,
+      ...overrides,
+    },
+  };
+}
+
+function show(state: Games) {
+  games.current = state;
+  render(
+    <MemoryRouter>
+      <WeeklyGames orgId="org" />
+    </MemoryRouter>,
+  );
+}
+
+describe('WeeklyGames', () => {
+  it('shows a drawing found masked, with its tag and without its word', () => {
+    show(pixel({ found_by_me: true }));
+    expect(screen.getByText('RÉSOLU')).toBeVisible();
+    expect(screen.getByTestId('drawing')).toHaveAttribute('data-revealed', MASKED);
+    expect(screen.getByRole('link', { name: /Pixel mystère/ })).toHaveTextContent(
+      'UN MOT DE 4 LETTRES',
+    );
+    expect(screen.queryByText(/LE MOT/)).toBeNull();
+  });
+
+  it('shows its author the drawing masked, without a tag', () => {
+    show(pixel({ mine: true }));
+    expect(screen.getByTestId('drawing')).toHaveAttribute('data-revealed', MASKED);
+    expect(screen.queryByText('RÉSOLU')).toBeNull();
+  });
+
+  it('has no tag for whoever has not found yet', () => {
+    show(pixel({ guesses_left_today: 3 }));
+    expect(screen.queryByText('RÉSOLU')).toBeNull();
+  });
+});

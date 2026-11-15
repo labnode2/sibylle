@@ -2,12 +2,15 @@
 // is a line to tap, its picture on the left (the season's ball for the race, the drawing as far
 // as it shows for Pixel mystère), my record and attempts left, or the word's length. Only the
 // games the editor kept for the week show (US12), and nothing at all when there are none. The
-// drawing under way says how long it has left.
+// drawing under way says how long it has left. Whoever found it or drew it sees it here as the
+// newsroom does, masked and without its word (the server sends no more); a finder gets a
+// « RÉSOLU » tag.
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import { formatNumber } from '../../i18n';
+import { Chip } from '../../ui/components';
 import { shortTimeLeft, useNow } from '../../ui/Countdown';
 import { CrystalBall } from '../../ui/CrystalBall';
 import { useGames, type Games } from './api';
@@ -17,7 +20,6 @@ import { MysteryDrawing } from './pixel-mystere/MysteryDrawing';
 function pixelLine(t: TFunction<'games'>, pixel: Games['pixel'], now: number): string {
   if (!pixel) return t('box.pixelNone');
   if (pixel.state === 'finished') return t('box.pixelFinished', { word: pixel.word });
-  if (pixel.found_by_me && pixel.word) return t('box.pixelFound', { word: pixel.word });
   const left = pixel.ends_at ? shortTimeLeft(t, pixel.ends_at, now) : '';
   return t('box.pixelLine', { count: pixel.letters, left });
 }
@@ -64,7 +66,14 @@ export function WeeklyGames({ orgId, size = 32 }: { orgId: string; size?: 32 | 4
               <span className={`${styles.gameThumb} ${styles.gameThumbEmpty}`} style={thumb} />
             )}
             <span className={styles.gameText}>
-              <span className={styles.gameTitle}>{t('box.pixel')}</span>
+              <span className={styles.gameTitle}>
+                {t('box.pixel')}
+                {pixel?.found_by_me && (
+                  <span className={styles.gameTag}>
+                    <Chip variant="ink">{t('box.pixelSolved')}</Chip>
+                  </span>
+                )}
+              </span>
               <span className={styles.gameLine}>{pixelLine(t, pixel, now)}</span>
             </span>
           </Link>

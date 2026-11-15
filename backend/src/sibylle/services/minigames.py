@@ -78,12 +78,14 @@ async def _on(
 
 
 async def games(session: AsyncSession, member: Membership) -> dict[str, Any]:
-    """What a member sees of the games: those of the current week, and the state of each."""
+    """What a member sees of the games: those of the current week, and the state of each. As on
+    la une, Pixel mystère shows only what the newsroom sees so far, even to whoever found it or
+    drew it: the whole drawing and its word stay on the game's own page."""
     scheduled = await games_of(session, member.org_id, week_start(clock.now()))
     return {
         "scheduled": scheduled,
         "runner": await runner_status(session, member) if "runner" in scheduled else None,
-        "pixel": await pixel_status(session, member, on="pixel" in scheduled),
+        "pixel": await pixel_status(session, member, on="pixel" in scheduled, home=True),
     }
 
 
@@ -327,11 +329,13 @@ async def _ends_at(session: AsyncSession, puzzle: PixelPuzzle) -> datetime:
 
 
 async def pixel_status(
-    session: AsyncSession, member: Membership, *, on: bool | None = None
+    session: AsyncSession, member: Membership, *, on: bool | None = None, home: bool = False
 ) -> dict[str, Any] | None:
     """What a member sees: the pixels shown so far, or the whole drawing and its word once they
     found it, drew it, or the game ended. In a week without Pixel mystère (`on` false), only the
-    last drawing once finished, so that the word of a drawing stopped by the planning is given."""
+    last drawing once finished, so that the word of a drawing stopped by the planning is given.
+    For la une (`home`), the whole drawing and the word only once the game ended: whoever found
+    or drew it sees it masked like everyone else."""
     if on is None:
         on = await _on(session, member.org_id, "pixel")
     puzzle = await _current(session, member.org_id)
@@ -340,7 +344,7 @@ async def pixel_status(
     finds = await _finds(session, puzzle)
     found = any(m.id == member.id for _, m in finds)
     mine = puzzle.author_membership_id == member.id
-    open_book = found or mine or puzzle.state == "finished"
+    open_book = puzzle.state == "finished" or (not home and (found or mine))
     pixels = decode(puzzle.drawing)
     left = 0
     if puzzle.state == "active" and not found and not mine:

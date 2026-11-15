@@ -18,6 +18,8 @@ export type PixelPuzzleIn = components['schemas']['PixelPuzzleIn'];
 export const GAMES: readonly Game[] = ['runner', 'pixel'];
 
 export const gamesKey = (orgId: string) => ['games', orgId] as const;
+// Under the games' key, so that whatever refreshes the games refreshes it too.
+const pixelKey = (orgId: string) => [...gamesKey(orgId), 'pixel'] as const;
 const queueKey = (orgId: string) => ['pixel-queue', orgId] as const;
 const scheduleKey = (orgId: string) => ['game-schedule', orgId] as const;
 const GAME_EVENTS = new Set([
@@ -44,6 +46,16 @@ export function useGames(orgId: string) {
     queryKey: gamesKey(orgId),
     queryFn: () =>
       unwrap(api.GET('/api/orgs/{org_id}/games', { params: { path: { org_id: orgId } } })),
+  });
+}
+
+/** Pixel mystère as its own page shows it: the whole drawing and the word for whoever found it
+ *  or drew it, which the games of la une leave out. Live with the games. */
+export function usePixel(orgId: string) {
+  return useQuery({
+    queryKey: pixelKey(orgId),
+    queryFn: () =>
+      unwrap(api.GET('/api/orgs/{org_id}/games/pixel', { params: { path: { org_id: orgId } } })),
   });
 }
 

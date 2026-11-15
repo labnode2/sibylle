@@ -131,6 +131,29 @@ async def test_three_guesses_a_day_and_the_first_finders_win(
     assert (third.json()["rank"], third.json()["guesses_left_today"]) == (3, 2)
 
 
+async def test_la_une_never_gives_the_drawing_nor_the_word_before_the_end(
+    make_org: MakeOrg, person: MakePerson
+) -> None:
+    org = await make_org()
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    await person(org, "reader", "Léo")
+    await post(hugo, org.id)
+    assert (await guess(cami, org.id, "café")).json()["correct"] is True
+
+    for who, flag in ((hugo, "mine"), (cami, "found_by_me")):
+        response = await who.client.get(f"/api/orgs/{org.id}/games")
+        home = response.json()["pixel"]
+        assert home[flag] is True and home["state"] == "active"
+        assert home["word"] is None
+        assert "Café" not in response.text
+        assert shown(home) == 37 == home["revealed_count"]
+        assert base64.b64decode(home["revealed"]) != PIXELS
+        # The game's own page still shows them the whole drawing and the word.
+        page = await status(who, org.id)
+        assert page["word"] == "Café" and base64.b64decode(page["revealed"]) == PIXELS
+
+
 async def test_the_game_ends_when_everyone_else_found(
     make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
 ) -> None:
