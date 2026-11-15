@@ -152,6 +152,16 @@ def test_an_open_ended_date_can_be_bet_again_once_its_day_has_passed() -> None:
     assert refusal(**{**open_ended, "answer": Answer(date_value=TODAY)}) == "validation_error"
 
 
+@pytest.mark.parametrize("open_ended", [True, False])
+def test_a_date_bet_must_be_strictly_after_today(open_ended: bool) -> None:
+    base = {"kind": Kind.DATE, "open_ended": open_ended}
+    if open_ended:
+        base["closes_at"] = None
+    for past in (TODAY, TODAY - timedelta(days=3)):
+        assert refusal(**base, answer=Answer(date_value=past)) == "validation_error"
+    bet(**base, answer=Answer(date_value=TODAY + timedelta(days=1)))
+
+
 @pytest.mark.parametrize(
     ("kind", "answer"),
     [

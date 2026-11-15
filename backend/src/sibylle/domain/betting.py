@@ -123,8 +123,8 @@ def _check_answer(kind: Kind, answer: Answer, *, open_ended: bool, today: date) 
             or (isinstance(exponent, int) and exponent < -2)
         ):
             raise BetRefused("validation_error", {"number_value": "invalid"})
-    if answer.date_value is not None and open_ended and answer.date_value <= today:
-        # An open-ended date is a bet on the future: strictly after the day of the bet.
+    if answer.date_value is not None and answer.date_value <= today:
+        # A date bet is on the future: strictly after the day of the bet (Paris).
         raise BetRefused("validation_error", {"date_value": "not_future"})
 
 

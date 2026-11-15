@@ -259,7 +259,9 @@ export function PronoPage() {
   const hideBallot =
     Boolean(prono.special_edition) ||
     (prono.state === 'closed' && me.role !== 'reader' && prono.bet_count > 0);
-  const today = parisDay(new Date());
+  const tomorrowDate = new Date();
+  tomorrowDate.setUTCDate(tomorrowDate.getUTCDate() + 1);
+  const tomorrow = parisDay(tomorrowDate);
 
   const answer = choosing
     ? optionId && { option_id: optionId }
@@ -399,7 +401,7 @@ export function PronoPage() {
               <input
                 className={styles.answerInput}
                 type="date"
-                min={prono.open_ended ? today : undefined}
+                min={tomorrow}
                 value={day}
                 onChange={(event) => setDay(event.target.value)}
               />
