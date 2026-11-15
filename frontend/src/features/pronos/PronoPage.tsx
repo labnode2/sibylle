@@ -32,7 +32,7 @@ import { usePlaceBet, useProno, type Bet, type PronoDetail } from './api';
 import { Discussion } from './Discussion';
 import { ProposalDecision } from './ProposalsPanel';
 import { ReactionBar } from './ReactionBar';
-import { WhoVoted } from './WhoVoted';
+import { Voters, votersFor } from './WhoVoted';
 import styles from './pronos.module.css';
 
 const STAKE_STEP = 10;
@@ -134,17 +134,20 @@ function Ballot({
   );
 }
 
-function Distribution({ prono }: { prono: PronoDetail }) {
+function Distribution({ orgId, prono }: { orgId: string; prono: PronoDetail }) {
   const { t } = useTranslation('pronos');
   if (!prono.distribution.length) return null;
   return (
     <section className={styles.page} aria-label={t('detail.distribution')}>
       <span className={styles.label}>{t('detail.distribution')}</span>
       <div className={styles.ballot}>
-        {prono.distribution.map((bucket) => (
+        {prono.distribution.map((bucket, index) => (
           <div key={bucket.label}>
             <div className={styles.choice}>
               <span className={styles.choiceLabel}>{bucket.label}</span>
+              {prono.state !== 'proposed' && prono.state !== 'rejected' && (
+                <Voters orgId={orgId} bets={votersFor(prono, index)} />
+              )}
               <span className={styles.pct}>{t('detail.share', { pct: bucket.share_pct })}</span>
             </div>
             <div className={styles.gauge} aria-hidden="true">
@@ -381,10 +384,7 @@ export function PronoPage() {
               />
             </section>
           )}
-          {!choosing && <Distribution prono={prono} />}
-          {prono.state !== 'proposed' && prono.state !== 'rejected' && (
-            <WhoVoted orgId={orgId} prono={prono} />
-          )}
+          {!choosing && <Distribution orgId={orgId} prono={prono} />}
 
           {canBet && prono.kind === 'number' && (
             <label className={styles.fieldset}>
