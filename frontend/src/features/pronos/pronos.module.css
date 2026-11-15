@@ -880,11 +880,18 @@
   font: 700 13px/1.2 var(--font-mono);
 }
 
-.voter {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  min-height: 40px;
+.voterList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 8px 0 0;
+  padding: 8px 0 0;
+  list-style: none;
   border-top: 1px solid var(--rule);
+}
+
+.voter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }

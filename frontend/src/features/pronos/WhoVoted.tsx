@@ -1,10 +1,9 @@
 // « Qui a voté quoi »: for each option (or each number or date), the members who chose it, with
-// their avatar, their pseudo and their stake. Only the bets in force; the whole newsroom sees it,
+// their avatar and their pseudo side by side. Only the bets in force; the whole newsroom sees it,
 // the ballot open or closed.
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
-import { formatNumber } from '../../i18n';
 import { PixelImage } from '../../ui/PixelImage';
 import type { Bet, PronoDetail } from './api';
 import styles from './pronos.module.css';
@@ -44,18 +43,13 @@ export function WhoVoted({ orgId, prono }: { orgId: string; prono: PronoDetail }
             <span>{group.label}</span>
             <span className={styles.meta}>{group.bets.length}</span>
           </p>
-          <ul className={styles.peopleList}>
+          <ul className={styles.voterList}>
             {group.bets.map((bet) => (
               <li key={bet.id} className={styles.voter}>
                 <PixelImage image={bet.member.avatar} size={24} />
                 <Link to={`/o/${orgId}/membres/${bet.member.id}`} className={styles.personName}>
                   {bet.member.pseudo}
                 </Link>
-                <span className={styles.personStake}>
-                  {bet.stake > 0
-                    ? t('detail.submitStake', { stake: formatNumber(bet.stake) })
-                    : t('detail.submitFree')}
-                </span>
               </li>
             ))}
           </ul>

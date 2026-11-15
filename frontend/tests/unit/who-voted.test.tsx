@@ -1,5 +1,5 @@
 // « Qui a voté quoi » on a prono's page: the members under the option (or number) they chose, with
-// their stake; a bet replaced by a later one is not listed.
+// their avatar; a bet replaced by a later one is not listed.
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -43,7 +43,7 @@ function show(prono: Record<string, unknown>) {
 }
 
 describe('WhoVoted', () => {
-  it('lists the members under the option they chose, with their stake', () => {
+  it('lists the members under the option they chose', () => {
     show({
       kind: 'choice',
       options: [
@@ -59,7 +59,8 @@ describe('WhoVoted', () => {
     });
     const nice = screen.getByRole('group', { name: 'Nice' });
     expect(within(nice).getByText('Cami')).toBeVisible();
-    expect(within(nice).getByText(/20/)).toBeVisible();
+    // The stake is not shown.
+    expect(within(nice).queryByText(/20/)).toBeNull();
     expect(within(nice).queryByText('Leo')).toBeNull();
     expect(within(screen.getByRole('group', { name: 'Monaco' })).getByText('Hugo')).toBeVisible();
     // An option nobody chose is not listed.
