@@ -66,6 +66,7 @@
     "missing": "Champ obligatoire.",
     "out_of_range": "Valeur hors limites.",
     "unknown": "Valeur inconnue.",
+    "unknown_word": "Ce mot n'est pas dans le dictionnaire.",
     "empty": "Écris quelque chose d'abord.",
     "too_long": "Trop long.",
     "past": "Cette date est déjà passée.",

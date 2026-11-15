@@ -1,7 +1,8 @@
 // « Les jeux de la semaine » on la une (canvas B-Accueil, B-Web-Accueil): each game of the week
 // is a line to tap, its picture on the left (the season's ball for the race, the drawing as far
 // as it shows for Pixel mystère), my record and attempts left, or the word's length. Only the
-// games the editor kept for the week show (US12), and nothing at all when there are none. The
+// games the editor kept for the week show (US12); Wordle, one word a day, is always there and
+// says whether the member played today. The
 // drawing under way says how long it has left. Whoever found it or drew it sees it here as the
 // newsroom does, masked and without its word (the server sends no more); a finder gets a
 // « RÉSOLU » tag.
@@ -31,8 +32,8 @@ export function WeeklyGames({ orgId, size = 32 }: { orgId: string; size?: 32 | 4
   const { t } = useTranslation('games');
   const games = useGames(orgId);
   const now = useNow(60_000);
-  if (!games.data || games.data.scheduled.length === 0) return null;
-  const { runner, pixel, scheduled } = games.data;
+  if (!games.data) return null;
+  const { runner, pixel, scheduled, wordle } = games.data;
   const thumb = { width: size, height: size };
 
   return (
@@ -82,6 +83,17 @@ export function WeeklyGames({ orgId, size = 32 }: { orgId: string; size?: 32 | 4
           </Link>
         </li>
       )}
+      <li>
+        <Link to={`/o/${orgId}/jeux/wordle`} className={styles.gameLink}>
+          <span className={`${styles.gameThumb} ${styles.wordleThumb}`} style={thumb} aria-hidden>
+            W
+          </span>
+          <span className={styles.gameText}>
+            <span className={styles.gameTitle}>{t('box.wordle')}</span>
+            <span className={styles.gameLine}>{t(`box.wordleLine_${wordle.state}`)}</span>
+          </span>
+        </Link>
+      </li>
     </ul>
   );
 }

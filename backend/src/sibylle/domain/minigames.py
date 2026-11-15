@@ -1,14 +1,18 @@
 """Rules of the mini-games: the ball's race (research.md J3 and R19) and Pixel mystère (J4)."""
 
+import hashlib
 import random
 import re
 import unicodedata
 import uuid
+from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from typing import Literal
 
 from sibylle.domain.seasons import PARIS, week_bounds, week_start
+from sibylle.domain.wordle_words import ACCEPTED, ANSWERS
 
 RUNNER_ATTEMPTS = 5
 # A run open longer than this can no longer be finished.
@@ -155,3 +159,43 @@ def _morning(day: date) -> datetime:
 def next_start(finished_at: datetime) -> datetime:
     """The next drawing starts the day after the last one ended, at 08:00."""
     return _morning(finished_at.astimezone(PARIS).date() + timedelta(days=1))
+
+
+# Wordle
+
+WORDLE_LETTERS = 5
+WORDLE_TRIES = 6
+Mark = Literal["correct", "present", "absent"]
+
+
+def wordle_answer(day: date) -> str:
+    """The word of a day (Paris): the same for all, picked from the answers by a hash of the date,
+    so that nothing about tomorrow's word shows in today's."""
+    digest = hashlib.sha256(f"sibylle-wordle:{day.isoformat()}".encode()).digest()
+    return ANSWERS[int.from_bytes(digest[:8], "big") % len(ANSWERS)]
+
+
+def wordle_word(text: str) -> str | None:
+    """The word tried, normalized, if it is one that is accepted; else None."""
+    word = normalize_word(text)
+    return word if len(word) == WORDLE_LETTERS and word in ACCEPTED else None
+
+
+def wordle_marks(guess: str, answer: str) -> list[Mark]:
+    """Each letter of `guess`: `correct` in its place, `present` elsewhere in the answer, else
+    `absent`. A letter is marked as many times as the answer has it: the greens first, then the
+    yellows from the left, so a double letter tried once in the answer shows one yellow only."""
+    marks: list[Mark] = ["absent"] * len(guess)
+    left = Counter(a for g, a in zip(guess, answer, strict=True) if g != a)
+    for i, (g, a) in enumerate(zip(guess, answer, strict=True)):
+        if g == a:
+            marks[i] = "correct"
+        elif left[g] > 0:
+            marks[i] = "present"
+            left[g] -= 1
+    return marks
+
+
+def wordle_gain(tries: int) -> int:
+    """6 laurels for a word found at the first try, then 5, 4, 3, 2 and 1 for the sixth."""
+    return WORDLE_TRIES + 1 - tries

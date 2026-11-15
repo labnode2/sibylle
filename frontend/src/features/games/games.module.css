@@ -313,3 +313,12 @@
 .gameListLarge .gameLine {
   font-size: 12px;
 }
+
+.wordleThumb {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--surface);
+  font: 800 18px/1 var(--font-text);
+}

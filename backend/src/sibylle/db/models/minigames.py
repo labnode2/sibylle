@@ -141,3 +141,24 @@ class PixelFind(Base):
     rank: Mapped[int]
     laurels: Mapped[int]
     found_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
+
+
+class WordleGame(Base):
+    """A member's Wordle of a day (Paris): the words tried so far, and how it ended. The word of
+    the day is not stored; it comes from the date."""
+
+    __tablename__ = "wordle_games"
+    __table_args__ = (
+        UniqueConstraint("membership_id", "day"),
+        CheckConstraint("state IN ('playing', 'won', 'lost')", name="state"),
+        Index("ix_wordle_games_org_id_day", "org_id", "day"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    org_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organisations.id"))
+    membership_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("memberships.id"))
+    day: Mapped[date]
+    guesses: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
+    state: Mapped[str] = mapped_column(Text, default="playing", server_default="playing")
+    laurels: Mapped[int | None]
+    created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())

@@ -18,6 +18,7 @@ from sibylle.db.models.minigames import (
     PixelGuess,
     PixelPuzzle,
     RunnerRun,
+    WordleGame,
 )
 from sibylle.db.models.notifications import Notification, NotificationPref, PushSubscription
 from sibylle.db.models.orgs import Invitation, Membership, Organisation
@@ -60,6 +61,7 @@ __all__ = [
     "PixelFind",
     "PixelGuess",
     "PixelPuzzle",
+    "WordleGame",
     "Prono",
     "PronoEvent",
     "PronoOption",

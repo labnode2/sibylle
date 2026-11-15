@@ -27,6 +27,14 @@ function pixel(overrides: Partial<NonNullable<Games['pixel']>>): Games {
   return {
     scheduled: ['pixel'],
     runner: null,
+    wordle: {
+      day: '2026-11-16',
+      state: 'playing',
+      tries: [],
+      tries_left: 6,
+      laurels: null,
+      solution: null,
+    },
     pixel: {
       puzzle_id: '00000000-0000-0000-0000-000000000001',
       size: 16,
@@ -109,5 +117,14 @@ describe('WeeklyGames', () => {
   it('shows no gain to whoever cannot play', () => {
     show(pixel({ mine: true, gain_now: null }));
     expect(screen.queryByText(/TROUVE MAINTENANT/)).toBeNull();
+  });
+
+  it('always shows Wordle, even in a week without games, and says if it was played', () => {
+    const base = pixel({});
+    show({ ...base, scheduled: [], pixel: null });
+    expect(screen.getByRole('link', { name: /Wordle/ })).toHaveTextContent('UN MOT PAR JOUR');
+    cleanup();
+    show({ ...base, wordle: { ...base.wordle, state: 'won', laurels: 4 } });
+    expect(screen.getByRole('link', { name: /Wordle/ })).toHaveTextContent('TROUVÉ AUJOURD');
   });
 });

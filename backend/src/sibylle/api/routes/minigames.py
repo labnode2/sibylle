@@ -21,6 +21,8 @@ from sibylle.api.schemas import (
     RunFinished,
     RunFinishIn,
     RunStarted,
+    WordleGuessIn,
+    WordleStatus,
 )
 from sibylle.db.models import Membership
 from sibylle.domain.permissions import Action
@@ -48,6 +50,18 @@ async def finish_run(
 ) -> RunFinished:
     result = await minigames.finish_run(session, member, run_id, body.score, body.duration_ms)
     return RunFinished.model_validate(result)
+
+
+@router.get("/wordle")
+async def get_wordle(org_id: uuid.UUID, member: CurrentMember, session: Db) -> WordleStatus:
+    return WordleStatus.model_validate(await minigames.wordle_status(session, member))
+
+
+@router.post("/wordle/guesses")
+async def wordle_guess(
+    org_id: uuid.UUID, body: WordleGuessIn, member: CurrentMember, session: Db
+) -> WordleStatus:
+    return WordleStatus.model_validate(await minigames.wordle_guess(session, member, body.word))
 
 
 @router.get("/pixel")

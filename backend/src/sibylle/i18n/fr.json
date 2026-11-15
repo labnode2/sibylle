@@ -19,6 +19,7 @@
     "rate_limited": "Trop d'essais. Réessaie dans quelques minutes.",
     "error": "Une erreur est survenue.",
     "run_finished": "Cette partie est déjà terminée.",
+    "wordle_over": "Le Wordle du jour est déjà terminé.",
     "game_not_scheduled": "Ce jeu n'est pas au programme cette semaine.",
     "identity_unavailable": "Le service de connexion ne répond pas pour le moment. Réessaie dans quelques minutes."
   },

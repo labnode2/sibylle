@@ -992,6 +992,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/orgs/{org_id}/games/wordle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Wordle */
+        get: operations["get_wordle_api_orgs__org_id__games_wordle_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orgs/{org_id}/games/wordle/guesses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Wordle Guess */
+        post: operations["wordle_guess_api_orgs__org_id__games_wordle_guesses_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/orgs/{org_id}/games/pixel": {
         parameters: {
             query?: never;
@@ -1472,6 +1506,7 @@ export interface components {
             scheduled: ("runner" | "pixel")[];
             runner: components["schemas"]["RunnerStatus"] | null;
             pixel: components["schemas"]["PixelStatus"] | null;
+            wordle: components["schemas"]["WordleStatus"];
         };
         /**
          * GamesIn
@@ -2931,6 +2966,42 @@ export interface components {
             early_bird: number;
             /** Pot Share */
             pot_share: number;
+        };
+        /** WordleGuessIn */
+        WordleGuessIn: {
+            /** Word */
+            word: string;
+        };
+        /**
+         * WordleStatus
+         * @description The member's Wordle of the day (Paris). `solution` and `laurels` only once it is over.
+         */
+        WordleStatus: {
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "playing" | "won" | "lost";
+            /** Tries */
+            tries: components["schemas"]["WordleTry"][];
+            /** Tries Left */
+            tries_left: number;
+            /** Laurels */
+            laurels: number | null;
+            /** Solution */
+            solution: string | null;
+        };
+        /** WordleTry */
+        WordleTry: {
+            /** Word */
+            word: string;
+            /** Marks */
+            marks: ("correct" | "present" | "absent")[];
         };
     };
     responses: never;
@@ -5171,6 +5242,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RunFinished"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_wordle_api_orgs__org_id__games_wordle_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WordleStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    wordle_guess_api_orgs__org_id__games_wordle_guesses_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WordleGuessIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WordleStatus"];
                 };
             };
             /** @description Validation Error */

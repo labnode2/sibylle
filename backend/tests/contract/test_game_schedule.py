@@ -210,7 +210,10 @@ async def test_the_editor_plans_each_of_the_four_weeks(
 
     # A week without a game: nothing to show, nothing to play.
     assert (await plan(ines, org.id, THIS_WEEK, [])).status_code == 200
-    assert await games(cami, org.id) == {"scheduled": [], "runner": None, "pixel": None}
+    # (Wordle is always on, whatever the planning.)
+    week_games = await games(cami, org.id)
+    assert (week_games["scheduled"], week_games["runner"], week_games["pixel"]) == ([], None, None)
+    assert week_games["wordle"]["state"] == "playing"
     refused(await start(cami, org.id), 409, "game_not_scheduled")
     refused(await guess(cami, org.id, "café"), 409, "game_not_scheduled")
 

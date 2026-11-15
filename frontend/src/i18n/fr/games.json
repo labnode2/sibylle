@@ -11,7 +11,11 @@
     "pixelSolved": "RÉSOLU",
     "pixelFinished": "LE MOT ÉTAIT « {{word}} »",
     "pixelNone": "PAS DE DESSIN EN COURS",
-    "see": "Voir"
+    "see": "Voir",
+    "wordle": "Wordle",
+    "wordleLine_playing": "UN MOT PAR JOUR · 6 ESSAIS",
+    "wordleLine_won": "TROUVÉ AUJOURD'HUI · REVIENS DEMAIN",
+    "wordleLine_lost": "PERDU AUJOURD'HUI · REVIENS DEMAIN"
   },
   "runner": {
     "back": "Retour à la une",
@@ -81,5 +85,24 @@
       "mine": "« {{word}} », par toi",
       "other": "Par un·e autre journaliste"
     }
+  },
+  "wordle": {
+    "back": "Retour à la une",
+    "title": "Wordle",
+    "intro": "Trouve le mot de 5 lettres du jour en 6 essais, le même pour toute la rédaction. Vert : bien placée. Jaune : présente ailleurs. Gris : absente. Trouvé du premier coup, il rapporte 6 lauriers, puis 5, 4, 3, 2 et 1.",
+    "grid": "Grille du Wordle",
+    "mark": {
+      "correct": "bien placée",
+      "present": "mal placée",
+      "absent": "absente"
+    },
+    "left_one": "Dernier essai.",
+    "left_other": "{{count}} essais restants.",
+    "enter": "Entrée",
+    "erase": "Effacer",
+    "won_one": "Trouvé en {{count}} essai : +{{laurels}} lauriers.",
+    "won_other": "Trouvé en {{count}} essais : +{{laurels}} lauriers.",
+    "lost": "Perdu. Le mot était « {{word}} ».",
+    "tomorrow": "Un nouveau mot demain."
   }
 }

@@ -36,6 +36,7 @@ import { PronoListPage } from '../features/pronos/PronoListPage';
 import { PronoPage } from '../features/pronos/PronoPage';
 import { NotificationsPage } from '../features/notifications/NotificationsPage';
 import { PixelMysterePage } from '../features/games/pixel-mystere/PixelMysterePage';
+import { WordlePage } from '../features/games/wordle/WordlePage';
 import { RunnerPage } from '../features/games/runner/RunnerPage';
 import { CardEditorPage } from '../features/profile/CardEditorPage';
 import { PressCardPage } from '../features/profile/PressCardPage';
@@ -159,6 +160,7 @@ export const router = createBrowserRouter([
           { path: 'collection', element: <CollectionPage /> },
           { path: 'jeux/course', element: <RunnerPage /> },
           { path: 'jeux/pixel', element: <PixelMysterePage /> },
+          { path: 'jeux/wordle', element: <WordlePage /> },
           {
             path: 'reglages',
             element: <AdminLayout />,

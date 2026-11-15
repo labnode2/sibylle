@@ -12,6 +12,7 @@ export type Game = Games['scheduled'][number];
 export type GameSchedule = components['schemas']['GameSchedule'];
 export type RunnerStatus = components['schemas']['RunnerStatus'];
 export type PixelStatus = components['schemas']['PixelStatus'];
+export type WordleStatus = components['schemas']['WordleStatus'];
 export type PixelPuzzleIn = components['schemas']['PixelPuzzleIn'];
 
 /** Every game, in the order the server lists them. */
@@ -19,6 +20,8 @@ export const GAMES: readonly Game[] = ['runner', 'pixel'];
 
 export const gamesKey = (orgId: string) => ['games', orgId] as const;
 // Under the games' key, so that whatever refreshes the games refreshes it too.
+// Under the games' key too: playing a try refreshes the card of la une.
+const wordleKey = (orgId: string) => [...gamesKey(orgId), 'wordle'] as const;
 const pixelKey = (orgId: string) => [...gamesKey(orgId), 'pixel'] as const;
 const queueKey = (orgId: string) => ['pixel-queue', orgId] as const;
 const scheduleKey = (orgId: string) => ['game-schedule', orgId] as const;
@@ -199,4 +202,33 @@ export function useUnplanWeek(orgId: string) {
       }),
     ),
   );
+}
+
+/** The member's Wordle of the day, kept by the server. */
+export function useWordle(orgId: string) {
+  return useQuery({
+    queryKey: wordleKey(orgId),
+    queryFn: () =>
+      unwrap(api.GET('/api/orgs/{org_id}/games/wordle', { params: { path: { org_id: orgId } } })),
+  });
+}
+
+/** One try: the answer is the whole game of the day, with the colours of every try. */
+export function useWordleGuess(orgId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (word: string) =>
+      unwrap(
+        api.POST('/api/orgs/{org_id}/games/wordle/guesses', {
+          params: { path: { org_id: orgId } },
+          body: { word },
+        }),
+      ),
+    meta: { quiet: true },
+    onSuccess: (game) => {
+      client.setQueryData(wordleKey(orgId), game);
+      void client.invalidateQueries({ queryKey: gamesKey(orgId) });
+      if (game.state === 'won') void client.invalidateQueries({ queryKey: orgKey(orgId) });
+    },
+  });
 }

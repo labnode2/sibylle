@@ -974,6 +974,27 @@ class PixelStatus(BaseModel):
     gain_now: int | None
 
 
+class WordleTry(BaseModel):
+    word: str
+    # One per letter: in its place, elsewhere in the word, or not in it.
+    marks: list[Literal["correct", "present", "absent"]]
+
+
+class WordleStatus(BaseModel):
+    """The member's Wordle of the day (Paris). `solution` and `laurels` only once it is over."""
+
+    day: date
+    state: Literal["playing", "won", "lost"]
+    tries: list[WordleTry]
+    tries_left: int
+    laurels: int | None
+    solution: str | None
+
+
+class WordleGuessIn(BaseModel):
+    word: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
+
+
 class Games(BaseModel):
     """The current week's games (`scheduled`), and each one's state: `runner` is null when the
     race is not on; out of the week's games, `pixel` is only the last drawing once finished."""
@@ -981,6 +1002,7 @@ class Games(BaseModel):
     scheduled: list[Game]
     runner: RunnerStatus | None
     pixel: PixelStatus | None
+    wordle: WordleStatus
 
 
 class GamesIn(BaseModel):

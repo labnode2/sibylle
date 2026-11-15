@@ -36,6 +36,7 @@ from sibylle.db.models import (
     PixelGuess,
     PixelPuzzle,
     RunnerRun,
+    WordleGame,
 )
 from sibylle.domain.game_schedule import Game
 from sibylle.domain.ledger import minigame
@@ -43,6 +44,7 @@ from sibylle.domain.minigames import (
     PIXEL_GUESSES_PER_DAY,
     RUN_MAX,
     RUNNER_ATTEMPTS,
+    WORDLE_TRIES,
     RunResult,
     letter_count,
     masked,
@@ -57,6 +59,10 @@ from sibylle.domain.minigames import (
     runner_gains,
     valid_word,
     week_to_pay,
+    wordle_answer,
+    wordle_gain,
+    wordle_marks,
+    wordle_word,
 )
 from sibylle.domain.permissions import Action, can
 from sibylle.domain.pixels import decode
@@ -87,6 +93,7 @@ async def games(session: AsyncSession, member: Membership) -> dict[str, Any]:
         "scheduled": scheduled,
         "runner": await runner_status(session, member) if "runner" in scheduled else None,
         "pixel": await pixel_status(session, member, on="pixel" in scheduled, home=True),
+        "wordle": await wordle_status(session, member),
     }
 
 
@@ -621,3 +628,65 @@ async def follow_schedule(session: AsyncSession, org_id: uuid.UUID) -> None:
     )
     if playing is not None:
         await _finish(session, playing)
+
+
+# Wordle: a word a day, the same for the whole newsroom, six tries; always on, whatever the week's
+# games. The word stays on the server until the member's game is over.
+
+
+async def _wordle_game(session: AsyncSession, member: Membership, *, lock: bool = False) -> Any:
+    query = select(WordleGame).where(
+        WordleGame.membership_id == member.id, WordleGame.day == _today()
+    )
+    if lock:
+        query = query.with_for_update()
+    return await session.scalar(query)
+
+
+def _wordle_view(game: WordleGame | None, day: date) -> dict[str, Any]:
+    answer = wordle_answer(day)
+    guesses = list(game.guesses) if game else []
+    state = game.state if game else "playing"
+    return {
+        "day": day,
+        "state": state,
+        "tries": [{"word": word, "marks": wordle_marks(word, answer)} for word in guesses],
+        "tries_left": WORDLE_TRIES - len(guesses),
+        "laurels": game.laurels if game else None,
+        "solution": answer if state != "playing" else None,
+    }
+
+
+async def wordle_status(session: AsyncSession, member: Membership) -> dict[str, Any]:
+    return _wordle_view(await _wordle_game(session, member), _today())
+
+
+async def wordle_guess(session: AsyncSession, member: Membership, text: str) -> dict[str, Any]:
+    """One try at the word of the day: validated, marked, kept. The game of the day is created
+    by the first try; the win is paid at once, once, as no try is taken after the game is over."""
+    # One try at a time per member, so two taps cannot take a seventh try or pay twice.
+    await session.execute(select(Membership.id).where(Membership.id == member.id).with_for_update())
+    day = _today()
+    word = wordle_word(text)
+    if word is None:
+        raise AppError("validation_error", {"word": "unknown_word"})
+    game = await _wordle_game(session, member, lock=True)
+    if game is None:
+        game = WordleGame(
+            org_id=member.org_id, membership_id=member.id, day=day, guesses=[], state="playing"
+        )
+        session.add(game)
+    if game.state != "playing":
+        raise AppError("wordle_over")
+    answer = wordle_answer(day)
+    game.guesses = [*game.guesses, word]
+    if word == answer:
+        game.state = "won"
+        game.laurels = wordle_gain(len(game.guesses))
+        await ledger.append(
+            session, member.id, minigame(game.laurels), reason=f"wordle:{day.isoformat()}"
+        )
+    elif len(game.guesses) >= WORDLE_TRIES:
+        game.state = "lost"
+    await session.flush()
+    return _wordle_view(game, day)
