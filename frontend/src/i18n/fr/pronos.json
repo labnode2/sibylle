@@ -38,6 +38,7 @@
   "detail": {
     "back": "LA UNE",
     "backList": "PRONOS",
+    "backPrevious": "RETOUR",
     "kicker": "{{section}} · {{org}} · PAR {{creator}}",
     "countdown": "Temps restant avant la clôture",
     "openEnded": "SANS DATE DE CLÔTURE : ON JOUE UNE DATE, ON PEUT REJOUER SI ELLE PASSE",

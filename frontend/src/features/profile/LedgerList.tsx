@@ -1,6 +1,6 @@
 // The member's statement: every movement of their laurels, newest first, with its reason.
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 
 import { formatDate, formatNumber } from '../../i18n';
 import { Button } from '../../ui/components';
@@ -11,9 +11,14 @@ const signed = (value: number) => (value > 0 ? `+${formatNumber(value)}` : forma
 
 function Detail({ orgId, entry }: { orgId: string; entry: LedgerEntry }) {
   const { t } = useTranslation('profile');
+  const { pathname } = useLocation();
   if (entry.prono) {
     return (
-      <Link to={`/o/${orgId}/pronos/${entry.prono.id}`} className={styles.ledgerDetail}>
+      <Link
+        to={`/o/${orgId}/pronos/${entry.prono.id}`}
+        state={{ from: pathname }}
+        className={styles.ledgerDetail}
+      >
         {entry.prono.question}
       </Link>
     );

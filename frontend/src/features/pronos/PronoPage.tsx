@@ -296,16 +296,21 @@ export function PronoPage() {
     errors.field('number_value') ??
     errors.field('date_value') ??
     errors.field('stake');
-  // From la une, the way back leads there; otherwise to the list of pronos.
-  const fromUne = (location.state as { from?: string } | null)?.from === 'une';
+  // The way back leads to the page that opened the prono (la une, or a path in `state.from`,
+  // e.g. the profile's ledger); otherwise to the list of pronos.
+  const from = (location.state as { from?: unknown } | null)?.from;
+  const fromUne = from === 'une';
+  const fromPath = typeof from === 'string' && from.startsWith('/') && !from.startsWith('//');
   const numbered = t('detail.number', { number: prono.number });
   const settled = Boolean(prono.special_edition);
 
   return (
     <article className={styles.page}>
       <TopBar
-        back={fromUne ? `/o/${orgId}` : `/o/${orgId}/pronos`}
-        backLabel={fromUne ? t('detail.back') : t('detail.backList')}
+        back={fromPath ? from : fromUne ? `/o/${orgId}` : `/o/${orgId}/pronos`}
+        backLabel={
+          fromPath ? t('detail.backPrevious') : fromUne ? t('detail.back') : t('detail.backList')
+        }
         aside={settled ? t('detail.resultNumber', { number: prono.number }) : numbered}
         asideOnPhoneOnly
       />
