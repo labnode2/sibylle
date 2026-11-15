@@ -10,8 +10,10 @@ from sqlalchemy import (
     Numeric,
     Text,
     UniqueConstraint,
+    Uuid,
     text,
 )
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from sibylle import clock
@@ -234,6 +236,10 @@ class Message(Base):
     prono_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("pronos.id"))
     membership_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("memberships.id"), index=True)
     body: Mapped[str] = mapped_column(Text)
+    # The members tagged with « @pseudo » in the body (their memberships' ids).
+    mentions: Mapped[list[uuid.UUID]] = mapped_column(
+        ARRAY(Uuid), default=list, server_default=text("'{}'")
+    )
     created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
 
 

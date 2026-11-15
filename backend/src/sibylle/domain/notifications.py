@@ -14,6 +14,10 @@ class NotificationType(StrEnum):
     DESIGNATION_REMINDER = "designation_reminder"
     # For whoever handles the reports (Action.HANDLE_REPORTS): a member just flagged a prono.
     REPORT = "report"
+    # In a prono's discussion: a message tags the member, or comes after the ones they wrote or
+    # were tagged in.
+    MENTION = "mention"
+    DISCUSSION = "discussion"
 
 
 class Channel(StrEnum):

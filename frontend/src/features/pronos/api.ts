@@ -211,11 +211,11 @@ export function useDiscussion(orgId: string, pronoId: string) {
   const path = { org_id: orgId, prono_id: pronoId };
   return {
     write: useMutation({
-      mutationFn: (body: string) =>
+      mutationFn: ({ body, mentions }: { body: string; mentions: string[] }) =>
         unwrap(
           api.POST('/api/orgs/{org_id}/pronos/{prono_id}/messages', {
             params: { path },
-            body: { body },
+            body: { body, mentions },
           }),
         ),
       onSuccess: refresh,

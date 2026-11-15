@@ -9,7 +9,15 @@ from sibylle.db.session import transaction
 
 pytestmark = pytest.mark.contract
 
-TYPES = ["new_prono", "closing_soon", "result", "designation_reminder", "report"]
+TYPES = [
+    "new_prono",
+    "closing_soon",
+    "result",
+    "designation_reminder",
+    "report",
+    "mention",
+    "discussion",
+]
 DEVICE = {
     "endpoint": "https://fcm.googleapis.com/fcm/send/telephone-de-cami",
     "keys": {"p256dh": "cle-publique", "auth": "secret"},

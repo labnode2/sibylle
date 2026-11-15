@@ -1,8 +1,9 @@
 // « La discussion » under a prono (US14): the messages, oldest first, with the author's avatar,
 // pseudo and time; « Messages précédents » for older ones; « J'aime » with who liked; the author
 // deletes their own message, the editor removes anyone's, once confirmed. Messages and likes of
-// the others arrive live through `prono:<id>`.
-import { useState, type FormEvent, type KeyboardEvent } from 'react';
+// the others arrive live through `prono:<id>`. Typing « @ » in the composer proposes the active
+// members to tag; the tagged names are highlighted in the messages.
+import { Fragment, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
@@ -10,6 +11,7 @@ import { formatDate, parisDay } from '../../i18n';
 import { Button, SectionHead } from '../../ui/components';
 import { PixelImage } from '../../ui/PixelImage';
 import { toast } from '../../ui/Toaster';
+import { useMembers } from '../admin/api';
 import { useFormErrors } from '../forms';
 import { useDiscussion, useMessages, type Message } from './api';
 import styles from './pronos.module.css';
@@ -58,6 +60,34 @@ function useLikedBy() {
   };
 }
 
+type Mentioned = { id: string; pseudo: string };
+
+const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** The text of a message, with each « @pseudo » of a tagged member highlighted. */
+export function MessageBody({ body, mentions }: { body: string; mentions: Mentioned[] }) {
+  if (mentions.length === 0) return <>{body}</>;
+  const pseudos = mentions.map((m) => m.pseudo).sort((a, b) => b.length - a.length);
+  const parts = body.split(new RegExp(`(@(?:${pseudos.map(escape).join('|')}))`, 'u'));
+  return (
+    <>
+      {parts.map((part, index) => (
+        <Fragment key={index}>
+          {index % 2 === 1 ? <strong className={styles.mention}>{part}</strong> : part}
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+/** The word being typed after an « @ » just before the caret, if any. */
+function typedMention(text: string, caret: number): { start: number; query: string } | null {
+  const found = /(?:^|\s)@([^@\n]{0,30})$/u.exec(text.slice(0, caret));
+  if (!found) return null;
+  const query = found[1] ?? '';
+  return { start: caret - query.length - 1, query };
+}
+
 function MessageItem({
   orgId,
   pronoId,
@@ -87,7 +117,9 @@ function MessageItem({
             {when(message.created_at)}
           </time>
         </p>
-        <p className={styles.messageText}>{message.body}</p>
+        <p className={styles.messageText}>
+          <MessageBody body={message.body} mentions={message.mentions} />
+        </p>
         <div className={styles.messageActions}>
           <button
             type="button"
@@ -147,25 +179,82 @@ function MessageItem({
   );
 }
 
-function Composer({ orgId, pronoId }: { orgId: string; pronoId: string }) {
+export function Composer({ orgId, pronoId, me }: { orgId: string; pronoId: string; me: string }) {
   const { t } = useTranslation('pronos');
   const { write } = useDiscussion(orgId, pronoId);
+  const members = useMembers(orgId);
   const errors = useFormErrors(write.error);
+  const input = useRef<HTMLTextAreaElement>(null);
   const [body, setBody] = useState('');
+  const [caret, setCaret] = useState(0);
+  const [picked, setPicked] = useState<Mentioned[]>([]);
+  const [active, setActive] = useState(0);
+  const [dismissed, setDismissed] = useState(false);
   const empty = body.trim().length === 0;
+  const listId = `mentions-${pronoId}`;
+
+  const typed = typedMention(body, caret);
+  const query = typed?.query.toLowerCase() ?? '';
+  const choices =
+    typed && !dismissed
+      ? (members.data ?? [])
+          .filter((m) => m.id !== me && m.pseudo.toLowerCase().startsWith(query))
+          .slice(0, 6)
+      : [];
+  const open = choices.length > 0;
+
+  const choose = (member: Mentioned) => {
+    if (!typed) return;
+    const inserted = `@${member.pseudo} `;
+    const next = body.slice(0, typed.start) + inserted + body.slice(caret);
+    const position = typed.start + inserted.length;
+    setBody(next.slice(0, BODY_MAX));
+    setPicked((list) => (list.some((m) => m.id === member.id) ? list : [...list, member]));
+    setCaret(position);
+    setActive(0);
+    requestAnimationFrame(() => {
+      input.current?.focus();
+      input.current?.setSelectionRange(position, position);
+    });
+  };
 
   const submit = (event?: FormEvent) => {
     event?.preventDefault();
     if (empty || write.isPending) return;
-    write.mutate(body, {
-      onSuccess: () => {
-        setBody('');
-        toast.success(t('toast.messagePosted'));
+    // Only the names still written in the message stay tagged.
+    const mentions = picked.filter((m) => body.includes(`@${m.pseudo}`)).map((m) => m.id);
+    write.mutate(
+      { body, mentions },
+      {
+        onSuccess: () => {
+          setBody('');
+          setPicked([]);
+          toast.success(t('toast.messagePosted'));
+        },
       },
-    });
+    );
   };
-  // Ctrl or ⌘ + Entrée sends; Entrée alone goes to the line.
+  // Ctrl or ⌘ + Entrée sends; Entrée alone goes to the line, or picks the member proposed.
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (open) {
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        const step = event.key === 'ArrowDown' ? 1 : choices.length - 1;
+        setActive((active + step) % choices.length);
+        return;
+      }
+      if ((event.key === 'Enter' && !event.ctrlKey && !event.metaKey) || event.key === 'Tab') {
+        event.preventDefault();
+        const chosen = choices[Math.min(active, choices.length - 1)];
+        if (chosen) choose(chosen);
+        return;
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setDismissed(true);
+        return;
+      }
+    }
     if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) submit();
   };
 
@@ -174,16 +263,59 @@ function Composer({ orgId, pronoId }: { orgId: string; pronoId: string }) {
       <label className={styles.label} htmlFor={`message-${pronoId}`}>
         {t('discussion.yours')}
       </label>
-      <textarea
-        id={`message-${pronoId}`}
-        className={styles.composerInput}
-        value={body}
-        maxLength={BODY_MAX}
-        rows={2}
-        placeholder={t('discussion.placeholder')}
-        onChange={(event) => setBody(event.target.value)}
-        onKeyDown={onKeyDown}
-      />
+      <div className={styles.composerField}>
+        <textarea
+          ref={input}
+          id={`message-${pronoId}`}
+          className={styles.composerInput}
+          value={body}
+          maxLength={BODY_MAX}
+          rows={2}
+          placeholder={t('discussion.placeholder')}
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={open}
+          aria-controls={open ? listId : undefined}
+          aria-activedescendant={open ? `${listId}-${active}` : undefined}
+          aria-describedby={`${listId}-hint`}
+          onChange={(event) => {
+            setBody(event.target.value);
+            setCaret(event.target.selectionStart);
+            setActive(0);
+            setDismissed(false);
+          }}
+          onSelect={(event) => setCaret(event.currentTarget.selectionStart)}
+          onKeyDown={onKeyDown}
+        />
+        {open && (
+          <ul
+            id={listId}
+            role="listbox"
+            className={styles.mentionList}
+            aria-label={t('discussion.mentionList')}
+          >
+            {choices.map((member, index) => (
+              <li
+                key={member.id}
+                id={`${listId}-${index}`}
+                role="option"
+                aria-selected={index === active}
+                className={`${styles.mentionOption} ${index === active ? styles.mentionActive : ''}`}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  choose(member);
+                }}
+              >
+                <PixelImage image={member.avatar} size={20} />
+                {member.pseudo}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <span id={`${listId}-hint`} className="visually-hidden">
+        {t('discussion.mentionHint')}
+      </span>
       <div className={styles.composerFoot}>
         <span className={styles.meta} aria-live="polite">
           {t('discussion.left', { count: BODY_MAX - body.length })}
@@ -247,7 +379,7 @@ export function Discussion({
           ))}
         </ol>
       )}
-      <Composer orgId={orgId} pronoId={pronoId} />
+      <Composer orgId={orgId} pronoId={pronoId} me={me} />
     </section>
   );
 }

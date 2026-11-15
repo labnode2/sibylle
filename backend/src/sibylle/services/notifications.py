@@ -19,6 +19,7 @@ from sibylle.db.models import (
     Account,
     Bet,
     Membership,
+    Message,
     Notification,
     NotificationPref,
     Organisation,
@@ -309,6 +310,66 @@ async def report_created(session: AsyncSession, report: Report, prono: Prono) ->
     )
 
 
+_DISCUSSION_TYPES = (NotificationType.MENTION.value, NotificationType.DISCUSSION.value)
+
+
+async def message_posted(
+    session: AsyncSession, prono: Prono, message: Message, author: Membership
+) -> int:
+    """A message in a prono's discussion: « tagged » for the members it tags, « discussion » for
+    the others who wrote or were tagged there before. Never for its author, and a member with
+    one of these still unread for this prono gets no second one."""
+    org = await session.get(Organisation, prono.org_id)
+    assert org is not None
+    # Two messages written together would each see the other's notification as missing.
+    await session.execute(
+        select(func.pg_advisory_xact_lock(func.hashtext(f"discussion:{prono.id}")))
+    )
+    involved: set[uuid.UUID] = set()
+    for writer, tagged in await session.execute(
+        select(Message.membership_id, Message.mentions).where(Message.prono_id == prono.id)
+    ):
+        involved.add(writer)
+        involved.update(tagged)
+    involved.discard(author.id)
+    members = await _active_members(session, org.id, involved)
+    waiting = set(
+        (
+            await session.scalars(
+                select(Notification.account_id).where(
+                    Notification.org_id == org.id,
+                    Notification.type.in_(_DISCUSSION_TYPES),
+                    Notification.payload["prono_id"].as_string() == str(prono.id),
+                    Notification.read_at.is_(None),
+                    Notification.state != "skipped",
+                )
+            )
+        ).all()
+    )
+    rows = []
+    for member in members:
+        if member.account_id in waiting:
+            continue
+        type = (
+            NotificationType.MENTION
+            if member.id in message.mentions
+            else NotificationType.DISCUSSION
+        )
+        rows.append(
+            _row(
+                type,
+                member,
+                f"{type.value}:{message.id}:{member.account_id}",
+                {
+                    **_about(org, prono, member.id),
+                    "message_id": str(message.id),
+                    "author": author.pseudo,
+                },
+            )
+        )
+    return await enqueue_many(session, rows)
+
+
 async def still_relevant(session: AsyncSession, notification: Notification) -> bool:
     """Whether the notification still has an object when it leaves (otherwise `skipped`)."""
     payload = notification.payload
@@ -347,6 +408,12 @@ async def still_relevant(session: AsyncSession, notification: Notification) -> b
                 report is not None
                 and report.state == "open"
                 and can(member.role, Action.HANDLE_REPORTS)
+            )
+        case NotificationType.MENTION | NotificationType.DISCUSSION:
+            # The message may be gone, and the prono no longer open to discussion.
+            return (
+                prono.state not in (State.PROPOSED.value, State.REJECTED.value)
+                and await session.get(Message, uuid.UUID(payload["message_id"])) is not None
             )
 
 

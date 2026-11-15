@@ -13,6 +13,8 @@ export const KINDS: NotificationKind[] = [
   'result',
   'designation_reminder',
   'report',
+  'mention',
+  'discussion',
 ];
 export const CHANNELS: NotificationChannel[] = ['push', 'email'];
 

@@ -1,0 +1,5 @@
+{% extends "fr/base.html" %}
+{% block title %}Nouveau message{% endblock %}
+{% block content %}
+{% with kicker="NOUVEAU MESSAGE", action="Voir la discussion" %}{% include "fr/_notification.html" %}{% endwith %}
+{% endblock %}

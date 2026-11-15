@@ -1,0 +1,1 @@
+{% with kicker="NOUVEAU MESSAGE", action="Voir la discussion" %}{% include "fr/_notification.txt" %}{% endwith %}

@@ -1853,10 +1853,25 @@ export interface components {
              */
             sole_editor: boolean;
         };
+        /** Mention */
+        Mention: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Pseudo */
+            pseudo: string;
+        };
         /** MessageIn */
         MessageIn: {
             /** Body */
             body: string;
+            /**
+             * Mentions
+             * @default []
+             */
+            mentions: string[];
         };
         /** MessageOut */
         MessageOut: {
@@ -1868,6 +1883,8 @@ export interface components {
             author: components["schemas"]["MemberPublic"];
             /** Body */
             body: string;
+            /** Mentions */
+            mentions: components["schemas"]["Mention"][];
             /**
              * Created At
              * Format: date-time
@@ -1915,7 +1932,7 @@ export interface components {
              * Type
              * @enum {string}
              */
-            type: "new_prono" | "closing_soon" | "result" | "designation_reminder" | "report";
+            type: "new_prono" | "closing_soon" | "result" | "designation_reminder" | "report" | "mention" | "discussion";
             /**
              * Prono Id
              * Format: uuid
@@ -1937,7 +1954,7 @@ export interface components {
              * Type
              * @enum {string}
              */
-            type: "new_prono" | "closing_soon" | "result" | "designation_reminder" | "report";
+            type: "new_prono" | "closing_soon" | "result" | "designation_reminder" | "report" | "mention" | "discussion";
             /**
              * Channel
              * @enum {string}

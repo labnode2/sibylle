@@ -11,6 +11,8 @@
 | `result` | règlement (`resolution`, `correction`, `cancellation`) | membres qui ont parié | `result:{prono}:{settlement_seq}:{account}` |
 | `designation_reminder` | date de résultat attendu (sinon lendemain de la clôture), puis J+1, J+3, J+7, puis chaque semaine ; une relance repart de zéro | créateur journaliste, ou journaliste qui a validé la proposition | `designation:{prono}:{relance}-{étape}` |
 | `report` | un membre signale un prono (résultat erroné ou contenu) | membres actifs qui traitent les signalements (`handle_reports` : rédaction en chef), sauf l'auteur du signalement et le créateur du prono signalé ; lien vers `/o/<org_id>/reglages/signalements` ; sans objet si le signalement est déjà traité | `report:{report}:{account}` |
+| `mention` | un message de la discussion d'un prono tague un membre (`@pseudo`, membres actifs de la rédaction) | le membre tagué, jamais l'auteur du message ; au plus une notification non lue par membre et par prono (`mention` ou `discussion`) ; sans objet si le message est supprimé | `mention:{message}:{account}` |
+| `discussion` | un message arrive dans la discussion d'un prono | membres actifs qui y ont écrit ou y ont été tagués, sauf l'auteur du message et les membres tagués par lui (déjà prévenus par `mention`) ; au plus une notification non lue par membre et par prono | `discussion:{message}:{account}` |
 
 En plus, hors préférences (toujours envoyés par e-mail) : vérification de l'adresse, réinitialisation du mot de passe, invitation nominative.
 
@@ -18,7 +20,7 @@ Un membre de plusieurs rédactions reçoit les notifications de chacune ; le nom
 
 ## Préférences
 
-Dix interrupteurs par compte : 5 types × 2 canaux (`push`, `email`), tous actifs par défaut (routes `/me/notification-prefs` dans [rest-api.md](rest-api.md)). Un compte dont l'e-mail n'est pas vérifié ne reçoit aucun e-mail de notification.
+Quatorze interrupteurs par compte : 7 types × 2 canaux (`push`, `email`), tous actifs par défaut (routes `/me/notification-prefs` dans [rest-api.md](rest-api.md)). Un compte dont l'e-mail n'est pas vérifié ne reçoit aucun e-mail de notification.
 
 ## Notification push
 
@@ -51,6 +53,8 @@ Envoyés par le relais SMTP de Brevo depuis `Sibylle <ne-pas-repondre@<domaine>>
 | `result` | {organisation} · Édition spéciale : {question} |
 | `designation_reminder` | {organisation} · Résultat à désigner : {question} |
 | `report` | {organisation} · Nouveau signalement : {question} |
+| `mention` | {organisation} · {auteur} t'a taggé : {question} |
+| `discussion` | {organisation} · Nouveau message : {question} |
 
 ## Envoi et reprises
 

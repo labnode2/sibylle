@@ -166,7 +166,9 @@
     "deleteConfirm": "Supprimer ton message ? Il disparaîtra pour tout le monde.",
     "removeConfirm": "Retirer ce message de la discussion ? Il disparaîtra pour tout le monde.",
     "keep": "Annuler",
-    "yesterday": "hier, {{time}}"
+    "yesterday": "hier, {{time}}",
+    "mentionHint": "Tape @ pour taguer un membre.",
+    "mentionList": "Membres à taguer"
   },
   "reactions": {
     "label": "Réactions",

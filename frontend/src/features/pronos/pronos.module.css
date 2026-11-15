@@ -816,6 +816,43 @@
   gap: 8px;
 }
 
+.composerField {
+  position: relative;
+}
+
+.mention {
+  color: var(--indigo);
+  font-weight: 700;
+}
+
+.mentionList {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 5;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+}
+
+.mentionOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font: 600 14px/1.2 var(--font-text);
+  cursor: pointer;
+}
+
+.mentionActive,
+.mentionOption:hover {
+  background: var(--ink);
+  color: var(--surface);
+}
+
 .composerInput {
   width: 100%;
   min-height: 76px;

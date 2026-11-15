@@ -452,12 +452,20 @@ class PronoList(BaseModel):
 class MessageIn(BaseModel):
     # 1 to 500 characters once the spaces around are gone; the service says which is wrong.
     body: Annotated[str, StringConstraints(max_length=2000)]
+    # The members tagged with « @pseudo » in the body: active members of the newsroom.
+    mentions: Annotated[list[uuid.UUID], Field(max_length=20)] = []
+
+
+class Mention(BaseModel):
+    id: uuid.UUID
+    pseudo: str
 
 
 class MessageOut(BaseModel):
     id: uuid.UUID
     author: MemberPublic
     body: str
+    mentions: list[Mention]
     created_at: datetime
     likes: int
     # Whether the member reading likes it, and the pseudos of who does, in the order they did.
@@ -860,7 +868,9 @@ class PublicCard(BaseModel):
 
 # Notifications (US8)
 
-NotificationKind = Literal["new_prono", "closing_soon", "result", "designation_reminder", "report"]
+NotificationKind = Literal[
+    "new_prono", "closing_soon", "result", "designation_reminder", "report", "mention", "discussion"
+]
 NotificationChannel = Literal["push", "email"]
 
 

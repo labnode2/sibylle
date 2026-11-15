@@ -8,6 +8,7 @@ import pytest
 from sqlalchemy import select, update
 from tests.conftest import MakeAccount, MakeMember, MakeOrg, MakePerson, Person
 from tests.contract.helpers import notifications
+from tests.contract.test_discussion import write
 from tests.contract.test_pronos import place, publish
 from tests.contract.test_results import close, option, url
 
@@ -517,3 +518,118 @@ async def test_report_preferences_and_handled_reports(
     assert push.sent == []
     late = [n for n in await notifications("report") if second in n.dedupe_key]
     assert {n.state for n in late} == {"skipped"}
+
+
+async def talk(
+    who: Person, org_id: Any, prono_id: str, body: str, *tagged: Person
+) -> dict[str, Any]:
+    return await write(who.client, org_id, prono_id, body, [str(t.member.id) for t in tagged])
+
+
+async def test_a_tagged_member_is_notified_at_once(make_org: MakeOrg, person: MakePerson) -> None:
+    org = await make_org()
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    leo = await person(org, "reader", "Léo")
+    prono = await publish(hugo.client, str(org.id))
+
+    message = await talk(cami, org.id, prono["id"], "@Léo et @Cami, d'accord ?", leo, cami)
+    assert [m["pseudo"] for m in message["mentions"]] == ["Léo", "Cami"]
+    # Léo only: nobody else has written or been tagged yet, and Cami wrote it.
+    assert await recipients("mention") == {leo.account.id}
+    assert await recipients("discussion") == set()
+    [queued] = await notifications("mention")
+    assert queued.dedupe_key == f"mention:{message['id']}:{leo.account.id}"
+    assert queued.payload["author"] == "Cami" and queued.org_id == org.id
+
+    # It shows in Léo's list, with the red dot.
+    listed = (await leo.client.get(f"/api/orgs/{org.id}/notifications")).json()
+    assert [i["type"] for i in listed["items"]].count("mention") == 1
+    assert listed["unread"] == 2  # with the « Nouveau prono »
+
+    await subscribe(leo)
+    push = MemoryPushSender()
+    mails = [m for m in (await send(push)).sent if m.to == leo.account.email]
+    [mail] = [m for m in mails if "t'a taggé" in m.subject]
+    assert "Cami t'a taggé" in mail.subject
+    [(_, pushed, _)] = [p for p in push.sent if p[1]["type"] == "mention"]
+    assert pushed["url"] == f"/o/{org.id}/pronos/{prono['id']}"
+
+
+async def test_participants_hear_of_the_next_message_but_not_its_author(
+    make_org: MakeOrg, person: MakePerson
+) -> None:
+    org = await make_org()
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    leo = await person(org, "reader", "Léo")
+    ines = await person(org, "reader", "Inès")
+    prono = await publish(hugo.client, str(org.id))
+
+    await talk(cami, org.id, prono["id"], "Premier !")
+    assert await notifications("discussion") == []
+    await talk(leo, org.id, prono["id"], "Salut @Inès", ines)
+    # Cami wrote before: told. Inès is tagged: told as such. Léo wrote it: not told.
+    assert await recipients("discussion") == {cami.account.id}
+    assert await recipients("mention") == {ines.account.id}
+    [queued] = await notifications("discussion")
+    assert queued.payload["author"] == "Léo"
+
+    # A tagged member is a participant from then on; Hugo never wrote nor was tagged.
+    reply = await talk(hugo, org.id, prono["id"], "Bonjour")
+    assert await recipients("discussion") == {cami.account.id, leo.account.id}
+    assert await recipients("mention") == {ines.account.id}
+    assert reply["mentions"] == []
+    # Leaving the discussion's reach: a member who left is not notified.
+    await leave(leo)
+    await talk(cami, org.id, prono["id"], "Encore")
+    assert leo.account.id not in {
+        n.account_id for n in await notifications("discussion") if "Cami" == n.payload["author"]
+    }
+
+
+async def test_one_unread_notification_per_member_and_discussion(
+    make_org: MakeOrg, person: MakePerson
+) -> None:
+    org = await make_org()
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    leo = await person(org, "reader", "Léo")
+    prono = await publish(hugo.client, str(org.id))
+    other = await publish(hugo.client, str(org.id), question="Autre prono ?")
+
+    await talk(cami, org.id, prono["id"], "Un")
+    await talk(leo, org.id, prono["id"], "Deux")
+    await talk(leo, org.id, prono["id"], "Trois @Cami", cami)
+    await talk(leo, org.id, prono["id"], "Quatre")
+    assert [n.account_id for n in await notifications("discussion")] == [cami.account.id]
+    assert await notifications("mention") == []
+
+    # Another discussion has its own; and once read, the next message notifies again.
+    await talk(cami, org.id, other["id"], "Ailleurs")
+    await talk(leo, org.id, other["id"], "Ailleurs aussi")
+    assert len(await notifications("discussion")) == 2
+    await cami.client.post(f"/api/orgs/{org.id}/notifications/read")
+    await talk(leo, org.id, prono["id"], "Cinq")
+    assert len(await notifications("discussion")) == 3
+
+
+async def test_a_member_who_lost_access_or_a_deleted_message_notifies_no_one(
+    make_org: MakeOrg, person: MakePerson
+) -> None:
+    org = await make_org()
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    leo = await person(org, "reader", "Léo")
+    prono = await publish(hugo.client, str(org.id))
+    await talk(cami, org.id, prono["id"], "Un")
+    await leave(cami)
+    await talk(leo, org.id, prono["id"], "Deux")
+    assert await notifications("discussion") == []
+
+    # Only active members of the newsroom can be tagged.
+    response = await leo.client.post(
+        f"/api/orgs/{org.id}/pronos/{prono['id']}/messages",
+        json={"body": "@Cami", "mentions": [str(cami.member.id)]},
+    )
+    assert response.status_code == 422, response.text

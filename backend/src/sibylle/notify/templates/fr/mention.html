@@ -1,0 +1,5 @@
+{% extends "fr/base.html" %}
+{% block title %}Tu as été tagué{% endblock %}
+{% block content %}
+{% with kicker="TU AS ÉTÉ TAGGÉ", action="Voir la discussion" %}{% include "fr/_notification.html" %}{% endwith %}
+{% endblock %}

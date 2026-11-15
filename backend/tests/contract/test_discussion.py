@@ -28,9 +28,15 @@ def messages_url(org_id: object, prono_id: str, *rest: str) -> str:
 
 
 async def write(
-    client: httpx.AsyncClient, org_id: object, prono_id: str, body: str
+    client: httpx.AsyncClient,
+    org_id: object,
+    prono_id: str,
+    body: str,
+    mentions: list[str] | None = None,
 ) -> dict[str, Any]:
-    response = await client.post(messages_url(org_id, prono_id), json={"body": body})
+    response = await client.post(
+        messages_url(org_id, prono_id), json={"body": body, "mentions": mentions or []}
+    )
     assert response.status_code == 201, response.text
     message: dict[str, Any] = response.json()
     return message

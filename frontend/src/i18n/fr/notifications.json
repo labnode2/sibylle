@@ -22,6 +22,14 @@
     "report": {
       "label": "Signalements",
       "hint": "Pour la rédaction en chef : un membre signale un prono."
+    },
+    "mention": {
+      "label": "Tags",
+      "hint": "Quelqu'un te tague dans une discussion."
+    },
+    "discussion": {
+      "label": "Discussions",
+      "hint": "Un nouveau message dans une discussion où tu as écrit ou été tagué."
     }
   },
   "channels": {
@@ -79,7 +87,9 @@
       "closing_soon": "Plus que 2 h pour jouer",
       "result": "Résultat tombé",
       "designation_reminder": "Un résultat attend d'être désigné",
-      "report": "Nouveau signalement"
+      "report": "Nouveau signalement",
+      "mention": "Tu as été tagué",
+      "discussion": "Nouveau message dans une discussion"
     }
   }
 }

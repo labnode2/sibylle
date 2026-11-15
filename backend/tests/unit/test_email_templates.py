@@ -70,6 +70,8 @@ NOTIFICATIONS = {
     "result": {"kind": "resolution", "seq": 1, "result": "Nice", "outcome": "won", "payout": 1},
     "designation_reminder": {"relaunch": 0},
     "report": {"report_id": "signalement", "kind": "content"},
+    "mention": {"message_id": "message", "author": "Hugo"},
+    "discussion": {"message_id": "message", "author": "Hugo"},
 }
 
 

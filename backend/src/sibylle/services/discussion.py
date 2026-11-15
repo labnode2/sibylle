@@ -16,7 +16,8 @@ from sibylle.api.errors import AppError
 from sibylle.db.models import Membership, Message, MessageLike, Prono
 from sibylle.domain.permissions import Action, can
 from sibylle.realtime import bus
-from sibylle.services.orgs import public_member
+from sibylle.services import notifications
+from sibylle.services.orgs import active_members, public_member
 from sibylle.services.pronos import HIDDEN_STATES, get_prono
 
 PAGE = 20
@@ -58,6 +59,15 @@ def _may_delete(member: Membership, message: Message) -> bool:
 async def _views(
     session: AsyncSession, member: Membership, rows: Sequence[tuple[Message, Membership]]
 ) -> list[dict[str, Any]]:
+    tagged = {id_ for message, _ in rows for id_ in message.mentions}
+    pseudos: dict[uuid.UUID, str] = {}
+    if tagged:
+        pseudos = {
+            id_: pseudo
+            for id_, pseudo in await session.execute(
+                select(Membership.id, Membership.pseudo).where(Membership.id.in_(tagged))
+            )
+        }
     likers: dict[uuid.UUID, list[tuple[uuid.UUID, str]]] = defaultdict(list)
     for message_id, liker_id, pseudo in await session.execute(
         select(MessageLike.message_id, Membership.id, Membership.pseudo)
@@ -71,6 +81,9 @@ async def _views(
             "id": message.id,
             "author": public_member(author),
             "body": message.body,
+            "mentions": [
+                {"id": id_, "pseudo": pseudos[id_]} for id_ in message.mentions if id_ in pseudos
+            ],
             "created_at": message.created_at,
             "likes": len(likers[message.id]),
             "liked": any(liker_id == member.id for liker_id, _ in likers[message.id]),
@@ -118,7 +131,11 @@ async def _announce(session: AsyncSession, prono: Prono, event: str, message_id:
 
 
 async def write(
-    session: AsyncSession, member: Membership, prono_id: uuid.UUID, body: str
+    session: AsyncSession,
+    member: Membership,
+    prono_id: uuid.UUID,
+    body: str,
+    mentions: Sequence[uuid.UUID] = (),
 ) -> dict[str, Any]:
     if not can(member.role, Action.DISCUSS):
         raise AppError("forbidden")
@@ -128,9 +145,16 @@ async def write(
         raise AppError("validation_error", {"body": "empty"})
     if len(text) > BODY_MAX:
         raise AppError("validation_error", {"body": "too_long"})
-    message = Message(prono_id=prono.id, membership_id=member.id, body=text)
+    # Only the newsroom's active members can be tagged; each one once, in the order given.
+    tagged = list(dict.fromkeys(mentions))
+    if tagged:
+        active = {m.id for m in await active_members(session, member.org_id)}
+        if not all(id_ in active for id_ in tagged):
+            raise AppError("validation_error", {"mentions": "unknown"})
+    message = Message(prono_id=prono.id, membership_id=member.id, body=text, mentions=tagged)
     session.add(message)
     await session.flush()
+    await notifications.message_posted(session, prono, message, member)
     await _announce(session, prono, "message.posted", message.id)
     [view] = await _views(session, member, [(message, member)])
     return view

@@ -29,7 +29,9 @@ async def list_messages(
 async def write_message(
     org_id: uuid.UUID, prono_id: uuid.UUID, body: MessageIn, member: CurrentMember, session: Db
 ) -> MessageOut:
-    return MessageOut.model_validate(await discussion.write(session, member, prono_id, body.body))
+    return MessageOut.model_validate(
+        await discussion.write(session, member, prono_id, body.body, body.mentions)
+    )
 
 
 @router.delete("/{message_id}", status_code=204)
