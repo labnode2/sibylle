@@ -24,6 +24,7 @@ import {
   type PixelStatus,
 } from '../api';
 import styles from '../games.module.css';
+import { useGainNow } from './gain';
 import { MysteryDrawing } from './MysteryDrawing';
 
 function GuessForm({ guess, status }: { guess: ReturnType<typeof useGuess>; status: PixelStatus }) {
@@ -40,9 +41,7 @@ function GuessForm({ guess, status }: { guess: ReturnType<typeof useGuess>; stat
       onSuccess: (answer) => {
         setWord('');
         if (!answer.correct) toast.error(t('pixel.wrong', { word: tried }));
-        else if (answer.rank === 1)
-          toast.success(t('pixel.rightFirst', { laurels: answer.laurels }));
-        else toast.success(t('pixel.right', { rank: answer.rank, laurels: answer.laurels }));
+        else toast.success(t('pixel.right', { laurels: answer.laurels }));
       },
     });
   };
@@ -74,6 +73,7 @@ function GuessForm({ guess, status }: { guess: ReturnType<typeof useGuess>; stat
 function Puzzle({ orgId, status, on }: { orgId: string; status: PixelStatus; on: boolean }) {
   const { t } = useTranslation('games');
   const guess = useGuess(orgId);
+  const gain = useGainNow(status);
   const total = status.size * status.size;
   const message =
     status.state === 'finished'
@@ -116,6 +116,9 @@ function Puzzle({ orgId, status, on }: { orgId: string; status: PixelStatus; on:
               })}
             </p>
           </>
+        )}
+        {status.state === 'active' && gain != null && (
+          <p className={styles.label}>{t('pixel.gainNow', { laurels: gain })}</p>
         )}
         {status.word && <p className={styles.word}>{t('pixel.word', { word: status.word })}</p>}
         {message && <p className={styles.text}>{message}</p>}

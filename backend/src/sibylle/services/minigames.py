@@ -6,9 +6,10 @@ in the browser and sends its score and duration, which the server checks before 
 Monday, the past week's ranking is paid to the balance, once per newsroom.
 
 Pixel mystère: a journalist posts a drawing and its word; one drawing is active per newsroom, the
-others wait. A seventh of its pixels shows at the opening and each morning; the first members to
-find the word are paid at once. The game ends when every other member found or every pixel shows,
-and the next drawing starts the following morning.
+others wait. Its pixels show in proportion to the time gone over a week; whoever finds the word is
+paid at once, 50 laurels at the opening falling to 3 at the end, whatever the rank. The game ends
+when every other member found or the week is gone, and the next drawing starts the following
+morning.
 
 Both follow the week's games (US12, research.md J7). Out of them, the race opens and finishes no
 run, and Monday does not pay its week; Pixel mystère takes no guess and starts no drawing, and
@@ -313,11 +314,24 @@ def _total(puzzle: PixelPuzzle) -> int:
     return int(puzzle.drawing["size"]) ** 2
 
 
+def _shown(puzzle: PixelPuzzle) -> int:
+    """The pixels showing now: worked out from the clock, not read from the last reveal."""
+    if puzzle.state != "active" or puzzle.started_at is None:
+        return _total(puzzle) if puzzle.state == "finished" else puzzle.revealed_count
+    return revealed_count(int(puzzle.drawing["size"]), puzzle.started_at, clock.now())
+
+
+def _gain_now(puzzle: PixelPuzzle) -> int:
+    """The laurels whoever finds the word now would win."""
+    assert puzzle.started_at is not None
+    return pixel_gain(clock.now() - puzzle.started_at)
+
+
 async def _ends_at(session: AsyncSession, puzzle: PixelPuzzle) -> datetime:
     """When an active drawing ends unless everyone finds it first: the morning its last pixels
     show, or before that the Monday of a week without Pixel mystère."""
     assert puzzle.started_at is not None
-    end = reveal_end(int(puzzle.drawing["size"]), puzzle.started_at)
+    end = reveal_end(puzzle.started_at)
     week = week_start(clock.now())
     while True:
         week += timedelta(days=7)
@@ -346,6 +360,7 @@ async def pixel_status(
     mine = puzzle.author_membership_id == member.id
     open_book = puzzle.state == "finished" or (not home and (found or mine))
     pixels = decode(puzzle.drawing)
+    shown = _shown(puzzle)
     left = 0
     if puzzle.state == "active" and not found and not mine:
         left = max(0, PIXEL_GUESSES_PER_DAY - await _guesses_today(session, puzzle, member))
@@ -353,10 +368,10 @@ async def pixel_status(
         "puzzle_id": puzzle.id,
         "size": puzzle.drawing["size"],
         "revealed": base64.b64encode(
-            pixels if open_book else masked(pixels, puzzle.reveal_order, puzzle.revealed_count)
+            pixels if open_book else masked(pixels, puzzle.reveal_order, shown)
         ).decode(),
         # What the newsroom sees so far, even for whoever sees the whole drawing.
-        "revealed_count": puzzle.revealed_count,
+        "revealed_count": shown,
         "letters": letter_count(puzzle.word),
         "guesses_left_today": left,
         "finds": [{"member": m, "rank": f.rank} for f, m in finds],
@@ -365,6 +380,13 @@ async def pixel_status(
         "state": puzzle.state,
         "word": puzzle.word if open_book else None,
         "ends_at": await _ends_at(session, puzzle) if puzzle.state == "active" else None,
+        "started_at": puzzle.started_at if puzzle.state == "active" else None,
+        "gain_ends_at": reveal_end(puzzle.started_at)
+        if puzzle.state == "active" and puzzle.started_at
+        else None,
+        "gain_now": _gain_now(puzzle)
+        if puzzle.state == "active" and not found and not mine
+        else None,
     }
 
 
@@ -528,7 +550,8 @@ async def guess(session: AsyncSession, member: Membership, word: str) -> dict[st
 
     # The puzzle is locked: ranks are handed out one at a time.
     rank = len(await _finds(session, puzzle)) + 1
-    laurels = pixel_gain(rank)
+    assert puzzle.started_at is not None
+    laurels = _gain_now(puzzle)
     session.add(PixelFind(puzzle_id=puzzle.id, membership_id=member.id, rank=rank, laurels=laurels))
     await ledger.append(session, member.id, minigame(laurels), reason=f"pixel:{puzzle.word}")
     await bus.publish(
@@ -563,7 +586,7 @@ async def reveal_pixel_puzzles(session: AsyncSession, *, org_id: uuid.UUID | Non
             changed += 1
             continue
         target = revealed_count(int(puzzle.drawing["size"]), puzzle.started_at, now)
-        if target >= _total(puzzle) or await _everyone_found(session, puzzle):
+        if now >= reveal_end(puzzle.started_at) or await _everyone_found(session, puzzle):
             await _finish(session, puzzle)
             changed += 1
         elif target > puzzle.revealed_count:

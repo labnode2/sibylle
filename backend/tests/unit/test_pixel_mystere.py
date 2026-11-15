@@ -7,8 +7,8 @@ import pytest
 
 from sibylle.domain.minigames import (
     HIDDEN,
+    PIXEL_DURATION,
     PIXEL_GUESSES_PER_DAY,
-    batch_size,
     letter_count,
     masked,
     next_start,
@@ -33,38 +33,28 @@ def test_the_reveal_order_is_drawn_once_over_every_pixel() -> None:
     assert reveal_order(16, random.Random(1)) != reveal_order(16, random.Random(2))
 
 
-def test_a_seventh_of_the_pixels_a_day() -> None:
-    assert (batch_size(16), batch_size(32)) == (37, 147)
+def test_pixels_show_in_proportion_to_the_time_gone() -> None:
+    def shown(fraction: float, size: int = 16) -> int:
+        return revealed_count(size, WEDNESDAY, WEDNESDAY + PIXEL_DURATION * fraction)
+
+    assert (shown(0), shown(0.5), shown(1)) == (0, 128, 256)
+    assert (shown(0, 32), shown(0.5, 32), shown(1, 32)) == (0, 512, 1024)
+    # Rounded up, and never more than the drawing, nor less than nothing.
+    assert shown(0.001) == 1
+    assert shown(3) == 256
+    assert revealed_count(16, WEDNESDAY, WEDNESDAY - timedelta(hours=1)) == 0
 
 
-def test_the_first_batch_at_the_opening_then_one_each_morning_at_eight() -> None:
-    def shown(at: datetime) -> int:
-        return revealed_count(16, WEDNESDAY, at)
-
-    assert shown(WEDNESDAY) == 37
-    assert shown(datetime(2026, 11, 5, 7, 59, tzinfo=PARIS)) == 37
-    assert shown(datetime(2026, 11, 5, 8, 0, tzinfo=PARIS)) == 74
-    assert shown(datetime(2026, 11, 9, 8, 0, tzinfo=PARIS)) == 37 * 6
-    # The seventh batch shows everything, and no more.
-    assert shown(datetime(2026, 11, 10, 8, 0, tzinfo=PARIS)) == 256
-    assert shown(datetime(2026, 11, 20, 8, 0, tzinfo=PARIS)) == 256
-
-
-def test_the_drawing_ends_the_morning_its_last_pixels_show() -> None:
-    end = reveal_end(16, WEDNESDAY)
-    assert end == datetime(2026, 11, 10, 8, 0, tzinfo=PARIS)
-    assert revealed_count(16, WEDNESDAY, end - timedelta(minutes=1)) < 256
+def test_the_drawing_ends_a_week_after_its_opening() -> None:
+    end = reveal_end(WEDNESDAY)
+    assert end == WEDNESDAY + timedelta(days=7)
+    assert revealed_count(16, WEDNESDAY, end - timedelta(hours=1)) < 256
     assert revealed_count(16, WEDNESDAY, end) == 256
-    # Opened at 08:00 sharp: that morning is the opening, the next ones count.
-    eight = datetime(2026, 11, 5, 8, 0, tzinfo=PARIS)
-    assert reveal_end(32, eight) == datetime(2026, 11, 11, 8, 0, tzinfo=PARIS)
-    assert revealed_count(32, eight, reveal_end(32, eight)) == 1024
 
 
-def test_eight_o_clock_stays_eight_o_clock_when_the_clocks_change() -> None:
+def test_pixels_follow_the_clock_not_the_morning() -> None:
     saturday = datetime(2026, 10, 24, 10, 0, tzinfo=PARIS)  # summer time ends on Sunday 25
-    assert revealed_count(16, saturday, datetime(2026, 10, 26, 7, 59, tzinfo=PARIS)) == 74
-    assert revealed_count(16, saturday, datetime(2026, 10, 26, 8, 0, tzinfo=PARIS)) == 111
+    assert revealed_count(16, saturday, saturday + timedelta(days=1)) == 37
 
 
 def test_hidden_pixels_stay_hidden() -> None:
@@ -96,9 +86,22 @@ def test_letters_are_counted_without_spaces_or_signs() -> None:
     assert letter_count("porte-monnaie") == 12
 
 
-def test_ten_seven_five_then_three() -> None:
-    assert [pixel_gain(rank) for rank in range(1, 6)] == [10, 7, 5, 3, 3]
+def test_the_gain_falls_from_fifty_to_three_whatever_the_rank() -> None:
+    assert pixel_gain(timedelta(0)) == 50
+    assert pixel_gain(PIXEL_DURATION / 2) == 26  # 26.5 laurels: the half goes to the finder's loss
+    assert pixel_gain(PIXEL_DURATION) == 3
+    # The floor holds after the end, and before the opening nothing is lost.
+    assert pixel_gain(PIXEL_DURATION * 2) == 3
+    assert pixel_gain(-PIXEL_DURATION) == 50
+    gains = [pixel_gain(PIXEL_DURATION * i / 100) for i in range(101)]
+    assert gains == sorted(gains, reverse=True)
     assert PIXEL_GUESSES_PER_DAY == 3
+
+
+def test_two_finds_at_the_same_moment_win_the_same() -> None:
+    at = timedelta(days=2, hours=5)
+    assert pixel_gain(at) == pixel_gain(at)
+    assert pixel_gain(at) == 35  # 50 - 14.8
 
 
 def test_the_next_drawing_starts_the_next_morning() -> None:

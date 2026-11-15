@@ -2196,6 +2196,12 @@ export interface components {
             word: string | null;
             /** Ends At */
             ends_at: string | null;
+            /** Started At */
+            started_at: string | null;
+            /** Gain Ends At */
+            gain_ends_at: string | null;
+            /** Gain Now */
+            gain_now: number | null;
         };
         /**
          * PressCard

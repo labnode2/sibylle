@@ -77,7 +77,8 @@ async def test_a_journalist_posts_a_drawing_and_it_starts(
     assert (state["state"], state["size"], state["letters"]) == ("active", 16, 4)
     assert (state["guesses_left_today"], state["found_by_me"], state["mine"]) == (3, False, False)
     assert state["word"] is None and state["finds"] == []
-    assert shown(state) == 37 == state["revealed_count"]
+    assert shown(state) == state["revealed_count"] <= 1
+    assert state["gain_now"] == 50
     assert (await cami.client.get(f"/api/orgs/{org.id}/games")).json()["pixel"] == state
 
     # Its author sees the whole drawing and the word, and does not play.
@@ -106,19 +107,19 @@ async def test_three_guesses_a_day_and_the_first_finders_win(
         "guesses_left_today": 2,
     }
     right = await guess(cami, org.id, "cafe")
-    assert right.json() == {"correct": True, "rank": 1, "laurels": 10, "guesses_left_today": 1}
+    assert right.json() == {"correct": True, "rank": 1, "laurels": 50, "guesses_left_today": 1}
     again = await guess(cami, org.id, "cafe")
     assert again.status_code == 409
     second = await guess(leo, org.id, "  CAFÉ ")
-    assert (second.json()["rank"], second.json()["laurels"]) == (2, 7)
-    assert (await balance(cami), await balance(leo)) == (110, 107)
+    assert (second.json()["rank"], second.json()["laurels"]) == (2, 50)
+    assert (await balance(cami), await balance(leo)) == (150, 150)
 
     found = await status(cami, org.id)
     assert (found["found_by_me"], found["word"]) == (True, "Café")
     assert base64.b64decode(found["revealed"]) == PIXELS
     assert [(f["member"]["pseudo"], f["rank"]) for f in found["finds"]] == [("Cami", 1), ("Léo", 2)]
     still = await status(manon, org.id)
-    assert still["word"] is None and shown(still) == 37
+    assert still["word"] is None and shown(still) <= 1
 
     for word in ("thé", "lait", "sucre"):
         assert (await guess(manon, org.id, word)).json()["correct"] is False
@@ -129,6 +130,9 @@ async def test_three_guesses_a_day_and_the_first_finders_win(
     fake_clock.set(datetime(2026, 11, 3, 8, 0, tzinfo=PARIS))
     third = await guess(manon, org.id, "café")
     assert (third.json()["rank"], third.json()["guesses_left_today"]) == (3, 2)
+    # A day later the gain is lower, the same for whoever finds then: 50 - 47 × 22/168 = 43.8.
+    assert third.json()["laurels"] == 44
+    assert await balance(manon) == 144
 
 
 async def test_la_une_never_gives_the_drawing_nor_the_word_before_the_end(
@@ -147,7 +151,7 @@ async def test_la_une_never_gives_the_drawing_nor_the_word_before_the_end(
         assert home[flag] is True and home["state"] == "active"
         assert home["word"] is None
         assert "Café" not in response.text
-        assert shown(home) == 37 == home["revealed_count"]
+        assert shown(home) == home["revealed_count"] <= 1
         assert base64.b64decode(home["revealed"]) != PIXELS
         # The game's own page still shows them the whole drawing and the word.
         page = await status(who, org.id)
@@ -189,17 +193,22 @@ async def test_the_game_ends_when_every_pixel_shows(
     leo = await person(org, "reader", "Léo")
     await post(hugo, org.id)
     await guess(cami, org.id, "café")
-    # The countdown runs to the morning the last pixels show.
+    # The countdown runs to a week after the opening, when the last pixels show.
+    opening = clock.now()
     ends_at = (await status(leo, org.id))["ends_at"]
-    assert datetime.fromisoformat(ends_at) == datetime(2026, 11, 8, 8, 0, tzinfo=PARIS)
+    assert abs(datetime.fromisoformat(ends_at) - (opening + timedelta(days=7))) < timedelta(
+        seconds=5
+    )
 
     counts = []
-    for day in range(3, 9):
-        fake_clock.set(datetime(2026, 11, day, 8, 0, tzinfo=PARIS))
+    for day in (1, 2, 4, 6):
+        fake_clock.set(opening + timedelta(days=day))
         await reveal_pixel_puzzles()
         await reveal_pixel_puzzles()  # twice changes nothing
         counts.append((await status(leo, org.id))["revealed_count"])
-    assert counts == [74, 111, 148, 185, 222, 256]
+    assert counts == [37, 74, 147, 220]
+    fake_clock.set(opening + timedelta(days=7, minutes=1))
+    await reveal_pixel_puzzles()
     ended = await status(leo, org.id)
     assert (ended["state"], ended["word"], ended["found_by_me"]) == ("finished", "Café", False)
     assert ended["ends_at"] is None
@@ -237,13 +246,25 @@ async def test_a_newsroom_sees_only_its_own_game(make_org: MakeOrg, person: Make
     assert (await stranger.client.get(pixel(other.id))).json() is None
 
 
-async def test_reveals_are_spaced_by_mornings(
+async def test_pixels_and_gain_follow_the_time_gone(
     make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
 ) -> None:
     org = await make_org()
     hugo = await person(org, "journalist", "Hugo")
     cami = await person(org, "reader", "Cami")
+    leo = await person(org, "reader", "Léo")
     await post(hugo, org.id)
-    fake_clock.advance(timedelta(hours=12))  # Monday 22:00
-    assert await reveal_pixel_puzzles() == 0
-    assert (await status(cami, org.id))["revealed_count"] == 37
+    opening = clock.now()
+    fake_clock.set(opening + timedelta(hours=84))  # half of the week
+    state = await status(cami, org.id)
+    assert 128 <= state["revealed_count"] <= 130 and shown(state) == state["revealed_count"]
+    assert state["gain_now"] == 26
+    # What the home card shows is the same, and a finder is told the gain paid.
+    assert (await cami.client.get(f"/api/orgs/{org.id}/games")).json()["pixel"] == state
+    right = await guess(cami, org.id, "café")
+    assert right.json()["laurels"] == 26 == state["gain_now"]
+    assert await balance(cami) == 126
+    # The rank is kept but the gain does not depend on it.
+    again = await guess(leo, org.id, "café")
+    assert (again.json()["rank"], again.json()["laurels"]) == (2, 26)
+    assert (await status(hugo, org.id))["gain_now"] is None

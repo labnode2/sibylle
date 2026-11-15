@@ -288,7 +288,7 @@ async def test_pixel_taken_out_of_the_week_gives_the_word(
     assert (now["scheduled"], now["pixel"]) == (["runner"], stopped)
     refused(await guess(leo, org.id, "café"), 409, "game_not_scheduled")
     # The laurels won stay.
-    assert await balance(cami) == 110
+    assert await balance(cami) == 150
 
     # A drawing posted meanwhile waits for Pixel mystère to come back.
     waiting = await post(hugo, org.id, "Boule")
@@ -319,7 +319,8 @@ async def test_a_week_without_pixel_stops_the_drawing_on_monday(
     await reveal_pixel_puzzles(org.id)
     sunday = await pixel(cami, org.id)
     assert sunday is not None
-    assert (sunday["state"], sunday["revealed_count"]) == ("active", 148)
+    assert sunday["state"] == "active"
+    assert 131 <= sunday["revealed_count"] <= 133  # 3 days 14 hours of a week's 256 pixels
     # Its countdown runs to Monday, not to its last morning.
     monday = datetime(2026, 11, 9, 0, 0, tzinfo=PARIS)
     assert datetime.fromisoformat(sunday["ends_at"]) == monday

@@ -15,13 +15,16 @@ import { shortTimeLeft, useNow } from '../../ui/Countdown';
 import { CrystalBall } from '../../ui/CrystalBall';
 import { useGames, type Games } from './api';
 import styles from './games.module.css';
+import { gainAt } from './pixel-mystere/gain';
 import { MysteryDrawing } from './pixel-mystere/MysteryDrawing';
 
 function pixelLine(t: TFunction<'games'>, pixel: Games['pixel'], now: number): string {
   if (!pixel) return t('box.pixelNone');
   if (pixel.state === 'finished') return t('box.pixelFinished', { word: pixel.word });
   const left = pixel.ends_at ? shortTimeLeft(t, pixel.ends_at, now) : '';
-  return t('box.pixelLine', { count: pixel.letters, left });
+  const line = t('box.pixelLine', { count: pixel.letters, left });
+  const gain = gainAt(pixel, now);
+  return gain == null ? line : `${line} · ${t('box.pixelGain', { laurels: gain })}`;
 }
 
 export function WeeklyGames({ orgId, size = 32 }: { orgId: string; size?: 32 | 48 }) {

@@ -98,7 +98,7 @@ test('Pixel mystère: drawn, guessed in order, ended both ways', async ({ browse
   await expect(box).toContainText(/UN MOT DE 4 LETTRES · FIN DANS \d+ (J \d+ H|H \d+ MIN|MIN)/);
   await box.getByRole('link', { name: /Pixel mystère/ }).click();
   await expect(camiPage.getByRole('heading', { name: 'Pixel mystère' })).toBeVisible();
-  await expect(camiPage.getByRole('img', { name: /37 pixels dévoilés sur 256/ })).toBeVisible();
+  await expect(camiPage.getByRole('img', { name: /\d+ pixels? dévoilés? sur 256/ })).toBeVisible();
   await expect(
     camiPage.getByRole('timer', { name: 'Temps restant avant la fin du dessin' }),
   ).toBeVisible();
@@ -110,17 +110,15 @@ test('Pixel mystère: drawn, guessed in order, ended both ways', async ({ browse
   const [balance] = await laurels(camiPage, orgId);
   await camiPage.getByLabel('TA PROPOSITION').fill('cafe');
   await camiPage.getByRole('button', { name: 'Proposer' }).click();
-  await expect(notes(camiPage)).toContainText(
-    'Bravo ! Tu trouves en premier et gagnes 10 lauriers.',
-  );
+  await expect(notes(camiPage)).toContainText('Bravo ! Tu gagnes 50 lauriers.');
   await expect(camiPage.getByText('LE MOT : Café')).toBeVisible();
-  expect((await laurels(camiPage, orgId))[0]).toBe(balance + 10);
+  expect((await laurels(camiPage, orgId))[0]).toBe(balance + 50);
 
   // Léo second; Manon spends her three guesses, the fourth waits for tomorrow.
   const second = await call(leoPage, 'POST', `/orgs/${orgId}/games/pixel/guesses`, {
     word: 'CAFÉ',
   });
-  expect(second.body).toMatchObject({ correct: true, rank: 2, laurels: 7 });
+  expect(second.body).toMatchObject({ correct: true, rank: 2, laurels: 50 });
   for (const word of ['thé', 'lait', 'sucre']) {
     await call(manonPage, 'POST', `/orgs/${orgId}/games/pixel/guesses`, { word });
   }
@@ -137,7 +135,10 @@ test('Pixel mystère: drawn, guessed in order, ended both ways', async ({ browse
   const third = await call(manonPage, 'POST', `/orgs/${orgId}/games/pixel/guesses`, {
     word: 'cafe',
   });
-  expect(third.body).toMatchObject({ correct: true, rank: 3, laurels: 5 });
+  expect(third.body).toMatchObject({ correct: true, rank: 3 });
+  // A day later: the gain fell in proportion to the time, whatever the rank.
+  expect(third.body.laurels).toBeGreaterThanOrEqual(43);
+  expect(third.body.laurels).toBeLessThan(50);
   await ines.reload();
   await expect(ines.getByText(/^Partie terminée/)).toBeVisible();
   const finished = await call(leoPage, 'GET', `/orgs/${orgId}/games/pixel`);

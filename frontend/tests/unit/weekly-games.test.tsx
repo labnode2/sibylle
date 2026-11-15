@@ -1,6 +1,6 @@
 // « Les jeux de la semaine » on la une: a Pixel mystère found shows as the newsroom sees it,
 // masked and without its word, with a « RÉSOLU » tag; its author sees it masked too.
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -40,6 +40,9 @@ function pixel(overrides: Partial<NonNullable<Games['pixel']>>): Games {
       state: 'active',
       word: null,
       ends_at: null,
+      started_at: null,
+      gain_ends_at: null,
+      gain_now: null,
       ...overrides,
     },
   };
@@ -74,5 +77,37 @@ describe('WeeklyGames', () => {
   it('has no tag for whoever has not found yet', () => {
     show(pixel({ guesses_left_today: 3 }));
     expect(screen.queryByText('RÉSOLU')).toBeNull();
+  });
+
+  it('shows what finding the word would pay now, to the minute', () => {
+    const start = new Date('2026-11-02T09:00:00Z').getTime();
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
+    vi.setSystemTime(start + 84 * 3_600_000); // half of the week
+    try {
+      show(
+        pixel({
+          started_at: new Date(start).toISOString(),
+          gain_ends_at: new Date(start + 168 * 3_600_000).toISOString(),
+          ends_at: new Date(start + 168 * 3_600_000).toISOString(),
+          gain_now: 26,
+        }),
+      );
+      expect(screen.getByRole('link', { name: /Pixel mystère/ })).toHaveTextContent(
+        'TROUVE MAINTENANT : +26',
+      );
+      act(() => {
+        vi.advanceTimersByTime(84 * 3_600_000);
+      });
+      expect(screen.getByRole('link', { name: /Pixel mystère/ })).toHaveTextContent(
+        'TROUVE MAINTENANT : +3',
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('shows no gain to whoever cannot play', () => {
+    show(pixel({ mine: true, gain_now: null }));
+    expect(screen.queryByText(/TROUVE MAINTENANT/)).toBeNull();
   });
 });

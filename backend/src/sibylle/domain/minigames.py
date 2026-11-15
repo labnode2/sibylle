@@ -1,6 +1,5 @@
 """Rules of the mini-games: the ball's race (research.md J3 and R19) and Pixel mystère (J4)."""
 
-import math
 import random
 import re
 import unicodedata
@@ -73,10 +72,13 @@ def week_to_pay(now: datetime) -> date:
 # Pixel mystère
 
 PIXEL_GUESSES_PER_DAY = 3
-PIXEL_GAINS = (10, 7, 5)
-PIXEL_OTHER_GAIN = 3
-# A seventh of the pixels shows each morning at 08:00 (Paris), the first batch at the opening.
+# A drawing lasts a week: its pixels show in proportion to the time gone, and what finding the
+# word pays falls the same way, from 50 laurels at the opening to 3 at the end, whatever the rank.
 REVEAL_DAYS = 7
+PIXEL_DURATION = timedelta(days=REVEAL_DAYS)
+PIXEL_START_GAIN = 50
+PIXEL_OTHER_GAIN = 3
+# The next drawing starts at this hour (Paris), the day after the last one ended.
 REVEAL_HOUR = 8
 # The value of a pixel not shown yet, in the drawing sent to the players.
 HIDDEN = 255
@@ -113,40 +115,21 @@ def order_indices(order: bytes) -> list[int]:
     return [int.from_bytes(order[i : i + 2], "big") for i in range(0, len(order), 2)]
 
 
-def batch_size(size: int) -> int:
-    return math.ceil(size * size / REVEAL_DAYS)
+def _micros(delta: timedelta) -> int:
+    return delta // timedelta(microseconds=1)
 
 
-def _morning(day: date) -> datetime:
-    return datetime(day.year, day.month, day.day, REVEAL_HOUR, tzinfo=PARIS)
+def revealed_count(
+    size: int, started_at: datetime, now: datetime, duration: timedelta = PIXEL_DURATION
+) -> int:
+    """The pixels shown `now`: `ceil(total × elapsed / duration)`, none before the opening."""
+    elapsed = min(max(_micros(now - started_at), 0), _micros(duration))
+    return -(-size * size * elapsed // _micros(duration))
 
 
-def mornings_between(start: datetime, now: datetime) -> int:
-    """How many 08:00 (Paris) passed after `start`, up to `now` included."""
-    first_day = start.astimezone(PARIS).date()
-    if _morning(first_day) <= start:
-        first_day += timedelta(days=1)
-    last_day = now.astimezone(PARIS).date()
-    if _morning(last_day) > now:
-        last_day -= timedelta(days=1)
-    return max(0, (last_day - first_day).days + 1)
-
-
-def revealed_count(size: int, started_at: datetime, now: datetime) -> int:
-    batches = 1 + mornings_between(started_at, now)
-    return min(size * size, batches * batch_size(size))
-
-
-def reveal_end(size: int, started_at: datetime) -> datetime:
-    """The morning the last pixels show, which ends the drawing (unless everyone finds it
-    first): the opening shows the first batch, each 08:00 after it the next one."""
-    mornings = math.ceil(size * size / batch_size(size)) - 1
-    if mornings <= 0:
-        return started_at
-    first_day = started_at.astimezone(PARIS).date()
-    if _morning(first_day) <= started_at:
-        first_day += timedelta(days=1)
-    return _morning(first_day + timedelta(days=mornings - 1))
+def reveal_end(started_at: datetime, duration: timedelta = PIXEL_DURATION) -> datetime:
+    """When the last pixels show, which ends the drawing (unless everyone finds it first)."""
+    return started_at + duration
 
 
 def masked(pixels: bytes, order: bytes, count: int) -> bytes:
@@ -157,8 +140,16 @@ def masked(pixels: bytes, order: bytes, count: int) -> bytes:
     return bytes(shown)
 
 
-def pixel_gain(rank: int) -> int:
-    return PIXEL_GAINS[rank - 1] if rank <= len(PIXEL_GAINS) else PIXEL_OTHER_GAIN
+def pixel_gain(elapsed: timedelta, duration: timedelta = PIXEL_DURATION) -> int:
+    """What finding the word pays after `elapsed`: 50 laurels at the opening, falling in a line
+    to 3 at the end of `duration`, rounded to the whole laurel. The same for all at that moment."""
+    done = min(max(_micros(elapsed), 0), _micros(duration))
+    span = PIXEL_START_GAIN - PIXEL_OTHER_GAIN
+    return PIXEL_START_GAIN - (span * done * 2 + _micros(duration)) // (2 * _micros(duration))
+
+
+def _morning(day: date) -> datetime:
+    return datetime(day.year, day.month, day.day, REVEAL_HOUR, tzinfo=PARIS)
 
 
 def next_start(finished_at: datetime) -> datetime:

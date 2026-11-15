@@ -127,7 +127,8 @@ async def pay_runner_week(org_id: uuid.UUID | None = None) -> int:
 
 @job("reveal_pixel_puzzles", minute="*")
 async def reveal_pixel_puzzles(org_id: uuid.UUID | None = None) -> int:
-    """Shows each morning's Pixel mystère pixels at 08:00 (Paris), ends the drawings fully shown,
+    """Records the Pixel mystère pixels shown so far (in proportion to the time gone), ends
+    the drawings fully shown,
     and starts the next ones. A week without Pixel mystère ends the drawing in play at its first
     minute, its word given, and starts none (research.md J7). Checked every minute, so that a
     worker restarted later catches up. `org_id` keeps one newsroom only (`sibylle games

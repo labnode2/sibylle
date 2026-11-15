@@ -966,6 +966,12 @@ class PixelStatus(BaseModel):
     word: str | None
     # When an active drawing ends unless everyone finds it first; null once finished.
     ends_at: datetime | None
+    # What finding the word pays falls in a line from 50 to 3 laurels between `started_at` and
+    # `gain_ends_at` (the drawing's full week, even if the planning ends it sooner); `gain_now` is
+    # what it pays now, null when the member cannot play or the game ended.
+    started_at: datetime | None
+    gain_ends_at: datetime | None
+    gain_now: int | None
 
 
 class Games(BaseModel):
