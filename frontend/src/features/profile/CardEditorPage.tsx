@@ -6,7 +6,7 @@
 // « Annuler » puts back what was saved.
 import { useCallback, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router';
+import { Link, useLocation, useParams } from 'react-router';
 
 import type { Org } from '../../api/types';
 import { Button, Field, TopBar } from '../../ui/components';
@@ -92,6 +92,7 @@ function WearablePicker({
   preview: (key: string | null) => ReactNode;
 }) {
   const { t } = useTranslation('profile');
+  const { pathname } = useLocation();
   const legend = t(`customize.${kind}`);
   return (
     <fieldset className={styles.choices}>
@@ -99,7 +100,9 @@ function WearablePicker({
       {owned.length === 0 ? (
         <p className={styles.meta}>
           {t(`customize.no.${kind}`)}{' '}
-          <Link to={`/o/${orgId}/collection`}>{t('customize.collection')}</Link>
+          <Link to={`/o/${orgId}/collection`} state={{ from: pathname }}>
+            {t('customize.collection')}
+          </Link>
         </p>
       ) : (
         <div className={styles.choiceGrid} role="radiogroup" aria-label={legend}>

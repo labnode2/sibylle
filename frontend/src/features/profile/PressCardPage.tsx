@@ -216,7 +216,7 @@ function Lines({ orgId }: { orgId: string }) {
   const logout = useLogoutConfirm();
   return (
     <nav className={styles.lines} aria-label={t('lines.label')}>
-      <Link to={`/o/${orgId}/collection`} className={styles.line}>
+      <Link to={`/o/${orgId}/collection`} state={{ from: pathname }} className={styles.line}>
         <span className={styles.lineText}>{t('collectionLink')}</span>
         <Icon name="chevronRight" size={24} />
       </Link>

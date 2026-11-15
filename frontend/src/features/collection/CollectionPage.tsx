@@ -3,7 +3,7 @@
 // surprises.
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router';
+import { Link, useLocation, useParams } from 'react-router';
 
 import { formatDate, formatNumber } from '../../i18n';
 import { Button, Card, Chip, Coins, Field, TopBar } from '../../ui/components';
@@ -170,6 +170,13 @@ function SecretCode({ orgId }: { orgId: string }) {
 export function CollectionPage() {
   const { t } = useTranslation('profile');
   const { orgId = '' } = useParams();
+  const { state } = useLocation();
+  // Back to the page that opened the collection (`state.from`), else to the press card.
+  const from = (state as { from?: unknown } | null)?.from;
+  const back =
+    typeof from === 'string' && from.startsWith('/') && !from.startsWith('//')
+      ? from
+      : `/o/${orgId}/profil`;
   const org = useOrg(orgId);
   const catalog = useCatalog(orgId);
   if (!org.data || !catalog.data) return <p role="status">{t('common:shell.loading')}</p>;
@@ -178,7 +185,7 @@ export function CollectionPage() {
 
   return (
     <div className={styles.page}>
-      <TopBar back={`/o/${orgId}/profil`} backLabel={t('collection.back')} />
+      <TopBar back={back} backLabel={t('collection.back')} />
       <div className={styles.top}>
         <h1 className={styles.title}>{t('collection.title')}</h1>
         <span className={styles.balance}>
@@ -211,7 +218,7 @@ export function CollectionPage() {
         );
       })}
       <SecretCode orgId={orgId} />
-      <Link to={`/o/${orgId}/profil`} className={styles.back}>
+      <Link to={back} className={styles.back}>
         {t('collection.backToCard')}
       </Link>
     </div>

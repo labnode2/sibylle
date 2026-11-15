@@ -2,6 +2,7 @@
 // opening after the conversion (or straight away when it happens while the app is open).
 import { useEffect, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router';
 
 import { formatDate, formatNumber } from '../../i18n';
 import { Button, ButtonLink, Coins, Kicker } from '../../ui/components';
@@ -11,6 +12,7 @@ import styles from './coins.module.css';
 
 export function WeeklyCoinsDialog({ orgId, coins }: { orgId: string; coins: number }) {
   const { t } = useTranslation('coins');
+  const { pathname } = useLocation();
   const weekly = useWeeklyCoins(orgId);
   const seen = useWeeklyCoinsSeen(orgId);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -55,7 +57,7 @@ export function WeeklyCoinsDialog({ orgId, coins }: { orgId: string; coins: numb
       </p>
       <p className={styles.text}>{t('total', { count: coins, coins: formatNumber(coins) })}</p>
       <div className={styles.actions}>
-        <ButtonLink to={`/o/${orgId}/collection`} onClick={close}>
+        <ButtonLink to={`/o/${orgId}/collection`} state={{ from: pathname }} onClick={close}>
           {t('spend')}
         </ButtonLink>
         <Button variant="secondary" onClick={close}>
