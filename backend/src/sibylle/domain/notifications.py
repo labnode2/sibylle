@@ -6,12 +6,14 @@ from urllib.parse import urlsplit
 
 
 class NotificationType(StrEnum):
-    """The four notifications a member can switch off, channel by channel."""
+    """The notifications a member can switch off, channel by channel."""
 
     NEW_PRONO = "new_prono"
     CLOSING_SOON = "closing_soon"
     RESULT = "result"
     DESIGNATION_REMINDER = "designation_reminder"
+    # For whoever handles the reports (Action.HANDLE_REPORTS): a member just flagged a prono.
+    REPORT = "report"
 
 
 class Channel(StrEnum):

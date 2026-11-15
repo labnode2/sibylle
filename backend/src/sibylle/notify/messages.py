@@ -1,4 +1,4 @@
-"""What the four notifications say, in the account's language: the push message
+"""What the notifications say, in the account's language: the push message
 (contracts/notifications.md) and the values of the e-mail templates."""
 
 from typing import Any
@@ -17,6 +17,18 @@ def prono_path(payload: dict[str, Any]) -> str:
     return f"/o/{payload['org_id']}/pronos/{payload['prono_id']}"
 
 
+def reports_path(payload: dict[str, Any]) -> str:
+    """The newsroom's reports page (ReportsPage), where the report is handled."""
+    return f"/o/{payload['org_id']}/reglages/signalements"
+
+
+def path(notification: Notification) -> str:
+    """Where the notification leads: the reports page for a report, otherwise the prono."""
+    if notification.type == NotificationType.REPORT:
+        return reports_path(notification.payload)
+    return prono_path(notification.payload)
+
+
 def _result_key(payload: dict[str, Any]) -> str:
     if payload["kind"] == "cancellation":
         return "cancelled"
@@ -31,6 +43,8 @@ def lead(notification: Notification, locale: str) -> str:
     payload = notification.payload
     if notification.type == NotificationType.RESULT:
         return t(f"notify.result.{_result_key(payload)}", locale, **payload)
+    if notification.type == NotificationType.REPORT:
+        return t(f"notify.report.{payload['kind']}", locale, **payload)
     return t(f"notify.{notification.type}.lead", locale, **payload)
 
 
@@ -42,9 +56,9 @@ def push_message(notification: Notification, locale: str) -> dict[str, str]:
         "body": t(
             "notify.body", locale, question=payload["question"], lead=lead(notification, locale)
         ),
-        "url": prono_path(payload),
-        # A newer message about the same prono replaces the older one on the device.
-        "tag": f"{notification.type}:{payload['prono_id']}",
+        "url": path(notification),
+        # A newer message about the same prono (or report) replaces the older one on the device.
+        "tag": f"{notification.type}:{payload.get('report_id') or payload['prono_id']}",
         "icon": ICON,
     }
 
@@ -54,6 +68,6 @@ def email_values(notification: Notification, locale: str) -> dict[str, Any]:
     return {
         **notification.payload,
         "lead": lead(notification, locale),
-        "link": origin + prono_path(notification.payload),
+        "link": origin + path(notification),
         "prefs_link": origin + PREFS_PATH,
     }

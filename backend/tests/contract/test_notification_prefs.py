@@ -9,14 +9,14 @@ from sibylle.db.session import transaction
 
 pytestmark = pytest.mark.contract
 
-TYPES = ["new_prono", "closing_soon", "result", "designation_reminder"]
+TYPES = ["new_prono", "closing_soon", "result", "designation_reminder", "report"]
 DEVICE = {
     "endpoint": "https://fcm.googleapis.com/fcm/send/telephone-de-cami",
     "keys": {"p256dh": "cle-publique", "auth": "secret"},
 }
 
 
-async def test_eight_switches_all_on_by_default(
+async def test_two_switches_per_type_all_on_by_default(
     make_account: MakeAccount, client_for: ClientFor
 ) -> None:
     cami = await client_for(await make_account())
@@ -32,15 +32,19 @@ async def test_eight_switches_all_on_by_default(
         json=[
             {"type": "closing_soon", "channel": "email", "enabled": False},
             {"type": "result", "channel": "push", "enabled": False},
+            {"type": "report", "channel": "email", "enabled": False},
         ],
     )
     assert response.status_code == 200, response.text
     off = {(p["type"], p["channel"]) for p in response.json() if not p["enabled"]}
-    assert off == {("closing_soon", "email"), ("result", "push")}
+    assert off == {("closing_soon", "email"), ("result", "push"), ("report", "email")}
 
     again = await cami.put(
         "/api/me/notification-prefs",
-        json=[{"type": "closing_soon", "channel": "email", "enabled": True}],
+        json=[
+            {"type": "closing_soon", "channel": "email", "enabled": True},
+            {"type": "report", "channel": "email", "enabled": True},
+        ],
     )
     off = {(p["type"], p["channel"]) for p in again.json() if not p["enabled"]}
     assert off == {("result", "push")}
@@ -54,7 +58,7 @@ async def test_eight_switches_all_on_by_default(
         {"type": "result", "channel": "sms", "enabled": False},
     ],
 )
-async def test_only_the_four_types_and_two_channels(
+async def test_only_the_known_types_and_two_channels(
     make_account: MakeAccount, client_for: ClientFor, pref: dict[str, object]
 ) -> None:
     cami = await client_for(await make_account())

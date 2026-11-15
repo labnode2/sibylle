@@ -1,0 +1,1 @@
+{% with kicker="NOUVEAU SIGNALEMENT", action="Voir les signalements" %}{% include "fr/_notification.txt" %}{% endwith %}

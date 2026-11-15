@@ -1846,7 +1846,7 @@ export interface components {
              * Type
              * @enum {string}
              */
-            type: "new_prono" | "closing_soon" | "result" | "designation_reminder";
+            type: "new_prono" | "closing_soon" | "result" | "designation_reminder" | "report";
             /**
              * Channel
              * @enum {string}

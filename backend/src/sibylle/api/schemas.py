@@ -860,7 +860,7 @@ class PublicCard(BaseModel):
 
 # Notifications (US8)
 
-NotificationKind = Literal["new_prono", "closing_soon", "result", "designation_reminder"]
+NotificationKind = Literal["new_prono", "closing_soon", "result", "designation_reminder", "report"]
 NotificationChannel = Literal["push", "email"]
 
 

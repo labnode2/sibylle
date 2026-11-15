@@ -69,6 +69,7 @@ NOTIFICATIONS = {
     "closing_soon": {},
     "result": {"kind": "resolution", "seq": 1, "result": "Nice", "outcome": "won", "payout": 1},
     "designation_reminder": {"relaunch": 0},
+    "report": {"report_id": "signalement", "kind": "content"},
 }
 
 
@@ -80,7 +81,8 @@ def test_notification_emails_render(type: str) -> None:
     notification = Notification(type=type, payload={**ABOUT, **NOTIFICATIONS[type]})
     mail = Renderer().render(type, "cami@exemple.fr", email_values(notification, "fr"))
     assert mail.subject.startswith("Sophia Office · ")
-    prono, prefs = f"{ORIGIN}/o/org/pronos/prono", f"{ORIGIN}/compte#notifications"
+    target = "reglages/signalements" if type == "report" else "pronos/prono"
+    prono, prefs = f"{ORIGIN}/o/org/{target}", f"{ORIGIN}/compte#notifications"
     for link in (prono, prefs):
         assert link in mail.text and link in mail.html
     assert "Nice ou Monaco samedi ?" in mail.html

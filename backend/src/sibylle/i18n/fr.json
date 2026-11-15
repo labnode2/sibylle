@@ -28,7 +28,8 @@
       "new_prono": "{org_title} · Nouveau prono : {question}",
       "closing_soon": "{org_title} · Plus que 2 h pour jouer",
       "result": "{org_title} · Édition spéciale : {question}",
-      "designation_reminder": "{org_title} · Résultat à désigner : {question}"
+      "designation_reminder": "{org_title} · Résultat à désigner : {question}",
+      "report": "{org_title} · Nouveau signalement : {question}"
     }
   },
   "notify": {
@@ -54,6 +55,11 @@
     "designation_reminder": {
       "title": "{org_title} · Résultat à désigner",
       "lead": "Désigne le résultat, ou relance ou annule le prono."
+    },
+    "report": {
+      "title": "{org_title} · Nouveau signalement",
+      "result_error": "Un membre signale un résultat erroné. À toi de trancher.",
+      "content": "Un membre signale un contenu qui pose problème. À toi de trancher."
     }
   }
 }

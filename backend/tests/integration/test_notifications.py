@@ -414,3 +414,106 @@ async def test_a_deleted_account_gets_nothing(make_org: MakeOrg, person: MakePer
         )
     assert (await send()).sent == []
     assert (await states("new_prono"))[cami.account.id] == "skipped"
+
+
+async def report(reporter: Person, org_id: Any, prono_id: str, kind: str = "content") -> str:
+    response = await reporter.client.post(url(org_id, prono_id, "reports"), json={"kind": kind})
+    assert response.status_code == 201, response.text
+    report_id: str = response.json()["id"]
+    return report_id
+
+
+async def test_a_report_reaches_whoever_handles_reports_only(
+    make_org: MakeOrg, person: MakePerson
+) -> None:
+    org = await make_org()
+    ines = await person(org, "editor", "Inès")
+    alix = await person(org, "editor", "Alix")
+    zoe = await person(org, "editor", "Zoé")
+    await leave(zoe)
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    await person(org, "reader", "Léo")
+
+    # Inès's prono, flagged by Cami: neither of them hears of it, nor the journalist and the
+    # other reader, who cannot handle it.
+    by_ines = await publish(ines.client, str(org.id))
+    first = await report(cami, org.id, by_ines["id"])
+    assert await recipients("report") == {alix.account.id}
+    [queued] = await notifications("report")
+    assert queued.dedupe_key == f"report:{first}:{alix.account.id}"
+    assert queued.payload["report_id"] == first and queued.payload["kind"] == "content"
+
+    # An editor who reports is not told of their own report either.
+    by_hugo = await publish(hugo.client, str(org.id))
+    second = await report(alix, org.id, by_hugo["id"], "result_error")
+    second_round = {n.account_id for n in await notifications("report") if second in n.dedupe_key}
+    assert second_round == {ines.account.id}
+
+
+async def test_a_report_leads_to_the_reports_page(make_org: MakeOrg, person: MakePerson) -> None:
+    org = await make_org()
+    alix = await person(org, "editor", "Alix")
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    prono = await publish(hugo.client, str(org.id))
+    await send()  # the « Nouveau prono » of Alix and Cami
+    await subscribe(alix)
+    report_id = await report(cami, org.id, prono["id"], "result_error")
+
+    push = MemoryPushSender()
+    [mail] = (await send(push)).sent
+    page = f"/o/{org.id}/reglages/signalements"
+    assert mail.to == alix.account.email
+    assert mail.subject == "Sophia Office · Nouveau signalement : Nice ou Monaco samedi ?"
+    assert "http://localhost:5173" + page in mail.html
+    assert "http://localhost:5173" + page in mail.text
+    assert "résultat erroné" in mail.text
+    [(_, message, _)] = push.sent
+    assert message["url"] == page
+    assert message["title"] == "Sophia Office · Nouveau signalement"
+    assert message["tag"] == f"report:{report_id}"
+    assert (await states("report")) == {alix.account.id: "sent"}
+
+
+async def test_report_preferences_and_handled_reports(
+    make_org: MakeOrg, person: MakePerson
+) -> None:
+    org = await make_org()
+    alix = await person(org, "editor", "Alix")
+    ines = await person(org, "editor", "Inès")
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    prono = await publish(hugo.client, str(org.id))
+    await send()
+    await subscribe(alix)
+    response = await alix.client.put(
+        "/api/me/notification-prefs",
+        json=[{"type": "report", "channel": "email", "enabled": False}],
+    )
+    assert response.status_code == 200, response.text
+    await ines.client.put(
+        "/api/me/notification-prefs",
+        json=[
+            {"type": "report", "channel": "push", "enabled": False},
+            {"type": "report", "channel": "email", "enabled": False},
+        ],
+    )
+
+    await report(cami, org.id, prono["id"])
+    push = MemoryPushSender()
+    assert emailed(await send(push)) == []
+    assert [endpoint for endpoint, _, _ in push.sent] == [FCM + "telephone"]
+    assert await states("report") == {alix.account.id: "sent", ines.account.id: "skipped"}
+
+    # Handled before the worker gets to it: nothing left to tell.
+    second = await report(cami, org.id, prono["id"], "result_error")
+    handled = await ines.client.post(
+        f"/api/orgs/{org.id}/reports/{second}/handle", json={"state": "dismissed"}
+    )
+    assert handled.status_code == 200, handled.text
+    push = MemoryPushSender()
+    await send(push)
+    assert push.sent == []
+    late = [n for n in await notifications("report") if second in n.dedupe_key]
+    assert {n.state for n in late} == {"skipped"}

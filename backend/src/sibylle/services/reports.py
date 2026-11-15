@@ -11,6 +11,7 @@ from sibylle.api.errors import AppError
 from sibylle.db.models import Membership, Prono, Report
 from sibylle.domain.permissions import Action, Role, can
 from sibylle.realtime import bus
+from sibylle.services import notifications
 from sibylle.services.pronos import get_prono
 
 
@@ -49,6 +50,7 @@ async def create_report(
             {"report_id": str(report.id), "prono_id": str(prono.id), "kind": kind},
             topics=[f"me:{account_id}" for account_id in editors],
         )
+    await notifications.report_created(session, report, prono)
     return report
 
 

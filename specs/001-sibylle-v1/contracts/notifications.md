@@ -10,6 +10,7 @@
 | `closing_soon` | clôture moins 2 h (vérifié chaque minute) | membres actifs sans pari actif ; jamais pour un prono de date « sans fin » | `closing_soon:{prono}:{account}` |
 | `result` | règlement (`resolution`, `correction`, `cancellation`) | membres qui ont parié | `result:{prono}:{settlement_seq}:{account}` |
 | `designation_reminder` | date de résultat attendu (sinon lendemain de la clôture), puis J+1, J+3, J+7, puis chaque semaine ; une relance repart de zéro | créateur journaliste, ou journaliste qui a validé la proposition | `designation:{prono}:{relance}-{étape}` |
+| `report` | un membre signale un prono (résultat erroné ou contenu) | membres actifs qui traitent les signalements (`handle_reports` : rédaction en chef), sauf l'auteur du signalement et le créateur du prono signalé ; lien vers `/o/<org_id>/reglages/signalements` ; sans objet si le signalement est déjà traité | `report:{report}:{account}` |
 
 En plus, hors préférences (toujours envoyés par e-mail) : vérification de l'adresse, réinitialisation du mot de passe, invitation nominative.
 
@@ -17,7 +18,7 @@ Un membre de plusieurs rédactions reçoit les notifications de chacune ; le nom
 
 ## Préférences
 
-Huit interrupteurs par compte : 4 types × 2 canaux (`push`, `email`), tous actifs par défaut (routes `/me/notification-prefs` dans [rest-api.md](rest-api.md)). Un compte dont l'e-mail n'est pas vérifié ne reçoit aucun e-mail de notification.
+Dix interrupteurs par compte : 5 types × 2 canaux (`push`, `email`), tous actifs par défaut (routes `/me/notification-prefs` dans [rest-api.md](rest-api.md)). Un compte dont l'e-mail n'est pas vérifié ne reçoit aucun e-mail de notification.
 
 ## Notification push
 
@@ -49,6 +50,7 @@ Envoyés par le relais SMTP de Brevo depuis `Sibylle <ne-pas-repondre@<domaine>>
 | `closing_soon` | {organisation} · Plus que 2 h pour jouer |
 | `result` | {organisation} · Édition spéciale : {question} |
 | `designation_reminder` | {organisation} · Résultat à désigner : {question} |
+| `report` | {organisation} · Nouveau signalement : {question} |
 
 ## Envoi et reprises
 

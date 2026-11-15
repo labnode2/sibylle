@@ -45,7 +45,8 @@ class NotificationPref(Base):
     __tablename__ = "notification_prefs"
     __table_args__ = (
         CheckConstraint(
-            "type IN ('new_prono', 'closing_soon', 'result', 'designation_reminder')", name="type"
+            "type IN ('new_prono', 'closing_soon', 'result', 'designation_reminder', 'report')",
+            name="type",
         ),
         CheckConstraint("channel IN ('push', 'email')", name="channel"),
     )

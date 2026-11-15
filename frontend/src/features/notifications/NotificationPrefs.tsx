@@ -1,4 +1,4 @@
-// The notification settings: this device's push subscription, then four kinds × two channels
+// The notification settings: this device's push subscription, then each kind × two channels
 // (push, e-mail); the e-mail ones wait for a confirmed address, since no notification e-mail
 // leaves before. Notification e-mails link here (`#notifications`).
 import { useEffect, useId, useRef } from 'react';

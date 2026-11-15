@@ -1,7 +1,7 @@
 """The notifications outbox: rows written with the event that causes them, sent by the worker.
 
-Also who gets the four notifications of US8 (contracts/notifications.md), the switches of each
-account and its push devices.
+Also who gets the notifications of US8 and the reports' one (contracts/notifications.md), the
+switches of each account and its push devices.
 """
 
 import uuid
@@ -24,6 +24,7 @@ from sibylle.db.models import (
     Organisation,
     Prono,
     PushSubscription,
+    Report,
     Settlement,
 )
 from sibylle.domain.lifecycle import State
@@ -264,6 +265,31 @@ async def queue_designation_reminders(session: AsyncSession) -> int:
     return added
 
 
+async def report_created(session: AsyncSession, report: Report, prono: Prono) -> int:
+    """« Nouveau signalement » for whoever may handle it, never its author nor the member it is
+    about (the prono's author)."""
+    org = await session.get(Organisation, prono.org_id)
+    assert org is not None
+    skip = {report.reporter_membership_id, prono.created_by}
+    handlers = [
+        member
+        for member in await _active_members(session, org.id)
+        if member.id not in skip and can(member.role, Action.HANDLE_REPORTS)
+    ]
+    return await enqueue_many(
+        session,
+        [
+            _row(
+                NotificationType.REPORT,
+                member,
+                f"report:{report.id}:{member.account_id}",
+                {**_about(org, prono, member.id), "report_id": str(report.id), "kind": report.kind},
+            )
+            for member in handlers
+        ],
+    )
+
+
 async def still_relevant(session: AsyncSession, notification: Notification) -> bool:
     """Whether the notification still has an object when it leaves (otherwise `skipped`)."""
     payload = notification.payload
@@ -295,13 +321,21 @@ async def still_relevant(session: AsyncSession, notification: Notification) -> b
                 and prono.relaunch_count == payload["relaunch"]
                 and can(member.role, Action.DESIGNATE_RESULT)
             )
+        case NotificationType.REPORT:
+            # Already handled by someone else, or no longer theirs to handle: nothing to tell.
+            report = await session.get(Report, uuid.UUID(payload["report_id"]))
+            return (
+                report is not None
+                and report.state == "open"
+                and can(member.role, Action.HANDLE_REPORTS)
+            )
 
 
 # Switches
 
 
 async def prefs(session: AsyncSession, account_id: uuid.UUID) -> list[tuple[str, str, bool]]:
-    """The eight switches, in the contract's order; the ones never touched are on."""
+    """The switches (two per type), in the contract's order; the ones never touched are on."""
     stored = {
         (pref.type, pref.channel): pref.enabled
         for pref in await session.scalars(

@@ -18,6 +18,10 @@
     "designation_reminder": {
       "label": "Résultats à désigner",
       "hint": "Pour les journalistes : un rappel tant qu'un résultat attend."
+    },
+    "report": {
+      "label": "Signalements",
+      "hint": "Pour la rédaction en chef : un membre signale un prono."
     }
   },
   "channels": {

@@ -12,6 +12,7 @@ export const KINDS: NotificationKind[] = [
   'closing_soon',
   'result',
   'designation_reminder',
+  'report',
 ];
 export const CHANNELS: NotificationChannel[] = ['push', 'email'];
 
