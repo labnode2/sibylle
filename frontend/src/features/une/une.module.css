@@ -492,13 +492,3 @@
     margin-top: 0;
   }
 }
-
-/* « LORENZO », en gros en haut de la une (carte #14). */
-.lorenzo {
-  margin: 8px 0 16px;
-  font: 400 clamp(64px, 18vw, 160px)/1 var(--font-title);
-  letter-spacing: 0.02em;
-  text-align: center;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}

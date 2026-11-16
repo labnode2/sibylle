@@ -269,7 +269,6 @@ export function UnePage() {
   return (
     <div className={styles.une}>
       <h1 className="visually-hidden">{t('title', { org: org.data.title })}</h1>
-      <p className={styles.lorenzo}>LORENZO</p>
       <Dateline org={org.data} />
       <div className="only-mobile">
         <Masthead size="compact" />
