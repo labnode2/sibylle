@@ -183,14 +183,13 @@
   gap: 12px;
 }
 
-/* Pixel mystère: what finding the word now would pay, a gold box under the countdown. */
+/* Pixel mystère: what finding the word now would pay, a box over the countdown, its figure as
+   big as the countdown's and followed by a gold laurel. */
 .gainNow {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 10px 14px;
-  background: var(--gold);
-  color: var(--ink);
 }
 
 .gainNowLabel {
@@ -199,13 +198,11 @@
 }
 
 .gainNowValue {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font: 800 34px/1 var(--font-text);
   font-variant-numeric: tabular-nums;
-}
-
-.gainNowUnit {
-  font: 700 13px/1 var(--font-mono);
-  letter-spacing: 0.06em;
 }
 
 .word {
@@ -303,15 +300,12 @@
   color: var(--ink-2);
 }
 
-/* What finding the drawing's word now would pay, a gold tag under its line. */
+/* What finding the drawing's word now would pay, after its time left: « +42 » and a gold
+   laurel centred on it, kept together. */
 .gameGain {
-  align-self: flex-start;
-  padding: 3px 6px;
-  border: 1px solid var(--gold-line);
-  background: var(--gold);
-  color: var(--ink);
-  font: 700 11px/1 var(--font-mono);
-  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   white-space: nowrap;
 }
 

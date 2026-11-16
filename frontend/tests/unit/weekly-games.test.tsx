@@ -1,5 +1,7 @@
 // « Les jeux de la semaine » on la une: a Pixel mystère found shows as the newsroom sees it,
-// masked and without its word, with a « RÉSOLU » tag; its author sees it masked too.
+// masked and without its word, with a blue « RÉSOLU » tag; its author sees it masked too. Whoever
+// can still find it reads what finding it now would pay right after its time left, with a gold
+// laurel.
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -68,9 +70,12 @@ function show(state: Games) {
 }
 
 describe('WeeklyGames', () => {
-  it('shows a drawing found masked, with its tag and without its word', () => {
+  it('shows a drawing found masked, with its blue tag and without its word', () => {
     show(pixel({ found_by_me: true }));
-    expect(screen.getByText('RÉSOLU')).toBeVisible();
+    const tag = screen.getByText('RÉSOLU');
+    expect(tag).toBeVisible();
+    expect(tag.className).toMatch(/chipIndigo/);
+    expect(tag.className).not.toMatch(/chipInk/);
     expect(screen.getByTestId('drawing')).toHaveAttribute('data-revealed', MASKED);
     expect(screen.getByRole('link', { name: /Pixel mystère/ })).toHaveTextContent(
       'UN MOT DE 4 LETTRES',
@@ -89,7 +94,7 @@ describe('WeeklyGames', () => {
     expect(screen.queryByText('RÉSOLU')).toBeNull();
   });
 
-  it('shows what finding the word would pay now, to the minute', () => {
+  it('shows what finding the word would pay now after its time left, to the minute', () => {
     const start = new Date('2026-11-02T09:00:00Z').getTime();
     vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
     vi.setSystemTime(start + 84 * 3_600_000); // half of the week
@@ -102,15 +107,20 @@ describe('WeeklyGames', () => {
           gain_now: 26,
         }),
       );
-      expect(screen.getByRole('link', { name: /Pixel mystère/ })).toHaveTextContent(
-        'TROUVE MAINTENANT : +26',
+      const link = screen.getByRole('link', { name: /Pixel mystère/ });
+      // « +26 » and a gold laurel, named for screen readers, on the line after the time left.
+      expect(link).toHaveTextContent(
+        'UN MOT DE 4 LETTRES · FIN DANS 3 J 12 H · +26 lauriers si tu trouves maintenant',
       );
+      expect(link.querySelector('img')).toHaveAttribute(
+        'src',
+        expect.stringMatching(/\/laurel\.png$/),
+      );
+      expect(link).not.toHaveTextContent('TROUVE MAINTENANT');
       act(() => {
         vi.advanceTimersByTime(84 * 3_600_000);
       });
-      expect(screen.getByRole('link', { name: /Pixel mystère/ })).toHaveTextContent(
-        'TROUVE MAINTENANT : +3',
-      );
+      expect(link).toHaveTextContent('· +3 lauriers si tu trouves maintenant');
     } finally {
       vi.useRealTimers();
     }
@@ -118,7 +128,10 @@ describe('WeeklyGames', () => {
 
   it('shows no gain to whoever cannot play', () => {
     show(pixel({ mine: true, gain_now: null }));
-    expect(screen.queryByText(/TROUVE MAINTENANT/)).toBeNull();
+    const link = screen.getByRole('link', { name: /Pixel mystère/ });
+    expect(link).not.toHaveTextContent('si tu trouves maintenant');
+    expect(link).not.toHaveTextContent('+');
+    expect(link.querySelector('img')).toBeNull();
   });
 
   it('always shows Wordle, even in a week without games, and says if it was played', () => {

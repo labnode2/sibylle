@@ -2,16 +2,16 @@
 // is a line to tap, its picture on the left (the season's ball for the race, the drawing as far
 // as it shows for Pixel mystère), my record and attempts left, or the word's length. Only the
 // games the editor kept for the week show (US12); Wordle, one word a day, is always there and
-// says whether the member played today. The
-// drawing under way says how long it has left. Whoever found it or drew it sees it here as the
-// newsroom does, masked and without its word (the server sends no more); a finder gets a
-// « RÉSOLU » tag.
+// says whether the member played today. The drawing under way says how long it has left and, to
+// whoever can still find it, what finding it now would pay, right after (« FIN DANS 6 J 23 H ·
+// +50 » and a gold laurel). Whoever found it or drew it sees it here as the newsroom does, masked
+// and without its word (the server sends no more); a finder gets a blue « RÉSOLU » tag.
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import { formatNumber } from '../../i18n';
-import { Chip } from '../../ui/components';
+import { Chip, Laurel } from '../../ui/components';
 import { shortTimeLeft, useNow } from '../../ui/Countdown';
 import { CrystalBall } from '../../ui/CrystalBall';
 import { useGames, type Games } from './api';
@@ -73,14 +73,21 @@ export function WeeklyGames({ orgId, size = 32 }: { orgId: string; size?: 32 | 4
                 {t('box.pixel')}
                 {pixel?.found_by_me && (
                   <span className={styles.gameTag}>
-                    <Chip variant="ink">{t('box.pixelSolved')}</Chip>
+                    <Chip variant="indigo">{t('box.pixelSolved')}</Chip>
                   </span>
                 )}
               </span>
-              <span className={styles.gameLine}>{pixelLine(t, pixel, now)}</span>
-              {gain != null && (
-                <span className={styles.gameGain}>{t('box.pixelGain', { laurels: gain })}</span>
-              )}
+              <span className={styles.gameLine}>
+                {pixelLine(t, pixel, now)}
+                {gain != null && (
+                  <>
+                    {' · '}
+                    <span className={styles.gameGain}>
+                      +{gain} <Laurel tone="gold" label={t('box.pixelGain')} />
+                    </span>
+                  </>
+                )}
+              </span>
             </span>
           </Link>
         </li>

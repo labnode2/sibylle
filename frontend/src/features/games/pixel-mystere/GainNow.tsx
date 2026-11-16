@@ -1,9 +1,9 @@
-// What finding the word now would pay, in a gold box beside the countdown so that it catches
-// the eye: « TROUVE MAINTENANT » over a big « +42 LAURIERS ». Nothing for whoever cannot win
-// (the drawing's author, whoever already found, a finished drawing).
+// What finding the word now would pay, in a box beside the countdown so that it catches the eye:
+// « SI TU TROUVES MAINTENANT » over a big « +42 » and a gold laurel. Nothing for whoever cannot
+// win (the drawing's author, whoever already found, a finished drawing).
 import { useTranslation } from 'react-i18next';
 
-import { Card } from '../../../ui/components';
+import { Card, Laurel } from '../../../ui/components';
 import type { PixelStatus } from '../api';
 import styles from '../games.module.css';
 import { useGainNow } from './gain';
@@ -17,7 +17,7 @@ export function GainNow({ status }: { status: PixelStatus }) {
       <Card as="div" className={styles.gainNow}>
         <span className={styles.gainNowLabel}>{t('pixel.gainNowLabel')}</span>
         <span className={styles.gainNowValue}>
-          +{gain} <span className={styles.gainNowUnit}>{t('pixel.gainNowUnit')}</span>
+          +{gain} <Laurel size={32} tone="gold" />
         </span>
       </Card>
     </div>

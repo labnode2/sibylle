@@ -1,5 +1,6 @@
-// Pixel mystère: what finding the word now would pay shows in a gold box on the game page, big
-// and counting down to the minute; nothing for whoever cannot win.
+// Pixel mystère: what finding the word now would pay shows in a box on the game page, big, with
+// a gold laurel in place of the word, and counting down to the minute; nothing for whoever cannot
+// win.
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -36,22 +37,28 @@ function status(overrides: Partial<PixelStatus>): PixelStatus {
 }
 
 describe('GainNow', () => {
-  it('shows the laurels to win now, big, and counts them down', () => {
+  it('shows the laurels to win now, big with a gold laurel, and counts them down', () => {
     vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
     vi.setSystemTime(START);
     try {
       render(<GainNow status={status({})} />);
       const box = screen.getByRole('status', { name: 'TROUVE MAINTENANT : +50' });
       expect(box).toHaveTextContent('SI TU TROUVES MAINTENANT');
-      expect(box).toHaveTextContent('+50 LAURIERS');
+      // The figure, then the gold laurel (named « lauriers » for screen readers), not the word.
+      expect(box).toHaveTextContent('+50 lauriers');
+      expect(box).not.toHaveTextContent('LAURIERS');
+      expect(box.querySelector('img')).toHaveAttribute(
+        'src',
+        expect.stringMatching(/\/laurel\.png$/),
+      );
       act(() => {
         vi.advanceTimersByTime(WEEK / 2);
       });
-      expect(screen.getByRole('status')).toHaveTextContent('+26 LAURIERS');
+      expect(screen.getByRole('status')).toHaveTextContent('+26 lauriers');
       act(() => {
         vi.advanceTimersByTime(WEEK / 2);
       });
-      expect(screen.getByRole('status')).toHaveTextContent('+3 LAURIERS');
+      expect(screen.getByRole('status')).toHaveTextContent('+3 lauriers');
     } finally {
       vi.useRealTimers();
     }
@@ -62,6 +69,7 @@ describe('GainNow', () => {
     render(<GainNow status={status({ found_by_me: true, gain_now: null })} />);
     render(<GainNow status={status({ state: 'finished', gain_now: null })} />);
     expect(screen.queryByRole('status')).toBeNull();
-    expect(screen.queryByText(/LAURIERS/)).toBeNull();
+    expect(screen.queryByText(/SI TU TROUVES MAINTENANT/)).toBeNull();
+    expect(document.querySelector('img')).toBeNull();
   });
 });

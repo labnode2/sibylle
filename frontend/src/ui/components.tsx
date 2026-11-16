@@ -295,13 +295,14 @@ export function Chip({
   variant = 'outline',
 }: {
   children: ReactNode;
-  variant?: 'outline' | 'ink' | 'grey' | 'stamp';
+  variant?: 'outline' | 'ink' | 'indigo' | 'grey' | 'stamp';
 }) {
   return (
     <span
       className={cx(
         styles.chip,
         variant === 'ink' && styles.chipInk,
+        variant === 'indigo' && styles.chipIndigo,
         variant === 'grey' && styles.chipGrey,
         variant === 'stamp' && styles.chipStamp,
       )}
