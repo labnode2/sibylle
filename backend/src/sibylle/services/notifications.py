@@ -9,7 +9,7 @@ from collections.abc import Iterable, Sequence
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import delete, func, or_, select, update
+from sqlalchemy import Text, and_, cast, delete, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -82,7 +82,7 @@ async def enqueue_many(session: AsyncSession, rows: Sequence[dict[str, Any]]) ->
         .returning(Notification.id)
     )
     added = result.all()
-    # The bell of whoever is on the app moves at once (the event leaves with the commit).
+    # The bubbles of whoever is on the app move at once (the event leaves with the commit).
     for account_id, org_id in {
         (row["account_id"], row.get("org_id")) for row in rows if row.get("account_id")
     }:
@@ -417,18 +417,63 @@ async def still_relevant(session: AsyncSession, notification: Notification) -> b
             )
 
 
-# The member's list, in a newsroom
+# The member's notifications, in a newsroom: the list, and the bubbles of the menus
 
 
-def _listed(account_id: uuid.UUID, org_id: uuid.UUID) -> list[Any]:
-    """What the app's list shows: the newsroom's notifications of this account (not the e-mails
-    to an address without an account, not those that were skipped)."""
+def _mine(account_id: uuid.UUID, org_id: uuid.UUID) -> list[Any]:
+    """The newsroom's notifications of this account (not the e-mails to an address without an
+    account), whatever became of their push and e-mail: `skipped` also says that no channel could
+    carry one, and the app still shows it to a member who switched both off."""
     return [
         Notification.account_id == account_id,
         Notification.org_id == org_id,
         Notification.type.in_([type.value for type in NotificationType]),
-        Notification.state != "skipped",
     ]
+
+
+def _listed(account_id: uuid.UUID, org_id: uuid.UUID) -> list[Any]:
+    """The list: not those that were skipped."""
+    return [*_mine(account_id, org_id), Notification.state != "skipped"]
+
+
+def _waiting() -> Any:
+    """What a bubble still leads to, the notification's prono joined: a new prono and its last
+    two hours while it is open, a reminder while the result waits, a result, a tag or a message
+    until read. Never a proposal, which not everyone may open. The reports are left out: their
+    own count, the open reports beside « La rédaction », leads to them. Whether it was sent does
+    not matter (see `_mine`)."""
+    while_open = (NotificationType.NEW_PRONO.value, NotificationType.CLOSING_SOON.value)
+    until_read = (NotificationType.RESULT.value, *_DISCUSSION_TYPES)
+    return and_(
+        Prono.state.notin_((State.PROPOSED.value, State.REJECTED.value)),
+        or_(
+            Notification.type.in_(while_open) & (Prono.state == State.OPEN.value),
+            (Notification.type == NotificationType.DESIGNATION_REMINDER.value)
+            & _awaiting_designation(),
+            Notification.type.in_(until_read),
+        ),
+    )
+
+
+async def unread_pronos(
+    session: AsyncSession, account_id: uuid.UUID, org_id: uuid.UUID
+) -> list[tuple[uuid.UUID, str, int]]:
+    """The bubbles: per prono, its state and how many unread notifications still lead to it,
+    the most recently notified first."""
+    rows = await session.execute(
+        select(Prono.id, Prono.state, func.count())
+        .select_from(Notification)
+        .join(Prono, cast(Prono.id, Text) == Notification.payload["prono_id"].as_string())
+        .where(
+            *_mine(account_id, org_id),
+            Notification.read_at.is_(None),
+            Prono.org_id == org_id,
+            _waiting(),
+        )
+        .group_by(Prono.id, Prono.state)
+        .order_by(func.max(Notification.created_at).desc(), Prono.id)
+    )
+    return [(prono_id, state, count) for prono_id, state, count in rows]
 
 
 async def listing(
@@ -462,19 +507,27 @@ async def mark_read(
     account_id: uuid.UUID,
     org_id: uuid.UUID,
     notification_id: uuid.UUID | None = None,
+    *,
+    prono_id: uuid.UUID | None = None,
 ) -> None:
-    """One notification (404 when it is not this member's in this newsroom), or all of them."""
-    query = update(Notification).where(*_listed(account_id, org_id), Notification.read_at.is_(None))
+    """One notification (404 when it is not this member's in this newsroom), those about a
+    prono (the member opened it), or all of them. Skipped ones too: every bubble must go once its
+    prono is opened."""
+    query = update(Notification).where(*_mine(account_id, org_id), Notification.read_at.is_(None))
     if notification_id is not None:
         found = await session.scalar(
             select(Notification.id).where(
-                *_listed(account_id, org_id), Notification.id == notification_id
+                *_mine(account_id, org_id), Notification.id == notification_id
             )
         )
         if found is None:
             raise AppError("not_found")
         query = query.where(Notification.id == notification_id)
-    result = await session.execute(query.values(read_at=clock.now()))
+    if prono_id is not None:
+        query = query.where(Notification.payload["prono_id"].as_string() == str(prono_id))
+    result = await session.execute(
+        query.values(read_at=clock.now()).execution_options(synchronize_session=False)
+    )
     if result.rowcount:  # type: ignore[attr-defined]
         await _changed(session, account_id, org_id, "notification.read")
 

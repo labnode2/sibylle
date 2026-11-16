@@ -881,7 +881,7 @@ class NotificationPrefItem(BaseModel):
 
 
 class NotificationOut(BaseModel):
-    """A line of the bell's list: what happened, on which prono, and whether it was read."""
+    """A notification of the member: what happened, on which prono, and whether it was read."""
 
     id: uuid.UUID
     type: NotificationKind
@@ -894,6 +894,28 @@ class NotificationOut(BaseModel):
 class NotificationList(BaseModel):
     unread: int
     items: list[NotificationOut]
+
+
+class UnreadProno(BaseModel):
+    """A prono with notifications the member has not read: its state says under which filter of
+    the list it stands."""
+
+    prono_id: uuid.UUID
+    state: PronoState
+    unread: int
+
+
+class UnreadNotifications(BaseModel):
+    """The bubbles of the menus: the unread notifications that still lead to a prono, counted
+    beside « Pronos », then on the list's filters and on each prono."""
+
+    total: int
+    pronos: list[UnreadProno]
+
+
+class NotificationReadIn(BaseModel):
+    # Only the notifications about this prono (the member opened it); all of them when left out.
+    prono_id: uuid.UUID | None = None
 
 
 class VapidKey(BaseModel):

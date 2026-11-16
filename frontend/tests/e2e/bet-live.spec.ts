@@ -74,7 +74,8 @@ test('a bet shows up live, then the prono closes', async ({ browser }, testInfo)
   const cami = await newPerson(browser, testInfo, 'Camille', invitation);
   await joinWith(cami, 'Cami');
   await expect(cami.getByRole('heading', { name: /^La une de / })).toBeVisible();
-  await cami.getByRole('link', { name: /^(LES )?PRONOS$/ }).click();
+  // Its name may end with the count of the notifications waiting.
+  await cami.getByRole('link', { name: /^(LES )?PRONOS(,|$)/ }).click();
   await cami.getByRole('link', { name: /Qui gagnera le derby/ }).click();
   await cami.getByRole('button', { name: /OGC Nice/ }).click();
   await cami.getByRole('button', { name: 'Plus' }).click();

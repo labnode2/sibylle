@@ -390,6 +390,9 @@
 }
 
 .filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   min-height: var(--tap);
   padding: 0 12px;
   border: 1px solid var(--ink);
@@ -403,6 +406,12 @@
 .filter[aria-pressed='true'] {
   background: var(--ink);
   color: var(--on-ink);
+}
+
+/* The notifications waiting under a filter: in ink, or in paper on the chosen filter's ink. */
+.filter[aria-pressed='true'] .filterBadge {
+  background: var(--on-ink);
+  color: var(--ink);
 }
 
 .select {
@@ -430,6 +439,14 @@
   padding: 14px;
   color: var(--ink);
   text-decoration: none;
+}
+
+/* The kicker, and the notifications waiting on the prono at its right. */
+.itemHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .itemTitle {

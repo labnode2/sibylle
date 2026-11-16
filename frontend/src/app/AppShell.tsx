@@ -7,16 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useMatch, useMatches, useParams } from 'react-router';
 
 import { formatDate } from '../i18n';
-import {
-  CountBadge,
-  Icon,
-  Logo,
-  Masthead,
-  Rule,
-  TabBar,
-  UnreadDot,
-  type Tab,
-} from '../ui/components';
+import { CountBadge, countedName, Logo, Masthead, Rule, TabBar, type Tab } from '../ui/components';
 import styles from './shell.module.css';
 
 function subscribeOnline(callback: () => void) {
@@ -56,7 +47,8 @@ export type ShellSlots = {
   issue?: number;
   /** For the editor, the open reports, counted beside « La rédaction ». */
   reports?: number;
-  /** The notifications not read yet: the bell's red dot shows while it is above zero. */
+  /** The notifications still waiting in the pronos (a new prono, a result, a tag…), counted
+   *  beside « Pronos »: the list then shows on which filter and which prono they are. */
   unread?: number;
 };
 
@@ -71,7 +63,13 @@ export function AppShell({ account, newsroom, issue, reports = 0, unread = 0 }: 
   const bare = useMatches().some((match) => (match.handle as RouteHandle | undefined)?.bare);
   const tabs: (Tab & { long: string })[] = [
     { to: base, label: t('tabs.une'), long: t('tabs.une'), icon: 'home', end: true },
-    { to: `${base}/pronos`, label: t('tabs.pronos'), long: t('tabs.pronosLong'), icon: 'ball' },
+    {
+      to: `${base}/pronos`,
+      label: t('tabs.pronos'),
+      long: t('tabs.pronosLong'),
+      icon: 'ball',
+      badge: { count: unread, label: t('tabs.unread', { count: unread }) },
+    },
     {
       to: `${base}/redaction`,
       label: t('tabs.newsroom'),
@@ -80,14 +78,6 @@ export function AppShell({ account, newsroom, issue, reports = 0, unread = 0 }: 
       badge: { count: reports, label: t('tabs.reports', { count: reports }) },
     },
     { to: `${base}/profil`, label: t('tabs.profile'), long: t('tabs.profileLong'), icon: 'user' },
-    {
-      to: `${base}/notifications`,
-      label: t('notifications:bell.tab'),
-      long: t('notifications:bell.tab'),
-      icon: 'bell',
-      dot: unread > 0,
-      ariaLabel: t('notifications:bell.label', { count: unread }),
-    },
   ];
   const today = formatDate(new Date(), {
     weekday: 'long',
@@ -102,18 +92,10 @@ export function AppShell({ account, newsroom, issue, reports = 0, unread = 0 }: 
           key={tab.to}
           to={tab.to}
           end={tab.end}
-          aria-label={tab.ariaLabel}
+          aria-label={countedName(tab.long, tab.badge)}
           className={({ isActive }) => `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`}
         >
-          {tab.icon === 'bell' ? (
-            // The desktop's bell: an icon with its dot, in the navigation.
-            <span className={styles.bell}>
-              <Icon name="bell" size={20} />
-              {tab.dot && <UnreadDot />}
-            </span>
-          ) : (
-            <span>{tab.long}</span>
-          )}
+          <span>{tab.long}</span>
           {tab.badge && <CountBadge {...tab.badge} />}
         </NavLink>
       ))}

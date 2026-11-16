@@ -130,7 +130,7 @@ async def test_a_proposal_reaches_the_journalists_and_its_author_only(
     # Léo hears of the next public prono, never of the proposal.
     await publish(hugo.client, str(org.id), question="Le pot aura-t-il lieu ?")
     event = await next_of(sockets["leo"], "event")
-    if event["event"] == "notification.created":  # the bell's event, on Léo's own topic
+    if event["event"] == "notification.created":  # the bubbles' event, on Léo's own topic
         event = await next_of(sockets["leo"], "event")
     assert event["data"]["prono"]["question"] == "Le pot aura-t-il lieu ?"
     for socket in sockets.values():

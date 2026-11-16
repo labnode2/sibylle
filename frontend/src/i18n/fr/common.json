@@ -46,7 +46,9 @@
     "profile": "PROFIL",
     "profileLong": "MON PROFIL",
     "reports_one": "{{count}} signalement ouvert",
-    "reports_other": "{{count}} signalements ouverts"
+    "reports_other": "{{count}} signalements ouverts",
+    "unread_one": "{{count}} notification non lue",
+    "unread_other": "{{count}} notifications non lues"
   },
   "shell": {
     "loading": "Chargement…",

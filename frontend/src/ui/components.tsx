@@ -369,21 +369,22 @@ export type Tab = {
   label: string;
   icon: IconName;
   end?: boolean;
-  /** A count beside the tab (open reports), and what it counts for screen readers. */
+  /** A count beside the tab (open reports, notifications waiting), and what it counts for
+   *  screen readers. */
   badge?: { count: number; label: string };
-  /** A red dot on the icon when something is unread; `ariaLabel` then names the tab and the count
-   *  for screen readers. */
-  dot?: boolean;
-  ariaLabel?: string;
 };
 
-/** The small red dot of something unread, on the corner of an icon. */
-export function UnreadDot({ className }: { className?: string }) {
-  return <span className={cx(styles.dot, className)} data-testid="unread-dot" aria-hidden="true" />;
+/** A menu entry's name for screen readers while its count shows: « PRONOS, 3 notifications non
+ *  lues » (its `aria-label`, so that the count comes after the name). */
+export function countedName(
+  name: string,
+  badge: { count: number; label: string } | undefined,
+): string | undefined {
+  return badge && badge.count > 0 ? `${name}, ${badge.label}` : undefined;
 }
 
-/** A small count in ink, such as the open reports beside « La rédaction »; screen readers hear
- *  `label` instead of the bare number. */
+/** A small count in ink, such as the open reports beside « La rédaction » or the notifications
+ *  waiting beside « Pronos »; screen readers hear `label` instead of the bare number. */
 export function CountBadge({
   count,
   label,
@@ -412,12 +413,11 @@ export function TabBar({ tabs, label }: { tabs: Tab[]; label: string }) {
           key={tab.to}
           to={tab.to}
           end={tab.end}
-          aria-label={tab.ariaLabel}
+          aria-label={countedName(tab.label, tab.badge)}
           className={({ isActive }) => cx(styles.tab, isActive && styles.tabActive)}
         >
           <span className={styles.tabIcon}>
             <Icon name={tab.icon} size={24} />
-            {tab.dot && <UnreadDot />}
             {tab.badge && <CountBadge {...tab.badge} className={styles.tabBadge} />}
           </span>
           <span className={styles.tabLabel}>{tab.label}</span>

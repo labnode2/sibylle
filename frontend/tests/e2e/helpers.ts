@@ -156,7 +156,7 @@ export function notes(page: Page): Locator {
 /** The newsroom's settings: the editor reaches them from « La rédaction ». */
 export async function openSettings(page: Page): Promise<void> {
   // Their names may end with the count of open reports.
-  await page.getByRole('link', { name: /^(LA )?RÉDACTION( |$)/ }).click();
+  await page.getByRole('link', { name: /^(LA )?RÉDACTION(,|$)/ }).click();
   await page.getByRole('link', { name: /^Réglages de la rédaction( |$)/ }).click();
 }
 

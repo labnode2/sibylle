@@ -1,4 +1,5 @@
-"""Notifications: the eight switches of the account and its push devices (US8)."""
+"""Notifications: the switches of the account and its push devices (US8), then the member's
+notifications in a newsroom: the list, the bubbles of the menus and what is read."""
 
 import uuid
 from typing import Annotated
@@ -10,8 +11,11 @@ from sibylle.api.schemas import (
     NotificationList,
     NotificationOut,
     NotificationPrefItem,
+    NotificationReadIn,
     PushSubscriptionIn,
     PushSubscriptionOut,
+    UnreadNotifications,
+    UnreadProno,
     VapidKey,
 )
 from sibylle.config import get_settings
@@ -97,9 +101,31 @@ async def list_notifications(
     )
 
 
+@org_router.get("/unread")
+async def unread(org_id: uuid.UUID, member: CurrentMember, session: Db) -> UnreadNotifications:
+    """The bubbles of the menus: per prono, the member's unread notifications that still lead to
+    it (a new prono while it is open, a result, a tag…), the most recently notified first."""
+    pronos = await notifications.unread_pronos(session, member.account_id, org_id)
+    return UnreadNotifications(
+        total=sum(count for _, _, count in pronos),
+        pronos=[
+            UnreadProno.model_validate({"prono_id": prono_id, "state": state, "unread": count})
+            for prono_id, state, count in pronos
+        ],
+    )
+
+
 @org_router.post("/read", status_code=204)
-async def read_all(org_id: uuid.UUID, member: CurrentMember, session: Db) -> None:
-    await notifications.mark_read(session, member.account_id, org_id)
+async def read_all(
+    org_id: uuid.UUID,
+    member: CurrentMember,
+    session: Db,
+    body: NotificationReadIn | None = None,
+) -> None:
+    """Marks the member's notifications here read: those about `prono_id`, or all of them."""
+    await notifications.mark_read(
+        session, member.account_id, org_id, prono_id=body.prono_id if body else None
+    )
 
 
 @org_router.post("/{notification_id}/read", status_code=204)

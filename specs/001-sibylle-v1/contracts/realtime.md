@@ -49,6 +49,7 @@ Enveloppe commune : `{"type": "event", "topic": "<sujet>", "event": "<nom>", "at
 | `member.joined`, `member.left` | `org` | `{member: MemberPublic}` |
 | `org.deleted` | `org` | `{org_id}` ; la rédaction en chef l'a supprimée : le client oublie la rédaction et revient à l'accueil |
 | `balance.changed` | `me` | `{org_id, balance, season_score}` |
+| `notification.created`, `notification.read` | `me` | `{org_id}` : une notification arrive pour le membre, ou il en a lu sur un autre appareil ; le client recharge les bulles des menus de cette rédaction |
 | `coins.granted` | `me` | `{org_id, week_start, amount, coins}` ; le client recharge la rédaction et ouvre la fenêtre « Bonne nouvelle » |
 | `games.runner.updated` | `org` | `{week_start, top}` |
 | `games.pixel.revealed` | `org` | `{puzzle_id, revealed_count}` |

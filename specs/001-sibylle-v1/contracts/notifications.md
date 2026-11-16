@@ -18,6 +18,16 @@ En plus, hors préférences (toujours envoyés par e-mail) : vérification de l'
 
 Un membre de plusieurs rédactions reçoit les notifications de chacune ; le nom de la rédaction figure dans le titre.
 
+## Dans l'appli
+
+Pas d'onglet ni de liste à part : de petites bulles (le compteur en encre des signalements ouverts) mènent jusqu'au prono concerné. Le nombre de notifications non lues est à côté de « Pronos », dans la barre d'onglets du téléphone comme dans la navigation de l'ordinateur. Dans la liste des pronos, il est ensuite sur chaque filtre (« Ouverts », « Clos », « Résolus », selon l'état du prono), puis sur chaque prono. Le nom accessible du menu porte le nombre (`aria-label` « PRONOS, 3 notifications non lues »).
+
+Ouvrir le prono marque lues toutes les notifications du membre sur ce prono (`read_at`), y compris celles qui arrivent pendant qu'il est ouvert. Les bulles suivent sans recharger sur tous les appareils du membre, grâce aux événements `notification.created` et `notification.read` sur son sujet `me`.
+
+Une notification non lue ne compte que tant qu'elle mène encore à quelque chose. `new_prono` et `closing_soon` comptent tant que le prono est ouvert. `designation_reminder` compte tant que le résultat attend d'être désigné. `result`, `mention` et `discussion` comptent jusqu'à leur lecture. `report` ne compte pas ici : les signalements ouverts ont déjà leur compteur à côté de « La rédaction ».
+
+Le push et l'e-mail n'y changent rien : une notification qu'aucun canal n'a pu porter (`skipped`, par exemple quand les deux interrupteurs de son type sont coupés) compte quand même, et ouvrir le prono la marque lue comme les autres.
+
 ## Préférences
 
 Quatorze interrupteurs par compte : 7 types × 2 canaux (`push`, `email`), tous actifs par défaut (routes `/me/notification-prefs` dans [rest-api.md](rest-api.md)). Un compte dont l'e-mail n'est pas vérifié ne reçoit aucun e-mail de notification.

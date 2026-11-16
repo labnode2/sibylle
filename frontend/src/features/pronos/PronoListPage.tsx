@@ -1,10 +1,21 @@
-// The newsroom's pronos, by state and section. New pronos and bets refresh the list live.
+// The newsroom's pronos, by state and section. New pronos and bets refresh the list live. The
+// notifications waiting for me (counted beside « Pronos ») show on the filters, then on each
+// prono, up to the one to open.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
 import { formatDate, formatNumber } from '../../i18n';
-import { Button, ButtonLink, Card, Icon, Laurel } from '../../ui/components';
+import {
+  Button,
+  ButtonLink,
+  Card,
+  CountBadge,
+  countedName,
+  Icon,
+  Laurel,
+} from '../../ui/components';
+import { useUnread, type UnreadProno } from '../notifications/api';
 import { useOrg } from '../orgs/api';
 import { usePronoList, useSections, type PronoSummary } from './api';
 import styles from './pronos.module.css';
@@ -17,6 +28,14 @@ const FILTERS = {
 
 type Filter = keyof typeof FILTERS;
 
+/** How many notifications wait on the pronos of a filter. */
+function unreadUnder(filter: Filter, pronos: UnreadProno[]): number {
+  const states: readonly string[] = FILTERS[filter];
+  return pronos
+    .filter((prono) => states.includes(prono.state))
+    .reduce((sum, prono) => sum + prono.unread, 0);
+}
+
 const shortDate = (value: string) =>
   formatDate(value, {
     day: 'numeric',
@@ -25,7 +44,15 @@ const shortDate = (value: string) =>
     minute: '2-digit',
   }).toUpperCase();
 
-function PronoItem({ orgId, prono }: { orgId: string; prono: PronoSummary }) {
+function PronoItem({
+  orgId,
+  prono,
+  unread,
+}: {
+  orgId: string;
+  prono: PronoSummary;
+  unread: number;
+}) {
   const { t } = useTranslation('pronos');
   const when =
     prono.state === 'scheduled' && prono.opens_at
@@ -39,8 +66,11 @@ function PronoItem({ orgId, prono }: { orgId: string; prono: PronoSummary }) {
     <li>
       <Card as="article">
         <Link to={`/o/${orgId}/pronos/${prono.id}`} className={styles.item}>
-          <span className={styles.kicker}>
-            {prono.section.name.toUpperCase()} · {t(`state.${prono.state}`)}
+          <span className={styles.itemHead}>
+            <span className={styles.kicker}>
+              {prono.section.name.toUpperCase()} · {t(`state.${prono.state}`)}
+            </span>
+            <CountBadge count={unread} label={t('common:tabs.unread', { count: unread })} />
           </span>
           <span className={styles.itemTitle}>{prono.question}</span>
           <span className={styles.meta}>
@@ -71,6 +101,7 @@ export function PronoListPage() {
   const list = usePronoList(orgId, [...FILTERS[filter]], section || undefined);
   const items = list.data?.pages.flatMap((page) => page.items) ?? [];
   const proposing = org.data?.my_membership.role === 'reader';
+  const waiting = useUnread(orgId).data?.pronos ?? [];
 
   return (
     <div className={styles.page}>
@@ -83,17 +114,23 @@ export function PronoListPage() {
         )}
       </div>
       <div className={styles.filters} role="group" aria-label={t('list.filters')}>
-        {(Object.keys(FILTERS) as Filter[]).map((value) => (
-          <button
-            key={value}
-            type="button"
-            className={styles.filter}
-            aria-pressed={filter === value}
-            onClick={() => setFilter(value)}
-          >
-            {t(`list.${value}`)}
-          </button>
-        ))}
+        {(Object.keys(FILTERS) as Filter[]).map((value) => {
+          const count = unreadUnder(value, waiting);
+          const badge = { count, label: t('common:tabs.unread', { count }) };
+          return (
+            <button
+              key={value}
+              type="button"
+              className={styles.filter}
+              aria-pressed={filter === value}
+              aria-label={countedName(t(`list.${value}`), badge)}
+              onClick={() => setFilter(value)}
+            >
+              {t(`list.${value}`)}
+              <CountBadge {...badge} className={styles.filterBadge} />
+            </button>
+          );
+        })}
         {sections.data && sections.data.length > 1 && (
           <select
             className={styles.select}
@@ -117,7 +154,12 @@ export function PronoListPage() {
       ) : (
         <ul className={styles.list}>
           {items.map((prono) => (
-            <PronoItem key={prono.id} orgId={orgId} prono={prono} />
+            <PronoItem
+              key={prono.id}
+              orgId={orgId}
+              prono={prono}
+              unread={waiting.find((w) => w.prono_id === prono.id)?.unread ?? 0}
+            />
           ))}
         </ul>
       )}

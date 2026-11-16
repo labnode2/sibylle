@@ -31,7 +31,7 @@ test('the first newsroom explains the game once, then on demand', async ({ brows
   await expect(welcome).toBeHidden();
 
   // ...unless asked for, from « La rédaction ».
-  await ines.getByRole('link', { name: /^(LA )?RÉDACTION( |$)/ }).click();
+  await ines.getByRole('link', { name: /^(LA )?RÉDACTION(,|$)/ }).click();
   await ines.getByRole('button', { name: 'Revoir les bases du jeu' }).click();
   await expect(welcome).toHaveAccessibleName('Bienvenue dans Sophia Office\u00a0!');
   await welcome.getByRole('button', { name: 'Passer' }).click();

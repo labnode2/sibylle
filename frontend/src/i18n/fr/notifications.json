@@ -70,26 +70,5 @@
     "note": "Tu choisis ensuite lesquelles dans tes réglages.",
     "enable": "Activer les notifications",
     "later": "Plus tard"
-  },
-  "bell": {
-    "tab": "ALERTES",
-    "label_zero": "Notifications : aucune non lue",
-    "label_one": "Notifications : {{count}} non lue",
-    "label_other": "Notifications : {{count}} non lues"
-  },
-  "list": {
-    "title": "NOTIFICATIONS",
-    "none": "Aucune notification pour l'instant.",
-    "readAll": "Tout marquer comme lu",
-    "unread": "Non lue",
-    "lines": {
-      "new_prono": "Nouveau prono",
-      "closing_soon": "Plus que 2 h pour jouer",
-      "result": "Résultat tombé",
-      "designation_reminder": "Un résultat attend d'être désigné",
-      "report": "Nouveau signalement",
-      "mention": "Tu as été tagué",
-      "discussion": "Nouveau message dans une discussion"
-    }
   }
 }

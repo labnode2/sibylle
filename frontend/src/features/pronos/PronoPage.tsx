@@ -1,7 +1,8 @@
 // A prono's page (canvas B-Prono, B-Web-Prono): the question, the countdown, the ballot with who
 // played what, the stake and the reactions; beside them, the players, the rules and, under the
 // rules, the discussion. Bets and messages of the others arrive live through `prono:<id>`. Once
-// settled, the special edition (canvas G-Résultat) heads the page.
+// settled, the special edition (canvas G-Résultat) heads the page. Opening it reads its
+// notifications: its bubbles leave the menus.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useParams } from 'react-router';
@@ -22,6 +23,7 @@ import { Countdown } from '../../ui/Countdown';
 import { AvatarStack, PixelImage } from '../../ui/PixelImage';
 import { toast } from '../../ui/Toaster';
 import { useFormErrors } from '../forms';
+import { useReadProno } from '../notifications/api';
 import { PushPrompt } from '../notifications/PushPrompt';
 import { useOrg } from '../orgs/api';
 import { DesignatePanel } from '../results/DesignatePanel';
@@ -242,6 +244,7 @@ export function PronoPage() {
   const location = useLocation();
   const org = useOrg(orgId);
   const query = useProno(orgId, pronoId);
+  useReadProno(orgId, pronoId);
   const placeBet = usePlaceBet(orgId, pronoId);
   const errors = useFormErrors(placeBet.error);
   const [optionId, setOptionId] = useState<string | null>(null);

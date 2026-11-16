@@ -47,6 +47,10 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 | GET | `/push/vapid-public-key` | Compte | → `{key}` (`null` si le serveur n'a pas de clés VAPID) |
 | POST | `/me/push-subscriptions` | Compte | `{endpoint, keys: {p256dh, auth}}` → `201 {id}` ; un appareil déjà connu revient au compte connecté ; `422` si `endpoint` n'est pas un service push de navigateur |
 | DELETE | `/me/push-subscriptions/{id}` | Compte | → `204` |
+| GET | `/orgs/{org}/notifications` | Membre | → `{unread, items: [{id, type, prono_id, question, created_at, read_at}]}` : ses notifications dans la rédaction (sans celles passées à `skipped`), les 50 plus récentes d'abord, et combien sont non lues |
+| GET | `/orgs/{org}/notifications/unread` | Membre | → `{total, pronos: [{prono_id, state, unread}]}` : les bulles des menus ([notifications.md](notifications.md#dans-lappli)), par prono, le plus récemment notifié d'abord |
+| POST | `/orgs/{org}/notifications/read` | Membre | `{prono_id?}` ou sans corps → `204` : marque lues ses notifications sur ce prono (il l'a ouvert), ou toutes |
+| POST | `/orgs/{org}/notifications/{id}/read` | Membre | → `204` ; `404` si ce n'est pas l'une des siennes dans la rédaction |
 
 `Me` = `{id, email, first_name, last_name, email_verified, theme, reduce_motion, locale, memberships: [{org: OrgCard, membership: MemberSelf}]}`. C'est la seule réponse qui contient le nom, le prénom et l'e-mail.
 

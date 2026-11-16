@@ -1201,6 +1201,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/orgs/{org_id}/notifications/unread": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Unread
+         * @description The bubbles of the menus: per prono, the member's unread notifications that still lead to
+         *     it (a new prono while it is open, a result, a tag…), the most recently notified first.
+         */
+        get: operations["unread_api_orgs__org_id__notifications_unread_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/orgs/{org_id}/notifications/read": {
         parameters: {
             query?: never;
@@ -1210,7 +1231,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Read All */
+        /**
+         * Read All
+         * @description Marks the member's notifications here read: those about `prono_id`, or all of them.
+         */
         post: operations["read_all_api_orgs__org_id__notifications_read_post"];
         delete?: never;
         options?: never;
@@ -1955,7 +1979,7 @@ export interface components {
         };
         /**
          * NotificationOut
-         * @description A line of the bell's list: what happened, on which prono, and whether it was read.
+         * @description A notification of the member: what happened, on which prono, and whether it was read.
          */
         NotificationOut: {
             /**
@@ -1997,6 +2021,11 @@ export interface components {
             channel: "push" | "email";
             /** Enabled */
             enabled: boolean;
+        };
+        /** NotificationReadIn */
+        NotificationReadIn: {
+            /** Prono Id */
+            prono_id?: string | null;
         };
         /** OptionOut */
         OptionOut: {
@@ -2894,6 +2923,36 @@ export interface components {
             rank: number;
             /** Podium */
             podium: boolean;
+        };
+        /**
+         * UnreadNotifications
+         * @description The bubbles of the menus: the unread notifications that still lead to a prono, counted
+         *     beside « Pronos », then on the list's filters and on each prono.
+         */
+        UnreadNotifications: {
+            /** Total */
+            total: number;
+            /** Pronos */
+            pronos: components["schemas"]["UnreadProno"][];
+        };
+        /**
+         * UnreadProno
+         * @description A prono with notifications the member has not read: its state says under which filter of
+         *     the list it stands.
+         */
+        UnreadProno: {
+            /**
+             * Prono Id
+             * Format: uuid
+             */
+            prono_id: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "proposed" | "rejected" | "scheduled" | "open" | "closed" | "resolved" | "cancelled";
+            /** Unread */
+            unread: number;
         };
         /** UploadOut */
         UploadOut: {
@@ -5722,7 +5781,7 @@ export interface operations {
             };
         };
     };
-    read_all_api_orgs__org_id__notifications_read_post: {
+    unread_api_orgs__org_id__notifications_unread_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -5732,6 +5791,41 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnreadNotifications"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_all_api_orgs__org_id__notifications_read_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["NotificationReadIn"] | null;
+            };
+        };
         responses: {
             /** @description Successful Response */
             204: {

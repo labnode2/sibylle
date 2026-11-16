@@ -1,6 +1,7 @@
-// US8: push notifications offered after a bet, then the switches of the profile. The device's
-// push side is a stand-in: Playwright's Chromium cannot subscribe to a real push service, and the
-// development server has no service worker.
+// US8: push notifications offered after a bet, then the switches of the profile; and in the app,
+// the bubbles of the menus that lead to a notification. The device's push side is a stand-in:
+// Playwright's Chromium cannot subscribe to a real push service, and the development server has
+// no service worker.
 import { expect, test, type Page } from '@playwright/test';
 
 import {
@@ -218,4 +219,40 @@ test("the address check of Keycloak's e-mail opens the notification e-mails", as
   // Landed here without a newsroom, the way home is still there.
   await cami.getByRole('link', { name: "Retour à l'accueil" }).click();
   await expect(cami.getByRole('heading', { name: 'Bienvenue sur Sibylle' })).toBeVisible();
+});
+
+test('bubbles lead to a new prono without a reload, and go once it is opened', async ({
+  browser,
+}, testInfo) => {
+  test.setTimeout(90_000);
+  const ines = await newPerson(browser, testInfo, 'Inès');
+  await createNewsroom(ines, 'Sophia Office', 'Inès');
+  const orgId = orgIdOf(ines);
+  const cami = await newPerson(browser, testInfo, 'Camille', await invitationPath(ines));
+  await joinWith(cami, 'Cami');
+  await expect(cami.getByRole('heading', { name: /^La une de / })).toBeVisible();
+  // « Pronos », in the tab bar or in the navigation: no count yet, and no tab of their own.
+  const pronos = cami
+    .getByRole('navigation', { name: 'Navigation principale' })
+    .getByRole('link', { name: /^(LES )?PRONOS(,|$)/ });
+  await expect(pronos).toHaveAccessibleName(/^(LES )?PRONOS$/);
+  await expect(cami.getByRole('link', { name: /notification/i })).toHaveCount(0);
+
+  // Inès publishes: Cami's « Pronos » counts it at once.
+  await publishProno(ines, orgId, { question: 'Nice ou Monaco samedi ?' });
+  await expect(pronos).toHaveAccessibleName(/^(LES )?PRONOS, 1 notification non lue$/);
+
+  // The bubbles lead to the filter, then to the prono.
+  await pronos.click();
+  await expect(cami.getByRole('button', { name: 'OUVERTS, 1 notification non lue' })).toBeVisible();
+  const item = cami.getByRole('link', { name: /Nice ou Monaco samedi/ });
+  await expect(item).toHaveAccessibleName(/1 notification non lue/);
+  await item.click();
+  await expect(cami.getByRole('heading', { name: 'Nice ou Monaco samedi' })).toBeVisible();
+
+  // Opened: its bubbles go, here and back in the list.
+  await expect(pronos).toHaveAccessibleName(/^(LES )?PRONOS$/);
+  await cami.goBack();
+  await expect(cami.getByRole('button', { name: 'OUVERTS', exact: true })).toBeVisible();
+  await expect(item).not.toHaveAccessibleName(/non lue/);
 });

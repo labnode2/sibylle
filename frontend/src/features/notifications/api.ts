@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 import { api, unwrap } from '../../api/client';
 import type { components } from '../../api/schema';
@@ -81,41 +82,59 @@ export async function forgetSubscription(id: string): Promise<void> {
   );
 }
 
-// The bell: the member's notifications in a newsroom, and how many are unread.
-export type NotificationItem = components['schemas']['NotificationOut'];
-export type NotificationList = components['schemas']['NotificationList'];
+// The bubbles of the menus: per prono, the notifications still waiting for me in a newsroom.
+// They are counted beside « Pronos », then on the list's filters and on each prono; opening the
+// prono reads them.
+export type UnreadNotifications = components['schemas']['UnreadNotifications'];
+export type UnreadProno = components['schemas']['UnreadProno'];
 
-export const notificationListKey = (orgId: string) => ['notification-list', orgId] as const;
+export const unreadKey = (orgId: string) => ['notifications-unread', orgId] as const;
 
-export function useNotificationList(orgId: string) {
+export function useUnread(orgId: string) {
   return useQuery({
-    queryKey: notificationListKey(orgId),
+    queryKey: unreadKey(orgId),
     queryFn: () =>
-      unwrap(api.GET('/api/orgs/{org_id}/notifications', { params: { path: { org_id: orgId } } })),
+      unwrap(
+        api.GET('/api/orgs/{org_id}/notifications/unread', {
+          params: { path: { org_id: orgId } },
+        }),
+      ),
   });
 }
 
-/** How many notifications are unread here (0 until the list is loaded). */
-export function useUnreadCount(orgId: string): number {
-  return useNotificationList(orgId).data?.unread ?? 0;
+/** The bubbles without a prono's: what is left once it is read. */
+function without(unread: UnreadNotifications, pronoId: string): UnreadNotifications {
+  const pronos = unread.pronos.filter((prono) => prono.prono_id !== pronoId);
+  return { total: pronos.reduce((sum, prono) => sum + prono.unread, 0), pronos };
 }
 
-/** Marks one notification read, or all of them when no id is given; the list reloads. */
-export function useMarkRead(orgId: string) {
+/** Opening a prono reads its notifications, those that arrive while it is open too: its bubbles
+ *  go at once, and on my other screens through the server's event. */
+export function useReadProno(orgId: string, pronoId: string) {
   const client = useQueryClient();
-  return useMutation({
-    mutationFn: (notificationId?: string) =>
-      notificationId
-        ? unwrap(
-            api.POST('/api/orgs/{org_id}/notifications/{notification_id}/read', {
-              params: { path: { org_id: orgId, notification_id: notificationId } },
-            }),
-          )
-        : unwrap(
-            api.POST('/api/orgs/{org_id}/notifications/read', {
-              params: { path: { org_id: orgId } },
-            }),
-          ),
-    onSettled: () => client.invalidateQueries({ queryKey: notificationListKey(orgId) }),
+  const waiting = useUnread(orgId).data?.pronos.some((prono) => prono.prono_id === pronoId);
+  const { mutate, isPending } = useMutation({
+    mutationFn: () =>
+      unwrap(
+        api.POST('/api/orgs/{org_id}/notifications/read', {
+          params: { path: { org_id: orgId } },
+          body: { prono_id: pronoId },
+        }),
+      ),
+    // The bubbles go at once. After a failure, the next refresh shows them again and so tries
+    // again: refreshing right away would try again and again while the server cannot answer.
+    onMutate: async () => {
+      await client.cancelQueries({ queryKey: unreadKey(orgId) });
+      client.setQueryData<UnreadNotifications>(
+        unreadKey(orgId),
+        (unread) => unread && without(unread, pronoId),
+      );
+    },
+    onSuccess: () => client.invalidateQueries({ queryKey: unreadKey(orgId) }),
+    // Nobody asked for it: no note when it fails.
+    meta: { quiet: true },
   });
+  useEffect(() => {
+    if (waiting && !isPending) mutate();
+  }, [waiting, isPending, mutate]);
 }

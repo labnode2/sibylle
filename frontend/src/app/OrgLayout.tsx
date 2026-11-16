@@ -13,7 +13,7 @@ import { meKey, useMe, useWelcomed } from '../features/auth/api';
 import { useWeeklyCoins, weeklyCoinsKey } from '../features/coins/api';
 import { WeeklyCoinsDialog } from '../features/coins/WeeklyCoinsDialog';
 import { InstallButton } from '../features/install/InstallButton';
-import { notificationListKey, useUnreadCount } from '../features/notifications/api';
+import { unreadKey, useUnread } from '../features/notifications/api';
 import { InstalledPushDialog } from '../features/notifications/InstalledPushDialog';
 import { WelcomeDialog } from '../features/welcome/WelcomeDialog';
 import { orgKey, useOrg } from '../features/orgs/api';
@@ -63,6 +63,11 @@ export function OrgLayout() {
     if (event.event === 'prono.created' || event.event === 'prono.state_changed') {
       void client.invalidateQueries({ queryKey: meKey });
     }
+    // A prono that closes or is settled moves its bubble to another filter of the list, or ends
+    // the news it carried (a new prono, a result to designate).
+    if (event.event === 'prono.state_changed' || event.event === 'prono.resolved') {
+      void client.invalidateQueries({ queryKey: unreadKey(orgId) });
+    }
     if (event.event !== 'org.deleted') return;
     const title = client.getQueryData<Org>(orgKey(orgId))?.title;
     if (title && client.isMutating({ mutationKey: deleteOrgKey(orgId) }) === 0) {
@@ -73,8 +78,9 @@ export function OrgLayout() {
   });
   // The editor's open reports, counted beside « La rédaction » (the others may not read them).
   const reports = useReports(orgId, org.data?.my_membership.role === 'editor');
-  // The bell's red dot: the unread count, kept up to date by the server's events.
-  const unread = useUnreadCount(orgId);
+  // The notifications waiting in the pronos, counted beside « Pronos »; the server's events keep
+  // the count up to date without a reload.
+  const unread = useUnread(orgId);
   // A result, a refund or a correction moves the balance: the header follows.
   useTopic('me', (event) => {
     if (event.event === 'balance.changed' && event.data.org_id === orgId) {
@@ -85,12 +91,12 @@ export function OrgLayout() {
       void client.invalidateQueries({ queryKey: orgKey(orgId) });
       void client.invalidateQueries({ queryKey: weeklyCoinsKey(orgId) });
     }
-    // A notification arrived, or was read on another device: the bell follows without a reload.
+    // A notification arrived, or was read on another device: the bubbles follow.
     if (
       (event.event === 'notification.created' || event.event === 'notification.read') &&
       event.data.org_id === orgId
     ) {
-      void client.invalidateQueries({ queryKey: notificationListKey(orgId) });
+      void client.invalidateQueries({ queryKey: unreadKey(orgId) });
     }
     // A new report for the editor; a handled one for its author, on the prono's page.
     if (event.event === 'report.created') {
@@ -125,7 +131,7 @@ export function OrgLayout() {
         }
         issue={org.data.edition_number}
         newsroom={<NewsroomSwitcher org={org.data} />}
-        unread={unread}
+        unread={unread.data?.total ?? 0}
         reports={me.role === 'editor' ? (reports.data?.length ?? 0) : 0}
       />
       <Dialogs org={org.data} coins={me.coins} />

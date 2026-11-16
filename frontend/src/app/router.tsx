@@ -34,7 +34,6 @@ import { LeaderboardPage } from '../features/leaderboard/LeaderboardPage';
 import { CreatePronoPage } from '../features/pronos/CreatePronoPage';
 import { PronoListPage } from '../features/pronos/PronoListPage';
 import { PronoPage } from '../features/pronos/PronoPage';
-import { NotificationsPage } from '../features/notifications/NotificationsPage';
 import { PixelMysterePage } from '../features/games/pixel-mystere/PixelMysterePage';
 import { WordlePage } from '../features/games/wordle/WordlePage';
 import { RunnerPage } from '../features/games/runner/RunnerPage';
@@ -154,7 +153,6 @@ export const router = createBrowserRouter([
           { path: 'classement', element: <LeaderboardPage /> },
           { path: 'profil', element: <PressCardPage /> },
           { path: 'profil/carte', element: <CardEditorPage /> },
-          { path: 'notifications', element: <NotificationsPage /> },
           { path: 'redaction', element: <NewsroomPage /> },
           { path: 'membres/:memberId', element: <PressCardPage /> },
           { path: 'collection', element: <CollectionPage /> },
