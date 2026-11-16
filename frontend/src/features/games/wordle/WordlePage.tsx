@@ -1,7 +1,8 @@
 // Wordle: guess the word of the day, the same for the whole newsroom, in six tries. The grid and
 // the keyboard (on screen or the device's own) type five letters, the server checks the word and
 // sends the colours back; the solution only comes once the game is over. One game a day: the
-// state is kept by the server, so a reload shows the same grid.
+// state is kept by the server, so a reload shows the same grid. Once over, the result can be
+// copied to be pasted elsewhere, in colours only.
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
@@ -13,6 +14,7 @@ import styles from '../games.module.css';
 import { KEY_ROWS, keyMarks, plainLetter, WORD_LENGTH } from './letters';
 import { WordleGrid } from './WordleGrid';
 import wordle from './wordle.module.css';
+import { WordleShare } from './WordleShare';
 
 export function WordlePage() {
   const { t } = useTranslation('games');
@@ -80,7 +82,10 @@ export function WordlePage() {
         {state === 'playing' && (problem ?? t('wordle.left', { count: left }))}
       </p>
       {over ? (
-        <p className={styles.note}>{t('wordle.tomorrow')}</p>
+        <>
+          <p className={styles.note}>{t('wordle.tomorrow')}</p>
+          <WordleShare game={status.data} />
+        </>
       ) : (
         <div className={wordle.keyboard}>
           {KEY_ROWS.map((row, index) => (

@@ -92,3 +92,20 @@
     padding: 0 4px;
   }
 }
+
+/* The result to share, as it will be pasted. One click selects it all, to copy it by hand. The
+   squares come from the system's colour emoji, before any monospace font that would draw them in
+   black and white. */
+.share {
+  align-self: flex-start;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  font: 500 14px/1.45 var(--font-mono);
+  font-family:
+    'Geist Mono', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', ui-monospace, monospace;
+  white-space: pre;
+  user-select: all;
+}

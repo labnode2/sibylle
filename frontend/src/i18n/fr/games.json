@@ -109,6 +109,12 @@
     "won_one": "Trouvé en {{count}} essai : +{{laurels}} lauriers.",
     "won_other": "Trouvé en {{count}} essais : +{{laurels}} lauriers.",
     "lost": "Perdu. Le mot était « {{word}} ».",
-    "tomorrow": "Un nouveau mot demain."
+    "tomorrow": "Un nouveau mot demain.",
+    "share": {
+      "title": "PARTAGE TON RÉSULTAT",
+      "head": "Wordle Sibylle #{{number}} {{score}}/6",
+      "copy": "Copier le résultat",
+      "copied": "Résultat copié : colle-le où tu veux."
+    }
   }
 }
