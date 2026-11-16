@@ -359,3 +359,22 @@
   color: var(--surface);
   font: 800 18px/1 var(--font-text);
 }
+
+.wordRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.wordRow > :first-child {
+  flex: 1;
+}
+
+.wordRemove {
+  flex: none;
+  align-self: flex-start;
+  margin-top: 19px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+}

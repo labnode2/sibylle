@@ -181,30 +181,35 @@ function PostPuzzle({ orgId, unlocked, on }: { orgId: string; unlocked: number[]
             error={errors.field('word') ?? undefined}
           />
           {others.map((other, index) => (
-            <Field
-              key={index}
-              label={t('pixel.post.otherWord', { count: index + 2 })}
-              value={other}
-              maxLength={24}
-              autoComplete="off"
-              onChange={(event) =>
-                setOthers(others.map((w, i) => (i === index ? event.target.value : w)))
-              }
-              error={index === 0 ? (errors.field('other_words') ?? undefined) : undefined}
-            />
+            <div key={index} className={styles.wordRow}>
+              <Field
+                label={t('pixel.post.otherWord', { count: index + 2 })}
+                value={other}
+                maxLength={24}
+                autoComplete="off"
+                onChange={(event) =>
+                  setOthers(others.map((w, i) => (i === index ? event.target.value : w)))
+                }
+                error={index === 0 ? (errors.field('other_words') ?? undefined) : undefined}
+              />
+              <Button
+                variant="secondary"
+                className={styles.wordRemove}
+                aria-label={t('pixel.post.removeWord', { count: index + 2 })}
+                title={t('pixel.post.removeWord', { count: index + 2 })}
+                onClick={() => setOthers(others.filter((_, i) => i !== index))}
+              >
+                <Icon name="minus" />
+              </Button>
+            </div>
           ))}
-          <div>
-            {others.length < 4 && (
+          {others.length < 4 && (
+            <div>
               <Button variant="secondary" onClick={() => setOthers([...others, ''])}>
-                {t('pixel.post.addWord')}
+                <Icon name="plus" /> {t('pixel.post.addWord')}
               </Button>
-            )}
-            {others.length > 0 && (
-              <Button variant="secondary" onClick={() => setOthers(others.slice(0, -1))}>
-                {t('pixel.post.removeWord')}
-              </Button>
-            )}
-          </div>
+            </div>
+          )}
           <PixelEditor
             sizes={[16, 32]}
             unlocked={unlocked}
