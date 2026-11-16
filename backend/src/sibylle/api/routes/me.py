@@ -1,6 +1,8 @@
 """The signed-in account: its own data and its newsrooms, the export of everything about it,
 and its deletion (US11)."""
 
+import uuid
+from collections.abc import Sequence
 from typing import Any
 
 from fastapi import APIRouter, Request, Response
@@ -13,10 +15,31 @@ from sibylle import clock
 from sibylle.api.deps import SESSION_COOKIE, CurrentAccount, Db, clear_session_cookie
 from sibylle.api.schemas import AccountDeletion, Me, MePatch
 from sibylle.db.models import Account, Membership, Organisation
+from sibylle.domain.permissions import Action, can
 from sibylle.domain.seasons import PARIS
-from sibylle.services import accounts, coins, export, orgs, pronos
+from sibylle.services import accounts, coins, export, notifications, orgs, reports
 
 router = APIRouter(tags=["me"])
+
+
+async def _waiting(
+    session: AsyncSession, account: Account, members: Sequence[Membership]
+) -> dict[uuid.UUID, int]:
+    """Each newsroom's bubble: the bubbles of its menus added up, « Pronos » (its unread
+    notifications that still lead to a prono) and, for whoever handles the reports, « La
+    rédaction » (its open reports). A notification seen on the newsroom is so always found again
+    below it, down to what clears it."""
+    unread = await notifications.unread_by_newsroom(
+        session, account.id, [member.org_id for member in members]
+    )
+    reported = await reports.open_counts(
+        session,
+        [member.org_id for member in members if can(member.role, Action.HANDLE_REPORTS)],
+    )
+    return {
+        member.id: unread.get(member.org_id, 0) + reported.get(member.org_id, 0)
+        for member in members
+    }
 
 
 async def me_of(session: AsyncSession, account: Account) -> Me:
@@ -37,7 +60,7 @@ async def me_of(session: AsyncSession, account: Account) -> Me:
         account,
         memberships,
         in_play,
-        await pronos.unanswered(session, members),
+        await _waiting(session, account, members),
         await orgs.sole_editors(session, members),
     )
 

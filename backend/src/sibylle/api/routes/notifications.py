@@ -107,10 +107,12 @@ async def unread(org_id: uuid.UUID, member: CurrentMember, session: Db) -> Unrea
     it (a new prono while it is open, a result, a tag…), the most recently notified first."""
     pronos = await notifications.unread_pronos(session, member.account_id, org_id)
     return UnreadNotifications(
-        total=sum(count for _, _, count in pronos),
+        total=sum(count for *_, count in pronos),
         pronos=[
-            UnreadProno.model_validate({"prono_id": prono_id, "state": state, "unread": count})
-            for prono_id, state, count in pronos
+            UnreadProno.model_validate(
+                {"prono_id": prono_id, "state": state, "section_id": section_id, "unread": count}
+            )
+            for prono_id, state, section_id, count in pronos
         ],
     )
 

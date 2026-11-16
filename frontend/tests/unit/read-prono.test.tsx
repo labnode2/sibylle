@@ -1,9 +1,11 @@
 // Opening a prono reads its notifications: its bubbles leave the menus at once, the server is
-// told, and a prono with nothing waiting asks nothing.
+// told, the newsroom's bubble in the lists of newsrooms follows, and a prono with nothing waiting
+// asks nothing.
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useMe } from '../../src/features/auth/api';
 import {
   useReadProno,
   useUnread,
@@ -15,6 +17,7 @@ const server = vi.hoisted(() => ({
   GET: vi.fn(),
   POST: vi.fn(),
 }));
+const asked = (path: string) => server.GET.mock.calls.filter(([called]) => called === path).length;
 vi.mock('../../src/api/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/api/client')>()),
   api: { GET: server.GET, POST: server.POST },
@@ -26,11 +29,13 @@ beforeEach(() => {
   server.unread = {
     total: 3,
     pronos: [
-      { prono_id: 'nice', state: 'open', unread: 2 },
-      { prono_id: 'pot', state: 'open', unread: 1 },
+      { prono_id: 'nice', state: 'open', section_id: 'sport', unread: 2 },
+      { prono_id: 'pot', state: 'open', section_id: 'sport', unread: 1 },
     ],
   } satisfies UnreadNotifications;
-  server.GET.mockImplementation(() => ok(server.unread));
+  server.GET.mockImplementation((path: string) =>
+    ok(path === '/api/me' ? { memberships: [] } : server.unread),
+  );
   server.POST.mockImplementation((_path: string, init: { body: { prono_id: string } }) => {
     const before = server.unread as UnreadNotifications;
     const pronos = before.pronos.filter((p) => p.prono_id !== init.body.prono_id);
@@ -46,6 +51,7 @@ afterEach(() => {
 
 function Prono({ id }: { id: string }) {
   useReadProno('org', id);
+  useMe();
   const unread = useUnread('org');
   return <p>{unread.data ? `total ${unread.data.total}` : 'loading'}</p>;
 }
@@ -68,8 +74,10 @@ describe('opening a prono', () => {
       params: { path: { org_id: 'org' } },
       body: { prono_id: 'nice' },
     });
-    // The count comes back from the server once it is told.
-    await waitFor(() => expect(server.GET).toHaveBeenCalledTimes(2));
+    // The count comes back from the server once it is told, and so do the newsrooms' own.
+    const unread = '/api/orgs/{org_id}/notifications/unread';
+    await waitFor(() => expect(asked(unread)).toBe(2));
+    await waitFor(() => expect(asked('/api/me')).toBe(2));
     expect(screen.getByText('total 1')).toBeInTheDocument();
   });
 
@@ -77,5 +85,6 @@ describe('opening a prono', () => {
     open('neige');
     await waitFor(() => expect(screen.getByText('total 3')).toBeInTheDocument());
     expect(server.POST).not.toHaveBeenCalled();
+    expect(asked('/api/me')).toBe(1);
   });
 });

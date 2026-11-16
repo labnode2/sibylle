@@ -139,10 +139,12 @@ async def test_the_bubbles_lead_to_the_pronos_until_opened(
 
     body = await bubbles(cami, org.id)
     assert body["total"] == 2
-    # The most recently notified first, with the state that tells under which filter it is.
-    assert [(p["prono_id"], p["state"], p["unread"]) for p in body["pronos"]] == [
-        (second["id"], "open", 1),
-        (first["id"], "open", 1),
+    # The most recently notified first, with the state and section that tell under which
+    # filters of the list it is.
+    section = first["section"]["id"]
+    assert [(p["prono_id"], p["state"], p["section_id"], p["unread"]) for p in body["pronos"]] == [
+        (second["id"], "open", section, 1),
+        (first["id"], "open", section, 1),
     ]
     # Its author is not told of their own prono.
     assert await bubbles(hugo, org.id) == {"total": 0, "pronos": []}
@@ -305,3 +307,80 @@ async def test_the_bubbles_move_on_every_screen_of_the_member(
         {"org_id": str(org.id)},
     )
     await socket.close()
+
+
+async def test_a_state_change_moves_the_bubbles_of_those_notified(
+    make_org: MakeOrg, person: MakePerson, live_server: str
+) -> None:
+    """A prono that closes, is cancelled or resolved changes what its unread notifications count
+    for: the screens of their members reload the bubbles, the newsroom's own in the lists of
+    newsrooms too, which do not follow the newsroom's events. Not the others' screens."""
+    org = await make_org()
+    ines = await person(org, "editor", "Inès")
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    leo = await person(org, "reader", "Léo")
+    prono = await publish(hugo.client, str(org.id))
+    await open_prono(leo.client, org.id, prono["id"])
+    cami_screen, hugo_screen, leo_screen = [
+        await connect(live_server, who) for who in (cami, hugo, leo)
+    ]
+
+    cancelled = await ines.client.post(url(org.id, prono["id"], "cancel"), json={})
+    assert cancelled.status_code == 200, cancelled.text
+    event = await next_of(cami_screen, "event")
+    assert (event["topic"], event["event"], event["data"]) == (
+        "me",
+        "notification.changed",
+        {"org_id": str(org.id)},
+    )
+    # Its author had nothing about it, Léo had read it: their next event is the next prono.
+    await publish(ines.client, str(org.id), question="Le pot aura-t-il lieu ?")
+    for screen in (cami_screen, hugo_screen, leo_screen):
+        event = await next_of(screen, "event")
+        assert (event["topic"], event["event"]) == ("me", "notification.created")
+        await screen.close()
+
+
+async def test_every_editor_follows_the_open_reports(
+    make_org: MakeOrg, person: MakePerson, live_server: str
+) -> None:
+    """A report filed, then handled by one editor: the others' count beside « La rédaction », and
+    the newsroom's bubble, follow on their screens."""
+    org = await make_org()
+    ines = await person(org, "editor", "Inès")
+    lea = await person(org, "editor", "Léa")
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    prono = await publish(hugo.client, str(org.id))
+    screen = await connect(live_server, lea)
+
+    reported = await cami.client.post(url(org.id, prono["id"], "reports"), json={"kind": "content"})
+    assert reported.status_code == 201, reported.text
+    report = reported.json()["id"]
+    event = await next_event(screen, "report.created")
+    assert event["data"] == {
+        "report_id": report,
+        "prono_id": prono["id"],
+        "org_id": str(org.id),
+        "kind": "content",
+    }
+    handled = await ines.client.post(
+        f"/api/orgs/{org.id}/reports/{report}/handle", json={"state": "dismissed"}
+    )
+    assert handled.status_code == 200, handled.text
+    event = await next_event(screen, "report.handled")
+    assert event["data"] == {
+        "report_id": report,
+        "prono_id": prono["id"],
+        "org_id": str(org.id),
+        "state": "dismissed",
+    }
+    await screen.close()
+
+
+async def next_event(socket: Any, name: str) -> dict[str, Any]:
+    while True:
+        event = await next_of(socket, "event")
+        if event["event"] == name:
+            return event

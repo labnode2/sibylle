@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
 import type { Org } from '../../api/types';
-import { Button, Chip, CountBadge, Icon } from '../../ui/components';
+import { Button, Chip, CountBadge, countedName, Icon } from '../../ui/components';
 import { Streak } from '../../ui/Flame';
 import { FramedAvatar } from '../../ui/FramedAvatar';
 import { PixelImage } from '../../ui/PixelImage';
@@ -30,7 +30,9 @@ export function OrgLogo({ org, size }: { org: Pick<Org, 'logo'>; size: 24 | 64 }
 /** The newsroom's small card: its band and logo, its name and members. It opens a menu below
  *  it: the account's newsrooms, the current one marked, then « Rejoindre ou créer une
  *  rédaction ». Escape, a click elsewhere or a choice closes it. `align` is the side the menu
- *  keeps: the card's right edge in the navigation, its left edge on la une of a phone. */
+ *  keeps: the card's right edge in the navigation, its left edge on la une of a phone. Each
+ *  newsroom's bubble adds up the bubbles of its menus, which lead on to what clears them; the
+ *  card's own adds up the other newsrooms', the menus here already showing this one's. */
 export function NewsroomSwitcher({ org, align = 'end' }: { org: Org; align?: 'start' | 'end' }) {
   const { t } = useTranslation('orgs');
   const me = useMe();
@@ -39,10 +41,9 @@ export function NewsroomSwitcher({ org, align = 'end' }: { org: Org; align?: 'st
   const button = useRef<HTMLButtonElement>(null);
   const menuId = useId();
   const memberships = me.data?.memberships ?? [];
-  // The open pronos without my bet in my other newsrooms: la une already lists this one's.
   const elsewhere = memberships
     .filter((entry) => entry.org.id !== org.id)
-    .reduce((sum, entry) => sum + entry.unanswered, 0);
+    .reduce((sum, entry) => sum + entry.waiting, 0);
 
   useEffect(() => {
     if (!open) return;
@@ -85,7 +86,7 @@ export function NewsroomSwitcher({ org, align = 'end' }: { org: Org; align?: 'st
         <span className={styles.cardLinkMore}>
           <CountBadge
             count={elsewhere}
-            label={t('unansweredElsewhere', { count: elsewhere })}
+            label={t('waitingElsewhere', { count: elsewhere })}
             className={styles.cardLinkBadge}
           />
           <Icon name="chevronDown" />
@@ -95,26 +96,30 @@ export function NewsroomSwitcher({ org, align = 'end' }: { org: Org; align?: 'st
       {open && (
         <div id={menuId} className={`${styles.menu} ${align === 'start' ? styles.menuStart : ''}`}>
           <ul className={styles.menuList} aria-label={t('switcher.title')}>
-            {memberships.map(({ org: other, unanswered }) => (
-              <li key={other.id}>
-                <Link
-                  to={`/o/${other.id}`}
-                  className={styles.menuItem}
-                  aria-current={other.id === org.id ? 'true' : undefined}
-                  onClick={close}
-                >
-                  <span
-                    className={`${styles.menuBand} bg-${other.background_key}`}
-                    aria-hidden="true"
+            {memberships.map(({ org: other, waiting }) => {
+              const badge = { count: waiting, label: t('waiting', { count: waiting }) };
+              return (
+                <li key={other.id}>
+                  <Link
+                    to={`/o/${other.id}`}
+                    className={styles.menuItem}
+                    aria-current={other.id === org.id ? 'true' : undefined}
+                    aria-label={countedName(other.title, badge)}
+                    onClick={close}
                   >
-                    <OrgLogo org={other} size={24} />
-                  </span>
-                  <span className={styles.menuName}>{other.title}</span>
-                  <CountBadge count={unanswered} label={t('unanswered', { count: unanswered })} />
-                  {other.id === org.id && <Icon name="check" />}
-                </Link>
-              </li>
-            ))}
+                    <span
+                      className={`${styles.menuBand} bg-${other.background_key}`}
+                      aria-hidden="true"
+                    >
+                      <OrgLogo org={other} size={24} />
+                    </span>
+                    <span className={styles.menuName}>{other.title}</span>
+                    <CountBadge {...badge} />
+                    {other.id === org.id && <Icon name="check" />}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
           <Link to="/bienvenue" className={styles.menuMore} onClick={close}>
             <Icon name="plus" />

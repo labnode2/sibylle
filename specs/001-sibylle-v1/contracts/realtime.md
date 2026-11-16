@@ -39,8 +39,8 @@ Enveloppe commune : `{"type": "event", "topic": "<sujet>", "event": "<nom>", "at
 | `bet.placed` | `prono` | `{bet: Bet, pot, bet_count}` ; le client recharge le détail pour la répartition |
 | `bet.placed` | `org` | `{prono_id, pot, bet_count}` (version courte pour les listes) |
 | `prono.resolved` | `org`, `prono` | `{prono_id, settlement_seq, kind: "resolution" \| "correction" \| "cancellation"}` ; le client recharge l'édition spéciale |
-| `report.created` | `me` (rédaction en chef) | `{report_id, prono_id, kind}` |
-| `report.handled` | `me` (auteur·rice du signalement) | `{report_id, prono_id, state}` ; le client recharge le prono, où `my_reports` donne la note de la rédaction en chef |
+| `report.created` | `me` (rédaction en chef) | `{report_id, prono_id, org_id, kind}` ; le client recharge les signalements ouverts et les bulles des rédactions |
+| `report.handled` | `me` (auteur·rice du signalement et rédaction en chef) | `{report_id, prono_id, org_id, state}` ; le client recharge le prono, où `my_reports` donne la note de la rédaction en chef, puis les signalements ouverts et les bulles des rédactions |
 | `reaction.changed` | `prono` | `{prono_id, reactions: {kind: count}}` |
 | `message.posted`, `message.deleted` | `prono` | `{prono_id, message_id, message_count}` ; le client recharge la discussion |
 | `message.liked` | `prono` | `{prono_id, message_id, likes}` ; le client recharge la discussion (`liked` dépend de qui regarde) |
@@ -49,7 +49,8 @@ Enveloppe commune : `{"type": "event", "topic": "<sujet>", "event": "<nom>", "at
 | `member.joined`, `member.left` | `org` | `{member: MemberPublic}` |
 | `org.deleted` | `org` | `{org_id}` ; la rédaction en chef l'a supprimée : le client oublie la rédaction et revient à l'accueil |
 | `balance.changed` | `me` | `{org_id, balance, season_score}` |
-| `notification.created`, `notification.read` | `me` | `{org_id}` : une notification arrive pour le membre, ou il en a lu sur un autre appareil ; le client recharge les bulles des menus de cette rédaction |
+| `notification.created`, `notification.read` | `me` | `{org_id}` : une notification arrive pour le membre, ou il en a lu sur un autre appareil ; le client recharge les bulles des menus de cette rédaction et celle de la rédaction dans les listes de rédactions |
+| `notification.changed` | `me` (membres qui ont une notification non lue sur le prono) | `{org_id}` : le prono a changé d'état, ce qui peut faire compter ou non ses notifications (un nouveau prono clos n'est plus une nouvelle) ; le client recharge les mêmes bulles |
 | `coins.granted` | `me` | `{org_id, week_start, amount, coins}` ; le client recharge la rédaction et ouvre la fenêtre « Bonne nouvelle » |
 | `games.runner.updated` | `org` | `{week_start, top}` |
 | `games.pixel.revealed` | `org` | `{puzzle_id, revealed_count}` |

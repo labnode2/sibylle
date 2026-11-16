@@ -8,12 +8,12 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router';
 
 import { ApiError } from '../api/client';
 import { useTopic } from '../api/realtime';
-import { deleteOrgKey, forgetOrg, reportsKey, useReports } from '../features/admin/api';
-import { meKey, useMe, useWelcomed } from '../features/auth/api';
+import { deleteOrgKey, forgetOrg, useReports } from '../features/admin/api';
+import { useMe, useWelcomed } from '../features/auth/api';
 import { useWeeklyCoins, weeklyCoinsKey } from '../features/coins/api';
 import { WeeklyCoinsDialog } from '../features/coins/WeeklyCoinsDialog';
 import { InstallButton } from '../features/install/InstallButton';
-import { unreadKey, useUnread } from '../features/notifications/api';
+import { unreadKey, useBubbleEvents, useUnread } from '../features/notifications/api';
 import { InstalledPushDialog } from '../features/notifications/InstalledPushDialog';
 import { WelcomeDialog } from '../features/welcome/WelcomeDialog';
 import { orgKey, useOrg } from '../features/orgs/api';
@@ -59,10 +59,6 @@ export function OrgLayout() {
   // Deleted by its editor, elsewhere: the newsroom is forgotten and its members told why they
   // are back home. The editor who deletes it here is told by the deletion itself.
   useTopic(`org:${orgId}`, (event) => {
-    // A prono that opens or closes changes the count of those waiting for my bet.
-    if (event.event === 'prono.created' || event.event === 'prono.state_changed') {
-      void client.invalidateQueries({ queryKey: meKey });
-    }
     // A prono that closes or is settled moves its bubble to another filter of the list, or ends
     // the news it carried (a new prono, a result to designate).
     if (event.event === 'prono.state_changed' || event.event === 'prono.resolved') {
@@ -79,8 +75,9 @@ export function OrgLayout() {
   // The editor's open reports, counted beside « La rédaction » (the others may not read them).
   const reports = useReports(orgId, org.data?.my_membership.role === 'editor');
   // The notifications waiting in the pronos, counted beside « Pronos »; the server's events keep
-  // the count up to date without a reload.
+  // the count up to date without a reload, and each newsroom's in the lists of newsrooms.
   const unread = useUnread(orgId);
+  useBubbleEvents();
   // A result, a refund or a correction moves the balance: the header follows.
   useTopic('me', (event) => {
     if (event.event === 'balance.changed' && event.data.org_id === orgId) {
@@ -91,18 +88,8 @@ export function OrgLayout() {
       void client.invalidateQueries({ queryKey: orgKey(orgId) });
       void client.invalidateQueries({ queryKey: weeklyCoinsKey(orgId) });
     }
-    // A notification arrived, or was read on another device: the bubbles follow.
-    if (
-      (event.event === 'notification.created' || event.event === 'notification.read') &&
-      event.data.org_id === orgId
-    ) {
-      void client.invalidateQueries({ queryKey: unreadKey(orgId) });
-    }
-    // A new report for the editor; a handled one for its author, on the prono's page.
-    if (event.event === 'report.created') {
-      void client.invalidateQueries({ queryKey: reportsKey(orgId) });
-    }
-    if (event.event === 'report.handled') {
+    // A handled report, for its author: the editor's note on the prono's page.
+    if (event.event === 'report.handled' && event.data.org_id === orgId) {
       void client.invalidateQueries({ queryKey: pronoKey(orgId, String(event.data.prono_id)) });
     }
   });

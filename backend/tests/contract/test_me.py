@@ -7,8 +7,8 @@ from typing import Any
 
 import pytest
 from sqlalchemy import update
-from tests.conftest import ClientFor, MakeAccount, MakeMember, MakeOrg, MakePerson
-from tests.contract.test_pronos import place, publish
+from tests.conftest import ClientFor, MakeAccount, MakeMember, MakeOrg, MakePerson, Person
+from tests.contract.test_pronos import publish
 from tests.keycloak_fake import FakeKeycloak
 
 from sibylle import clock
@@ -102,27 +102,75 @@ def entry(me: dict[str, Any], org_id: object) -> dict[str, Any]:
     return found
 
 
-async def test_each_newsroom_counts_the_open_pronos_without_my_bet(
-    make_org: MakeOrg, person: MakePerson
+async def test_each_newsroom_bubble_adds_up_the_bubbles_of_its_menus(
+    make_org: MakeOrg, make_member: MakeMember, person: MakePerson
 ) -> None:
-    org = await make_org()
+    """In the lists of newsrooms, a newsroom's bubble is what its menus count: « Pronos » (the
+    unread notifications that still lead to a prono) and, for the editor, « La rédaction » (the
+    open reports). It goes with them: never a bubble that leads nowhere."""
+    org, other = await make_org(), await make_org("Autre")
+    ines = await person(org, "editor", "Inès")
     hugo = await person(org, "journalist", "Hugo")
     cami = await person(org, "reader", "Cami")
-    first = await publish(hugo.client, str(org.id))
-    await publish(hugo.client, str(org.id), question="Il neige à Noël ?")
-    assert entry((await cami.client.get("/api/me")).json(), org.id)["unanswered"] == 2
+    await make_member(other, "reader", account=cami.account, pseudo="Cami")
+    zoe = await person(other, "journalist", "Zoé")
 
-    nice = first["options"][0]["id"]
-    assert (
-        await place(cami.client, str(org.id), first["id"], option_id=nice, stake=0)
-    ).status_code == 201
-    assert entry((await cami.client.get("/api/me")).json(), org.id)["unanswered"] == 1
-    # A closed prono no longer waits for anyone.
+    async def bubbles(who: Person) -> dict[str, int]:
+        me = (await who.client.get("/api/me")).json()
+        return {e["org"]["id"]: e["waiting"] for e in me["memberships"]}
+
+    async def menus(who: Person, org_id: object) -> int:
+        """« Pronos », plus « La rédaction » for whoever may read the open reports."""
+        base = f"/api/orgs/{org_id}"
+        count: int = (await who.client.get(f"{base}/notifications/unread")).json()["total"]
+        reports = await who.client.get(f"{base}/reports", params={"state": "open"})
+        return count + (len(reports.json()) if reports.status_code == 200 else 0)
+
+    first = await publish(hugo.client, str(org.id))
+    second = await publish(hugo.client, str(org.id), question="Il neige à Noël ?")
+    there = await publish(zoe.client, str(other.id), question="Le pot aura-t-il lieu ?")
+    assert await bubbles(cami) == {str(org.id): 2, str(other.id): 1}
+    assert await bubbles(ines) == {str(org.id): 2}
+    # Its author is not told of their own prono.
+    assert await bubbles(hugo) == {str(org.id): 0}
+
+    # Opening a prono reads it, in its newsroom only.
+    await read(cami, org.id, first["id"])
+    assert await bubbles(cami) == {str(org.id): 1, str(other.id): 1}
+    await read(cami, other.id, there["id"])
+    assert await bubbles(cami) == {str(org.id): 1, str(other.id): 0}
+
+    # A report waits for the editor beside « La rédaction », so on the newsroom too.
+    reported = await cami.client.post(
+        f"/api/orgs/{org.id}/pronos/{second['id']}/reports", json={"kind": "content"}
+    )
+    assert reported.status_code == 201, reported.text
+    assert await bubbles(ines) == {str(org.id): 3}
+    assert await bubbles(hugo) == {str(org.id): 0}
+    for who, newsroom in ((ines, org), (hugo, org), (cami, org), (cami, other)):
+        assert (await bubbles(who))[str(newsroom.id)] == await menus(who, newsroom.id)
+
+    handled = await ines.client.post(
+        f"/api/orgs/{org.id}/reports/{reported.json()['id']}/handle", json={"state": "dismissed"}
+    )
+    assert handled.status_code == 200, handled.text
+    assert await bubbles(ines) == {str(org.id): 2}
+
+    # Closed, a new prono is no longer news: nothing left to lead to.
     async with transaction() as session:
         await session.execute(
             update(Prono).where(Prono.org_id == org.id).values(state=State.CLOSED.value)
         )
-    assert entry((await cami.client.get("/api/me")).json(), org.id)["unanswered"] == 0
+    assert await bubbles(cami) == {str(org.id): 0, str(other.id): 0}
+    assert await bubbles(ines) == {str(org.id): 0}
+
+
+async def read(who: Person, org_id: object, prono_id: str) -> None:
+    """What opening the prono does."""
+    response = await who.client.post(
+        f"/api/orgs/{org_id}/notifications/read", json={"prono_id": prono_id}
+    )
+    assert response.status_code == 204, response.text
 
 
 async def test_the_only_editor_is_told_before_leaving(

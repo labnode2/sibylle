@@ -110,8 +110,9 @@ class MemberSelf(MemberPublic):
 class MembershipEntry(BaseModel):
     org: OrgCard
     membership: MemberSelf
-    # The newsroom's open pronos the member has not bet on yet: a badge in the newsroom lists.
-    unanswered: int = 0
+    # The newsroom's bubble in the lists of newsrooms: the bubbles of its menus added up, so that
+    # it always leads somewhere and goes with them (notifications.md, « Dans l'appli »).
+    waiting: int = 0
     # The newsroom's only editor while others stay: they name another one before leaving or
     # deleting their account (`last_editor`).
     sole_editor: bool = False
@@ -136,7 +137,7 @@ class Me(BaseModel):
         account: Account,
         memberships: list[tuple[Organisation, Membership]],
         in_play: dict[uuid.UUID, int],
-        unanswered: dict[uuid.UUID, int],
+        waiting: dict[uuid.UUID, int],
         sole_editors: set[uuid.UUID],
     ) -> Self:
         return cls(
@@ -153,7 +154,7 @@ class Me(BaseModel):
                 MembershipEntry(
                     org=OrgCard.of(org),
                     membership=MemberSelf.build(member, in_play=in_play.get(member.id, 0)),
-                    unanswered=unanswered.get(member.id, 0),
+                    waiting=waiting.get(member.id, 0),
                     sole_editor=member.id in sole_editors,
                 )
                 for org, member in memberships
@@ -897,11 +898,12 @@ class NotificationList(BaseModel):
 
 
 class UnreadProno(BaseModel):
-    """A prono with notifications the member has not read: its state says under which filter of
-    the list it stands."""
+    """A prono with notifications the member has not read: its state and section say under which
+    filters of the list it stands."""
 
     prono_id: uuid.UUID
     state: PronoState
+    section_id: uuid.UUID
     unread: int
 
 

@@ -222,7 +222,12 @@ export function useHandleReport(orgId: string) {
           body: { state, note: note.trim() || null },
         }),
       ),
-    onSuccess: () => client.invalidateQueries({ queryKey: reportsKey(orgId) }),
+    // One report fewer beside « La rédaction », and on the newsroom in the lists of newsrooms.
+    onSuccess: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: reportsKey(orgId) }),
+        client.invalidateQueries({ queryKey: meKey }),
+      ]),
     meta: { success: 'admin:toasts.reportHandled' },
   });
 }

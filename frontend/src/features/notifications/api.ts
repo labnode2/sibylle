@@ -2,7 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
 import { api, unwrap } from '../../api/client';
+import { useTopic } from '../../api/realtime';
 import type { components } from '../../api/schema';
+import { reportsKey } from '../admin/api';
+import { meKey } from '../auth/api';
 
 export type NotificationPref = components['schemas']['NotificationPrefItem'];
 export type NotificationKind = NotificationPref['type'];
@@ -83,12 +86,34 @@ export async function forgetSubscription(id: string): Promise<void> {
 }
 
 // The bubbles of the menus: per prono, the notifications still waiting for me in a newsroom.
-// They are counted beside « Pronos », then on the list's filters and on each prono; opening the
-// prono reads them.
+// They are counted on the newsroom in the lists of newsrooms, beside « Pronos », then on the
+// list's filters and on each prono; opening the prono reads them.
 export type UnreadNotifications = components['schemas']['UnreadNotifications'];
 export type UnreadProno = components['schemas']['UnreadProno'];
 
 export const unreadKey = (orgId: string) => ['notifications-unread', orgId] as const;
+
+// A notification arrived, was read on another device, or stopped counting (its prono closed…).
+const NOTIFICATION_EVENTS = ['notification.created', 'notification.read', 'notification.changed'];
+
+/** The bubbles follow the server's events on my own topic, without a reload: those of a
+ *  newsroom's menus (« Pronos », and « La rédaction » for the editor's open reports), and each
+ *  newsroom's own in the lists of newsrooms, which adds them up (`waiting` in `/api/me`). */
+export function useBubbleEvents() {
+  const client = useQueryClient();
+  useTopic('me', (event) => {
+    const orgId = typeof event.data.org_id === 'string' ? event.data.org_id : null;
+    if (NOTIFICATION_EVENTS.includes(event.event)) {
+      void client.invalidateQueries({ queryKey: meKey });
+      if (orgId) void client.invalidateQueries({ queryKey: unreadKey(orgId) });
+    }
+    // A report filed, or handled by an editor: the editors' counts of open reports.
+    if (event.event === 'report.created' || event.event === 'report.handled') {
+      void client.invalidateQueries({ queryKey: meKey });
+      void client.invalidateQueries({ queryKey: orgId ? reportsKey(orgId) : ['reports'] });
+    }
+  });
+}
 
 export function useUnread(orgId: string) {
   return useQuery({
@@ -130,7 +155,12 @@ export function useReadProno(orgId: string, pronoId: string) {
         (unread) => unread && without(unread, pronoId),
       );
     },
-    onSuccess: () => client.invalidateQueries({ queryKey: unreadKey(orgId) }),
+    // The newsroom's bubble in the lists of newsrooms follows (the server's event says it too).
+    onSuccess: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: unreadKey(orgId) }),
+        client.invalidateQueries({ queryKey: meKey }),
+      ]),
     // Nobody asked for it: no note when it fails.
     meta: { quiet: true },
   });

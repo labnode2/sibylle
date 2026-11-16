@@ -5,11 +5,21 @@ import { useTranslation } from 'react-i18next';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 
 import type { OrgCard, PixelImage } from '../../api/types';
-import { Button, ButtonLink, Card, CountBadge, Field, Icon, Rule } from '../../ui/components';
+import {
+  Button,
+  ButtonLink,
+  Card,
+  CountBadge,
+  countedName,
+  Field,
+  Icon,
+  Rule,
+} from '../../ui/components';
 import { PixelImage as Pixels } from '../../ui/PixelImage';
 import { toast } from '../../ui/Toaster';
 import { useMe } from '../auth/api';
 import { useFormErrors } from '../forms';
+import { useBubbleEvents } from '../notifications/api';
 import { useContent, useCreateOrg, useJoin, useJoinPreview, type JoinSource } from './api';
 import { OrgLogo } from './NewsroomPage';
 import { PixelEditor } from '../pixel-editor/PixelEditor';
@@ -28,6 +38,8 @@ export function StartPage() {
   const { t } = useTranslation('orgs');
   const navigate = useNavigate();
   const me = useMe();
+  // Each newsroom's bubble, below, follows its notifications and reports without a reload.
+  useBubbleEvents();
   const [code, setCode] = useState('');
   const memberships = me.data?.memberships ?? [];
   return (
@@ -61,19 +73,27 @@ export function StartPage() {
           <h2 id="start-newsrooms" className={styles.switcherTitle}>
             {t('switcher.title')}
           </h2>
-          {memberships.map(({ org, unanswered }) => (
-            <Link key={org.id} to={`/o/${org.id}`} className={styles.switcherItem}>
-              <span
-                className={`${styles.switcherBand} bg-${org.background_key}`}
-                aria-hidden="true"
+          {memberships.map(({ org, waiting }) => {
+            const badge = { count: waiting, label: t('waiting', { count: waiting }) };
+            return (
+              <Link
+                key={org.id}
+                to={`/o/${org.id}`}
+                className={styles.switcherItem}
+                aria-label={countedName(org.title, badge)}
               >
-                <OrgLogo org={org} size={24} />
-              </span>
-              <span className={styles.switcherName}>{org.title}</span>
-              <CountBadge count={unanswered} label={t('unanswered', { count: unanswered })} />
-              <Icon name="chevronRight" />
-            </Link>
-          ))}
+                <span
+                  className={`${styles.switcherBand} bg-${org.background_key}`}
+                  aria-hidden="true"
+                >
+                  <OrgLogo org={org} size={24} />
+                </span>
+                <span className={styles.switcherName}>{org.title}</span>
+                <CountBadge {...badge} />
+                <Icon name="chevronRight" />
+              </Link>
+            );
+          })}
         </nav>
       )}
     </section>

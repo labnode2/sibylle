@@ -1902,10 +1902,10 @@ export interface components {
             org: components["schemas"]["OrgCard"];
             membership: components["schemas"]["MemberSelf"];
             /**
-             * Unanswered
+             * Waiting
              * @default 0
              */
-            unanswered: number;
+            waiting: number;
             /**
              * Sole Editor
              * @default false
@@ -2937,8 +2937,8 @@ export interface components {
         };
         /**
          * UnreadProno
-         * @description A prono with notifications the member has not read: its state says under which filter of
-         *     the list it stands.
+         * @description A prono with notifications the member has not read: its state and section say under which
+         *     filters of the list it stands.
          */
         UnreadProno: {
             /**
@@ -2951,6 +2951,11 @@ export interface components {
              * @enum {string}
              */
             state: "proposed" | "rejected" | "scheduled" | "open" | "closed" | "resolved" | "cancelled";
+            /**
+             * Section Id
+             * Format: uuid
+             */
+            section_id: string;
             /** Unread */
             unread: number;
         };

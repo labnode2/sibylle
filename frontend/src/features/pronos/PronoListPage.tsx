@@ -1,6 +1,7 @@
 // The newsroom's pronos, by state and section. New pronos and bets refresh the list live. The
 // notifications waiting for me (counted beside « Pronos ») show on the filters, then on each
-// prono, up to the one to open.
+// prono, up to the one to open: on the sections of the chosen filter too, and on « Voir plus »
+// while they wait further down the list.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
@@ -28,12 +29,12 @@ const FILTERS = {
 
 type Filter = keyof typeof FILTERS;
 
-/** How many notifications wait on the pronos of a filter. */
-function unreadUnder(filter: Filter, pronos: UnreadProno[]): number {
+const total = (pronos: UnreadProno[]) => pronos.reduce((sum, prono) => sum + prono.unread, 0);
+
+/** The pronos of a filter that notifications wait on. */
+function under(filter: Filter, pronos: UnreadProno[]): UnreadProno[] {
   const states: readonly string[] = FILTERS[filter];
-  return pronos
-    .filter((prono) => states.includes(prono.state))
-    .reduce((sum, prono) => sum + prono.unread, 0);
+  return pronos.filter((prono) => states.includes(prono.state));
 }
 
 const shortDate = (value: string) =>
@@ -102,6 +103,20 @@ export function PronoListPage() {
   const items = list.data?.pages.flatMap((page) => page.items) ?? [];
   const proposing = org.data?.my_membership.role === 'reader';
   const waiting = useUnread(orgId).data?.pronos ?? [];
+  const here = under(filter, waiting);
+  const unreadBadge = (count: number) => ({
+    count,
+    label: t('common:tabs.unread', { count }),
+  });
+  // Those of the chosen filter and section that the pages shown do not reach yet.
+  const loaded = new Set(items.map((prono) => prono.id));
+  const further = unreadBadge(
+    total(
+      here.filter(
+        (prono) => (!section || prono.section_id === section) && !loaded.has(prono.prono_id),
+      ),
+    ),
+  );
 
   return (
     <div className={styles.page}>
@@ -115,8 +130,7 @@ export function PronoListPage() {
       </div>
       <div className={styles.filters} role="group" aria-label={t('list.filters')}>
         {(Object.keys(FILTERS) as Filter[]).map((value) => {
-          const count = unreadUnder(value, waiting);
-          const badge = { count, label: t('common:tabs.unread', { count }) };
+          const badge = unreadBadge(total(under(value, waiting)));
           return (
             <button
               key={value}
@@ -139,11 +153,16 @@ export function PronoListPage() {
             onChange={(event) => setSection(event.target.value)}
           >
             <option value="">{t('list.allSections')}</option>
-            {sections.data.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
+            {sections.data.map((s) => {
+              const badge = unreadBadge(total(here.filter((prono) => prono.section_id === s.id)));
+              return (
+                <option key={s.id} value={s.id} aria-label={countedName(s.name, badge)}>
+                  {badge.count > 0
+                    ? t('list.sectionCount', { name: s.name, count: badge.count })
+                    : s.name}
+                </option>
+              );
+            })}
           </select>
         )}
       </div>
@@ -168,8 +187,10 @@ export function PronoListPage() {
           variant="secondary"
           onClick={() => void list.fetchNextPage()}
           disabled={list.isFetchingNextPage}
+          aria-label={countedName(t('list.more'), further)}
         >
           {t('list.more')}
+          <CountBadge {...further} />
         </Button>
       )}
     </div>

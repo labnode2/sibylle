@@ -256,3 +256,55 @@ test('bubbles lead to a new prono without a reload, and go once it is opened', a
   await expect(cami.getByRole('button', { name: 'OUVERTS', exact: true })).toBeVisible();
   await expect(item).not.toHaveAccessibleName(/non lue/);
 });
+
+test("a newsroom's bubble leads down to its prono, and goes once it is opened", async ({
+  browser,
+}, testInfo) => {
+  test.setTimeout(120_000);
+  const ines = await newPerson(browser, testInfo, 'Inès');
+  await createNewsroom(ines, 'Sophia Office', 'Inès');
+  const orgId = orgIdOf(ines);
+  const cami = await newPerson(browser, testInfo, 'Camille', await invitationPath(ines));
+  await joinWith(cami, 'Cami');
+  await expect(cami.getByRole('heading', { name: 'La une de Sophia Office' })).toBeVisible();
+  // Then a newsroom of her own, where she is when Inès publishes.
+  await cami.goto('/bienvenue');
+  await createNewsroom(cami, 'Antibes Matin', 'Cami');
+  // The newsroom's card is in the navigation on a computer, on la une on a phone.
+  const card = (title: string) =>
+    cami.getByRole('button', { name: new RegExp(`^${title}.*Changer de rédaction$`) }).filter({
+      visible: true,
+    });
+  const menu = cami.getByRole('list', { name: 'Mes rédactions' });
+  const nav = cami.getByRole('navigation', { name: 'Navigation principale' });
+  const pronos = nav.getByRole('link', { name: /^(LES )?PRONOS(,|$)/ });
+  await expect(card('Antibes Matin')).not.toHaveAccessibleName(/notification/);
+
+  // Inès publishes: Cami's card counts it at once, and its menu says in which newsroom.
+  await publishProno(ines, orgId, { question: 'Nice ou Monaco samedi ?' });
+  await expect(card('Antibes Matin')).toHaveAccessibleName(
+    /1 notification dans tes autres rédactions/,
+  );
+  await card('Antibes Matin').click();
+  await expect(menu.getByRole('link', { name: 'Antibes Matin', exact: true })).toBeVisible();
+  await menu.getByRole('link', { name: 'Sophia Office, 1 notification', exact: true }).click();
+
+  // There, « Pronos », then its filter, then the prono.
+  await expect(cami.getByRole('heading', { name: 'La une de Sophia Office' })).toBeVisible();
+  await expect(pronos).toHaveAccessibleName(/^(LES )?PRONOS, 1 notification non lue$/);
+  await pronos.click();
+  await cami.getByRole('button', { name: 'OUVERTS, 1 notification non lue' }).click();
+  const item = cami.getByRole('link', { name: /Nice ou Monaco samedi/ });
+  await expect(item).toHaveAccessibleName(/1 notification non lue/);
+  await item.click();
+  await expect(cami.getByRole('heading', { name: 'Nice ou Monaco samedi' })).toBeVisible();
+  await expect(pronos).toHaveAccessibleName(/^(LES )?PRONOS$/);
+
+  // Opened: the newsroom's bubble goes too, in its menu and seen from the other newsroom.
+  await nav.getByRole('link', { name: 'LA UNE', exact: true }).click();
+  await card('Sophia Office').click();
+  await expect(menu.getByRole('link', { name: 'Sophia Office', exact: true })).toBeVisible();
+  await menu.getByRole('link', { name: 'Antibes Matin', exact: true }).click();
+  await expect(cami.getByRole('heading', { name: 'La une de Antibes Matin' })).toBeVisible();
+  await expect(card('Antibes Matin')).not.toHaveAccessibleName(/notification/);
+});

@@ -420,13 +420,13 @@ async def still_relevant(session: AsyncSession, notification: Notification) -> b
 # The member's notifications, in a newsroom: the list, and the bubbles of the menus
 
 
-def _mine(account_id: uuid.UUID, org_id: uuid.UUID) -> list[Any]:
+def _mine(account_id: uuid.UUID, *org_ids: uuid.UUID) -> list[Any]:
     """The newsroom's notifications of this account (not the e-mails to an address without an
     account), whatever became of their push and e-mail: `skipped` also says that no channel could
     carry one, and the app still shows it to a member who switched both off."""
     return [
         Notification.account_id == account_id,
-        Notification.org_id == org_id,
+        Notification.org_id.in_(org_ids),
         Notification.type.in_([type.value for type in NotificationType]),
     ]
 
@@ -455,25 +455,85 @@ def _waiting() -> Any:
     )
 
 
+def _about_prono() -> Any:
+    return cast(Prono.id, Text) == Notification.payload["prono_id"].as_string()
+
+
+def _bubbling(account_id: uuid.UUID, *org_ids: uuid.UUID) -> list[Any]:
+    """What every bubble counts, the notification's prono joined: the account's unread
+    notifications in these newsrooms that still lead to their prono (`_waiting`). The bubbles
+    of a prono, of the list's filters, of « Pronos » and of the newsroom itself add up the same
+    rows, so that each one leads down to the prono that clears it."""
+    return [
+        *_mine(account_id, *org_ids),
+        Notification.read_at.is_(None),
+        Prono.org_id == Notification.org_id,
+        _waiting(),
+    ]
+
+
 async def unread_pronos(
     session: AsyncSession, account_id: uuid.UUID, org_id: uuid.UUID
-) -> list[tuple[uuid.UUID, str, int]]:
-    """The bubbles: per prono, its state and how many unread notifications still lead to it,
-    the most recently notified first."""
+) -> list[tuple[uuid.UUID, str, uuid.UUID, int]]:
+    """The bubbles: per prono, its state and section (the list's filters) and how many unread
+    notifications still lead to it, the most recently notified first."""
     rows = await session.execute(
-        select(Prono.id, Prono.state, func.count())
+        select(Prono.id, Prono.state, Prono.section_id, func.count())
         .select_from(Notification)
-        .join(Prono, cast(Prono.id, Text) == Notification.payload["prono_id"].as_string())
-        .where(
-            *_mine(account_id, org_id),
-            Notification.read_at.is_(None),
-            Prono.org_id == org_id,
-            _waiting(),
-        )
-        .group_by(Prono.id, Prono.state)
+        .join(Prono, _about_prono())
+        .where(*_bubbling(account_id, org_id))
+        .group_by(Prono.id, Prono.state, Prono.section_id)
         .order_by(func.max(Notification.created_at).desc(), Prono.id)
     )
-    return [(prono_id, state, count) for prono_id, state, count in rows]
+    return [(prono_id, state, section_id, count) for prono_id, state, section_id, count in rows]
+
+
+async def unread_by_newsroom(
+    session: AsyncSession, account_id: uuid.UUID, org_ids: Sequence[uuid.UUID]
+) -> dict[uuid.UUID, int]:
+    """Per newsroom, the bubble beside « Pronos »: what `unread_pronos` adds up there. A
+    newsroom with none is left out."""
+    if not org_ids:
+        return {}
+    rows = await session.execute(
+        select(Notification.org_id, func.count())
+        .select_from(Notification)
+        .join(Prono, _about_prono())
+        .where(*_bubbling(account_id, *org_ids))
+        .group_by(Notification.org_id)
+    )
+    return {org_id: count for org_id, count in rows.all() if org_id is not None}
+
+
+# Topics per event, well under PostgreSQL's limit on a payload (`bus.MAX_PAYLOAD`).
+_TOPICS_PER_EVENT = 50
+
+
+async def prono_state_changed(session: AsyncSession, prono: Prono) -> None:
+    """A prono changed state: the bubbles of the members with unread notifications about it may
+    change (a new prono stops counting once closed, a reminder once the result is designated).
+    Their screens reload them, the newsroom's bubble in their lists of newsrooms too: those
+    screens do not follow the newsroom's own events."""
+    accounts = (
+        await session.scalars(
+            select(Notification.account_id)
+            .distinct()
+            .where(
+                Notification.org_id == prono.org_id,
+                Notification.account_id.is_not(None),
+                Notification.read_at.is_(None),
+                Notification.payload["prono_id"].as_string() == str(prono.id),
+            )
+        )
+    ).all()
+    topics = sorted(f"me:{account_id}" for account_id in accounts)
+    for start in range(0, len(topics), _TOPICS_PER_EVENT):
+        await bus.publish(
+            session,
+            "notification.changed",
+            {"org_id": str(prono.org_id)},
+            topics=topics[start : start + _TOPICS_PER_EVENT],
+        )
 
 
 async def listing(

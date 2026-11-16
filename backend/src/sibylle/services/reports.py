@@ -2,8 +2,9 @@
 and its author is told."""
 
 import uuid
+from collections.abc import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle import clock
@@ -34,24 +35,36 @@ async def create_report(
     )
     session.add(report)
     await session.flush()
-    editors = (
-        await session.scalars(
-            select(Membership.account_id).where(
-                Membership.org_id == prono.org_id,
-                Membership.role == Role.EDITOR.value,
-                Membership.status == "active",
-            )
-        )
-    ).all()
+    editors = await _editors(session, prono.org_id)
     if editors:
         await bus.publish(
             session,
             "report.created",
-            {"report_id": str(report.id), "prono_id": str(prono.id), "kind": kind},
+            {
+                "report_id": str(report.id),
+                "prono_id": str(prono.id),
+                "org_id": str(prono.org_id),
+                "kind": kind,
+            },
             topics=[f"me:{account_id}" for account_id in editors],
         )
     await notifications.report_created(session, report, prono)
     return report
+
+
+async def _editors(session: AsyncSession, org_id: uuid.UUID) -> list[uuid.UUID]:
+    """The accounts of the newsroom's editors, who handle its reports."""
+    return list(
+        (
+            await session.scalars(
+                select(Membership.account_id).where(
+                    Membership.org_id == org_id,
+                    Membership.role == Role.EDITOR.value,
+                    Membership.status == "active",
+                )
+            )
+        ).all()
+    )
 
 
 async def list_reports(
@@ -68,6 +81,19 @@ async def list_reports(
         query = query.where(Report.state == state)
     rows = await session.execute(query.order_by(Report.created_at.desc(), Report.id.desc()))
     return [(report, prono, author) for report, prono, author in rows]
+
+
+async def open_counts(session: AsyncSession, org_ids: Sequence[uuid.UUID]) -> dict[uuid.UUID, int]:
+    """Per newsroom, its open reports: the count beside « La rédaction », which `list_reports`
+    details. A newsroom with none is left out."""
+    if not org_ids:
+        return {}
+    rows = await session.execute(
+        select(Report.org_id, func.count())
+        .where(Report.org_id.in_(list(org_ids)), Report.state == "open")
+        .group_by(Report.org_id)
+    )
+    return {org_id: count for org_id, count in rows.all()}
 
 
 async def handle_report(
@@ -94,10 +120,17 @@ async def handle_report(
     await session.flush()
     author = await session.get(Membership, report.reporter_membership_id)
     assert author is not None
+    # Its author reads the editor's note; the other editors' counts of open reports follow.
+    accounts = [author.account_id, *await _editors(session, report.org_id)]
     await bus.publish(
         session,
         "report.handled",
-        {"report_id": str(report.id), "prono_id": str(report.prono_id), "state": state},
-        topics=[f"me:{author.account_id}"],
+        {
+            "report_id": str(report.id),
+            "prono_id": str(report.prono_id),
+            "org_id": str(report.org_id),
+            "state": state,
+        },
+        topics=[f"me:{account_id}" for account_id in dict.fromkeys(accounts)],
     )
     return report
