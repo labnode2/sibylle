@@ -1,8 +1,8 @@
 /* The burst of a game won (Celebration.tsx): scraps of confetti and gold laurels fly up from the
-   middle of the screen and fall back, in under two seconds, over the page and under the notes,
-   without catching a click. Each piece drifts sideways (.piece) while what it carries (.bit)
-   rises, falls, turns and fades, each move at its own pace. Only transforms and opacity move, so
-   the page is not laid out or painted again. Without animations (.reduce-motion,
+   middle of the screen and fall back, in two and a half seconds at most, over the page and under
+   the notes, without catching a click. Each piece drifts sideways (.piece) while what it carries
+   (.bit) rises, falls, turns and fades, each move at its own pace. Only transforms and opacity
+   move, so the page is not laid out or painted again. Without animations (.reduce-motion,
    prefers-reduced-motion), the bits stay unseen. */
 .celebration {
   /* How far the burst goes: across a phone, a little wider than the page on a computer; and how

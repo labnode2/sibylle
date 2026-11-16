@@ -217,6 +217,41 @@ describe('Voters', () => {
     expect(pressCardShown()).toBeNull();
   });
 
+  it('opens over the avatar when the screen ends under the card, if it fits there', async () => {
+    // jsdom lays nothing out: here the card is told where it would be, under the avatar or over
+    // it, on jsdom's screen of 768 px.
+    const places = { under: [700, 924], over: [460, 692] };
+    const layout = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        const [top = 0, bottom = 0] = this.hasAttribute('data-above') ? places.over : places.under;
+        return {
+          x: 100,
+          y: top,
+          left: 100,
+          right: 420,
+          top,
+          bottom,
+          width: 320,
+          height: bottom - top,
+        } as DOMRect;
+      });
+    try {
+      const user = userEvent.setup();
+      const { cami } = show();
+      await user.hover(cami);
+      expect(pressCardShown()?.parentElement).toHaveAttribute('data-above');
+
+      // No room over it either: the card stays under the avatar.
+      await user.unhover(cami);
+      places.over = [-20, 212];
+      await user.hover(cami);
+      expect(pressCardShown()?.parentElement).not.toHaveAttribute('data-above');
+    } finally {
+      layout.mockRestore();
+    }
+  });
+
   it('says so when the member left the newsroom', async () => {
     usePressCard.mockReturnValue({
       data: undefined,

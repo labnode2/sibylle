@@ -946,10 +946,12 @@
   padding-top: 8px;
 }
 
+/* Over the avatar, the card's shadow (6 px down) falls toward it: the wider gap keeps the shadow
+   clear of the avatar's ink frame, with a little more paper between them than under the card. */
 .voterCard[data-above] {
   top: auto;
   bottom: 100%;
-  padding: 0 0 8px;
+  padding: 0 0 16px;
 }
 
 .voterNote {

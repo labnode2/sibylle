@@ -135,17 +135,17 @@ function VoterCard({
   // Placed again once the card arrives, which makes it taller.
   useLayoutEffect(() => {
     const element = box.current;
-    const avatar = element?.parentElement;
-    if (!element || !avatar) return;
+    if (!element) return;
     element.style.transform = '';
     element.removeAttribute('data-above');
     let rect = element.getBoundingClientRect();
-    if (
-      rect.bottom > window.innerHeight - EDGE &&
-      avatar.getBoundingClientRect().top - rect.height > EDGE
-    ) {
+    // Over the avatar when the screen ends below, if it fits there. It keeps farther from the
+    // avatar over it than under it (see the CSS), so it is measured there before it stays.
+    if (rect.bottom > window.innerHeight - EDGE) {
       element.setAttribute('data-above', '');
-      rect = element.getBoundingClientRect();
+      const above = element.getBoundingClientRect();
+      if (above.top < EDGE) element.removeAttribute('data-above');
+      else rect = above;
     }
     const shift =
       rect.left < EDGE

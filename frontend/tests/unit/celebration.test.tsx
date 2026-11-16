@@ -1,4 +1,4 @@
-// The burst of a game won: confetti and gold laurels over the page for one to two seconds, then
+// The burst of a game won: confetti and gold laurels over the page for two to three seconds, then
 // gone. It plays after the answer that wins, in Wordle (the word found) as in Pixel mystère (the
 // right word); never after a wrong answer, nor when a page opens on a game already won. It says
 // nothing to screen readers, and without animations nothing shows.
@@ -108,9 +108,9 @@ describe('Celebration', () => {
     expect(burst()).toBeNull();
   });
 
-  it('lasts one to two seconds', () => {
-    expect(CELEBRATION_MS).toBeGreaterThanOrEqual(1000);
-    expect(CELEBRATION_MS).toBeLessThanOrEqual(2000);
+  it('lasts two to three seconds', () => {
+    expect(CELEBRATION_MS).toBeGreaterThanOrEqual(2000);
+    expect(CELEBRATION_MS).toBeLessThanOrEqual(3000);
   });
 
   it('starts again for a new win, one burst at a time', () => {

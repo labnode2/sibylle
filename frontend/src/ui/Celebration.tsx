@@ -1,9 +1,10 @@
 // A game won, Wordle or Pixel mystère: a burst of confetti and gold laurels flies up from the
-// middle of the screen and falls back, in under two seconds, then leaves the page. Only the
-// winning answer plays it: never a wrong one, nor a page that opens on a game already won. It
-// stands over the page and under the notes, says nothing to screen readers (the page says the
-// win in words) and lets every click through. Without animations (« couper les animations »,
-// prefers-reduced-motion), nothing shows. The pieces are worked out once, the same every time.
+// middle of the screen and falls back, unhurried, in two and a half seconds at most, then leaves
+// the page. Only the winning answer plays it: never a wrong one, nor a page that opens on a game
+// already won. It stands over the page and under the notes, says nothing to screen readers (the
+// page says the win in words) and lets every click through. Without animations (« couper les
+// animations », prefers-reduced-motion), nothing shows. The pieces are worked out once, the same
+// every time.
 import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -29,8 +30,9 @@ const between = (low: number, high: number) => low + next() * (high - low);
 
 const COUNT = 36;
 /** How long a piece flies, in ms: a few lengths only, so that the browser has few starts and
- *  ends to follow. All set off together. */
-const FLIGHTS = [1350, 1500, 1650] as const;
+ *  ends to follow. All set off together. The longer the flight, the slower the piece goes over
+ *  the same way. */
+const FLIGHTS = [2000, 2250, 2500] as const;
 /** The scraps' sizes in px, width × height: squares and strips. */
 const SCRAPS = [
   [9, 9],
