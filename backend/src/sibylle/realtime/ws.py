@@ -63,15 +63,21 @@ async def authorize(account_id: uuid.UUID, topic: str) -> tuple[uuid.UUID, uuid.
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket) -> None:
     hub: Hub | None = getattr(websocket.app.state, "hub", None)
+    # uvicorn's own lines name the visitor's address and are filtered out (logs.py): these
+    # lines replace them, without it.
     if websocket.headers.get("origin") != get_settings().public_origin or hub is None:
+        log.warning("websocket refused", extra={"reason": "origin"})
         await websocket.close(code=CLOSE_FORBIDDEN)
         return
     signed_in = await _authenticate(websocket.cookies.get(SESSION_COOKIE))
     await websocket.accept()
     if signed_in is None:
+        log.warning("websocket refused", extra={"reason": "unauthenticated"})
         await websocket.close(code=CLOSE_UNAUTHENTICATED)
         return
     account_id, session_id = signed_in
+    opened = time.monotonic()
+    log.info("websocket opened", extra={"account_id": str(account_id)})
 
     async def close(code: int) -> None:
         await websocket.close(code=code)
@@ -123,3 +129,10 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     finally:
         pinger.cancel()
         hub.remove(connection)
+        log.info(
+            "websocket closed",
+            extra={
+                "account_id": str(account_id),
+                "duration_ms": round((time.monotonic() - opened) * 1000),
+            },
+        )

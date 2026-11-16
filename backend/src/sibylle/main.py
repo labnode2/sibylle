@@ -9,6 +9,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from sibylle.api.deps import Limits
 from sibylle.api.errors import error_response, install_error_handlers
+from sibylle.api.request_log import RequestLogMiddleware
 from sibylle.api.routes import (
     auth,
     bets,
@@ -89,6 +90,8 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
     app.add_middleware(CsrfMiddleware, origin=settings.public_origin)
+    # Added last, so it wraps CsrfMiddleware and logs its refusals too.
+    app.add_middleware(RequestLogMiddleware)
     install_error_handlers(app)
     app.state.limits = Limits()
     for module in (

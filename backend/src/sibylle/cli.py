@@ -73,7 +73,8 @@ def _serve(args: argparse.Namespace) -> None:
     """Migrations, then one uvicorn process: the WebSocket hub lives in memory, so a single
     process serves every browser. The visitor's address comes from X-Forwarded-For, trusted
     from the addresses in FORWARDED_ALLOW_IPS (`*` in the container, which only nginx reaches).
-    No access log: no visitor address is written down."""
+    No access log: no visitor address is written down; each request leaves a line of its own
+    (api/request_log.py). `log_config=None` keeps uvicorn's other lines on the JSON handler."""
     import uvicorn
 
     _migrate(args)
@@ -84,6 +85,7 @@ def _serve(args: argparse.Namespace) -> None:
         port=args.port,
         proxy_headers=True,
         access_log=False,
+        log_config=None,
     )
 
 

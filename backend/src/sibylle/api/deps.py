@@ -105,6 +105,8 @@ async def current_account(request: Request, session: Db) -> Account:
     account = await account_from_token(session, request.cookies.get(SESSION_COOKIE))
     if account is None:
         raise AppError("not_authenticated")
+    # Read by the request's log line (api/request_log.py).
+    request.state.account_id = str(account.id)
     return account
 
 
