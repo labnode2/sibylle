@@ -70,6 +70,7 @@
     "nobody": "Personne n'a encore joué. Sois le ou la première !",
     "replaced": "remplacé",
     "distribution": "RÉPARTITION DES PRONOS",
+    "voterGone": "{{pseudo}} ne fait plus partie de la rédaction.",
     "share": "{{pct}} %",
     "rules": "LE RÈGLEMENT",
     "rulesClose": "CLÔTURE",

@@ -89,7 +89,8 @@
 }
 
 .identity :global(.only-mobile),
-.identity :global(.only-desktop) {
+.identity :global(.only-desktop),
+.identityAvatar {
   flex: none;
   line-height: 0;
   outline: 2px solid var(--ink);

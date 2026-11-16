@@ -84,18 +84,24 @@ function Showcase({ card }: { card: CardFace }) {
 }
 
 /** The card itself; « Personnaliser ma carte » shows it as it goes, and the public card (US15)
- *  as anyone sees it. Only one's own card has `editTo`, the way to customise it. */
+ *  as anyone sees it. Only one's own card has `editTo`, the way to customise it. `avatarSize`
+ *  draws the avatar at one size on every screen, for the card opened over a prono's voters. */
 export function Identity({
   card,
   orgTitle,
   editTo,
+  avatarSize,
 }: {
   card: CardFace;
   orgTitle: string;
   editTo?: string;
+  avatarSize?: number;
 }) {
   const { t } = useTranslation('profile');
   const since = formatDate(card.joined_at, { month: 'long', year: 'numeric' }).toUpperCase();
+  const avatar = (size: number) => (
+    <FramedAvatar image={card.avatar} frame={card.frame} animation={card.animation} size={size} />
+  );
   return (
     <Card as="section" shadow={6} className={styles.card} aria-label={t('title')}>
       <div className={styles.band}>
@@ -103,22 +109,14 @@ export function Identity({
         <span className={styles.bandNumber}>{t('number', { number: card.card_number })}</span>
       </div>
       <div className={styles.identity}>
-        <span className="only-mobile">
-          <FramedAvatar
-            image={card.avatar}
-            frame={card.frame}
-            animation={card.animation}
-            size={96}
-          />
-        </span>
-        <span className="only-desktop">
-          <FramedAvatar
-            image={card.avatar}
-            frame={card.frame}
-            animation={card.animation}
-            size={128}
-          />
-        </span>
+        {avatarSize ? (
+          <span className={styles.identityAvatar}>{avatar(avatarSize)}</span>
+        ) : (
+          <>
+            <span className="only-mobile">{avatar(96)}</span>
+            <span className="only-desktop">{avatar(128)}</span>
+          </>
+        )}
         <div className={styles.identityText}>
           <div className={styles.pseudoLine}>
             <h2 className={styles.pseudo}>{card.pseudo}</h2>

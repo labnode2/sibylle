@@ -143,7 +143,7 @@ function Distribution({ orgId, prono }: { orgId: string; prono: PronoDetail }) {
       <div className={styles.ballot}>
         {prono.distribution.map((bucket, index) => (
           <div key={bucket.label}>
-            <div className={styles.choice}>
+            <div className={`${styles.choice} ${styles.distributionLine}`}>
               <span className={styles.choiceLabel}>{bucket.label}</span>
               {prono.state !== 'proposed' && prono.state !== 'rejected' && (
                 <Voters orgId={orgId} bets={votersFor(prono, index)} />

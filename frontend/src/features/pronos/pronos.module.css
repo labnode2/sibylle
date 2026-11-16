@@ -873,17 +873,69 @@
   gap: 8px 12px;
 }
 
+/* A line of the distribution, laid out as a choice of the ballot but not one to click: only its
+   avatars answer a click (and a phone's tap flash stays on the avatar, not the whole line). */
+.distributionLine {
+  cursor: auto;
+}
+
+/* « Qui a voté quoi »: the voters' avatars on a line of the distribution (WhoVoted.tsx). The
+   mouse over one frames it in ink, as a selection, and opens the member's press card under it, or
+   over it near the bottom of the screen; a click closes the card. */
 .voterList {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 4px;
+  gap: 6px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .voter {
+  position: relative;
   display: flex;
   align-items: center;
+}
+
+.voterAvatar {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.voterAvatar[aria-expanded='true'] {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+
+/* Only where a mouse hovers: a tap leaves :hover stuck on the avatar it touched. */
+@media (hover: hover) {
+  .voterAvatar:hover {
+    outline: 2px solid var(--ink);
+    outline-offset: 1px;
+  }
+}
+
+/* The padding bridges the gap to the avatar: the pointer crosses it without closing the card. */
+.voterCard {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 30;
+  width: min(320px, calc(100vw - 16px));
+  padding-top: 8px;
+}
+
+.voterCard[data-above] {
+  top: auto;
+  bottom: 100%;
+  padding: 0 0 8px;
+}
+
+.voterNote {
+  padding: 12px 14px;
+  font: 500 14px/1.4 var(--font-text);
 }
