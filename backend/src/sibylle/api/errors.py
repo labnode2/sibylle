@@ -1,5 +1,6 @@
 """The API's error envelope: `{"error": {"code", "message", "fields"}}`, codes from the contract."""
 
+import logging
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -8,6 +9,8 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from sibylle.i18n import t
+
+log = logging.getLogger(__name__)
 
 STATUS: dict[str, int] = {
     "not_authenticated": 401,
@@ -52,17 +55,33 @@ def error_response(code: str, status: int, fields: dict[str, str] | None = None)
     return JSONResponse({"error": body}, status_code=status)
 
 
-async def _app_error(_: Request, exc: Exception) -> JSONResponse:
+def _log_validation_error(request: Request, fields: dict[str, str]) -> None:
+    # Field names and codes only: never the submitted values nor the query string.
+    log.warning(
+        "validation error",
+        extra={
+            "method": request.method,
+            "path": request.url.path,
+            "status": 422,
+            "fields": fields,
+        },
+    )
+
+
+async def _app_error(request: Request, exc: Exception) -> JSONResponse:
     assert isinstance(exc, AppError)
+    if exc.code == "validation_error":
+        _log_validation_error(request, exc.fields)
     return error_response(exc.code, exc.status, exc.fields)
 
 
-async def _validation_error(_: Request, exc: Exception) -> JSONResponse:
+async def _validation_error(request: Request, exc: Exception) -> JSONResponse:
     assert isinstance(exc, RequestValidationError)
     fields: dict[str, str] = {}
     for error in exc.errors():
         location = [str(part) for part in error["loc"] if part not in ("body", "query", "path")]
         fields[".".join(location) or "body"] = str(error["type"])
+    _log_validation_error(request, fields)
     return error_response("validation_error", 422, fields)
 
 
