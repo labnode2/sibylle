@@ -43,7 +43,7 @@
   "pixel": {
     "back": "Retour à la une",
     "title": "Pixel mystère",
-    "intro": "Un dessin se dévoile peu à peu pendant sept jours. Plus tu trouves le mot tôt, plus tu gagnes : 50 lauriers au départ, 3 à la fin, quel que soit ton rang. 3 essais par jour.",
+    "intro": "Un dessin se dévoile peu à peu pendant sept jours. Plus tu trouves le mot tôt, plus tu gagnes : 50 lauriers au départ, 3 à la fin. 3 essais par jour.",
     "none": "Pas de Pixel mystère en cours.",
     "off": "Pixel mystère n'est pas au programme cette semaine.",
     "drawing": "Le dessin du Pixel mystère, {{shown}} pixels dévoilés sur {{total}}",
