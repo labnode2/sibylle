@@ -2,11 +2,13 @@
 // the keyboard (on screen or the device's own) type five letters, the server checks the word and
 // sends the colours back; the solution only comes once the game is over. One game a day: the
 // state is kept by the server, so a reload shows the same grid. Once over, the result can be
-// copied to be pasted elsewhere, in colours only.
+// copied to be pasted elsewhere, in colours only. The try that finds the word plays the burst of a
+// win; a reload of a game already won does not.
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
+import { useCelebration } from '../../../ui/Celebration';
 import { Icon } from '../../../ui/components';
 import { useFormErrors } from '../../forms';
 import { useWordle, useWordleGuess } from '../api';
@@ -23,6 +25,7 @@ export function WordlePage() {
   const guess = useWordleGuess(orgId);
   const errors = useFormErrors(guess.error);
   const [typing, setTyping] = useState('');
+  const [celebration, celebrate] = useCelebration();
   const over = status.data ? status.data.state !== 'playing' : true;
   const { mutate, reset, isPending } = guess;
 
@@ -39,8 +42,13 @@ export function WordlePage() {
   }, [reset]);
   const submit = useCallback(() => {
     if (typing.length !== WORD_LENGTH || isPending) return;
-    mutate(typing, { onSuccess: () => setTyping('') });
-  }, [typing, isPending, mutate]);
+    mutate(typing, {
+      onSuccess: (game) => {
+        setTyping('');
+        if (game.state === 'won') celebrate();
+      },
+    });
+  }, [typing, isPending, mutate, celebrate]);
 
   useEffect(() => {
     if (over) return;
@@ -124,6 +132,7 @@ export function WordlePage() {
           ))}
         </div>
       )}
+      {celebration}
     </article>
   );
 }

@@ -1,0 +1,116 @@
+/* The burst of a game won (Celebration.tsx): scraps of confetti and gold laurels fly up from the
+   middle of the screen and fall back, in under two seconds, over the page and under the notes,
+   without catching a click. Each piece drifts sideways (.piece) while what it carries (.bit)
+   rises, falls, turns and fades, each move at its own pace. Only transforms and opacity move, so
+   the page is not laid out or painted again. Without animations (.reduce-motion,
+   prefers-reduced-motion), the bits stay unseen. */
+.celebration {
+  /* How far the burst goes: across a phone, a little wider than the page on a computer; and how
+     high it flies. */
+  --across: min(1vw, 6px);
+  --up: min(1vh, 8px);
+
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+}
+
+.piece {
+  position: absolute;
+  top: 64%;
+  left: 50%;
+  animation: drift var(--duration) cubic-bezier(0.2, 0.65, 0.4, 1) both;
+}
+
+.bit {
+  display: block;
+  opacity: 0;
+}
+
+/* A scrap of paper, turning over as it spins. */
+.scrap {
+  width: var(--width);
+  height: var(--height);
+  margin: calc(var(--height) / -2) 0 0 calc(var(--width) / -2);
+  background: var(--color);
+  animation:
+    arc var(--duration) linear both,
+    spin var(--duration) linear both,
+    flip calc(var(--duration) / 3) ease-in-out 3 both,
+    fade var(--duration) linear both;
+}
+
+/* A gold laurel, twice its 16 pixels, rocking a little. */
+.laurel {
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  image-rendering: pixelated;
+  animation:
+    arc var(--duration) linear both,
+    spin var(--duration) ease-in-out both,
+    fade var(--duration) linear both;
+}
+
+/* Sideways: fast, then slower, as through the air. */
+@keyframes drift {
+  from {
+    translate: 0 0;
+  }
+
+  to {
+    translate: calc(var(--x) * var(--across)) 0;
+  }
+}
+
+/* Up, slowing, to the top of the flight; then down, faster and faster, out of the screen. */
+@keyframes arc {
+  0% {
+    translate: 0 0;
+    animation-timing-function: cubic-bezier(0.3, 0.6, 0.5, 1);
+  }
+
+  30% {
+    translate: 0 calc(var(--rise) * var(--up) * -1);
+    animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.6);
+  }
+
+  100% {
+    translate: 0 calc(var(--fall) * 1vh);
+  }
+}
+
+@keyframes spin {
+  from {
+    rotate: var(--turn-from);
+  }
+
+  to {
+    rotate: var(--turn-to);
+  }
+}
+
+/* Edge on, halfway through each turn over. */
+@keyframes flip {
+  50% {
+    scale: 1 0.2;
+  }
+}
+
+@keyframes fade {
+  0% {
+    opacity: 0;
+  }
+
+  6%,
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}

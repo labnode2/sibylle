@@ -2,12 +2,13 @@
 // who found and in what order, the word at the end; and for journalists, a drawing to post with
 // the pixel editor and the drawings waiting their turn. In a week the editor left it out of
 // (US12), a word saying so, and the last drawing with its word once it ended. A drawing under
-// way counts down to its end.
+// way counts down to its end. Finding the word plays the burst of a win.
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
 import { formatDate, formatNumber } from '../../../i18n';
+import { useCelebration } from '../../../ui/Celebration';
 import { Button, Field, Icon } from '../../../ui/components';
 import { Countdown } from '../../../ui/Countdown';
 import { PixelImage } from '../../../ui/PixelImage';
@@ -27,7 +28,15 @@ import styles from '../games.module.css';
 import { GainNow } from './GainNow';
 import { MysteryDrawing } from './MysteryDrawing';
 
-function GuessForm({ guess, status }: { guess: ReturnType<typeof useGuess>; status: PixelStatus }) {
+function GuessForm({
+  guess,
+  status,
+  onFound,
+}: {
+  guess: ReturnType<typeof useGuess>;
+  status: PixelStatus;
+  onFound: () => void;
+}) {
   const { t } = useTranslation('games');
   const errors = useFormErrors(guess.error);
   const [word, setWord] = useState('');
@@ -41,7 +50,10 @@ function GuessForm({ guess, status }: { guess: ReturnType<typeof useGuess>; stat
       onSuccess: (answer) => {
         setWord('');
         if (!answer.correct) toast.error(t('pixel.wrong', { word: tried }));
-        else toast.success(t('pixel.right', { laurels: answer.laurels }));
+        else {
+          toast.success(t('pixel.right', { laurels: answer.laurels }));
+          onFound();
+        }
       },
     });
   };
@@ -73,6 +85,8 @@ function GuessForm({ guess, status }: { guess: ReturnType<typeof useGuess>; stat
 function Puzzle({ orgId, status, on }: { orgId: string; status: PixelStatus; on: boolean }) {
   const { t } = useTranslation('games');
   const guess = useGuess(orgId);
+  // Here rather than in the form, which goes as soon as the word is found.
+  const [celebration, celebrate] = useCelebration();
   const total = status.size * status.size;
   const message =
     status.state === 'finished'
@@ -129,7 +143,7 @@ function Puzzle({ orgId, status, on }: { orgId: string; status: PixelStatus; on:
         )}
         {message && <p className={styles.text}>{message}</p>}
         {status.state === 'active' && !status.mine && !status.found_by_me && (
-          <GuessForm guess={guess} status={status} />
+          <GuessForm guess={guess} status={status} onFound={celebrate} />
         )}
         <section className={styles.section} aria-labelledby="pixel-finds">
           <h2 id="pixel-finds" className={styles.sectionTitle}>
@@ -150,6 +164,7 @@ function Puzzle({ orgId, status, on }: { orgId: string; status: PixelStatus; on:
           )}
         </section>
       </div>
+      {celebration}
     </div>
   );
 }

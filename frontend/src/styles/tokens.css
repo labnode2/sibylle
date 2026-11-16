@@ -18,6 +18,13 @@
   --gold-line: #c99a18;
   /* Red for what cannot be taken back, such as signing out. */
   --danger: #c62f1a;
+  /* The confetti of a game won (ui/Celebration.tsx): the laurels' two golds and the page's two
+     blues. On the light paper, the deep gold and the indigo carry the burst; the dark theme has
+     blues of its own. */
+  --confetti-1: #c99a18;
+  --confetti-2: #4a50d0;
+  --confetti-3: #f2c230;
+  --confetti-4: #8f94ff;
 
   --font-title: 'Jacquard 12', 'Times New Roman', serif;
   --font-text:
@@ -43,6 +50,8 @@
   --on-ink: #10111e;
   --shadow: #05060d;
   --danger: #ff6b57;
+  --confetti-2: #9095ff;
+  --confetti-4: #5b60d6;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -59,5 +68,7 @@
     --on-ink: #10111e;
     --shadow: #05060d;
     --danger: #ff6b57;
+    --confetti-2: #9095ff;
+    --confetti-4: #5b60d6;
   }
 }
