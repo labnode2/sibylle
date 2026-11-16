@@ -91,6 +91,8 @@ REVEAL_HOUR = 8
 HIDDEN = 255
 WORD = re.compile(r"^[^\W\d_]+(?:[ '’-][^\W\d_]+)*$")
 WORD_MAX = 24
+# The words of a drawing, the main one included.
+WORDS_MAX = 5
 
 
 def normalize_word(text: str) -> str:

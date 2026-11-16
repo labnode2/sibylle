@@ -2158,6 +2158,8 @@ export interface components {
             drawing: components["schemas"]["PixelImage"];
             /** Word */
             word: string;
+            /** Other Words */
+            other_words?: string[];
         };
         /**
          * PixelQueueItem
@@ -2185,6 +2187,8 @@ export interface components {
             mine: boolean;
             /** Word */
             word: string | null;
+            /** Words */
+            words: string[] | null;
             drawing: components["schemas"]["PixelImage"] | null;
             /**
              * Created At
@@ -2229,6 +2233,8 @@ export interface components {
             state: "active" | "finished";
             /** Word */
             word: string | null;
+            /** Words */
+            words: string[] | null;
             /** Ends At */
             ends_at: string | null;
             /** Started At */

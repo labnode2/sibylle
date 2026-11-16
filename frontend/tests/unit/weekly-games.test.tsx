@@ -47,6 +47,7 @@ function pixel(overrides: Partial<NonNullable<Games['pixel']>>): Games {
       mine: false,
       state: 'active',
       word: null,
+      words: null,
       ends_at: null,
       started_at: null,
       gain_ends_at: null,

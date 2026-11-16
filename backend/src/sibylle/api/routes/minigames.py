@@ -86,7 +86,9 @@ async def get_queue(org_id: uuid.UUID, member: CurrentMember, session: Db) -> li
 async def post_puzzle(
     org_id: uuid.UUID, body: PixelPuzzleIn, member: CurrentMember, session: Db
 ) -> PixelQueueItem:
-    puzzle = await minigames.post_puzzle(session, member, body.drawing.model_dump(), body.word)
+    puzzle = await minigames.post_puzzle(
+        session, member, body.drawing.model_dump(), body.word, body.other_words
+    )
     mine = next(
         (item for item in await minigames.queue(session, member) if item["puzzle_id"] == puzzle.id),
         None,

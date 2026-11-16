@@ -120,7 +120,11 @@ function Puzzle({ orgId, status, on }: { orgId: string; status: PixelStatus; on:
         {status.state === 'active' && gain != null && (
           <p className={styles.label}>{t('pixel.gainNow', { laurels: gain })}</p>
         )}
-        {status.word && <p className={styles.word}>{t('pixel.word', { word: status.word })}</p>}
+        {status.words && (
+          <p className={styles.word}>
+            {t('pixel.word', { count: status.words.length, word: status.words.join(' · ') })}
+          </p>
+        )}
         {status.author_earned != null && (
           <p className={styles.label}>
             {t('pixel.authorEarned', { laurels: formatNumber(status.author_earned) })}
@@ -160,6 +164,7 @@ function PostPuzzle({ orgId, unlocked, on }: { orgId: string; unlocked: number[]
   const errors = useFormErrors(post.error);
   const [open, setOpen] = useState(false);
   const [word, setWord] = useState('');
+  const [others, setOthers] = useState<string[]>([]);
 
   return (
     <section className={styles.section} aria-labelledby="pixel-post">
@@ -178,6 +183,31 @@ function PostPuzzle({ orgId, unlocked, on }: { orgId: string; unlocked: number[]
             onChange={(event) => setWord(event.target.value)}
             error={errors.field('word') ?? undefined}
           />
+          {others.map((other, index) => (
+            <Field
+              key={index}
+              label={t('pixel.post.otherWord', { count: index + 2 })}
+              value={other}
+              maxLength={24}
+              autoComplete="off"
+              onChange={(event) =>
+                setOthers(others.map((w, i) => (i === index ? event.target.value : w)))
+              }
+              error={index === 0 ? (errors.field('other_words') ?? undefined) : undefined}
+            />
+          ))}
+          <div>
+            {others.length < 4 && (
+              <Button variant="secondary" onClick={() => setOthers([...others, ''])}>
+                {t('pixel.post.addWord')}
+              </Button>
+            )}
+            {others.length > 0 && (
+              <Button variant="secondary" onClick={() => setOthers(others.slice(0, -1))}>
+                {t('pixel.post.removeWord')}
+              </Button>
+            )}
+          </div>
           <PixelEditor
             sizes={[16, 32]}
             unlocked={unlocked}
@@ -188,11 +218,12 @@ function PostPuzzle({ orgId, unlocked, on }: { orgId: string; unlocked: number[]
             onCancel={() => setOpen(false)}
             onSave={(drawing) =>
               post.mutate(
-                { drawing, word },
+                { drawing, word, other_words: others.map((w) => w.trim()).filter(Boolean) },
                 {
                   onSuccess: (posted) => {
                     setOpen(false);
                     setWord('');
+                    setOthers([]);
                     toast.success(
                       t(
                         posted.state === 'active'
@@ -238,8 +269,8 @@ function PostPuzzle({ orgId, unlocked, on }: { orgId: string; unlocked: number[]
                     {t('pixel.queue.item', { size: item.size, count: item.letters })}
                   </span>
                   <span className={styles.text}>
-                    {item.word
-                      ? t('pixel.queue.mine', { word: item.word })
+                    {item.words
+                      ? t('pixel.queue.mine', { word: item.words.join(' · ') })
                       : t('pixel.queue.other')}
                   </span>
                 </span>

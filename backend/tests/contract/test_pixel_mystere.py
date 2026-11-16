@@ -27,9 +27,12 @@ def pixel(org_id: object, path: str = "") -> str:
     return f"/api/orgs/{org_id}/games/pixel{path}"
 
 
-async def post(person: Person, org_id: object, word: str = "Café") -> httpx.Response:
+async def post(
+    person: Person, org_id: object, word: str = "Café", others: list[str] | None = None
+) -> httpx.Response:
     return await person.client.post(
-        pixel(org_id, "/puzzles"), json={"drawing": DRAWING, "word": word}
+        pixel(org_id, "/puzzles"),
+        json={"drawing": DRAWING, "word": word, "other_words": others or []},
     )
 
 
@@ -301,3 +304,44 @@ async def test_the_author_is_paid_25_at_the_start_then_5_a_find(
     fake_clock.set(clock.now() + timedelta(days=8))
     await reveal_pixel_puzzles()
     assert await balance(hugo) == before + 35
+
+
+async def test_a_drawing_with_several_words_accepts_each_of_them(
+    make_org: MakeOrg, person: MakePerson
+) -> None:
+    org = await make_org()
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    leo = await person(org, "reader", "Léo")
+    manon = await person(org, "reader", "Manon")
+
+    # Refused: a bad other word, a duplicate once normalized, more than five words in all.
+    for others in (
+        ["x"],
+        ["CAFE"],
+        ["thé", "the"],
+        ["a1"],
+        ["un", "deux", "trois", "quatre", "cinq"],
+    ):
+        refused = await post(hugo, org.id, "Café", others)
+        assert refused.status_code == 422, others
+        assert "other_words" in refused.json()["error"]["fields"]
+    created = await post(hugo, org.id, "Café", ["Expresso", " petit  noir ", "Jus", "Thé"])
+    assert created.status_code == 201
+    assert created.json()["words"] == ["Café", "Expresso", "petit noir", "Jus", "Thé"]
+
+    # The others never see the list before they find the word.
+    state = await status(cami, org.id)
+    assert state["word"] is None and state["words"] is None
+    assert (await status(hugo, org.id))["words"] == created.json()["words"]
+
+    assert (await guess(cami, org.id, "tasse")).json()["correct"] is False
+    first = await guess(cami, org.id, "expresso")
+    assert (first.json()["correct"], first.json()["rank"]) == (True, 1)
+    second = await guess(leo, org.id, "Petit Noir")
+    assert (second.json()["correct"], second.json()["rank"]) == (True, 2)
+    assert (await guess(cami, org.id, "café")).status_code == 409  # one find per member
+
+    found = await status(cami, org.id)
+    assert found["words"] == created.json()["words"] and found["word"] == "Café"
+    assert (await status(manon, org.id))["words"] is None

@@ -3,7 +3,7 @@ from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import CheckConstraint, ForeignKey, Index, LargeBinary, Text, UniqueConstraint, text
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from sibylle import clock
@@ -98,8 +98,10 @@ class PixelPuzzle(Base):
     org_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organisations.id"))
     author_membership_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("memberships.id"))
     drawing: Mapped[dict[str, Any]]
-    word: Mapped[str] = mapped_column(Text)
-    word_normalized: Mapped[str] = mapped_column(Text)
+    # The words that fit the drawing, as the author wrote them (the first is the main one), and
+    # the same normalized (see `normalize_word`): any of them is a right answer.
+    words: Mapped[list[str]] = mapped_column(JSONB)
+    words_normalized: Mapped[list[str]] = mapped_column(JSONB)
     # The pixels in the order they show, two bytes each, drawn once at creation.
     reveal_order: Mapped[bytes] = mapped_column(LargeBinary)
     revealed_count: Mapped[int] = mapped_column(default=0, server_default="0")

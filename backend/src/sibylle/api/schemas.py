@@ -964,6 +964,8 @@ class PixelStatus(BaseModel):
     mine: bool
     state: Literal["active", "finished"]
     word: str | None
+    # Every word of the drawing, the main one first, shown as `word` is.
+    words: list[str] | None
     # When an active drawing ends unless everyone finds it first; null once finished.
     ends_at: datetime | None
     # What finding the word pays falls in a line from 50 to 3 laurels between `started_at` and
@@ -1030,6 +1032,10 @@ class GameSchedule(BaseModel):
 class PixelPuzzleIn(BaseModel):
     drawing: PixelImage
     word: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
+    # Other words that fit the drawing: 5 words at most with `word`, none twice.
+    other_words: list[
+        Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
+    ] = Field(default_factory=list, max_length=4)
 
 
 class PixelQueueItem(BaseModel):
@@ -1041,6 +1047,7 @@ class PixelQueueItem(BaseModel):
     letters: int
     mine: bool
     word: str | None
+    words: list[str] | None
     drawing: PixelImage | None
     created_at: datetime
 

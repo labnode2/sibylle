@@ -19,6 +19,7 @@ the drawing in play ends with its word given.
 import base64
 import secrets
 import uuid
+from collections.abc import Sequence
 from datetime import date, datetime, timedelta
 from typing import Any
 
@@ -48,6 +49,7 @@ from sibylle.domain.minigames import (
     RUN_MAX,
     RUNNER_ATTEMPTS,
     WORDLE_TRIES,
+    WORDS_MAX,
     RunResult,
     letter_count,
     masked,
@@ -394,13 +396,14 @@ async def pixel_status(
         ).decode(),
         # What the newsroom sees so far, even for whoever sees the whole drawing.
         "revealed_count": shown,
-        "letters": letter_count(puzzle.word),
+        "letters": letter_count(puzzle.words[0]),
         "guesses_left_today": left,
         "finds": [{"member": m, "rank": f.rank} for f, m in finds],
         "found_by_me": found,
         "mine": mine,
         "state": puzzle.state,
-        "word": puzzle.word if open_book else None,
+        "word": puzzle.words[0] if open_book else None,
+        "words": puzzle.words if open_book else None,
         "ends_at": await _ends_at(session, puzzle) if puzzle.state == "active" else None,
         "started_at": puzzle.started_at if puzzle.state == "active" else None,
         "gain_ends_at": reveal_end(puzzle.started_at)
@@ -478,7 +481,7 @@ async def _finish(session: AsyncSession, puzzle: PixelPuzzle) -> None:
     await bus.publish(
         session,
         "games.pixel.finished",
-        {"puzzle_id": str(puzzle.id), "word": puzzle.word},
+        {"puzzle_id": str(puzzle.id), "word": puzzle.words[0]},
         topics=[f"org:{puzzle.org_id}"],
     )
 
@@ -501,7 +504,11 @@ async def _everyone_found(session: AsyncSession, puzzle: PixelPuzzle) -> bool:
 
 
 async def post_puzzle(
-    session: AsyncSession, member: Membership, drawing: dict[str, Any], word: str
+    session: AsyncSession,
+    member: Membership,
+    drawing: dict[str, Any],
+    word: str,
+    other_words: Sequence[str] = (),
 ) -> PixelPuzzle:
     if not can(member.role, Action.CREATE_PUZZLE):
         raise AppError("forbidden")
@@ -509,12 +516,23 @@ async def post_puzzle(
     word = " ".join(word.split())
     if not valid_word(word):
         raise AppError("validation_error", {"word": "invalid"})
+    words = [word]
+    for other in other_words:
+        other = " ".join(other.split())
+        if not valid_word(other):
+            raise AppError("validation_error", {"other_words": "invalid"})
+        words.append(other)
+    if len(words) > WORDS_MAX:
+        raise AppError("validation_error", {"other_words": "too_many"})
+    normalized = [normalize_word(w) for w in words]
+    if len(set(normalized)) != len(normalized):
+        raise AppError("validation_error", {"other_words": "duplicate"})
     puzzle = PixelPuzzle(
         org_id=member.org_id,
         author_membership_id=member.id,
         drawing=checked,
-        word=word,
-        word_normalized=normalize_word(word),
+        words=words,
+        words_normalized=normalized,
         reveal_order=reveal_order(int(checked["size"])),
     )
     session.add(puzzle)
@@ -540,9 +558,10 @@ async def queue(session: AsyncSession, member: Membership) -> list[dict[str, Any
             "puzzle_id": puzzle.id,
             "state": puzzle.state,
             "size": puzzle.drawing["size"],
-            "letters": letter_count(puzzle.word),
+            "letters": letter_count(puzzle.words[0]),
             "mine": puzzle.author_membership_id == member.id,
-            "word": puzzle.word if puzzle.author_membership_id == member.id else None,
+            "word": puzzle.words[0] if puzzle.author_membership_id == member.id else None,
+            "words": puzzle.words if puzzle.author_membership_id == member.id else None,
             "drawing": puzzle.drawing if puzzle.author_membership_id == member.id else None,
             "created_at": puzzle.created_at,
         }
@@ -563,7 +582,7 @@ async def guess(session: AsyncSession, member: Membership, word: str) -> dict[st
     if await _guesses_today(session, puzzle, member) >= PIXEL_GUESSES_PER_DAY:
         raise AppError("attempts_exhausted")
     normalized = normalize_word(word)
-    correct = normalized == puzzle.word_normalized
+    correct = normalized in puzzle.words_normalized
     session.add(
         PixelGuess(
             puzzle_id=puzzle.id,
@@ -583,7 +602,7 @@ async def guess(session: AsyncSession, member: Membership, word: str) -> dict[st
     assert puzzle.started_at is not None
     laurels = _gain_now(puzzle)
     session.add(PixelFind(puzzle_id=puzzle.id, membership_id=member.id, rank=rank, laurels=laurels))
-    await ledger.append(session, member.id, minigame(laurels), reason=f"pixel:{puzzle.word}")
+    await ledger.append(session, member.id, minigame(laurels), reason=f"pixel:{puzzle.words[0]}")
     # One find per member (checked above, puzzle locked): the author is paid once for each.
     await ledger.append(
         session,
