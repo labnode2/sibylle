@@ -23,9 +23,7 @@ function pixelLine(t: TFunction<'games'>, pixel: Games['pixel'], now: number): s
   if (!pixel) return t('box.pixelNone');
   if (pixel.state === 'finished') return t('box.pixelFinished', { word: pixel.word });
   const left = pixel.ends_at ? shortTimeLeft(t, pixel.ends_at, now) : '';
-  const line = t('box.pixelLine', { count: pixel.letters, left });
-  const gain = gainAt(pixel, now);
-  return gain == null ? line : `${line} · ${t('box.pixelGain', { laurels: gain })}`;
+  return t('box.pixelLine', { count: pixel.letters, left });
 }
 
 export function WeeklyGames({ orgId, size = 32 }: { orgId: string; size?: 32 | 48 }) {
@@ -35,6 +33,7 @@ export function WeeklyGames({ orgId, size = 32 }: { orgId: string; size?: 32 | 4
   if (!games.data) return null;
   const { runner, pixel, scheduled, wordle } = games.data;
   const thumb = { width: size, height: size };
+  const gain = pixel?.state === 'active' ? gainAt(pixel, now) : null;
 
   return (
     <ul className={`${styles.gameList} ${size === 48 ? styles.gameListLarge : ''}`}>
@@ -79,6 +78,9 @@ export function WeeklyGames({ orgId, size = 32 }: { orgId: string; size?: 32 | 4
                 )}
               </span>
               <span className={styles.gameLine}>{pixelLine(t, pixel, now)}</span>
+              {gain != null && (
+                <span className={styles.gameGain}>{t('box.pixelGain', { laurels: gain })}</span>
+              )}
             </span>
           </Link>
         </li>

@@ -24,7 +24,7 @@ import {
   type PixelStatus,
 } from '../api';
 import styles from '../games.module.css';
-import { useGainNow } from './gain';
+import { GainNow } from './GainNow';
 import { MysteryDrawing } from './MysteryDrawing';
 
 function GuessForm({ guess, status }: { guess: ReturnType<typeof useGuess>; status: PixelStatus }) {
@@ -73,7 +73,6 @@ function GuessForm({ guess, status }: { guess: ReturnType<typeof useGuess>; stat
 function Puzzle({ orgId, status, on }: { orgId: string; status: PixelStatus; on: boolean }) {
   const { t } = useTranslation('games');
   const guess = useGuess(orgId);
-  const gain = useGainNow(status);
   const total = status.size * status.size;
   const message =
     status.state === 'finished'
@@ -101,6 +100,7 @@ function Puzzle({ orgId, status, on }: { orgId: string; status: PixelStatus; on:
             total: formatNumber(total),
           })}
         </p>
+        <GainNow status={status} />
         {status.state === 'active' && status.ends_at && (
           <>
             <Countdown until={status.ends_at} label={t('pixel.countdown')} />
@@ -116,9 +116,6 @@ function Puzzle({ orgId, status, on }: { orgId: string; status: PixelStatus; on:
               })}
             </p>
           </>
-        )}
-        {status.state === 'active' && gain != null && (
-          <p className={styles.label}>{t('pixel.gainNow', { laurels: gain })}</p>
         )}
         {status.words && (
           <p className={styles.word}>

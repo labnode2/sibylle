@@ -59,6 +59,8 @@
     "wrong": "« {{word}} » : ce n'est pas ça.",
     "right": "Bravo ! Tu gagnes {{laurels}} lauriers.",
     "gainNow": "TROUVE MAINTENANT : +{{laurels}}",
+    "gainNowLabel": "SI TU TROUVES MAINTENANT",
+    "gainNowUnit": "LAURIERS",
     "word_one": "LE MOT : {{word}}",
     "word_other": "LES MOTS : {{word}}",
     "mine": "C'est ton dessin : tu regardes la rédaction chercher.",
