@@ -2,7 +2,16 @@
 // join, and never see another member's private data.
 import { expect, test, type Page } from '@playwright/test';
 
-import { call, createNewsroom, joinWith, newPerson, notes, openSettings, orgIdOf } from './helpers';
+import {
+  call,
+  createNewsroom,
+  joinWith,
+  KEYCLOAK,
+  newPerson,
+  notes,
+  openSettings,
+  orgIdOf,
+} from './helpers';
 
 const PRIVATE_KEYS = ['first_name', 'last_name', 'email', 'keycloak_id'];
 
@@ -156,6 +165,6 @@ test('the newsroom card opens a menu to change newsroom or join another, and the
   await leaving.getByRole('button', { name: 'Me déconnecter' }).click();
   // Signed out of Keycloak too: its sign-in page asks for the password again.
   await expect(ines.getByRole('heading', { name: 'Connexion' })).toBeVisible();
-  await expect(ines.getByLabel('Mot de passe')).toBeEmpty();
-  expect(new URL(ines.url()).port).toBe('8280');
+  await expect(ines.getByLabel('Mot de passe', { exact: true })).toBeEmpty();
+  expect(new URL(ines.url()).port).toBe(new URL(KEYCLOAK).port);
 });

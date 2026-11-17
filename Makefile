@@ -12,6 +12,9 @@ ORIGIN = http://$(UI_HOST):$(WEB_PORT)
 # Les tests de bout en bout ont leurs propres ports (API 8001, interface 5180) : ils ne
 # croisent jamais un `make dev` ouvert à côté.
 E2E_WEB_PORT ?= 5180
+# Le Keycloak des parcours : celui de `make keycloak`, ou un autre déjà lancé ailleurs
+# (`make e2e KEYCLOAK_URL=http://localhost:8290`).
+KEYCLOAK_URL ?= http://localhost:8280
 
 .DEFAULT_GOAL := help
 
@@ -101,9 +104,9 @@ check-frontend:
 
 # Les parcours se connectent par les pages du Keycloak local, avec son client sibylle-e2e.
 e2e: ## Parcours de bout en bout (Playwright), avec le Keycloak local (make keycloak)
-	@curl --silent --fail --output /dev/null http://localhost:8280/realms/sibylle || \
+	@curl --silent --fail --output /dev/null $(KEYCLOAK_URL)/realms/sibylle || \
 		{ echo "Le Keycloak local ne répond pas : lance d'abord make keycloak." >&2; exit 1; }
-	cd frontend && SIBYLLE_WEB_PORT=$(E2E_WEB_PORT) npm run e2e
+	cd frontend && SIBYLLE_WEB_PORT=$(E2E_WEB_PORT) KEYCLOAK_URL=$(KEYCLOAK_URL) npm run e2e
 
 # Thème Keycloak (keycloak/README.md) : le Keycloak de la production, en local, avec le thème et
 # le realm de keycloak/dev-realm.json ; ses e-mails arrivent dans Mailpit. Une retouche du thème

@@ -1,5 +1,6 @@
-// Quickstart V5: the six rankings, a live refresh after a result, and the end of the autumn
-// season (simulated clock on 21 December 2026 at 00:00:30, Paris time).
+// Quickstart V5: the rankings (gold laurels all time, pronos won over the month, the season or all
+// time), a live refresh after a result, and the end of the autumn season (simulated clock on
+// 21 December 2026 at 00:00:30, Paris time).
 import { expect, test, type Page } from '@playwright/test';
 
 import {
@@ -100,9 +101,10 @@ test('rankings, a live refresh and the end of the season', async ({ browser }, t
   await expect(
     cami.getByRole('table', { name: /PRONOS GAGNÉS · SAISON D'AUTOMNE 2026/ }),
   ).toBeVisible();
-  await metric.getByRole('button', { name: 'LAURIERS' }).click();
-  // The laurels are what each one has: no month for them.
-  await expect(period.getByRole('button')).toHaveText(['SAISON', 'DEPUIS TOUJOURS']);
+  await metric.getByRole('button', { name: "LAURIERS D'OR" }).click();
+  // The gold laurels are what each one has as of now: all time only.
+  await expect(period.getByRole('button')).toHaveText(['DEPUIS TOUJOURS']);
+  await expect(cami.getByRole('table', { name: "LAURIERS D'OR · DEPUIS TOUJOURS" })).toBeVisible();
 
   // Léo watches the ranking while his win is published: it moves without reloading.
   await leo.goto(`/o/${orgId}/classement`);
@@ -134,6 +136,19 @@ test('rankings, a live refresh and the end of the season', async ({ browser }, t
   await expect.poll(() => board(cami)).toEqual(['1 Cami (toi) 100', '1 Inès 100', '1 Léo 100']);
   expect(await laurels(cami, orgId)).toEqual([100, 0]);
   expect(await laurels(leo, orgId)).toEqual([100, 0]);
+  // The pronos won start again with the winter; all time keeps the autumn's.
+  await metric.getByRole('button', { name: 'PRONOS GAGNÉS' }).click();
+  await period.getByRole('button', { name: 'SAISON' }).click();
+  await expect
+    .poll(() => board(cami))
+    .toEqual(['1 Cami (toi) 0 prono', '1 Inès 0 prono', '1 Léo 0 prono']);
   await period.getByRole('button', { name: 'DEPUIS TOUJOURS' }).click();
-  await expect.poll(() => board(cami)).toEqual(['1 Cami (toi) 234', '2 Léo 214', '3 Inès 100']);
+  await expect
+    .poll(() => board(cami))
+    .toEqual(['1 Cami (toi) 1 prono', '1 Léo 1 prono', '3 Inès 0 prono']);
+  // The autumn's gold laurels stay engraved on the trophies of those who played, on their card.
+  await cami.goto(`/o/${orgId}/profil`);
+  await expect(cami.getByText('AUTOMNE 2026 · 134 LAURIERS EN OR · 1E')).toBeAttached();
+  await leo.goto(`/o/${orgId}/profil`);
+  await expect(leo.getByText('AUTOMNE 2026 · 114 LAURIERS EN OR · 2E')).toBeAttached();
 });

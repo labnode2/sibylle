@@ -24,7 +24,7 @@ export function emailOf(page: Page): string {
 
 // The local Keycloak (`make keycloak`) and its admin, admin / admin (keycloak/dev.sh): what an
 // administrator does in its console.
-const KEYCLOAK = process.env.KEYCLOAK_URL ?? 'http://localhost:8280';
+export const KEYCLOAK = process.env.KEYCLOAK_URL ?? 'http://localhost:8280';
 
 /** A call to the admin API of the realm `sibylle`, as the local Keycloak's admin. */
 export async function keycloakAdmin(method: string, path: string): Promise<Response> {
@@ -120,7 +120,7 @@ export async function signUpOnKeycloak(
   await page.getByLabel('Prénom').fill(firstName);
   await page.getByLabel('Nom', { exact: true }).fill('Test');
   await page.getByLabel('E-mail').fill(email);
-  await page.getByLabel('Mot de passe').fill(PASSWORD);
+  await page.getByLabel('Mot de passe', { exact: true }).fill(PASSWORD);
   await page.getByRole('button', { name: 'Créer mon compte' }).click();
   await backOnSibylle(page, testInfo);
   if (!welcome) {

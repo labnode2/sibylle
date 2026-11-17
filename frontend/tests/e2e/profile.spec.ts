@@ -163,7 +163,7 @@ test('a new password from the settings signs the other devices out', async ({
   const phone = await (await browser.newContext({ ...testInfo.project.use })).newPage();
   await phone.goto(une);
   await phone.getByLabel('E-mail').fill(emailOf(ines));
-  await phone.getByLabel('Mot de passe').fill(PASSWORD);
+  await phone.getByLabel('Mot de passe', { exact: true }).fill(PASSWORD);
   await phone.getByRole('button', { name: 'Se connecter' }).click();
   await backOnSibylle(phone, testInfo);
   await expect(phone.getByRole('heading', { name: 'La une de Sophia Office' })).toBeVisible();
@@ -183,7 +183,7 @@ test('a new password from the settings signs the other devices out', async ({
   // The phone is signed out at once: Keycloak's sign-in page, where the new password works.
   await expect(phone.getByRole('heading', { name: 'Connexion' })).toBeVisible();
   await phone.getByLabel('E-mail').fill(emailOf(ines));
-  await phone.getByLabel('Mot de passe').fill(NEW_PASSWORD);
+  await phone.getByLabel('Mot de passe', { exact: true }).fill(NEW_PASSWORD);
   await phone.getByRole('button', { name: 'Se connecter' }).click();
   await backOnSibylle(phone, testInfo);
   await expect(phone.getByRole('heading', { name: 'La une de Sophia Office' })).toBeVisible();

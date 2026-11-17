@@ -9,6 +9,9 @@ const backend = '../backend';
 const apiPort = process.env.SIBYLLE_API_PORT ?? '8001';
 const webPort = process.env.SIBYLLE_WEB_PORT ?? '5180';
 const web = `http://localhost:${webPort}`;
+// The local Keycloak (`make keycloak`, on 8280); KEYCLOAK_URL moves it, for the API and for the
+// tests' helpers alike.
+const keycloak = process.env.KEYCLOAK_URL ?? 'http://localhost:8280';
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -38,7 +41,7 @@ export default defineConfig({
         SIBYLLE_CLOCK: 'fake',
         ENVIRONMENT: 'test',
         PUBLIC_ORIGIN: web,
-        OIDC_ISSUER: 'http://localhost:8280/realms/sibylle',
+        OIDC_ISSUER: `${keycloak}/realms/sibylle`,
         KEYCLOAK_INTERNAL_URL: '',
         OIDC_CLIENT_ID: 'sibylle-e2e',
         OIDC_CLIENT_SECRET: 'sibylle-e2e-secret',

@@ -79,7 +79,9 @@ test('Monday turns gold laurels into coins, and says so once', async ({ browser 
   const [deal] = deals;
   const box = ines.getByRole('region', { name: 'La promo de la semaine' });
   await expect(box).toContainText(`−${deal.discount_pct} %`);
-  await expect(box).toContainText(`${deal.regular_price}`);
+  // The struck price is written the French way: « 2 500 » when the draw falls on a dear frame.
+  const struck = new Intl.NumberFormat('fr-FR').format(deal.regular_price);
+  await expect(box).toContainText(`au lieu de ${struck}`);
   await expect(box).toContainText(`${deal.price}`);
   await expect(
     ines.getByRole('button', {

@@ -84,7 +84,7 @@ test('export, the last editor, then deleting an account', async ({ browser }, te
   await expect(cami.getByRole('heading', { name: 'Ton compte est supprimé' })).toBeVisible();
   await cami.goto('/connexion');
   await cami.getByLabel('E-mail').fill(email);
-  await cami.getByLabel('Mot de passe').fill(PASSWORD);
+  await cami.getByLabel('Mot de passe', { exact: true }).fill(PASSWORD);
   await cami.getByRole('button', { name: 'Se connecter' }).click();
   await expect(cami.getByText('E-mail ou mot de passe incorrect.')).toBeVisible();
 

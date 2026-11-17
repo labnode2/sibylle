@@ -8,6 +8,7 @@ import {
   backOnSibylle,
   createNewsroom,
   emailOf,
+  KEYCLOAK,
   keycloakAdmin,
   keycloakUserId,
   newPerson,
@@ -49,10 +50,10 @@ test('signing in again leads back to the page asked for, and never elsewhere', a
   await expect(ines.getByRole('heading', { name: 'Connexion' })).toBeVisible();
   await ines.goto('/compte');
   await expect(ines.getByRole('heading', { name: 'Connexion' })).toBeVisible();
-  expect(new URL(ines.url()).port).toBe('8280');
-  await expect(ines.getByLabel('Mot de passe')).toBeEmpty();
+  expect(new URL(ines.url()).port).toBe(new URL(KEYCLOAK).port);
+  await expect(ines.getByLabel('Mot de passe', { exact: true })).toBeEmpty();
   await ines.getByLabel('E-mail').fill(emailOf(ines));
-  await ines.getByLabel('Mot de passe').fill(PASSWORD);
+  await ines.getByLabel('Mot de passe', { exact: true }).fill(PASSWORD);
   await ines.getByRole('button', { name: 'Se connecter' }).click();
   await backOnSibylle(ines, testInfo);
   await expect(ines).toHaveURL(/\/compte$/);
@@ -71,7 +72,7 @@ test('a session an administrator closes in Keycloak ends in Sibylle at once, its
   const user = await keycloakUserId(emailOf(ines));
   expect((await keycloakAdmin('POST', `/users/${user}/logout`)).status).toBe(204);
   await expect(ines.getByRole('heading', { name: 'Connexion' })).toBeVisible();
-  expect(new URL(ines.url()).port).toBe('8280');
+  expect(new URL(ines.url()).port).toBe(new URL(KEYCLOAK).port);
 });
 
 test("Keycloak's sign-in, sign-up and forgotten password pages are accessible", async ({
