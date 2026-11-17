@@ -9,7 +9,7 @@ Pixel mystère: a journalist posts a drawing and its word; one drawing is active
 others wait. Its pixels show in proportion to the time gone over a week; whoever finds the word is
 paid at once, 50 laurels at the opening falling to 3 at the end, whatever the rank. The game ends
 when every other member found or the week is gone, and the next drawing starts the following
-morning.
+morning. Once over, a drawing goes to the newsroom's museum, whole and with its word.
 
 Both follow the week's games (US12, research.md J7). Out of them, the race opens and finishes no
 run, and Monday does not pay its week; Pixel mystère takes no guess and starts no drawing, and
@@ -566,6 +566,43 @@ async def queue(session: AsyncSession, member: Membership) -> list[dict[str, Any
             "created_at": puzzle.created_at,
         }
         for puzzle in puzzles
+    ]
+
+
+async def museum(session: AsyncSession, member: Membership) -> list[dict[str, Any]]:
+    """The newsroom's drawings whose game is over, the latest first: whole, with their main word,
+    their author and how many found them. Never one waiting or in play, whose word is still to
+    find. Open to every member, whatever the week's games."""
+    found = (
+        select(func.count())
+        .select_from(PixelFind)
+        .where(PixelFind.puzzle_id == PixelPuzzle.id)
+        .scalar_subquery()
+    )
+    rows = await session.execute(
+        select(
+            PixelPuzzle.id,
+            PixelPuzzle.drawing,
+            PixelPuzzle.words,
+            PixelPuzzle.finished_at,
+            Membership,
+            found,
+        )
+        .join(Membership, Membership.id == PixelPuzzle.author_membership_id)
+        .where(PixelPuzzle.org_id == member.org_id, PixelPuzzle.state == "finished")
+        .order_by(PixelPuzzle.finished_at.desc(), PixelPuzzle.id)
+    )
+    return [
+        {
+            "puzzle_id": puzzle_id,
+            "size": drawing["size"],
+            "drawing": drawing,
+            "word": words[0],
+            "author": author,
+            "finished_at": finished_at,
+            "found_count": count,
+        }
+        for puzzle_id, drawing, words, finished_at, author, count in rows
     ]
 
 

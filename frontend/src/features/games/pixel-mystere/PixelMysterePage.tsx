@@ -2,7 +2,8 @@
 // who found and in what order, the word at the end; and for journalists, a drawing to post with
 // the pixel editor and the drawings waiting their turn. In a week the editor left it out of
 // (US12), a word saying so, and the last drawing with its word once it ended. A drawing under
-// way counts down to its end. Finding the word plays the burst of a win.
+// way counts down to its end. Finding the word plays the burst of a win. Under the intro, for
+// everyone, the way into the museum of the drawings already played (PixelMuseumPage).
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
@@ -320,6 +321,16 @@ export function PixelMysterePage() {
       </Link>
       <h1 className={styles.title}>{t('pixel.title')}</h1>
       <p className={styles.text}>{t('pixel.intro')}</p>
+      <Link to={`/o/${orgId}/jeux/pixel/musee`} className={styles.museumEntry}>
+        <span className={styles.museumEntryIcon}>
+          <Icon name="museum" size={36} />
+        </span>
+        <span className={styles.gameText}>
+          <span className={styles.museumEntryTitle}>{t('pixel.museum.title')}</span>
+          <span className={styles.gameLine}>{t('pixel.museum.line')}</span>
+        </span>
+        <Icon name="chevronRight" size={12} />
+      </Link>
       {!on && <p className={styles.note}>{t('pixel.off')}</p>}
       {status ? (
         <Puzzle orgId={orgId} status={status} on={on} />

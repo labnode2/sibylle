@@ -345,3 +345,98 @@ async def test_a_drawing_with_several_words_accepts_each_of_them(
     found = await status(cami, org.id)
     assert found["words"] == created.json()["words"] and found["word"] == "Café"
     assert (await status(manon, org.id))["words"] is None
+
+
+async def museum(person: Person, org_id: object) -> list[dict[str, Any]]:
+    response = await person.client.get(pixel(org_id, "/museum"))
+    assert response.status_code == 200, response.text
+    data: list[dict[str, Any]] = response.json()
+    return data
+
+
+def near(text: str, instant: datetime) -> bool:
+    return abs(datetime.fromisoformat(text) - instant) < timedelta(seconds=5)
+
+
+async def test_the_museum_shows_the_finished_drawings_latest_first(
+    make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
+) -> None:
+    org = await make_org()
+    hugo = await person(org, "journalist", "Hugo")
+    ines = await person(org, "editor", "Inès")
+    cami = await person(org, "reader", "Cami")
+    leo = await person(org, "reader", "Léo")
+    assert await museum(cami, org.id) == []
+
+    # Neither the drawing in play nor the one waiting: their words are still to find.
+    await post(hugo, org.id, "Café", ["Expresso"])
+    await post(ines, org.id, "Boule")
+    await guess(cami, org.id, "café")
+    await guess(leo, org.id, "café")
+    response = await cami.client.get(pixel(org.id, "/museum"))
+    assert response.json() == []
+    assert "Café" not in response.text and "Boule" not in response.text
+
+    # « Café » ends with its last pixels, found by two; « Boule » starts the next morning.
+    opening = clock.now()
+    fake_clock.set(opening + timedelta(days=7, minutes=1))
+    await reveal_pixel_puzzles()
+    cafe_end = clock.now()
+    assert [item["word"] for item in await museum(cami, org.id)] == ["Café"]
+    fake_clock.set(datetime(2026, 11, 10, 8, 0, tzinfo=PARIS))
+    assert await reveal_pixel_puzzles() == 1
+    assert [item["word"] for item in await museum(cami, org.id)] == ["Café"]
+
+    # Everyone but Inès finds « Boule », which ends at once; the next drawing waits.
+    for who in (hugo, cami, leo):
+        assert (await guess(who, org.id, "boule")).json()["correct"] is True
+    boule_end = clock.now()
+    assert (await post(hugo, org.id, "Laurier")).json()["state"] == "queued"
+    fake_clock.set(datetime(2026, 11, 11, 8, 0, tzinfo=PARIS))
+    assert await reveal_pixel_puzzles() == 1
+
+    response = await cami.client.get(pixel(org.id, "/museum"))
+    assert response.status_code == 200
+    assert "Laurier" not in response.text
+    boule, cafe = response.json()
+    assert (boule["word"], boule["author"]["pseudo"], boule["found_count"]) == ("Boule", "Inès", 3)
+    assert (cafe["word"], cafe["author"]["pseudo"], cafe["found_count"]) == ("Café", "Hugo", 2)
+    for item in (boule, cafe):
+        assert (item["size"], item["drawing"]) == (16, DRAWING)
+        assert set(item["author"]) >= {"id", "pseudo", "avatar", "role"}
+        assert not {"first_name", "last_name", "email"} & set(item["author"])
+    assert near(boule["finished_at"], boule_end) and near(cafe["finished_at"], cafe_end)
+    assert cafe["puzzle_id"] != boule["puzzle_id"]
+
+
+async def test_the_museum_is_its_newsroom_s_own_and_open_to_all_its_members(
+    make_org: MakeOrg, person: MakePerson, client: httpx.AsyncClient
+) -> None:
+    org = await make_org()
+    other = await make_org("Autre Rédac")
+    hugo = await person(org, "journalist", "Hugo")
+    ines = await person(org, "editor", "Inès")
+    cami = await person(org, "reader", "Cami")
+    zoe = await person(other, "journalist", "Zoé")
+    stranger = await person(other, "reader", "Inconnu")
+    await post(hugo, org.id, "Café")
+    for who in (ines, cami):
+        await guess(who, org.id, "café")
+    await post(zoe, other.id, "Boule")
+    await guess(stranger, other.id, "boule")
+
+    assert [item["word"] for item in await museum(cami, org.id)] == ["Café"]
+    assert [item["word"] for item in await museum(stranger, other.id)] == ["Boule"]
+    # Not a member: the newsroom stays out of sight, as everywhere else.
+    refused = await stranger.client.get(pixel(org.id, "/museum"))
+    assert refused.status_code == 404
+    assert "Café" not in refused.text
+    assert (await client.get(pixel(org.id, "/museum"))).status_code == 401
+
+    # A week without Pixel mystère, the museum stays open, to the readers too.
+    planned = await ines.client.put(
+        f"/api/orgs/{org.id}/games/schedule/weeks/2026-11-02", json={"games": ["runner"]}
+    )
+    assert planned.status_code == 200, planned.text
+    assert (await ines.client.get(f"/api/orgs/{org.id}/games")).json()["scheduled"] == ["runner"]
+    assert [item["word"] for item in await museum(cami, org.id)] == ["Café"]

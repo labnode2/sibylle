@@ -10,10 +10,7 @@ import { createPortal } from 'react-dom';
 
 import laurelUrl from './assets/laurel.png';
 import styles from './celebration.module.css';
-
-const motionReduced = () =>
-  document.documentElement.classList.contains('reduce-motion') ||
-  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+import { motionReduced } from './motion';
 
 /** Numbers from 0 to 1 that look random but come in the same order every time (the « minimal
  *  standard » generator of Park and Miller). */

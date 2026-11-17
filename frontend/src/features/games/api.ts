@@ -14,6 +14,7 @@ export type RunnerStatus = components['schemas']['RunnerStatus'];
 export type PixelStatus = components['schemas']['PixelStatus'];
 export type WordleStatus = components['schemas']['WordleStatus'];
 export type PixelPuzzleIn = components['schemas']['PixelPuzzleIn'];
+export type PixelMuseumItem = components['schemas']['PixelMuseumItem'];
 
 /** Every game, in the order the server lists them. */
 export const GAMES: readonly Game[] = ['runner', 'pixel'];
@@ -23,6 +24,8 @@ export const gamesKey = (orgId: string) => ['games', orgId] as const;
 // Under the games' key too: playing a try refreshes the card of la une.
 const wordleKey = (orgId: string) => [...gamesKey(orgId), 'wordle'] as const;
 const pixelKey = (orgId: string) => [...gamesKey(orgId), 'pixel'] as const;
+// Under the games' key too: whatever refreshes them, a game ending first, refreshes the museum.
+const museumKey = (orgId: string) => [...gamesKey(orgId), 'pixel-museum'] as const;
 const queueKey = (orgId: string) => ['pixel-queue', orgId] as const;
 const scheduleKey = (orgId: string) => ['game-schedule', orgId] as const;
 const GAME_EVENTS = new Set([
@@ -115,6 +118,24 @@ export function useGuess(orgId: string) {
       void client.invalidateQueries({ queryKey: gamesKey(orgId) });
       if (answer.correct) void client.invalidateQueries({ queryKey: orgKey(orgId) });
     },
+  });
+}
+
+/** Pixel mystère's museum: the drawings whose game is over, the latest first, whole and with
+ *  their word. Live: a game that ends brings its drawing in. */
+export function usePixelMuseum(orgId: string) {
+  const client = useQueryClient();
+  useTopic(`org:${orgId}`, (event) => {
+    if (event.event === 'games.pixel.finished') {
+      void client.invalidateQueries({ queryKey: museumKey(orgId) });
+    }
+  });
+  return useQuery({
+    queryKey: museumKey(orgId),
+    queryFn: () =>
+      unwrap(
+        api.GET('/api/orgs/{org_id}/games/pixel/museum', { params: { path: { org_id: orgId } } }),
+      ),
   });
 }
 

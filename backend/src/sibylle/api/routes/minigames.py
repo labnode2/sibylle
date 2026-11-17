@@ -15,6 +15,7 @@ from sibylle.api.schemas import (
     GamesIn,
     PixelGuessIn,
     PixelGuessOut,
+    PixelMuseumItem,
     PixelPuzzleIn,
     PixelQueueItem,
     PixelStatus,
@@ -75,6 +76,15 @@ async def guess(
     org_id: uuid.UUID, body: PixelGuessIn, member: CurrentMember, session: Db
 ) -> PixelGuessOut:
     return PixelGuessOut.model_validate(await minigames.guess(session, member, body.word))
+
+
+@router.get("/pixel/museum")
+async def get_museum(
+    org_id: uuid.UUID, member: CurrentMember, session: Db
+) -> list[PixelMuseumItem]:
+    return [
+        PixelMuseumItem.model_validate(item) for item in await minigames.museum(session, member)
+    ]
 
 
 @router.get("/pixel/puzzles")

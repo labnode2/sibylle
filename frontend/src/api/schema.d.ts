@@ -1060,6 +1060,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/orgs/{org_id}/games/pixel/museum": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Museum */
+        get: operations["get_museum_api_orgs__org_id__games_pixel_museum_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/orgs/{org_id}/games/pixel/puzzles": {
         parameters: {
             query?: never;
@@ -2181,6 +2198,34 @@ export interface components {
             palette: "base-v1";
             /** Pixels */
             pixels: string;
+        };
+        /**
+         * PixelMuseumItem
+         * @description A drawing of the museum: a game over, whole, with its main word, its author and how many
+         *     found it.
+         */
+        PixelMuseumItem: {
+            /**
+             * Puzzle Id
+             * Format: uuid
+             */
+            puzzle_id: string;
+            /**
+             * Size
+             * @enum {integer}
+             */
+            size: 16 | 32;
+            drawing: components["schemas"]["PixelImage"];
+            /** Word */
+            word: string;
+            author: components["schemas"]["MemberPublic"];
+            /**
+             * Finished At
+             * Format: date-time
+             */
+            finished_at: string;
+            /** Found Count */
+            found_count: number;
         };
         /** PixelPuzzleIn */
         PixelPuzzleIn: {
@@ -5446,6 +5491,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PixelGuessOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_museum_api_orgs__org_id__games_pixel_museum_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PixelMuseumItem"][];
                 };
             };
             /** @description Validation Error */

@@ -1,7 +1,7 @@
 // Quickstart V9: five runs of the ball's race from la une, a sixth refused, then Monday pays the
 // week to the balance only (US9); a Pixel mystère drawn in the editor, guessed in order, and
-// ended both ways: everyone found, or every pixel shown (US10); the editor planning the games
-// week by week, members seeing and playing only those (US12).
+// ended both ways: everyone found, or every pixel shown (US10), then both in the museum; the
+// editor planning the games week by week, members seeing and playing only those (US12).
 import { expect, test, type Page } from '@playwright/test';
 
 import {
@@ -163,6 +163,23 @@ test('Pixel mystère: drawn, guessed in order, ended both ways', async ({ browse
   sibylle('games', 'reveal-pixel', '--org', orgId);
   await camiPage.goto(`/o/${orgId}`);
   await expect(box).toContainText('LE MOT ÉTAIT « Boule »');
+
+  // Both drawings hang in the museum, from the game's page, the latest first. With less motion
+  // the slideshow keeps still: the buttons go from one to the other.
+  await camiPage.emulateMedia({ reducedMotion: 'reduce' });
+  await box.getByRole('link', { name: /Pixel mystère/ }).click();
+  await camiPage.getByRole('link', { name: /^Le musée/ }).click();
+  await expect(camiPage.getByRole('heading', { name: 'Le musée' })).toBeVisible();
+  const museum = camiPage.getByRole('region', { name: 'Les dessins du musée' });
+  const boule = museum.getByRole('group', { name: '1 sur 2' });
+  await expect(boule.getByRole('img', { name: 'Le dessin « Boule », par Inès' })).toBeVisible();
+  await expect(boule).toContainText("PERSONNE NE L'A TROUVÉ");
+  await museum.getByRole('button', { name: 'Dessin suivant' }).click();
+  const cafe = museum.getByRole('group', { name: '2 sur 2' });
+  await expect(cafe.getByRole('img', { name: 'Le dessin « Café », par Inès' })).toBeVisible();
+  await expect(cafe).toContainText('TROUVÉ PAR 3 PERSONNES');
+  await camiPage.getByRole('link', { name: 'Retour au Pixel mystère' }).click();
+  await expect(camiPage.getByRole('heading', { name: 'Pixel mystère' })).toBeVisible();
 });
 
 test('the editor plans the games, members see and play only those', async ({

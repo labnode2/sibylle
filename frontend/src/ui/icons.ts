@@ -31,6 +31,12 @@ export const ICONS = {
   // « Ma collection »: a chest, its rounded lid shut on the clasp, banded at both ends.
   chest:
     'M2 1h8v1h-8zM1 2h2v1h-2zM9 2h2v1h-2zM0 3h1v1h-1zM2 3h1v1h-1zM9 3h1v1h-1zM11 3h1v1h-1zM0 4h1v1h-1zM2 4h1v1h-1zM5 4h2v1h-2zM9 4h1v1h-1zM11 4h1v1h-1zM0 5h12v1h-12zM0 6h1v1h-1zM2 6h1v1h-1zM5 6h2v1h-2zM9 6h1v1h-1zM11 6h1v1h-1zM0 7h1v1h-1zM2 7h1v1h-1zM9 7h1v1h-1zM11 7h1v1h-1zM0 8h1v1h-1zM2 8h1v1h-1zM9 8h1v1h-1zM11 8h1v1h-1zM0 9h1v1h-1zM2 9h1v1h-1zM9 9h1v1h-1zM11 9h1v1h-1zM0 10h12v1h-12z',
+  // Pixel mystère's museum: a temple front, its pediment over four columns and two steps.
+  museum:
+    'M5 0h2v1h-2zM3 1h2v1h-2zM7 1h2v1h-2zM1 2h2v1h-2zM9 2h2v1h-2zM0 3h12v1h-12zM1 4h1v6h-1zM4 4h1v6h-1zM7 4h1v6h-1zM10 4h1v6h-1zM1 10h10v1h-10zM0 11h12v1h-12z',
+  // A slideshow's play and pause.
+  play: 'M2 1h2v1h-2zM2 2h4v1h-4zM2 3h6v1h-6zM2 4h8v1h-8zM2 5h9v2h-9zM2 7h8v1h-8zM2 8h6v1h-6zM2 9h4v1h-4zM2 10h2v1h-2z',
+  pause: 'M2 1h3v10h-3zM7 1h3v10h-3z',
 } as const;
 
 export type IconName = keyof typeof ICONS;

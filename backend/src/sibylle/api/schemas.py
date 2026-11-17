@@ -1076,6 +1076,19 @@ class PixelQueueItem(BaseModel):
     created_at: datetime
 
 
+class PixelMuseumItem(BaseModel):
+    """A drawing of the museum: a game over, whole, with its main word, its author and how many
+    found it."""
+
+    puzzle_id: uuid.UUID
+    size: Literal[16, 32]
+    drawing: PixelImage
+    word: str
+    author: MemberPublic
+    finished_at: datetime
+    found_count: int
+
+
 class PixelGuessIn(BaseModel):
     word: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
 

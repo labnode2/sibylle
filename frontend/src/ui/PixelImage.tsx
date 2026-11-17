@@ -28,8 +28,9 @@ export function PixelImage({
   hidden,
 }: {
   image: PixelImageData;
-  /** CSS size in px; keep it a whole multiple of the grid (16 or 32). */
-  size: number;
+  /** CSS size, in px or as a length set by the stylesheet (`var(--art)`, which a container query
+   *  can change); keep it a whole multiple of the grid (16 or 32). */
+  size: number | string;
   label?: string;
   avatar?: boolean;
   hidden?: Uint8Array;

@@ -104,6 +104,7 @@ test('no request leaves the app', async ({ browser }, testInfo) => {
     `/o/${orgId}/collection`,
     `/o/${orgId}/jeux/course`,
     `/o/${orgId}/jeux/pixel`,
+    `/o/${orgId}/jeux/pixel/musee`,
     '/compte',
     '/bienvenue',
   ];

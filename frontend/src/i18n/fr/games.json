@@ -68,6 +68,10 @@
     "finished": "Partie terminée : le prochain dessin démarre un matin à 8 h.",
     "finds": "ONT TROUVÉ",
     "nobody": "Personne n'a encore trouvé.",
+    "museum": {
+      "title": "Le musée",
+      "line": "LES DESSINS DÉJÀ JOUÉS, AVEC LEUR MOT"
+    },
     "post": {
       "title": "DÉPOSER UN DESSIN",
       "text": "Dessine en 16 × 16 ou 32 × 32 et choisis le mot : un seul dessin se joue à la fois, les suivants attendent leur tour.",
@@ -91,6 +95,26 @@
       "mine": "« {{word}} », par toi",
       "other": "Par un·e autre journaliste"
     }
+  },
+  "museum": {
+    "back": "Retour au Pixel mystère",
+    "title": "Le musée",
+    "intro": "Les dessins du Pixel mystère que la rédaction a déjà joués, du plus récent au plus ancien, avec leur mot et leur auteur·rice.",
+    "empty": "Le musée est encore vide : les dessins y entrent une fois leur partie terminée.",
+    "carousel": "diaporama",
+    "drawings": "Les dessins du musée",
+    "slide": "dessin",
+    "position": "{{index}} sur {{count}}",
+    "count": "{{index}} / {{count}}",
+    "drawing": "Le dessin « {{word}} », par {{pseudo}}",
+    "by": "par {{pseudo}}",
+    "found_one": "TROUVÉ PAR {{count}} PERSONNE",
+    "found_other": "TROUVÉ PAR {{count}} PERSONNES",
+    "foundNone": "PERSONNE NE L'A TROUVÉ",
+    "previous": "Dessin précédent",
+    "next": "Dessin suivant",
+    "pause": "Mettre le diaporama en pause",
+    "play": "Relancer le diaporama"
   },
   "wordle": {
     "back": "Retour à la une",
