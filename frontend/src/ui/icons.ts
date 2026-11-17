@@ -28,6 +28,9 @@ export const ICONS = {
     'M5 0h2v1h-2zM4 1h4v1h-4zM3 2h6v1h-6zM5 3h2v5h-2zM1 4h3v1h-3zM8 4h3v1h-3zM1 5h1v6h-1zM10 5h1v6h-1zM1 11h10v1h-10z',
   // A browser's menu: three dots, one above the other.
   menu: 'M5 1h2v2h-2zM5 5h2v2h-2zM5 9h2v2h-2z',
+  // « Ma collection »: a chest, its rounded lid shut on the clasp, banded at both ends.
+  chest:
+    'M2 1h8v1h-8zM1 2h2v1h-2zM9 2h2v1h-2zM0 3h1v1h-1zM2 3h1v1h-1zM9 3h1v1h-1zM11 3h1v1h-1zM0 4h1v1h-1zM2 4h1v1h-1zM5 4h2v1h-2zM9 4h1v1h-1zM11 4h1v1h-1zM0 5h12v1h-12zM0 6h1v1h-1zM2 6h1v1h-1zM5 6h2v1h-2zM9 6h1v1h-1zM11 6h1v1h-1zM0 7h1v1h-1zM2 7h1v1h-1zM9 7h1v1h-1zM11 7h1v1h-1zM0 8h1v1h-1zM2 8h1v1h-1zM9 8h1v1h-1zM11 8h1v1h-1zM0 9h1v1h-1zM2 9h1v1h-1zM9 9h1v1h-1zM11 9h1v1h-1zM0 10h12v1h-12z',
 } as const;
 
 export type IconName = keyof typeof ICONS;

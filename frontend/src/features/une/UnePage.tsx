@@ -24,6 +24,7 @@ import {
 } from '../../ui/components';
 import { Streak } from '../../ui/Flame';
 import { PixelImage } from '../../ui/PixelImage';
+import { CollectionLink } from '../collection/CollectionLink';
 import { useGames } from '../games/api';
 import { WeeklyGames } from '../games/WeeklyGames';
 import { InstallButton } from '../install/InstallButton';
@@ -232,7 +233,8 @@ function Ranking({ orgId, front }: { orgId: string; front: FrontPage }) {
   );
 }
 
-/** « N° 305 · DIM. 1 NOV. 2026 », then my laurels: the phone's top line. */
+/** « N° 305 · DIM. 1 NOV. 2026 », then my laurels and the chest of « Ma collection »: the
+ *  phone's top line. */
 function Dateline({ org }: { org: Org }) {
   const { t } = useTranslation('une');
   const me = org.my_membership;
@@ -247,6 +249,7 @@ function Dateline({ org }: { org: Org }) {
       <span>{t('common:shell.dateline', { number: org.edition_number, date: today })}</span>
       <span className={styles.mine}>
         <Wallet balance={me.balance} gold={me.gold} coins={me.coins} />
+        <CollectionLink orgId={org.id} className={styles.chest} />
       </span>
     </div>
   );

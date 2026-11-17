@@ -1,7 +1,7 @@
 // A newsroom's frame: loads it, then fills the shell's desktop slots (« Installer l'appli » in a
-// browser's tab, laurels and coins, pseudo, the newsroom's small card), and shows the good news of Monday's coins, then the installed
-// app's offer of notifications. When the editor deletes the newsroom, everyone on its pages goes
-// back home.
+// browser's tab, laurels and coins, pseudo, the chest of « Ma collection », the newsroom's small
+// card), and shows the good news of Monday's coins, then the installed app's offer of
+// notifications. When the editor deletes the newsroom, everyone on its pages goes back home.
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate, useNavigate, useParams } from 'react-router';
@@ -11,6 +11,7 @@ import { useTopic } from '../api/realtime';
 import { deleteOrgKey, forgetOrg, useReports } from '../features/admin/api';
 import { useMe, useWelcomed } from '../features/auth/api';
 import { useWeeklyCoins, weeklyCoinsKey } from '../features/coins/api';
+import { CollectionLink } from '../features/collection/CollectionLink';
 import { WeeklyCoinsDialog } from '../features/coins/WeeklyCoinsDialog';
 import { InstallButton } from '../features/install/InstallButton';
 import { unreadKey, useBubbleEvents, useUnread } from '../features/notifications/api';
@@ -114,6 +115,7 @@ export function OrgLayout() {
               <PixelImage image={me.avatar} size={24} />
               <span>{me.pseudo.toUpperCase()}</span>
             </Link>
+            <CollectionLink orgId={orgId} className={styles.accountLink} />
           </>
         }
         issue={org.data.edition_number}

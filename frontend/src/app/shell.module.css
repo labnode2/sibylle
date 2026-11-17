@@ -131,6 +131,11 @@
   text-underline-offset: 3px;
 }
 
+/* The chest of « Ma collection » beside them, in ink on the collection itself. */
+.accountLink[aria-current='page'] {
+  color: var(--ink);
+}
+
 @media (min-width: 1024px) {
   .page {
     padding: 0 32px 48px;

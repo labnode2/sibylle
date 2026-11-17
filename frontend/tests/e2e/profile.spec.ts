@@ -78,7 +78,11 @@ test('a press card, an avatar drawn by hand and a collection', async ({ browser 
   sibylle('coins', 'grant', '--org', orgId);
   const news = cami.getByRole('dialog', { name: 'Tes lauriers en or deviennent des pièces' });
   await news.getByRole('button', { name: 'Fermer' }).click();
-  await cami.getByRole('link', { name: 'Ma collection' }).click();
+  // The line under her card (on a computer, the chest beside her pseudo has the same name).
+  await cami
+    .getByRole('navigation', { name: 'Ma collection et mes réglages' })
+    .getByRole('link', { name: 'Ma collection' })
+    .click();
   // 400 coins, or less if the deal of the week fell on it.
   await cami.getByRole('button', { name: /^Acheter Couleur Rouge vif pour \d+ pièces/ }).click();
   await cami.getByRole('button', { name: 'Acheter', exact: true }).click();
