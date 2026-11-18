@@ -4,7 +4,7 @@
   flex-direction: column;
 }
 
-/* « N° 305 · DIM. 1 NOV. 2026 », then my laurels and my coins, on a phone. */
+/* « N° 305 · DIM. 1 NOV. 2026 », then my laurels, my coins and the shop, on a phone. */
 .dateline {
   display: flex;
   flex-wrap: wrap;
@@ -27,6 +27,22 @@
 
 .mine:hover {
   color: var(--ink);
+}
+
+/* The shop that opens « Ma collection », right of my coins: as far from them as they are from my
+   laurels (12 px), and a whole tap wide (12 + 17 + 15 px), but taking no more room in the line
+   than that gap and its 17 pixels. The rest of the tap spills over the page's margin, so the shop
+   ends where the line does; the focus ring stays inside the tap, clear of the coins. */
+.shop {
+  display: flex;
+  align-items: center;
+  height: var(--tap);
+  padding: 0 15px 0 12px;
+  margin-right: -15px;
+}
+
+.shop:focus-visible {
+  outline-offset: -2px;
 }
 
 /* The newsroom's small card under the title, on a phone: it opens the menu of the newsrooms. */

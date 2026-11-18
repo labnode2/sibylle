@@ -1,8 +1,8 @@
 // A newsroom's frame: loads it, then fills the shell's desktop slots (« Installer l'appli » in a
-// browser's tab, laurels and coins, which open the collection, my avatar and pseudo, which open
-// my account's menu, the newsroom's small card), and shows the good news of Monday's coins, then
-// the installed app's offer of notifications. When the editor deletes the newsroom, everyone on
-// its pages goes back home.
+// browser's tab, laurels and coins, my avatar and pseudo, which open my account's menu, the
+// newsroom's small card), and shows the good news of Monday's coins, then the installed app's
+// offer of notifications. When the editor deletes the newsroom, everyone on its pages goes back
+// home.
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate, useParams } from 'react-router';
@@ -104,12 +104,7 @@ export function OrgLayout() {
         account={
           <>
             <InstallButton variant="inline" />
-            <Wallet
-              balance={me.balance}
-              gold={me.gold}
-              coins={me.coins}
-              collection={`/o/${orgId}/collection`}
-            />
+            <Wallet balance={me.balance} gold={me.gold} coins={me.coins} />
             <span aria-hidden="true">·</span>
             <AccountMenu orgId={orgId} me={me} />
           </>

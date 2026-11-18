@@ -1,7 +1,8 @@
-// My coins and my avatar, one click from where I want to go. The coins open the collection, from
-// the computer's date bar and from la une's top line on a phone, and still explain themselves on
-// hover and focus. On a computer, my avatar and pseudo open my account's menu: « Profil »,
-// « Collection », « Réglages », « Déconnexion ». The chest that stood beside them is gone.
+// My coins, the shop beside them and my avatar. My coins explain themselves again, on hover, on
+// focus or pinned by a tap, and lead nowhere. On a phone, the shop right of them on la une's top
+// line opens the collection, which leads back to la une; a computer has no shop. On a computer,
+// my avatar and pseudo open my account's menu: « Profil », « Collection », « Réglages »,
+// « Déconnexion ».
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -13,7 +14,6 @@ import type { Org } from '../../src/api/types';
 import { OrgLayout } from '../../src/app/OrgLayout';
 import { CollectionPage } from '../../src/features/collection/CollectionPage';
 import { UnePage } from '../../src/features/une/UnePage';
-import { ICONS } from '../../src/ui/icons';
 
 // The crystal balls and the pixel images draw on a canvas, which jsdom does not have.
 vi.mock('../../src/ui/CrystalBall', () => ({ CrystalBall: () => null }));
@@ -121,7 +121,11 @@ function visit(path: string) {
   return { router, desktop: within(desktop), phone: phone && within(phone) };
 }
 
-const coinsLink = { name: '40 pièces, ma collection' } as const;
+const coinsName = { name: /40 pièces$/ } as const;
+const coinsHint =
+  'Pièces : pour acheter des couleurs, des cadres et des animations dans la collection. ' +
+  'Les dépenser ne touche ni tes lauriers ni ton classement.';
+const shopName = { name: 'Ma collection' } as const;
 
 /** Where the collection's two ways back lead: « PROFIL » above it, the link at its foot. */
 function waysBack() {
@@ -137,35 +141,16 @@ function tipOf(trigger: HTMLElement) {
   return document.getElementById(trigger.getAttribute('aria-describedby')!)!;
 }
 
-describe('the chest of « Ma collection »', () => {
-  it('is gone, from the icons and from both top lines', () => {
-    expect(Object.keys(ICONS)).not.toContain('chest');
-    visit('/o/org');
-    expect(screen.queryByRole('link', { name: 'Ma collection' })).toBeNull();
-  });
-});
-
 describe('my coins', () => {
-  it('open the collection from the computer’s date bar, which leads back where I was', async () => {
-    const user = userEvent.setup();
-    const { router, desktop } = visit('/o/org/pronos');
-    const coins = desktop.getByRole('link', coinsLink);
-    expect(coins).toHaveAttribute('href', '/o/org/collection');
-    expect(coins).toHaveTextContent(/^40/);
-    await user.click(coins);
-    expect(router.state.location.pathname).toBe('/o/org/collection');
-    expect(await screen.findByRole('heading', { name: 'La collection' })).toBeInTheDocument();
-    expect(waysBack()).toEqual(['/o/org/pronos', '/o/org/pronos']);
-  });
-
-  it('still explain themselves, on hover and on focus', async () => {
+  it('explain themselves again on the computer’s date bar, and lead nowhere', async () => {
     const user = userEvent.setup();
     const { desktop } = visit('/o/org/pronos');
-    const coins = desktop.getByRole('link', coinsLink);
-    expect(coins).toHaveAccessibleDescription(
-      'Pièces : pour acheter des couleurs, des cadres et des animations dans la collection. ' +
-        'Les dépenser ne touche ni tes lauriers ni ton classement.',
-    );
+    expect(
+      desktop.queryAllByRole('link').filter((link) => /pièce/.test(link.textContent!)),
+    ).toEqual([]);
+    const coins = desktop.getByRole('button', coinsName);
+    expect(coins).toHaveTextContent(/^40/);
+    expect(coins).toHaveAccessibleDescription(coinsHint);
     const tip = tipOf(coins);
     expect(tip).toHaveRole('tooltip');
     expect(tip).not.toBeVisible();
@@ -178,45 +163,62 @@ describe('my coins', () => {
     await user.keyboard('{Escape}');
     expect(tip).not.toBeVisible();
     act(() => coins.blur());
-    expect(tip).not.toBeVisible();
+    // A click pins it, as it does for the laurels beside them.
+    await user.click(coins);
+    expect(coins).toHaveAttribute('aria-expanded', 'true');
+    expect(tip).toBeVisible();
   });
 
-  it('stand right of my laurels on la une’s top line, on a phone, and lead back to la une', async () => {
+  it('explain themselves again on la une’s top line, on a phone: a tap pins the word', async () => {
     const user = userEvent.setup();
-    const { phone } = visit('/o/org');
+    const { router, phone } = visit('/o/org');
     expect(phone).toBeDefined();
-    const coins = phone!.getByRole('link', coinsLink);
-    expect(coins).toHaveAttribute('href', '/o/org/collection');
-    expect(coins).toHaveAccessibleDescription(/^Pièces : pour acheter des couleurs/);
-    const laurels = phone!.getByText('120 lauriers verts à miser');
-    expect(laurels.compareDocumentPosition(coins) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const coins = phone!.getByRole('button', coinsName);
+    expect(coins).toHaveAttribute('aria-expanded', 'false');
     await user.click(coins);
+    expect(router.state.location.pathname).toBe('/o/org');
+    expect(coins).toHaveAttribute('aria-expanded', 'true');
+    expect(tipOf(coins)).toBeVisible();
+    expect(tipOf(coins)).toHaveTextContent(coinsHint);
+    // A tap elsewhere puts it away.
+    await user.click(phone!.getByText(/^N° 305 · /));
+    expect(coins).toHaveAttribute('aria-expanded', 'false');
+    expect(tipOf(coins)).not.toBeVisible();
+  });
+});
+
+describe('the shop of the collection', () => {
+  it('stands right of my coins on la une’s top line, on a phone', () => {
+    const { phone } = visit('/o/org');
+    const shop = phone!.getByRole('link', shopName);
+    expect(shop).toHaveAttribute('href', '/o/org/collection');
+    expect(shop).toHaveAttribute('title', 'Ma collection');
+    // A drawing, with no word to read.
+    expect(shop).toHaveTextContent('');
+    expect(shop.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+    // Right after my three counters, whose last are the coins, and last in the line.
+    const counters = within(shop.previousElementSibling as HTMLElement).getAllByRole('button');
+    expect(counters).toHaveLength(3);
+    expect(counters.at(-1)).toBe(phone!.getByRole('button', coinsName));
+    expect(shop.nextElementSibling).toBeNull();
+  });
+
+  it('opens the collection in a tap, whose way back leads to la une', async () => {
+    const user = userEvent.setup();
+    const { router, phone } = visit('/o/org');
+    await user.click(phone!.getByRole('link', shopName));
+    expect(router.state.location.pathname).toBe('/o/org/collection');
+    expect(router.state.location.state).toEqual({ from: '/o/org' });
     expect(await screen.findByRole('heading', { name: 'La collection' })).toBeInTheDocument();
     expect(waysBack()).toEqual(['/o/org', '/o/org']);
   });
 
-  it('keep that way back when clicked again on the collection, marked as the page open', async () => {
-    const user = userEvent.setup();
-    const { router, desktop } = visit('/o/org/pronos');
-    await user.click(desktop.getByRole('link', coinsLink));
-    await screen.findByRole('heading', { name: 'La collection' });
-    const coins = desktop.getByRole('link', coinsLink);
-    expect(coins).toHaveAttribute('aria-current', 'page');
-    await user.click(coins);
-    expect(router.state.location.state).toEqual({ from: '/o/org/pronos' });
-    expect(waysBack()).toEqual(['/o/org/pronos', '/o/org/pronos']);
-  });
-
-  it('leave the laurels as they were: a click pins what they are', async () => {
-    const user = userEvent.setup();
-    const { desktop } = visit('/o/org/pronos');
-    expect(
-      desktop.getAllByRole('link').filter((link) => /lauriers/.test(link.textContent!)),
-    ).toHaveLength(0);
-    const green = desktop.getByRole('button', { name: /120 lauriers verts à miser$/ });
-    await user.click(green);
-    expect(green).toHaveAttribute('aria-expanded', 'true');
-    expect(tipOf(green)).toBeVisible();
+  it('is not on the computer’s date bar, nor on the other pages', () => {
+    const { desktop } = visit('/o/org');
+    expect(desktop.queryByRole('link', shopName)).toBeNull();
+    cleanup();
+    visit('/o/org/pronos');
+    expect(screen.queryByRole('link', shopName)).toBeNull();
   });
 });
 

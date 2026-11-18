@@ -34,9 +34,7 @@
     "goldLabel_other": "{{count}} lauriers en or",
     "greenHint": "Lauriers verts : ce que tu peux miser. Tes mises en sortent, tes gains y reviennent.",
     "goldHint": "Lauriers en or : tes lauriers verts plus tes mises encore en jeu. Chaque lundi, ils te rapportent autant de pièces.",
-    "coinsHint": "Pièces : pour acheter des couleurs, des cadres et des animations dans la collection. Les dépenser ne touche ni tes lauriers ni ton classement.",
-    "coinsLink_one": "{{count}} pièce, ma collection",
-    "coinsLink_other": "{{count}} pièces, ma collection"
+    "coinsHint": "Pièces : pour acheter des couleurs, des cadres et des animations dans la collection. Les dépenser ne touche ni tes lauriers ni ton classement."
   },
   "account": {
     "open": "{{pseudo}}, mon compte",

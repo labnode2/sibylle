@@ -8,7 +8,7 @@
 // « Installer l'appli » sits beside the newsroom's card.
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router';
+import { Link, useLocation, useParams } from 'react-router';
 
 import type { Org } from '../../api/types';
 import { formatDate, formatNumber } from '../../i18n';
@@ -24,6 +24,7 @@ import {
 } from '../../ui/components';
 import { Streak } from '../../ui/Flame';
 import { PixelImage } from '../../ui/PixelImage';
+import { Shop } from '../../ui/Shop';
 import { useGames } from '../games/api';
 import { WeeklyGames } from '../games/WeeklyGames';
 import { InstallButton } from '../install/InstallButton';
@@ -232,10 +233,12 @@ function Ranking({ orgId, front }: { orgId: string; front: FrontPage }) {
   );
 }
 
-/** « N° 305 · DIM. 1 NOV. 2026 », then my laurels and my coins, which open the collection: the
- *  phone's top line. */
+/** « N° 305 · DIM. 1 NOV. 2026 », then my laurels, my coins and the shop that opens « Ma
+ *  collection », where coins are spent: the phone's top line. Like the line under my press card,
+ *  the shop tells the collection which page opened it, for its way back. */
 function Dateline({ org }: { org: Org }) {
   const { t } = useTranslation('une');
+  const { pathname } = useLocation();
   const me = org.my_membership;
   const today = formatDate(new Date(), {
     weekday: 'short',
@@ -247,12 +250,16 @@ function Dateline({ org }: { org: Org }) {
     <div className={`only-mobile ${styles.dateline}`}>
       <span>{t('common:shell.dateline', { number: org.edition_number, date: today })}</span>
       <span className={styles.mine}>
-        <Wallet
-          balance={me.balance}
-          gold={me.gold}
-          coins={me.coins}
-          collection={`/o/${org.id}/collection`}
-        />
+        <Wallet balance={me.balance} gold={me.gold} coins={me.coins} />
+        <Link
+          to={`/o/${org.id}/collection`}
+          state={{ from: pathname }}
+          className={styles.shop}
+          title={t('profile:collectionLink')}
+          aria-label={t('profile:collectionLink')}
+        >
+          <Shop />
+        </Link>
       </span>
     </div>
   );
