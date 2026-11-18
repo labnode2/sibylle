@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, NavLink, type LinkProps } from 'react-router';
+import { Link, NavLink, useLocation, type LinkProps } from 'react-router';
 
 import coinUrl from './assets/coin.png';
 import laurelGreenUrl from './assets/laurel-green.png';
@@ -487,12 +487,14 @@ export function Coins({ value, size = 16 }: { value?: number; size?: 16 | 32 }) 
 }
 
 /** A word of explanation beside its trigger: on hover, on focus, or pinned by a tap. It stays
- *  while the pointer is over it and Escape closes it (WCAG 1.4.13). */
+ *  while the pointer is over it and Escape closes it (WCAG 1.4.13). With `link`, the trigger is
+ *  a link: a click or a tap follows it, and the word shows on hover and on focus. */
 export function Tip({
   children,
   tip,
   label,
   align = 'end',
+  link,
 }: {
   children: ReactNode;
   tip: ReactNode;
@@ -500,6 +502,8 @@ export function Tip({
   label?: string;
   /** Which edge of the trigger the bubble lines up with. */
   align?: 'start' | 'end';
+  /** Where the trigger leads, and whether it is the page open. */
+  link?: Pick<LinkProps, 'to' | 'state'> & { current?: boolean };
 }) {
   const id = useId();
   const bubble = useRef<HTMLSpanElement>(null);
@@ -538,21 +542,36 @@ export function Tip({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <button
-        type="button"
-        className={styles.tipTrigger}
-        aria-label={label}
-        aria-describedby={id}
-        aria-expanded={open}
-        onFocus={() => setHovered(true)}
-        onBlur={() => {
-          setHovered(false);
-          setPinned(false);
-        }}
-        onClick={() => setPinned((value) => !value)}
-      >
-        {children}
-      </button>
+      {link ? (
+        <Link
+          to={link.to}
+          state={link.state}
+          className={cx(styles.tipTrigger, styles.tipLink)}
+          aria-label={label}
+          aria-describedby={id}
+          aria-current={link.current ? 'page' : undefined}
+          onFocus={() => setHovered(true)}
+          onBlur={() => setHovered(false)}
+        >
+          {children}
+        </Link>
+      ) : (
+        <button
+          type="button"
+          className={styles.tipTrigger}
+          aria-label={label}
+          aria-describedby={id}
+          aria-expanded={open}
+          onFocus={() => setHovered(true)}
+          onBlur={() => {
+            setHovered(false);
+            setPinned(false);
+          }}
+          onClick={() => setPinned((value) => !value)}
+        >
+          {children}
+        </button>
+      )}
       <span
         ref={bubble}
         role="tooltip"
@@ -567,19 +586,30 @@ export function Tip({
 }
 
 /** A member's three counters: green laurels to stake, gold laurels in all, coins to spend.
- *  Each one explains itself on hover, focus or tap; `captions` also writes what each one is. */
+ *  Each one explains itself on hover, focus or tap; `captions` also writes what each one is.
+ *  Given the address of the collection, where coins are spent, the coins lead there in a click:
+ *  they explain themselves on hover and focus, and tell the collection which page opened it,
+ *  for its way back. */
 export function Wallet({
   balance,
   gold,
   coins,
   captions = false,
+  collection,
 }: {
   balance: number;
   gold: number;
   coins: number;
   captions?: boolean;
+  collection?: string;
 }) {
   const { t } = useTranslation();
+  const { pathname, state } = useLocation();
+  // Clicked again on the collection itself, the coins keep the way back it already has.
+  const here = pathname === collection;
+  const coinsLink = collection
+    ? { to: collection, state: here ? state : { from: pathname }, current: here }
+    : undefined;
   const counters = [
     {
       key: 'green',
@@ -589,12 +619,17 @@ export function Wallet({
       key: 'gold',
       node: <Laurel value={gold} tone="gold" label={t('wallet.goldLabel', { count: gold })} />,
     },
-    { key: 'coins', node: <Coins value={coins} /> },
+    {
+      key: 'coins',
+      node: <Coins value={coins} />,
+      link: coinsLink,
+      label: coinsLink && t('wallet.coinsLink', { count: coins }),
+    },
   ];
   return (
     <span className={cx(styles.wallet, captions && styles.walletCaptions)}>
-      {counters.map(({ key, node }) => (
-        <Tip key={key} tip={t(`wallet.${key}Hint`)}>
+      {counters.map(({ key, node, link, label }) => (
+        <Tip key={key} tip={t(`wallet.${key}Hint`)} link={link} label={label}>
           <span className={styles.counter}>
             {node}
             {captions && (

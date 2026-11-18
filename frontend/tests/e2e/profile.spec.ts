@@ -78,7 +78,7 @@ test('a press card, an avatar drawn by hand and a collection', async ({ browser 
   sibylle('coins', 'grant', '--org', orgId);
   const news = cami.getByRole('dialog', { name: 'Tes lauriers en or deviennent des pièces' });
   await news.getByRole('button', { name: 'Fermer' }).click();
-  // The line under her card (on a computer, the chest beside her pseudo has the same name).
+  // The line under her card (on a computer, her coins in the date bar lead there too).
   await cami
     .getByRole('navigation', { name: 'Ma collection et mes réglages' })
     .getByRole('link', { name: 'Ma collection' })

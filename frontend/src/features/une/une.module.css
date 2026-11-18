@@ -4,7 +4,7 @@
   flex-direction: column;
 }
 
-/* « N° 305 · DIM. 1 NOV. 2026 », then my laurels and the chest of « Ma collection », on a phone. */
+/* « N° 305 · DIM. 1 NOV. 2026 », then my laurels and my coins, on a phone. */
 .dateline {
   display: flex;
   flex-wrap: wrap;
@@ -27,19 +27,6 @@
 
 .mine:hover {
   color: var(--ink);
-}
-
-/* The chest that opens « Ma collection »: a whole tap wide, like the profile's gear, but taking
-   no more room in the line than the icon and the 12 px between the wallet's counters. The rest
-   of the tap spills over that gap and the page's margin, so the icon ends where the line does. */
-.chest {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--tap);
-  height: var(--tap);
-  margin: 0 -10px 0 2px;
-  color: inherit;
 }
 
 /* The newsroom's small card under the title, on a phone: it opens the menu of the newsrooms. */

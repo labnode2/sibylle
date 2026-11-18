@@ -7,6 +7,8 @@
   background: var(--surface);
   color: var(--ink);
   box-shadow: 6px 6px 0 var(--shadow);
+  /* The same wherever it opens: the date bar's menu writes in spaced capitals around it. */
+  letter-spacing: normal;
 }
 
 .dialog::backdrop {

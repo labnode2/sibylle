@@ -24,9 +24,12 @@ const WIDTHS: Record<string, { width: number; height: number }> = {
   desktop: { width: 1280, height: 800 },
 };
 
-/** What axe-core finds on the page, one line per rule broken, with the elements that break it. */
-async function violations(page: Page): Promise<string[]> {
-  const { violations } = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+/** What axe-core finds on the page (or in the part of it `include` selects), one line per rule
+ *  broken, with the elements that break it. */
+async function violations(page: Page, include?: string): Promise<string[]> {
+  const axe = new AxeBuilder({ page }).withTags(WCAG_22_AA);
+  if (include) axe.include(include);
+  const { violations } = await axe.analyze();
   return violations.map(
     (violation) =>
       `${violation.id} (${violation.impact}): ${violation.nodes
@@ -96,6 +99,15 @@ test('the main pages meet WCAG 2.2 AA in both themes', async ({ browser }, testI
       await expect(ines.locator('html')).toHaveAttribute('data-theme', theme);
       const broken = [...(await violations(ines)), ...(await overflow(ines))];
       if (broken.length > 0) found[`${theme} ${viewport.width}px ${path}`] = broken;
+    }
+    // On a computer, my account's menu, open under my avatar on la une. Open, it covers the
+    // newsroom's card below (a click there closes it first): the menu itself is checked.
+    if (testInfo.project.name === 'desktop') {
+      await visit(ines, `/o/${orgId}`);
+      await ines.getByRole('button', { name: 'INÈS, mon compte' }).click();
+      await expect(ines.getByRole('list', { name: 'Mon compte' })).toBeVisible();
+      const broken = await violations(ines, 'ul[aria-label="Mon compte"]');
+      if (broken.length > 0) found[`${theme} ${viewport.width}px account menu`] = broken;
     }
   }
   expect(found).toEqual({});

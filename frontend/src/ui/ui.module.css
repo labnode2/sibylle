@@ -620,6 +620,23 @@
   cursor: help;
 }
 
+/* The coins that open the collection: a link, its number underlined on hover like the pseudo
+   beside them, and in ink on the collection itself. */
+.tipLink {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tipLink:hover,
+.tipLink[aria-current='page'] {
+  color: var(--ink);
+}
+
+.tipLink:hover .laurel > span:first-child {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .tipBubble {
   position: absolute;
   top: calc(100% - 4px);
