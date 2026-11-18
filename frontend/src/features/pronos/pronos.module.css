@@ -332,6 +332,16 @@
   align-self: flex-start;
 }
 
+/* « Supprimer le prono », once asked: what it does, then confirm or go back. */
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+}
+
 .rules {
   display: flex;
   flex-direction: column;

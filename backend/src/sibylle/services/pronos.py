@@ -40,7 +40,14 @@ from sibylle.domain.betting import (
 )
 from sibylle.domain.content import REACTION_KINDS
 from sibylle.domain.ledger import LedgerKind
-from sibylle.domain.lifecycle import Event, InvalidTransition, State, can_edit, transition
+from sibylle.domain.lifecycle import (
+    Event,
+    InvalidTransition,
+    State,
+    can_delete,
+    can_edit,
+    transition,
+)
 from sibylle.domain.permissions import Action, can
 from sibylle.domain.seasons import PARIS
 from sibylle.realtime import bus
@@ -86,13 +93,13 @@ def _is_newsroom(member: Membership) -> bool:
 
 
 def visible_to(member: Membership) -> Any:
-    """Proposals stay between their author and the journalists (US5)."""
+    """The newsroom's pronos but the deleted ones (`delete_prono`), for every read: the lists,
+    la une, the page (404), the discussion, the bets. Proposals stay between their author and
+    the journalists (US5)."""
+    shown = and_(Prono.org_id == member.org_id, Prono.deleted_at.is_(None))
     if _is_newsroom(member):
-        return Prono.org_id == member.org_id
-    return and_(
-        Prono.org_id == member.org_id,
-        or_(Prono.state.notin_(HIDDEN_STATES), Prono.created_by == member.id),
-    )
+        return shown
+    return and_(shown, or_(Prono.state.notin_(HIDDEN_STATES), Prono.created_by == member.id))
 
 
 async def get_prono(
@@ -336,6 +343,29 @@ async def reject_proposal(
     return prono
 
 
+async def delete_prono(session: AsyncSession, member: Membership, prono_id: uuid.UUID) -> None:
+    """Deletes a cancelled prono from the lists. Only a mark: its ledger entries, settlements and
+    bets stay, so the members' history keeps the refunds; every read leaves it out (`visible_to`)
+    and its page answers 404."""
+    if not can(member.role, Action.DELETE_PRONO):
+        raise AppError("forbidden")
+    prono = await get_prono(session, member, prono_id, lock=True)
+    if not can_delete(prono.state):
+        raise AppError("invalid_state")
+    prono.deleted_at = clock.now()
+    prono.deleted_by = member.id
+    await record_event(session, prono, "deleted", member)
+    await session.flush()
+    # Its unread notifications stop counting in the bubbles (notifications._waiting).
+    await notifications.prono_state_changed(session, prono)
+    await bus.publish(
+        session,
+        "prono.deleted",
+        {"prono_id": str(prono.id)},
+        topics=[f"org:{prono.org_id}", f"prono:{prono.id}"],
+    )
+
+
 async def reaction_counts(session: AsyncSession, prono_id: uuid.UUID) -> dict[str, int]:
     rows = await session.execute(
         select(Reaction.kind, func.count())
@@ -383,6 +413,10 @@ def _may_write(member: Membership, prono: Prono) -> bool:
 
 def may_edit(member: Membership, prono: Prono) -> bool:
     return _may_write(member, prono) and can_edit(prono.state, prono.bet_count)
+
+
+def may_delete(member: Membership, prono: Prono) -> bool:
+    return can(member.role, Action.DELETE_PRONO) and can_delete(prono.state)
 
 
 def _kept(value: Any) -> Any:
@@ -803,6 +837,7 @@ async def detail(session: AsyncSession, member: Membership, prono: Prono) -> dic
             and mine.date_value < today
         ),
         "can_edit": editable,
+        "can_delete": may_delete(member, prono),
         "locked_fields": list(locked_fields(prono.state, prono.bet_count)) if editable else [],
         "reactions": await reaction_counts(session, prono.id),
         "my_reactions": [kind for kind in REACTION_KINDS if kind in mine_reacted],

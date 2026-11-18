@@ -378,7 +378,8 @@ async def still_relevant(session: AsyncSession, notification: Notification) -> b
         return False
     org = await session.get(Organisation, member.org_id)
     prono = await session.get(Prono, uuid.UUID(payload["prono_id"]))
-    if org is None or org.deleted_at is not None or prono is None:
+    # A deleted prono has nothing left to show: its page answers 404.
+    if org is None or org.deleted_at is not None or prono is None or prono.deleted_at is not None:
         return False
     match NotificationType(notification.type):
         case NotificationType.NEW_PRONO:
@@ -439,13 +440,14 @@ def _listed(account_id: uuid.UUID, org_id: uuid.UUID) -> list[Any]:
 def _waiting() -> Any:
     """What a bubble still leads to, the notification's prono joined: a new prono and its last
     two hours while it is open, a reminder while the result waits, a result, a tag or a message
-    until read. Never a proposal, which not everyone may open. The reports are left out: their
-    own count, the open reports beside « La rédaction », leads to them. Whether it was sent does
-    not matter (see `_mine`)."""
+    until read. Never a proposal, which not everyone may open, nor a deleted prono, which nobody
+    can open any more. The reports are left out: their own count, the open reports beside « La
+    rédaction », leads to them. Whether it was sent does not matter (see `_mine`)."""
     while_open = (NotificationType.NEW_PRONO.value, NotificationType.CLOSING_SOON.value)
     until_read = (NotificationType.RESULT.value, *_DISCUSSION_TYPES)
     return and_(
         Prono.state.notin_((State.PROPOSED.value, State.REJECTED.value)),
+        Prono.deleted_at.is_(None),
         or_(
             Notification.type.in_(while_open) & (Prono.state == State.OPEN.value),
             (Notification.type == NotificationType.DESIGNATION_REMINDER.value)
@@ -510,10 +512,10 @@ _TOPICS_PER_EVENT = 50
 
 
 async def prono_state_changed(session: AsyncSession, prono: Prono) -> None:
-    """A prono changed state: the bubbles of the members with unread notifications about it may
-    change (a new prono stops counting once closed, a reminder once the result is designated).
-    Their screens reload them, the newsroom's bubble in their lists of newsrooms too: those
-    screens do not follow the newsroom's own events."""
+    """A prono changed state, or was deleted: the bubbles of the members with unread notifications
+    about it may change (a new prono stops counting once closed, a reminder once the result is
+    designated, all of them once it is deleted). Their screens reload them, the newsroom's bubble
+    in their lists of newsrooms too: those screens do not follow the newsroom's own events."""
     accounts = (
         await session.scalars(
             select(Notification.account_id)

@@ -27,6 +27,7 @@ class Action(StrEnum):
     MANAGE_SECTIONS = "manage_sections"
     CORRECT_RESULT = "correct_result"
     CANCEL_PRONO = "cancel_prono"
+    DELETE_PRONO = "delete_prono"
     ADJUST_LAURELS = "adjust_laurels"
     HANDLE_REPORTS = "handle_reports"
     SCHEDULE_GAMES = "schedule_games"
@@ -58,6 +59,8 @@ _ALLOWED: dict[Action, frozenset[Role]] = {
     Action.MANAGE_SECTIONS: _EDITOR,
     Action.CORRECT_RESULT: _EDITOR,
     Action.CANCEL_PRONO: _EDITOR,
+    # Whoever may cancel a prono may then delete it (lifecycle.can_delete).
+    Action.DELETE_PRONO: _EDITOR,
     Action.ADJUST_LAURELS: _EDITOR,
     Action.HANDLE_REPORTS: _EDITOR,
     Action.SCHEDULE_GAMES: _EDITOR,

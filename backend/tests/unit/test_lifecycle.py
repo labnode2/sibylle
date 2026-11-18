@@ -4,6 +4,7 @@ from sibylle.domain.lifecycle import (
     Event,
     InvalidTransition,
     State,
+    can_delete,
     can_edit,
     transition,
 )
@@ -79,3 +80,10 @@ def test_a_prono_without_bets_is_not_resolved() -> None:
 )
 def test_editing_lasts_until_the_result(state: State, bet_count: int, expected: bool) -> None:
     assert can_edit(state, bet_count) is expected
+
+
+@pytest.mark.parametrize("state", list(State))
+def test_only_a_cancelled_prono_can_be_deleted(state: State) -> None:
+    """Deleting tidies the lists: only a cancelled prono, whose stakes are all back."""
+    assert can_delete(state) is (state is S.CANCELLED)
+    assert can_delete(state.value) is (state is S.CANCELLED)

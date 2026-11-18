@@ -1,8 +1,14 @@
 """Everything Sibylle keeps about an account, as one file (US11, principle I): the account, then
 each newsroom with its membership, bets, laurels, coins, collection, trophies, messages and
-reports."""
+reports.
+
+What is only marked deleted is still kept, so it stays here with its mark, as a membership that
+left (`left_at`) or a replaced bet (`replaced_at`): the bets, laurels, messages and reports of a
+deleted prono carry `prono_deleted_at`. Only what is erased for good, a deleted message, is gone.
+"""
 
 import uuid
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import func, select
@@ -66,7 +72,20 @@ async def export(session: AsyncSession, account: Account) -> dict[str, Any]:
     }
 
 
+async def _deleted_pronos(
+    session: AsyncSession, org_id: uuid.UUID
+) -> dict[uuid.UUID, datetime | None]:
+    """The newsroom's deleted pronos, with when they were deleted."""
+    rows = await session.execute(
+        select(Prono.id, Prono.deleted_at).where(
+            Prono.org_id == org_id, Prono.deleted_at.is_not(None)
+        )
+    )
+    return {prono_id: deleted_at for prono_id, deleted_at in rows}
+
+
 async def _newsroom(session: AsyncSession, org: Organisation, member: Membership) -> dict[str, Any]:
+    deleted = await _deleted_pronos(session, org.id)
     return {
         "newsroom": {"id": org.id, "title": org.title},
         "membership": {
@@ -123,6 +142,7 @@ async def _newsroom(session: AsyncSession, org: Organisation, member: Membership
         "messages": [
             {
                 "prono_id": message.prono_id,
+                "prono_deleted_at": deleted.get(message.prono_id),
                 "body": message.body,
                 "created_at": message.created_at,
                 "likes": int(likes),
@@ -138,6 +158,7 @@ async def _newsroom(session: AsyncSession, org: Organisation, member: Membership
         "reports": [
             {
                 "prono_id": report.prono_id,
+                "prono_deleted_at": deleted.get(report.prono_id),
                 "kind": report.kind,
                 "message": report.message,
                 "state": report.state,
@@ -174,6 +195,7 @@ async def _bets(session: AsyncSession, member_id: uuid.UUID) -> list[dict[str, A
         {
             "prono_id": prono.id,
             "question": prono.question,
+            "prono_deleted_at": prono.deleted_at,
             "answer": answer_of(bet, prono, labels),
             "stake": bet.stake,
             "placed_at": bet.placed_at,
@@ -187,7 +209,7 @@ async def _bets(session: AsyncSession, member_id: uuid.UUID) -> list[dict[str, A
 
 async def _laurels(session: AsyncSession, member_id: uuid.UUID) -> list[dict[str, Any]]:
     rows = await session.execute(
-        select(LedgerEntry, Prono.question)
+        select(LedgerEntry, Prono.question, Prono.deleted_at)
         .outerjoin(Prono, Prono.id == LedgerEntry.prono_id)
         .where(LedgerEntry.membership_id == member_id)
         .order_by(LedgerEntry.id)
@@ -199,7 +221,8 @@ async def _laurels(session: AsyncSession, member_id: uuid.UUID) -> list[dict[str
             "score_delta": entry.score_delta,
             "reason": entry.reason,
             "question": question,
+            "prono_deleted_at": deleted_at,
             "created_at": entry.created_at,
         }
-        for entry, question in rows
+        for entry, question, deleted_at in rows
     ]

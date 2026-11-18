@@ -112,6 +112,25 @@ export function useEditProno(orgId: string, pronoId: string) {
   });
 }
 
+/** Deletes a cancelled prono: it leaves the lists and la une, and its page answers 404. The
+ *  screen that asked goes on to the list; the others hear `prono.deleted`. */
+export function useDeleteProno(orgId: string, pronoId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      unwrap(
+        api.DELETE('/api/orgs/{org_id}/pronos/{prono_id}', {
+          params: { path: { org_id: orgId, prono_id: pronoId } },
+        }),
+      ),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: pronoListKey(orgId) });
+      void client.invalidateQueries({ queryKey: ['front-page', orgId] });
+    },
+    meta: { success: 'pronos:toast.deleted' },
+  });
+}
+
 export function usePlaceBet(orgId: string, pronoId: string) {
   const client = useQueryClient();
   return useMutation({

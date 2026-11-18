@@ -26,6 +26,8 @@ MATRIX: dict[Action, set[Role]] = {
     Action.MANAGE_SECTIONS: {EDITOR},
     Action.CORRECT_RESULT: {EDITOR},
     Action.CANCEL_PRONO: {EDITOR},
+    # The same rights as cancelling: only a cancelled prono is deleted.
+    Action.DELETE_PRONO: {EDITOR},
     Action.ADJUST_LAURELS: {EDITOR},
     Action.HANDLE_REPORTS: {EDITOR},
     Action.SCHEDULE_GAMES: {EDITOR},

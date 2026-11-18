@@ -87,6 +87,10 @@ class Prono(Base):
     resolved_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("memberships.id"))
     cancelled_at: Mapped[datetime | None]
     cancelled_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("memberships.id"))
+    # A cancelled prono deleted from the lists: only a mark, since its ledger entries and
+    # settlements still point to it. Every read of the newsroom's pronos leaves it out.
+    deleted_at: Mapped[datetime | None]
+    deleted_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("memberships.id"))
     created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
     updated_at: Mapped[datetime] = mapped_column(
         default=lambda: clock.now(), onupdate=lambda: clock.now()

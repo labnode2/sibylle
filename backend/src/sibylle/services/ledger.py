@@ -171,10 +171,11 @@ async def check_caches(session: AsyncSession, org_id: uuid.UUID) -> list[CacheMi
 
 async def statement(
     session: AsyncSession, membership_id: uuid.UUID, *, cursor: str | None, limit: int
-) -> tuple[list[tuple[LedgerEntry, str | None]], str | None]:
-    """A member's entries, newest first, each with its prono's question; then the next cursor."""
+) -> tuple[list[tuple[LedgerEntry, Prono | None]], str | None]:
+    """A member's entries, newest first, each with its prono (a deleted one too: the refunds of
+    its cancellation stay in the history); then the next cursor."""
     query = (
-        select(LedgerEntry, Prono.question)
+        select(LedgerEntry, Prono)
         .outerjoin(Prono, Prono.id == LedgerEntry.prono_id)
         .where(LedgerEntry.membership_id == membership_id)
     )
@@ -183,7 +184,5 @@ async def statement(
             raise AppError("validation_error", {"cursor": "invalid"})
         query = query.where(LedgerEntry.id < int(cursor))
     rows = (await session.execute(query.order_by(LedgerEntry.id.desc()).limit(limit + 1))).all()
-    page: list[tuple[LedgerEntry, str | None]] = [
-        (entry, question) for entry, question in rows[:limit]
-    ]
+    page: list[tuple[LedgerEntry, Prono | None]] = [(entry, prono) for entry, prono in rows[:limit]]
     return page, str(page[-1][0].id) if len(rows) > limit else None

@@ -63,6 +63,15 @@ async def edit_prono(
     return PronoDetail.model_validate(await pronos.detail(session, member, prono))
 
 
+@router.delete("/pronos/{prono_id}", status_code=204)
+async def delete_prono(
+    org_id: uuid.UUID, prono_id: uuid.UUID, member: CurrentMember, session: Db
+) -> Response:
+    """Deletes a cancelled prono from the lists (`409 invalid_state` in any other state)."""
+    await pronos.delete_prono(session, member, prono_id)
+    return Response(status_code=204)
+
+
 @router.post("/pronos/{prono_id}/validate")
 async def validate_proposal(
     org_id: uuid.UUID, prono_id: uuid.UUID, body: ValidateIn, member: CurrentMember, session: Db

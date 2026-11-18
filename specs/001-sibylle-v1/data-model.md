@@ -120,6 +120,7 @@ Règles : au moins un `editor` actif par organisation qui a des membres actifs ;
 | result_number | numeric(14,2) | pour `number` |
 | result_date | date | pour `date` |
 | resolved_at, resolved_by, cancelled_at, cancelled_by | | |
+| deleted_at, deleted_by | timestamptz, uuid | prono annulé supprimé par la rédaction en chef : une marque, la ligne reste (le registre et les règlements s'y réfèrent) ; toute lecture des pronos de la rédaction l'exclut |
 | created_at, updated_at | timestamptz | |
 
 Index : (`org_id`, `state`, `closes_at`) pour la une et le `worker` ; (`org_id`, `section_id`).
@@ -130,7 +131,7 @@ Index : (`org_id`, `state`, `closes_at`) pour la une et le `worker` ; (`org_id`,
 
 ### prono_events (historique d'un prono)
 
-`id`, `prono_id`, `kind` (`created`, `proposed`, `validated`, `rejected`, `edited`, `opened`, `closed`, `relaunched`, `resolved`, `corrected`, `cancelled`), `actor_membership_id`, `data` (jsonb : anciennes et nouvelles dates, résultat…), `created_at`. Sert à l'édition spéciale, à l'audit et à l'historique des modifications sur la page du prono. Un `edited` garde ce qui a changé, dans l'ordre de la page : `{"changes": [{"field", "before", "after"}]}`, avec `field` ∈ `question`, `section` (par son nom), `kind`, `options` (les libellés), `number_unit`, `base_gain`, `open_ended`, `opens_at`, `closes_at`, `result_expected_at`, `link_url`, `image` (l'id de l'upload) ; les instants en ISO 8601. Une modification qui ne change rien n'en écrit pas.
+`id`, `prono_id`, `kind` (`created`, `proposed`, `validated`, `rejected`, `edited`, `opened`, `closed`, `relaunched`, `resolved`, `corrected`, `cancelled`, `deleted`), `actor_membership_id`, `data` (jsonb : anciennes et nouvelles dates, résultat…), `created_at`. Sert à l'édition spéciale, à l'audit et à l'historique des modifications sur la page du prono. Un `edited` garde ce qui a changé, dans l'ordre de la page : `{"changes": [{"field", "before", "after"}]}`, avec `field` ∈ `question`, `section` (par son nom), `kind`, `options` (les libellés), `number_unit`, `base_gain`, `open_ended`, `opens_at`, `closes_at`, `result_expected_at`, `link_url`, `image` (l'id de l'upload) ; les instants en ISO 8601. Une modification qui ne change rien n'en écrit pas.
 
 ### bets (pari)
 
@@ -173,6 +174,7 @@ scheduled | open | closed | resolved ──annulation (rédaction en chef)──
 | relance | journaliste, rédaction en chef | état `closed` ; nouvelle `closes_at` future |
 | correction | rédaction en chef | état `resolved` ; résultat différent |
 | annulation | rédaction en chef | état `scheduled`, `open`, `closed` ou `resolved` |
+| suppression | rédaction en chef | état `cancelled` ; pose `deleted_at` sans changer l'état |
 | modification | créateur journaliste, rédaction en chef | tout : `bet_count = 0` et état `proposed`, `scheduled` ou `open` ; en partie (question, rubrique, lien, image, clôture repoussée, résultat attendu) : `bet_count > 0` et état `open` ou `closed` (la clôture d'un prono `closed` reste : la relance le rouvre) |
 
 Une relance remet `state = open`, change `closes_at` (et `result_expected_at`), incrémente `relaunch_count` et garde les paris et leur rang.

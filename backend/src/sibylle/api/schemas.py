@@ -446,6 +446,8 @@ class PronoDetail(PronoSummary):
     my_bet: BetOut | None
     can_rebet: bool
     can_edit: bool
+    # « Supprimer », for the editor on a cancelled prono (lifecycle.can_delete).
+    can_delete: bool
     # With `can_edit`, what the member's edit cannot change: empty until the first bet.
     locked_fields: list[LockedField]
     reactions: dict[str, int]
@@ -603,6 +605,8 @@ class ReportOut(BaseModel):
 class PronoRef(BaseModel):
     id: uuid.UUID
     question: str
+    # A deleted prono (cancelled, then deleted): its page answers 404, so nothing links to it.
+    deleted: bool
 
 
 class ReportDetail(ReportOut):

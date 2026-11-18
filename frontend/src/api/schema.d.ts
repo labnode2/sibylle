@@ -574,7 +574,11 @@ export interface paths {
         get: operations["get_prono_api_orgs__org_id__pronos__prono_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Prono
+         * @description Deletes a cancelled prono from the lists (`409 invalid_state` in any other state).
+         */
+        delete: operations["delete_prono_api_orgs__org_id__pronos__prono_id__delete"];
         options?: never;
         head?: never;
         /** Edit Prono */
@@ -2434,6 +2438,8 @@ export interface components {
             can_rebet: boolean;
             /** Can Edit */
             can_edit: boolean;
+            /** Can Delete */
+            can_delete: boolean;
             /** Locked Fields */
             locked_fields: ("kind" | "options" | "open_ended" | "base_gain" | "number_unit" | "opens_at" | "closes_at")[];
             /** Reactions */
@@ -2551,6 +2557,8 @@ export interface components {
             id: string;
             /** Question */
             question: string;
+            /** Deleted */
+            deleted: boolean;
         };
         /** PronoSummary */
         PronoSummary: {
@@ -4421,6 +4429,36 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PronoDetail"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_prono_api_orgs__org_id__pronos__prono_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                prono_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

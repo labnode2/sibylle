@@ -5,6 +5,7 @@ scheduled → open (opens_at), open → closed (closes_at)
 closed → resolved (designation), open → resolved for an open-ended date
 closed → open (relaunch, bets kept), resolved → resolved (correction)
 scheduled | open | closed | resolved → cancelled
+A cancelled prono can then be deleted: a mark beside its state, which hides it.
 """
 
 from enum import StrEnum
@@ -44,6 +45,8 @@ EDITABLE = {State.PROPOSED, State.SCHEDULED, State.OPEN}
 # …then only what keeps the meaning of the bets (betting.LOCKED_AFTER_BETS), until the result
 # or the cancellation.
 EDITABLE_AFTER_BETS = {State.OPEN, State.CLOSED}
+# Every stake is back by then; the ledger keeps its entries, so the prono is only marked.
+DELETABLE = {State.CANCELLED}
 
 
 def transition(
@@ -83,3 +86,8 @@ def can_edit(state: State | str, bet_count: int) -> bool:
     """A prono can be edited before anyone bets on it; after that, in part, until its result
     or its cancellation."""
     return State(state) in (EDITABLE_AFTER_BETS if bet_count > 0 else EDITABLE)
+
+
+def can_delete(state: State | str) -> bool:
+    """Only a cancelled prono can be deleted, to tidy the lists."""
+    return State(state) in DELETABLE

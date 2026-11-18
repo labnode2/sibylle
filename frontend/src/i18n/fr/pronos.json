@@ -90,6 +90,13 @@
     "link": "Lire l'article",
     "image": "Illustration du prono",
     "edit": "Modifier",
+    "delete": "Supprimer le prono",
+    "deleteConfirm": "Le prono disparaîtra des listes pour toute la rédaction. Les mises rendues restent dans l'historique de chacun·e. Confirmer la suppression ?",
+    "deleteSubmit": "Confirmer la suppression",
+    "deleteBack": "Retour",
+    "deletedRef": "{{question}} (prono supprimé)",
+    "notFound": "Ce prono est introuvable : il a peut-être été supprimé.",
+    "notFoundBack": "Voir les pronos",
     "proposed": "En attente : un·e journaliste doit valider cette proposition avant sa publication.",
     "proposedNewsroom": "Proposition de {{author}} : à toi de la publier ou de la refuser.",
     "rejected": "Proposition refusée : {{reason}}",
@@ -245,6 +252,7 @@
     "rejected": "Proposition refusée.",
     "messagePosted": "Message publié.",
     "messageRemoved": "Message supprimé.",
-    "messageWithdrawn": "Message retiré de la discussion."
+    "messageWithdrawn": "Message retiré de la discussion.",
+    "deleted": "Prono supprimé."
   }
 }

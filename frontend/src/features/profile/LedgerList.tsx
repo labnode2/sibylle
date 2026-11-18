@@ -12,6 +12,14 @@ const signed = (value: number) => (value > 0 ? `+${formatNumber(value)}` : forma
 function Detail({ orgId, entry }: { orgId: string; entry: LedgerEntry }) {
   const { t } = useTranslation('profile');
   const { pathname } = useLocation();
+  // A deleted prono's refunds stay in the history, without a link: its page is gone.
+  if (entry.prono?.deleted) {
+    return (
+      <span className={styles.ledgerDetail}>
+        {t('pronos:detail.deletedRef', { question: entry.prono.question })}
+      </span>
+    );
+  }
   if (entry.prono) {
     return (
       <Link

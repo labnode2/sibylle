@@ -18,7 +18,7 @@ from sibylle.api.schemas import (
     RoleIn,
     drawing,
 )
-from sibylle.db.models import LedgerEntry, Membership
+from sibylle.db.models import LedgerEntry, Membership, Prono
 from sibylle.domain.permissions import Action
 from sibylle.services import coins, ledger, orgs, streaks
 
@@ -28,15 +28,15 @@ Gatekeeper = Annotated[Membership, Depends(require(Action.MANAGE_MEMBERS))]
 Treasurer = Annotated[Membership, Depends(require(Action.ADJUST_LAURELS))]
 
 
-def entry_out(entry: LedgerEntry, question: str | None) -> LedgerEntryOut:
+def entry_out(entry: LedgerEntry, prono: Prono | None) -> LedgerEntryOut:
     return LedgerEntryOut(
         id=entry.id,
         kind=entry.kind,
         amount=entry.amount,
         score_delta=entry.score_delta,
         reason=entry.reason,
-        prono=PronoRef(id=entry.prono_id, question=question)
-        if entry.prono_id and question
+        prono=PronoRef(id=prono.id, question=prono.question, deleted=prono.deleted_at is not None)
+        if prono
         else None,
         created_at=entry.created_at,
     )
@@ -87,7 +87,7 @@ async def my_ledger(
 ) -> LedgerPage:
     """The member's own statement: every movement of their laurels, newest first."""
     page, next_cursor = await ledger.statement(session, member.id, cursor=cursor, limit=limit)
-    return LedgerPage(items=[entry_out(e, q) for e, q in page], next_cursor=next_cursor)
+    return LedgerPage(items=[entry_out(e, p) for e, p in page], next_cursor=next_cursor)
 
 
 @router.delete("/me", status_code=204)

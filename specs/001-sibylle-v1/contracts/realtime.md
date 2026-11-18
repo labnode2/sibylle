@@ -36,6 +36,7 @@ Enveloppe commune : `{"type": "event", "topic": "<sujet>", "event": "<nom>", "at
 | `prono.created` | `org` | `{prono: PronoSummary}` (publié ou proposé ; un prono proposé n'est envoyé qu'aux journalistes et à son auteur·rice) |
 | `prono.state_changed` | `org`, `prono` | `{prono_id, state, closes_at, relaunch_count}` (ouverture, clôture, relance, refus, annulation) |
 | `prono.edited` | `org`, `prono` | `{prono: PronoSummary}` |
+| `prono.deleted` | `org`, `prono` | `{prono_id}` : la rédaction en chef a supprimé le prono annulé ; le client recharge les listes et la une, et la page du prono, qui répond `404` |
 | `bet.placed` | `prono` | `{bet: Bet, pot, bet_count}` ; le client recharge le détail pour la répartition |
 | `bet.placed` | `org` | `{prono_id, pot, bet_count}` (version courte pour les listes) |
 | `prono.resolved` | `org`, `prono` | `{prono_id, settlement_seq, kind: "resolution" \| "correction" \| "cancellation"}` ; le client recharge l'édition spéciale |
@@ -50,7 +51,7 @@ Enveloppe commune : `{"type": "event", "topic": "<sujet>", "event": "<nom>", "at
 | `org.deleted` | `org` | `{org_id}` ; la rédaction en chef l'a supprimée : le client oublie la rédaction et revient à l'accueil |
 | `balance.changed` | `me` | `{org_id, balance, season_score}` |
 | `notification.created`, `notification.read` | `me` | `{org_id}` : une notification arrive pour le membre, ou il en a lu sur un autre appareil ; le client recharge les bulles des menus de cette rédaction et celle de la rédaction dans les listes de rédactions |
-| `notification.changed` | `me` (membres qui ont une notification non lue sur le prono) | `{org_id}` : le prono a changé d'état, ce qui peut faire compter ou non ses notifications (un nouveau prono clos n'est plus une nouvelle) ; le client recharge les mêmes bulles |
+| `notification.changed` | `me` (membres qui ont une notification non lue sur le prono) | `{org_id}` : le prono a changé d'état ou a été supprimé, ce qui peut faire compter ou non ses notifications (un nouveau prono clos n'est plus une nouvelle, un prono supprimé ne compte plus) ; le client recharge les mêmes bulles |
 | `coins.granted` | `me` | `{org_id, week_start, amount, coins}` ; le client recharge la rédaction et ouvre la fenêtre « Bonne nouvelle » |
 | `games.runner.updated` | `org` | `{week_start, top}` |
 | `games.pixel.revealed` | `org` | `{puzzle_id, revealed_count}` |

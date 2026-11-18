@@ -42,7 +42,9 @@ async def list_reports(
         ReportDetail.model_validate(
             {
                 **ReportOut.model_validate(report).model_dump(),
-                "prono": PronoRef(id=prono.id, question=prono.question),
+                "prono": PronoRef(
+                    id=prono.id, question=prono.question, deleted=prono.deleted_at is not None
+                ),
                 "reporter": MemberPublic.of(author),
             }
         )

@@ -40,7 +40,7 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 | POST | `/auth/verify-email/resend` | Compte | → `204` ; Keycloak envoie l'e-mail (002) |
 | GET | `/me` | Compte | → `Me` |
 | PATCH | `/me` | Compte | `{theme?, reduce_motion?, locale?}` → `Me` ; les noms changent dans Keycloak (002) |
-| GET | `/me/export` | Compte | → fichier JSON `sibylle-mes-donnees-AAAA-MM-JJ.json` (compte, rédactions, paris, relevés de lauriers et de pièces, collections, trophées, signalements, préférences, appareils sans leur adresse push) |
+| GET | `/me/export` | Compte | → fichier JSON `sibylle-mes-donnees-AAAA-MM-JJ.json` (compte, rédactions, paris, relevés de lauriers et de pièces, collections, trophées, signalements, préférences, appareils sans leur adresse push) ; les paris, lauriers, messages et signalements d'un prono supprimé y restent, marqués par `prono_deleted_at` |
 | DELETE | `/me` | Compte | `{confirm: true}` → `204` (cookie effacé) ; `409 last_editor` avec `fields.org_id` si seule rédaction en chef d'une rédaction qui a d'autres membres |
 | GET | `/me/notification-prefs` | Compte | → `[{type, channel, enabled}]` |
 | PUT | `/me/notification-prefs` | Compte | `[{type, channel, enabled}]` → idem |
@@ -93,7 +93,7 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 | GET | `/orgs/{org}/front-page` | Membre | → `FrontPage` : `{headline, open, open_count, to_designate (journalistes seulement), latest_results, leaderboard_top (les cinq premiers de la saison par lauriers verts, puis la ligne du membre s'il n'en est pas ; chaque ligne avec sa streak), leaderboard_period ("2026-autumn"), editor_note}` ; `headline` et `open` sont des `FrontProno` = `PronoSummary` + `{options, distribution}` (la jauge de la une) ; l'encadré des jeux lit `GET /orgs/{org}/games` |
 | GET | `/orgs/{org}/pronos` | Membre | `?state=&section=&cursor=` → `[PronoSummary]` |
 | POST | `/orgs/{org}/pronos` | Membre | `PronoInput` → `201 PronoDetail` ; état `open`/`scheduled` pour un·e journaliste, `proposed` pour un·e lecteur·rice |
-| GET | `/orgs/{org}/pronos/{id}` | Membre | → `PronoDetail` |
+| GET | `/orgs/{org}/pronos/{id}` | Membre | → `PronoDetail` ; `404` pour un prono supprimé |
 | PATCH | `/orgs/{org}/pronos/{id}` | créateur journaliste, Réd. chef | `PronoInput` partiel → `PronoDetail` ; tout avant le premier pari ; ensuite, tant que le prono est `open` ou `closed`, `422` avec `fields.<champ>: locked_after_bets` pour un changement de `kind`, `options`, `open_ended`, `base_gain`, `number_unit`, `opens_at` (et `closes_at` d'un prono clos), `fields.closes_at: not_later` pour une clôture avancée ; `409 invalid_state` pour un prono résolu, annulé, refusé, ou clos sans pari ; chaque changement est noté dans `events` (`edited`) |
 | POST | `/orgs/{org}/pronos/{id}/validate` | Journaliste | `{base_gain?}` → `PronoDetail` |
 | POST | `/orgs/{org}/pronos/{id}/reject` | Journaliste | `{reason?}` → `PronoDetail` |
@@ -102,6 +102,7 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 | POST | `/orgs/{org}/pronos/{id}/relaunch` | Journaliste | `{closes_at, result_expected_at?, reason}` → `PronoDetail` |
 | POST | `/orgs/{org}/pronos/{id}/correct` | Réd. chef | même corps que `resolve` → `PronoDetail` |
 | POST | `/orgs/{org}/pronos/{id}/cancel` | Réd. chef | `{reason}` → `PronoDetail` |
+| DELETE | `/orgs/{org}/pronos/{id}` | Réd. chef | → `204` ; un prono annulé seulement (`409 invalid_state` sinon). Une marque (`deleted_at`) : le prono quitte les listes, la une et les bulles, sa page et tout ce qui en dépend (paris, discussion, réactions, signalements) répondent `404` ; ses écritures de lauriers restent, et les remboursements avec, dans l'historique des membres |
 | PUT | `/orgs/{org}/pronos/{id}/reactions/{kind}` | Membre | → `204` (ajoute) |
 | DELETE | `/orgs/{org}/pronos/{id}/reactions/{kind}` | Membre | → `204` (retire) |
 | GET | `/orgs/{org}/pronos/{id}/messages` | Membre | `?before=<message>&limit=` → `{items: [Message], has_more}` : les `limit` messages (20 par défaut, 50 au plus) écrits avant `before`, ou les derniers, rangés du plus ancien au plus récent ; `has_more` dit s'il en reste de plus anciens ; `409 invalid_state` pour un prono proposé ou refusé (`404` pour qui ne le voit pas) |
@@ -115,7 +116,7 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 
 `PronoInput` = `{kind, question, section_id, options?: [label], base_gain, link_url?, image_id?, opens_at?, closes_at?, open_ended?, result_expected_at?, number_unit?}`.
 
-`PronoDetail` = `PronoSummary` + `{image_id, options: [{id, label, is_correct, count, stake_total, share_pct}], bets: [{member: MemberPublic, answer, stake, rank, placed_at, outcome, payout}], my_bet, can_rebet, can_edit, locked_fields, pot, reactions: {kind: count}, my_reactions, events: [PronoEvent], special_edition?: {winners: [{member, payout}], pot_lost: bool, settlement_seq, settled_by: MemberPublic}, rejected_reason?, my_reports: [Report]}` (`my_reports` : les signalements du membre sur ce prono, avec la note de traitement ; `locked_fields` : avec `can_edit`, ce que sa modification ne peut plus changer, vide avant le premier pari). Pour un prono de nombre ou de date, `options` est remplacé par `distribution` (valeurs regroupées en tranches pour l'affichage).
+`PronoDetail` = `PronoSummary` + `{image_id, options: [{id, label, is_correct, count, stake_total, share_pct}], bets: [{member: MemberPublic, answer, stake, rank, placed_at, outcome, payout}], my_bet, can_rebet, can_edit, can_delete, locked_fields, pot, reactions: {kind: count}, my_reactions, events: [PronoEvent], special_edition?: {winners: [{member, payout}], pot_lost: bool, settlement_seq, settled_by: MemberPublic}, rejected_reason?, my_reports: [Report]}` (`my_reports` : les signalements du membre sur ce prono, avec la note de traitement ; `locked_fields` : avec `can_edit`, ce que sa modification ne peut plus changer, vide avant le premier pari ; `can_delete` : le bouton « Supprimer le prono », pour la rédaction en chef sur un prono annulé). Pour un prono de nombre ou de date, `options` est remplacé par `distribution` (valeurs regroupées en tranches pour l'affichage).
 
 `PronoEvent` = `{kind, at, data, by: MemberPublic | null}` (`by` : qui l'a fait, `null` pour le `worker`) ; `data` d'un `edited` : `{changes: [{field, before, after}]}` (data-model.md).
 

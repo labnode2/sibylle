@@ -3,11 +3,13 @@
 // and, under them, the discussion. Bets and messages of the others arrive live through
 // `prono:<id>`. Once settled, the special edition (canvas G-Résultat) heads the page. Opening it
 // reads its notifications: its bubbles leave the menus. Its author and the editor find
-// « Modifier » under the question until its result.
+// « Modifier » under the question until its result; once it is cancelled, the editor finds
+// « Supprimer le prono » there. A deleted prono's page says it is not to be found.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useParams } from 'react-router';
 
+import { ApiError } from '../../api/client';
 import { formatDate, formatNumber, parisDay, parseDecimal } from '../../i18n';
 import {
   Button,
@@ -33,6 +35,7 @@ import { MyReports } from '../results/MyReports';
 import { ReportForm } from '../results/ReportForm';
 import { SpecialEdition, SpecialEditionHead } from '../results/SpecialEdition';
 import { usePlaceBet, useProno, type Bet, type PronoDetail } from './api';
+import { DeleteProno } from './DeleteProno';
 import { Discussion } from './Discussion';
 import { PronoHistory } from './PronoHistory';
 import { ProposalDecision } from './ProposalsPanel';
@@ -241,6 +244,23 @@ function Rules({ prono }: { prono: PronoDetail }) {
   );
 }
 
+/** A prono that does not exist, or no longer: deleted, or never seen by this member (404), as a
+ *  notification's link or the history may still lead here. */
+function NotFound({ orgId }: { orgId: string }) {
+  const { t } = useTranslation('pronos');
+  return (
+    <article className={styles.page}>
+      <TopBar back={`/o/${orgId}/pronos`} backLabel={t('detail.backList')} />
+      <p role="alert" className={styles.alert}>
+        {t('detail.notFound')}
+      </p>
+      <ButtonLink variant="secondary" className={styles.edit} to={`/o/${orgId}/pronos`}>
+        {t('detail.notFoundBack')}
+      </ButtonLink>
+    </article>
+  );
+}
+
 export function PronoPage() {
   const { t } = useTranslation('pronos');
   const { orgId = '', pronoId = '' } = useParams();
@@ -257,6 +277,10 @@ export function PronoPage() {
   // Once a bet is in, the result is worth hearing about: the app offers push notifications.
   const [justBet, setJustBet] = useState(false);
 
+  // Deleted while on screen too: the prono's event reloads it, and the server answers 404.
+  if (query.error instanceof ApiError && query.error.status === 404) {
+    return <NotFound orgId={orgId} />;
+  }
   if (!query.data || !org.data) {
     return <p role="status">{t('common:shell.loading')}</p>;
   }
@@ -358,6 +382,7 @@ export function PronoPage() {
               {t('detail.edit')}
             </ButtonLink>
           )}
+          <DeleteProno orgId={orgId} prono={prono} />
 
           {prono.state === 'open' && prono.closes_at && (
             <Countdown until={prono.closes_at} label={t('detail.countdown')} large />

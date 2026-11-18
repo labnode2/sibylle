@@ -28,9 +28,16 @@ function ReportCard({ orgId, report }: { orgId: string; report: ReportDetail }) 
           minute: '2-digit',
         }).toUpperCase()}
       </Kicker>
-      <Link to={`/o/${orgId}/pronos/${report.prono.id}`} className={styles.rowName}>
-        {report.prono.question}
-      </Link>
+      {report.prono.deleted ? (
+        // Deleted since (cancelled first): the report is still handled here, its page is gone.
+        <span className={styles.rowName}>
+          {t('pronos:detail.deletedRef', { question: report.prono.question })}
+        </span>
+      ) : (
+        <Link to={`/o/${orgId}/pronos/${report.prono.id}`} className={styles.rowName}>
+          {report.prono.question}
+        </Link>
+      )}
       <div className={styles.memberHead}>
         <PixelImage image={report.reporter.avatar} size={24} />
         <span>{t('reports.by', { pseudo: report.reporter.pseudo })}</span>
