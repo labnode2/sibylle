@@ -1,5 +1,6 @@
 """What makes a prono well-formed, and when a bet is accepted (spec FR-030 to FR-044)."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
@@ -17,6 +18,11 @@ class Kind(StrEnum):
 
 YES_NO_OPTIONS = ["Oui", "Non"]
 MAX_NUMBER = Decimal("1e12")
+# What the bets were placed on (FR-035): once someone bet, the kind, the answers, the closing
+# rule, the fixed gain, the unit and the opening stay as they are. The question can still be
+# reworded, the section, the link and the image changed, the closing postponed and the result
+# expected at another time.
+LOCKED_AFTER_BETS = ("kind", "options", "open_ended", "base_gain", "number_unit", "opens_at")
 
 
 class ValidationFailed(ValueError):
@@ -36,10 +42,31 @@ class PronoDraft:
     closes_at: datetime | None = None
     open_ended: bool = False
     result_expected_at: datetime | None = None
+    number_unit: str | None = None
 
 
-def validate_prono(draft: PronoDraft, *, max_base_gain: int, now: datetime) -> list[str]:
-    """Checks a prono before it is published or edited; returns its options."""
+def locked_fields(state: State | str, bet_count: int) -> tuple[str, ...]:
+    """What an edit can no longer change: nothing before the first bet, then what the bets were
+    placed on. Once the bets are closed, the closing too: a relaunch reopens them."""
+    if bet_count == 0:
+        return ()
+    if State(state) is State.CLOSED:
+        return (*LOCKED_AFTER_BETS, "closes_at")
+    return LOCKED_AFTER_BETS
+
+
+def validate_prono(
+    draft: PronoDraft,
+    *,
+    max_base_gain: int,
+    now: datetime,
+    current: PronoDraft | None = None,
+    locked: Sequence[str] = (),
+) -> list[str]:
+    """Checks a prono before it is published or edited; returns its options. An edit after the
+    first bet gives the prono as it stands (`current`) and what can no longer change
+    (`locked_fields`): those keep their value, and the closing only moves later."""
+    assert current is not None or not locked, "locked fields keep the current values"
     errors: dict[str, str] = {}
     question = draft.question.strip()
     if not 5 <= len(question) <= 200:
@@ -48,7 +75,8 @@ def validate_prono(draft: PronoDraft, *, max_base_gain: int, now: datetime) -> l
         draft.link_url.startswith("https://") and len(draft.link_url) <= 500
     ):
         errors["link_url"] = "https_only"
-    if not 0 <= draft.base_gain <= max_base_gain:
+    # A gain kept since the bets stays, even above a ceiling lowered since.
+    if "base_gain" not in locked and not 0 <= draft.base_gain <= max_base_gain:
         errors["base_gain"] = "out_of_range"
 
     if draft.open_ended:
@@ -58,8 +86,12 @@ def validate_prono(draft: PronoDraft, *, max_base_gain: int, now: datetime) -> l
             errors["closes_at"] = "open_ended"
     elif draft.closes_at is None:
         errors["closes_at"] = "missing"
-    elif draft.closes_at <= now:
-        errors["closes_at"] = "past"
+    elif current is None or draft.closes_at != current.closes_at:
+        # A closing kept as it is is not checked again: a closed prono's is past.
+        if locked and current and current.closes_at and draft.closes_at < current.closes_at:
+            errors["closes_at"] = "not_later"
+        elif draft.closes_at <= now:
+            errors["closes_at"] = "past"
 
     if draft.opens_at is not None and draft.closes_at is not None:
         if draft.opens_at >= draft.closes_at:
@@ -80,6 +112,13 @@ def validate_prono(draft: PronoDraft, *, max_base_gain: int, now: datetime) -> l
         options = list(YES_NO_OPTIONS)
     elif options:
         errors["options"] = "not_allowed"
+
+    if current is not None:
+        for name in locked:
+            given = options if name == "options" else getattr(draft, name)
+            kept = current.options if name == "options" else getattr(current, name)
+            if given != kept:
+                errors[name] = "locked_after_bets"
 
     if errors:
         raise ValidationFailed(errors)

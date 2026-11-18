@@ -270,6 +270,68 @@
   text-decoration: line-through;
 }
 
+/* « Les modifications »: each edit, its fields as they were (struck) and as they are. */
+.history {
+  display: flex;
+  flex-direction: column;
+}
+
+.historyList {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historyItem {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.historyChanges {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+}
+
+.historyRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.historyRow dt {
+  font: 600 11px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+
+.historyRow dd {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  font: 400 15px/1.35 var(--font-text);
+  overflow-wrap: anywhere;
+}
+
+.historyRow del {
+  color: var(--ink-2);
+}
+
+.historyRow ins {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* « Modifier », under the question. */
+.edit {
+  align-self: flex-start;
+}
+
 .rules {
   display: flex;
   flex-direction: column;
@@ -520,11 +582,11 @@
   cursor: pointer;
 }
 
-/* The closing and the fixed gain side by side. */
+/* The closing and the fixed gain side by side; their hints, if any, under them. */
 .pair {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 140px;
-  align-items: end;
+  align-items: start;
   gap: 12px;
 }
 
@@ -632,6 +694,34 @@
 .iconButton:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+
+/* What can no longer change once someone bet: greyed, with why under it. */
+.optionRow input:disabled {
+  border-color: var(--rule);
+  background: var(--grey);
+  color: var(--ink-2);
+  cursor: not-allowed;
+}
+
+.lockNote {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lockedHint {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+  font: 500 11px/1.4 var(--font-mono);
+  color: var(--ink-2);
+}
+
+/* On the first line when the words wrap. */
+.lockedHint svg {
+  flex: none;
+  margin-top: 3px;
 }
 
 .row {

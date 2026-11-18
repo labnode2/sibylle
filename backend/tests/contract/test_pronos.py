@@ -150,23 +150,6 @@ async def test_betting_with_a_stake(make_org: MakeOrg, person: MakePerson) -> No
     assert unknown.status_code == 422
 
 
-async def test_editing_stops_at_the_first_bet(make_org: MakeOrg, person: MakePerson) -> None:
-    org = await make_org()
-    hugo = await person(org, "journalist")
-    cami = await person(org, "reader")
-    prono = await publish(hugo.client, str(org.id))
-    url = f"/api/orgs/{org.id}/pronos/{prono['id']}"
-    edited = await hugo.client.patch(url, json={"question": "Nice ou Monaco dimanche ?"})
-    assert edited.status_code == 200 and edited.json()["question"] == "Nice ou Monaco dimanche ?"
-    assert (await cami.client.patch(url, json={"question": "Pas moi ?"})).status_code == 403
-
-    await place(
-        cami.client, str(org.id), prono["id"], option_id=edited.json()["options"][0]["id"], stake=0
-    )
-    refused = await hugo.client.patch(url, json={"question": "Trop tard ?"})
-    assert refused.status_code == 409 and refused.json()["error"]["code"] == "invalid_state"
-
-
 async def test_closing_stops_the_bets(
     make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
 ) -> None:

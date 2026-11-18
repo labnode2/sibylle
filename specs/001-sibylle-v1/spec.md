@@ -57,7 +57,7 @@ Hugo, journaliste, publie « Nice ou Monaco samedi ? » avec trois choix, une cl
 4. **Given** une mise supérieure au solde, **When** Cami valide, **Then** le pari est refusé ; une mise de 0 (« sans mise ») est toujours possible.
 5. **Given** deux membres qui regardent le même prono, **When** l'un parie, **Then** l'autre voit dans les 2 secondes la nouvelle répartition, le nouveau pari et la nouvelle cagnotte.
 6. **Given** la date de clôture passée, **When** quelqu'un essaie de parier, **Then** le pari est refusé et le prono apparaît « clos, en attente du résultat ».
-7. **Given** un prono sur lequel personne n'a encore parié, **When** son ou sa journaliste le modifie, **Then** la modification est acceptée ; dès le premier pari, elle ne l'est plus.
+7. **Given** un prono sur lequel personne n'a encore parié, **When** son ou sa journaliste le modifie, **Then** la modification est acceptée ; dès le premier pari, il ou elle peut encore reformuler la question, changer la rubrique, le lien, l'image et le résultat attendu, et repousser la clôture, mais plus le type, les choix, l'unité, le gain fixe ni la date « sans fin » ; chaque modification est notée dans l'historique du prono, que toute la rédaction lit.
 8. **Given** un prono de date « sans fin », **When** la date choisie par Cami passe sans que l'événement arrive, **Then** Cami peut parier une nouvelle date, et sa première mise reste dans la cagnotte.
 
 ---
@@ -360,7 +360,7 @@ Cami veut montrer sa carte de presse sur son blog. Sous sa carte, elle active «
 - **FR-032**: Un prono à choix DOIT accepter une liste de choix sans limite de taille (au moins deux).
 - **FR-033**: Un·e journaliste DOIT pouvoir publier directement ; un·e lecteur·rice DOIT pouvoir proposer un prono, publié après validation ou refusé par un·e journaliste.
 - **FR-034**: Un prono DOIT suivre le cycle : proposé → publié (programmé) → ouvert → clos → résolu, avec relance (clos → ouvert, nouvelle date, paris conservés), refus d'une proposition et annulation.
-- **FR-035**: Un prono DOIT être modifiable par son créateur journaliste ou la rédaction en chef tant que personne n'a parié.
+- **FR-035**: Un prono DOIT être modifiable par son créateur journaliste ou la rédaction en chef : entièrement tant que personne n'a parié ; ensuite, tant qu'il n'est ni résolu ni annulé, seulement ce qui ne change pas le sens des paris déjà faits (la question reformulée, la rubrique, le lien, l'image, la date de clôture repoussée, jamais avancée ni mise dans le passé, et la date de résultat attendu). Le type, les choix, l'unité, le gain fixe, la date « sans fin » et l'ouverture restent tels quels (`locked_after_bets`) ; la clôture d'un prono clos aussi, une relance le rouvre. Chaque modification DOIT être notée dans l'historique du prono, avec l'ancienne et la nouvelle valeur, visible par les membres.
 
 **Paris et mises**
 

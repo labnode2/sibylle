@@ -1,8 +1,9 @@
 // A prono's page (canvas B-Prono, B-Web-Prono): the question, the countdown, the ballot with who
-// played what, the stake and the reactions; beside them, the players, the rules and, under the
-// rules, the discussion. Bets and messages of the others arrive live through `prono:<id>`. Once
-// settled, the special edition (canvas G-Résultat) heads the page. Opening it reads its
-// notifications: its bubbles leave the menus.
+// played what, the stake and the reactions; beside them, the players, the rules, what was edited
+// and, under them, the discussion. Bets and messages of the others arrive live through
+// `prono:<id>`. Once settled, the special edition (canvas G-Résultat) heads the page. Opening it
+// reads its notifications: its bubbles leave the menus. Its author and the editor find
+// « Modifier » under the question until its result.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useParams } from 'react-router';
@@ -10,6 +11,7 @@ import { Link, useLocation, useParams } from 'react-router';
 import { formatDate, formatNumber, parisDay, parseDecimal } from '../../i18n';
 import {
   Button,
+  ButtonLink,
   Card,
   ExternalLink,
   Icon,
@@ -32,6 +34,7 @@ import { ReportForm } from '../results/ReportForm';
 import { SpecialEdition, SpecialEditionHead } from '../results/SpecialEdition';
 import { usePlaceBet, useProno, type Bet, type PronoDetail } from './api';
 import { Discussion } from './Discussion';
+import { PronoHistory } from './PronoHistory';
 import { ProposalDecision } from './ProposalsPanel';
 import { ReactionBar } from './ReactionBar';
 import { Voters, votersFor } from './WhoVoted';
@@ -346,6 +349,15 @@ export function PronoPage() {
             <img src={prono.image_url} alt={t('detail.image')} className={styles.preview} />
           )}
           {prono.link_url && <ExternalLink href={prono.link_url}>{t('detail.link')}</ExternalLink>}
+          {prono.can_edit && (
+            <ButtonLink
+              variant="secondary"
+              className={styles.edit}
+              to={`/o/${orgId}/pronos/${prono.id}/modifier`}
+            >
+              {t('detail.edit')}
+            </ButtonLink>
+          )}
 
           {prono.state === 'open' && prono.closes_at && (
             <Countdown until={prono.closes_at} label={t('detail.countdown')} large />
@@ -492,6 +504,7 @@ export function PronoPage() {
         <div className={styles.page}>
           <People orgId={orgId} bets={prono.bets} />
           <Rules prono={prono} />
+          <PronoHistory prono={prono} />
           {prono.state !== 'proposed' && prono.state !== 'rejected' && (
             <Discussion orgId={orgId} pronoId={prono.id} count={prono.message_count} me={me.id} />
           )}

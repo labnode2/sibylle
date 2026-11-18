@@ -101,7 +101,7 @@ Règles : au moins un `editor` actif par organisation qui a des membres actifs ;
 | id | uuid | PK |
 | org_id, section_id | uuid | la rubrique appartient à la même organisation |
 | number | integer | numéro du prono dans sa rédaction, à partir de 1, propositions comprises ; unique (`org_id`, `number`) ; pris sous le verrou de la ligne de la rédaction |
-| kind | PronoKind | non modifiable après le premier pari |
+| kind | PronoKind | non modifiable après le premier pari (comme les choix, `open_ended`, `base_gain`, `number_unit` et `opens_at`) |
 | question | text | 5 à 200 caractères |
 | link_url | text | `https` seulement, facultatif |
 | image_id | uuid | → uploads, facultatif |
@@ -130,7 +130,7 @@ Index : (`org_id`, `state`, `closes_at`) pour la une et le `worker` ; (`org_id`,
 
 ### prono_events (historique d'un prono)
 
-`id`, `prono_id`, `kind` (`created`, `proposed`, `validated`, `rejected`, `edited`, `opened`, `closed`, `relaunched`, `resolved`, `corrected`, `cancelled`), `actor_membership_id`, `data` (jsonb : anciennes et nouvelles dates, résultat…), `created_at`. Sert à l'édition spéciale et à l'audit.
+`id`, `prono_id`, `kind` (`created`, `proposed`, `validated`, `rejected`, `edited`, `opened`, `closed`, `relaunched`, `resolved`, `corrected`, `cancelled`), `actor_membership_id`, `data` (jsonb : anciennes et nouvelles dates, résultat…), `created_at`. Sert à l'édition spéciale, à l'audit et à l'historique des modifications sur la page du prono. Un `edited` garde ce qui a changé, dans l'ordre de la page : `{"changes": [{"field", "before", "after"}]}`, avec `field` ∈ `question`, `section` (par son nom), `kind`, `options` (les libellés), `number_unit`, `base_gain`, `open_ended`, `opens_at`, `closes_at`, `result_expected_at`, `link_url`, `image` (l'id de l'upload) ; les instants en ISO 8601. Une modification qui ne change rien n'en écrit pas.
 
 ### bets (pari)
 
@@ -173,7 +173,7 @@ scheduled | open | closed | resolved ──annulation (rédaction en chef)──
 | relance | journaliste, rédaction en chef | état `closed` ; nouvelle `closes_at` future |
 | correction | rédaction en chef | état `resolved` ; résultat différent |
 | annulation | rédaction en chef | état `scheduled`, `open`, `closed` ou `resolved` |
-| modification | créateur journaliste, rédaction en chef | `bet_count = 0` et état `proposed`, `scheduled` ou `open` |
+| modification | créateur journaliste, rédaction en chef | tout : `bet_count = 0` et état `proposed`, `scheduled` ou `open` ; en partie (question, rubrique, lien, image, clôture repoussée, résultat attendu) : `bet_count > 0` et état `open` ou `closed` (la clôture d'un prono `closed` reste : la relance le rouvre) |
 
 Une relance remet `state = open`, change `closes_at` (et `result_expected_at`), incrémente `relaunch_count` et garde les paris et leur rang.
 

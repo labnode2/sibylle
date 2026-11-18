@@ -66,12 +66,16 @@ def test_a_prono_without_bets_is_not_resolved() -> None:
         (S.PROPOSED, 0, True),
         (S.SCHEDULED, 0, True),
         (S.OPEN, 0, True),
-        (S.OPEN, 1, False),
+        # After the first bet, in part (betting.locked_fields), until the result.
+        (S.OPEN, 1, True),
+        (S.CLOSED, 3, True),
+        # Closed without bets: relaunched or cancelled, as before.
         (S.CLOSED, 0, False),
-        (S.RESOLVED, 0, False),
+        (S.RESOLVED, 2, False),
         (S.REJECTED, 0, False),
         (S.CANCELLED, 0, False),
+        (S.CANCELLED, 2, False),
     ],
 )
-def test_editing_stops_at_the_first_bet(state: State, bet_count: int, expected: bool) -> None:
+def test_editing_lasts_until_the_result(state: State, bet_count: int, expected: bool) -> None:
     assert can_edit(state, bet_count) is expected

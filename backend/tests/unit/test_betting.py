@@ -1,9 +1,12 @@
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
+from typing import get_args
 
 import pytest
 
+from sibylle.api.schemas import LockedField
 from sibylle.domain.betting import (
+    LOCKED_AFTER_BETS,
     Answer,
     BetRefused,
     Kind,
@@ -11,6 +14,7 @@ from sibylle.domain.betting import (
     ValidationFailed,
     check_bet,
     distribution,
+    locked_fields,
     validate_prono,
 )
 from sibylle.domain.lifecycle import State
@@ -87,6 +91,110 @@ def test_an_open_ended_date_has_no_closing() -> None:
     assert validate_prono(open_ended, max_base_gain=50, now=NOW) == []
     with_closing = draft(kind=Kind.DATE, options=[], open_ended=True)
     assert "closes_at" in fields_of(with_closing)
+
+
+def test_nothing_is_locked_before_the_first_bet() -> None:
+    assert locked_fields(State.OPEN, 0) == ()
+    assert locked_fields(State.SCHEDULED, 0) == ()
+    assert set(locked_fields(State.OPEN, 1)) == {
+        "kind",
+        "options",
+        "open_ended",
+        "base_gain",
+        "number_unit",
+        "opens_at",
+    }
+    # Closed bets reopen with a relaunch, not an edit.
+    assert set(locked_fields(State.CLOSED, 1)) == {*LOCKED_AFTER_BETS, "closes_at"}
+    # The API names every one of them.
+    assert set(get_args(LockedField)) == {*LOCKED_AFTER_BETS, "closes_at"}
+
+
+def edited(changes: dict[str, object], state: State = State.OPEN, **current: object) -> list[str]:
+    """Validates an edit of a prono someone bet on: `current` as it stands, `changes` asked."""
+    placed = draft(**current)
+    values = {**placed.__dict__, **changes}
+    return validate_prono(
+        PronoDraft(**values),  # type: ignore[arg-type]
+        max_base_gain=50,
+        now=NOW,
+        current=placed,
+        locked=locked_fields(state, 3),
+    )
+
+
+def edit_refused(
+    changes: dict[str, object], state: State = State.OPEN, **current: object
+) -> dict[str, str]:
+    with pytest.raises(ValidationFailed) as refused:
+        edited(changes, state, **current)
+    return refused.value.fields
+
+
+def test_after_bets_the_wording_and_the_dates_can_change() -> None:
+    assert edited(
+        {
+            "question": "Nice ou Monaco dimanche ?",
+            "link_url": "https://exemple.fr/match",
+            "closes_at": NOW + timedelta(days=5),
+            "result_expected_at": NOW + timedelta(days=6),
+        }
+    ) == ["Nice", "Nul", "Monaco"]
+    # The same answers, spaces aside, are no change.
+    assert edited({"options": [" Nice", "Nul ", "Monaco"]}) == ["Nice", "Nul", "Monaco"]
+    yes_no = {"kind": Kind.YES_NO, "options": ["Oui", "Non"]}
+    assert edited({"options": []}, **yes_no) == ["Oui", "Non"]
+
+
+@pytest.mark.parametrize(
+    ("changes", "current"),
+    [
+        ({"kind": Kind.YES_NO, "options": []}, {}),
+        ({"options": ["Nice", "Monaco"]}, {}),
+        ({"options": ["Nice", "Nul", "Monaco", "Lyon"]}, {}),
+        ({"base_gain": 30}, {}),
+        (
+            {"open_ended": False, "closes_at": NOW + timedelta(days=3)},
+            {"kind": Kind.DATE, "options": [], "open_ended": True, "closes_at": None},
+        ),
+        ({"number_unit": "€"}, {"kind": Kind.NUMBER, "options": [], "number_unit": "%"}),
+        ({"opens_at": NOW + timedelta(days=1)}, {}),
+    ],
+)
+def test_after_bets_what_was_bet_on_is_locked(
+    changes: dict[str, object], current: dict[str, object]
+) -> None:
+    fields = edit_refused(changes, **current)
+    for name in changes.keys() & set(LOCKED_AFTER_BETS):
+        assert fields[name] == "locked_after_bets"
+
+
+def test_after_bets_the_closing_only_moves_later() -> None:
+    assert edit_refused({"closes_at": NOW + timedelta(days=2)}) == {"closes_at": "not_later"}
+    assert edit_refused({"closes_at": NOW - timedelta(days=1)}) == {"closes_at": "not_later"}
+    # An open prono past its closing, not yet closed by the worker: still not into the past.
+    late = {"closes_at": NOW - timedelta(hours=2)}
+    assert edit_refused({"closes_at": NOW - timedelta(hours=1)}, **late) == {"closes_at": "past"}
+    assert edited({"closes_at": NOW + timedelta(hours=1)}, **late)
+
+
+def test_a_closed_prono_keeps_its_past_closing() -> None:
+    past = {"closes_at": NOW - timedelta(days=1)}
+    assert edited({"question": "Nice ou Monaco dimanche ?"}, State.CLOSED, **past)
+    # The result expected later than announced, the closing kept as it is.
+    assert edited({"result_expected_at": NOW + timedelta(days=2)}, State.CLOSED, **past)
+    later = {"closes_at": NOW + timedelta(days=3)}
+    assert edit_refused(later, State.CLOSED, **past) == {"closes_at": "locked_after_bets"}
+
+
+def test_a_kept_gain_stays_above_a_lowered_ceiling() -> None:
+    assert edited({"question": "Nice ou Monaco dimanche ?"}, base_gain=80)
+    assert edit_refused({"base_gain": 40}, base_gain=80) == {"base_gain": "locked_after_bets"}
+
+
+def test_without_bets_the_closing_moves_freely() -> None:
+    sooner = draft(closes_at=NOW + timedelta(days=1))
+    assert validate_prono(sooner, max_base_gain=50, now=NOW, current=draft())
 
 
 def bet(**changes: object) -> None:

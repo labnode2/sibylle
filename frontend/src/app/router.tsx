@@ -31,7 +31,7 @@ import { ParametersPage } from '../features/admin/ParametersPage';
 import { ReportsPage } from '../features/admin/ReportsPage';
 import { CollectionPage } from '../features/collection/CollectionPage';
 import { LeaderboardPage } from '../features/leaderboard/LeaderboardPage';
-import { CreatePronoPage } from '../features/pronos/CreatePronoPage';
+import { CreatePronoPage, EditPronoPage } from '../features/pronos/CreatePronoPage';
 import { PronoListPage } from '../features/pronos/PronoListPage';
 import { PronoPage } from '../features/pronos/PronoPage';
 import { PixelMuseumPage } from '../features/games/pixel-mystere/PixelMuseumPage';
@@ -151,6 +151,7 @@ export const router = createBrowserRouter([
           { path: 'pronos', element: <PronoListPage /> },
           { path: 'pronos/nouveau', element: <CreatePronoPage />, handle: { bare: true } },
           { path: 'pronos/:pronoId', element: <PronoPage /> },
+          { path: 'pronos/:pronoId/modifier', element: <EditPronoPage />, handle: { bare: true } },
           { path: 'classement', element: <LeaderboardPage /> },
           { path: 'profil', element: <PressCardPage /> },
           { path: 'profil/carte', element: <CardEditorPage /> },

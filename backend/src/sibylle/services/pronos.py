@@ -30,7 +30,14 @@ from sibylle.db.models import (
     Settlement,
     Upload,
 )
-from sibylle.domain.betting import Kind, PronoDraft, ValidationFailed, distribution, validate_prono
+from sibylle.domain.betting import (
+    Kind,
+    PronoDraft,
+    ValidationFailed,
+    distribution,
+    locked_fields,
+    validate_prono,
+)
 from sibylle.domain.content import REACTION_KINDS
 from sibylle.domain.ledger import LedgerKind
 from sibylle.domain.lifecycle import Event, InvalidTransition, State, can_edit, transition
@@ -54,6 +61,23 @@ EDITABLE_FIELDS = (
     "open_ended",
     "result_expected_at",
     "number_unit",
+)
+# What a prono cannot do without: an edit that takes one away is refused.
+REQUIRED_FIELDS = ("kind", "question", "section_id", "base_gain", "open_ended")
+# What an edit's history tells, in this order.
+HISTORY_FIELDS = (
+    "question",
+    "section_id",
+    "kind",
+    "options",
+    "number_unit",
+    "base_gain",
+    "open_ended",
+    "opens_at",
+    "closes_at",
+    "result_expected_at",
+    "link_url",
+    "image_id",
 )
 
 
@@ -144,19 +168,24 @@ async def set_state(
 
 
 async def _check_links(
-    session: AsyncSession, org_id: uuid.UUID, section_id: uuid.UUID, image_id: uuid.UUID | None
+    session: AsyncSession,
+    org_id: uuid.UUID,
+    section_id: uuid.UUID | None,
+    image_id: uuid.UUID | None,
 ) -> None:
-    section = await session.get(Section, section_id)
-    if section is None or section.org_id != org_id or section.archived_at is not None:
-        raise AppError("validation_error", {"section_id": "unknown"})
+    """The section (an active one) and the image belong to the newsroom."""
+    if section_id is not None:
+        section = await session.get(Section, section_id)
+        if section is None or section.org_id != org_id or section.archived_at is not None:
+            raise AppError("validation_error", {"section_id": "unknown"})
     if image_id is not None:
         upload = await session.get(Upload, image_id)
         if upload is None or upload.org_id != org_id:
             raise AppError("validation_error", {"image_id": "unknown"})
 
 
-def _validated(fields: dict[str, Any], options: list[str], org: Organisation) -> list[str]:
-    draft = PronoDraft(
+def _draft(fields: dict[str, Any], options: list[str]) -> PronoDraft:
+    return PronoDraft(
         kind=Kind(fields["kind"]),
         question=fields["question"],
         base_gain=fields["base_gain"],
@@ -166,9 +195,26 @@ def _validated(fields: dict[str, Any], options: list[str], org: Organisation) ->
         closes_at=fields.get("closes_at"),
         open_ended=bool(fields.get("open_ended")),
         result_expected_at=fields.get("result_expected_at"),
+        number_unit=fields.get("number_unit"),
     )
+
+
+def _validated(
+    fields: dict[str, Any],
+    options: list[str],
+    org: Organisation,
+    *,
+    current: PronoDraft | None = None,
+    locked: Sequence[str] = (),
+) -> list[str]:
     try:
-        return validate_prono(draft, max_base_gain=org.max_base_gain, now=clock.now())
+        return validate_prono(
+            _draft(fields, options),
+            max_base_gain=org.max_base_gain,
+            now=clock.now(),
+            current=current,
+            locked=locked,
+        )
     except ValidationFailed as error:
         raise AppError("validation_error", error.fields) from error
 
@@ -329,45 +375,90 @@ async def react(
     )
 
 
-def may_edit(member: Membership, prono: Prono) -> bool:
+def _may_write(member: Membership, prono: Prono) -> bool:
+    """Its author in the newsroom, or the editor."""
     author = prono.created_by == member.id and _is_newsroom(member)
-    return (author or member.role == "editor") and can_edit(prono.state, prono.bet_count)
+    return author or member.role == "editor"
+
+
+def may_edit(member: Membership, prono: Prono) -> bool:
+    return _may_write(member, prono) and can_edit(prono.state, prono.bet_count)
+
+
+def _kept(value: Any) -> Any:
+    """A value as the history keeps it, in JSON."""
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, uuid.UUID):
+        return str(value)
+    return value
+
+
+async def _history(
+    session: AsyncSession, before: dict[str, Any], after: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """What an edit changed, field by field, before and after; a section by its name."""
+    changes: list[dict[str, Any]] = []
+    for name in HISTORY_FIELDS:
+        old, new = before[name], after[name]
+        if old == new:
+            continue
+        if name == "section_id":
+            sections = await session.scalars(select(Section).where(Section.id.in_([old, new])))
+            names = {section.id: section.name for section in sections}
+            changes.append({"field": "section", "before": names[old], "after": names[new]})
+        else:
+            field = "image" if name == "image_id" else name
+            changes.append({"field": field, "before": _kept(old), "after": _kept(new)})
+    return changes
 
 
 async def edit_prono(
     session: AsyncSession, member: Membership, prono: Prono, changes: dict[str, Any]
 ) -> Prono:
-    author = prono.created_by == member.id and _is_newsroom(member)
-    if not (author or member.role == "editor"):
+    """Changes a prono: all of it before the first bet, then only what keeps the meaning of
+    the bets (`locked_fields`). Its history keeps each change, before and after."""
+    if not _may_write(member, prono):
         raise AppError("forbidden")
     if not can_edit(prono.state, prono.bet_count):
         raise AppError("invalid_state")
+    missing = {
+        name: "missing" for name in REQUIRED_FIELDS if name in changes and changes[name] is None
+    }
+    if missing:
+        raise AppError("validation_error", missing)
     org = await session.get(Organisation, prono.org_id)
     assert org is not None
-    fields = {name: getattr(prono, name) for name in EDITABLE_FIELDS} | {
-        k: v for k, v in changes.items() if k in EDITABLE_FIELDS
-    }
-    if fields.get("open_ended"):
+    before = {name: getattr(prono, name) for name in EDITABLE_FIELDS}
+    fields = before | {k: v for k, v in changes.items() if k in EDITABLE_FIELDS}
+    fields["question"] = fields["question"].strip()
+    if fields["open_ended"]:
         fields["closes_at"] = None
-    current = (
-        await session.scalars(
-            select(PronoOption.label)
-            .where(PronoOption.prono_id == prono.id)
-            .order_by(PronoOption.position)
-        )
-    ).all()
-    options = changes["options"] if changes.get("options") is not None else list(current)
+    current = await _option_labels(session, prono)
+    options = changes["options"] if changes.get("options") is not None else current
     if Kind(fields["kind"]) in (Kind.NUMBER, Kind.DATE):
         options = []
-    await _check_links(session, org.id, fields["section_id"], fields.get("image_id"))
-    labels = _validated(fields, options, org)
+    # An unchanged section stays, even archived since.
+    await _check_links(
+        session,
+        org.id,
+        fields["section_id"] if fields["section_id"] != before["section_id"] else None,
+        fields["image_id"] if fields["image_id"] != before["image_id"] else None,
+    )
+    locked = locked_fields(prono.state, prono.bet_count)
+    labels = _validated(
+        fields, options, org, current=_draft(before, current) if locked else None, locked=locked
+    )
+    history = await _history(session, before | {"options": current}, fields | {"options": labels})
+    if not history:
+        return prono
     for name, value in fields.items():
         setattr(prono, name, value)
-    prono.question = prono.question.strip()
     if prono.state == State.SCHEDULED and not (prono.opens_at and prono.opens_at > clock.now()):
         prono.state = State.OPEN.value
-    await _replace_options(session, prono, labels)
-    await record_event(session, prono, "edited", member)
+    if labels != current:
+        await _replace_options(session, prono, labels)
+    await record_event(session, prono, "edited", member, {"changes": history})
     await session.flush()
     await announce(
         session,
@@ -684,8 +775,22 @@ async def detail(session: AsyncSession, member: Membership, prono: Prono) -> dic
             .order_by(PronoEvent.created_at)
         )
     ).all()
+    actors = {
+        m.id: public_member(m)
+        for m in (
+            await session.scalars(
+                select(Membership).where(
+                    Membership.id.in_(
+                        {e.actor_membership_id for e in events if e.actor_membership_id}
+                    )
+                )
+            )
+        ).all()
+    }
+    editable = may_edit(member, prono)
     return {
         **summary,
+        "image_id": prono.image_id,
         "options": option_rows,
         "distribution": buckets,
         "bets": [bet_view(bet, prono, m, labels) for bet, m in rows],
@@ -697,7 +802,8 @@ async def detail(session: AsyncSession, member: Membership, prono: Prono) -> dic
             and mine.date_value is not None
             and mine.date_value < today
         ),
-        "can_edit": may_edit(member, prono),
+        "can_edit": editable,
+        "locked_fields": list(locked_fields(prono.state, prono.bet_count)) if editable else [],
         "reactions": await reaction_counts(session, prono.id),
         "my_reactions": [kind for kind in REACTION_KINDS if kind in mine_reacted],
         "rejected_reason": prono.rejected_reason,
@@ -709,6 +815,14 @@ async def detail(session: AsyncSession, member: Membership, prono: Prono) -> dic
                 .order_by(Report.created_at)
             )
         ).all(),
-        "events": [{"kind": e.kind, "at": e.created_at, "data": e.data} for e in events],
+        "events": [
+            {
+                "kind": e.kind,
+                "at": e.created_at,
+                "data": e.data,
+                "by": actors.get(e.actor_membership_id) if e.actor_membership_id else None,
+            }
+            for e in events
+        ],
         "special_edition": await special_edition(session, prono, list(options), members),
     }

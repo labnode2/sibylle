@@ -2421,6 +2421,8 @@ export interface components {
             /** Message Count */
             message_count: number;
             created_by: components["schemas"]["MemberPublic"];
+            /** Image Id */
+            image_id: string | null;
             /** Options */
             options: components["schemas"]["OptionOut"][];
             /** Distribution */
@@ -2432,6 +2434,8 @@ export interface components {
             can_rebet: boolean;
             /** Can Edit */
             can_edit: boolean;
+            /** Locked Fields */
+            locked_fields: ("kind" | "options" | "open_ended" | "base_gain" | "number_unit" | "opens_at" | "closes_at")[];
             /** Reactions */
             reactions: {
                 [key: string]: number;
@@ -2449,7 +2453,11 @@ export interface components {
             events: components["schemas"]["PronoEventOut"][];
             special_edition?: components["schemas"]["SpecialEditionOut"] | null;
         };
-        /** PronoEventOut */
+        /**
+         * PronoEventOut
+         * @description A step in the history of a prono. An edit's `data` lists what changed:
+         *     `{"changes": [{"field", "before", "after"}]}` (data-model.md, prono_events).
+         */
         PronoEventOut: {
             /** Kind */
             kind: string;
@@ -2462,6 +2470,7 @@ export interface components {
             data: {
                 [key: string]: unknown;
             };
+            by: components["schemas"]["MemberPublic"] | null;
         };
         /** PronoIn */
         PronoIn: {

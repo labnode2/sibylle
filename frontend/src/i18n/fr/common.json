@@ -75,7 +75,9 @@
     "not_future": "Choisis une date à partir de demain : on ne peut pas parier sur aujourd'hui ni sur le passé.",
     "in_past": "Cette date est déjà passée.",
     "after_closing": "L'ouverture doit venir avant la clôture des pronos.",
-    "before_closing": "Le résultat ne peut pas être attendu avant la clôture des pronos."
+    "before_closing": "Le résultat ne peut pas être attendu avant la clôture des pronos.",
+    "locked_after_bets": "Ne change plus : des paris ont déjà été faits.",
+    "not_later": "Des paris ont déjà été faits : la clôture peut seulement être repoussée."
   },
   "countdown": {
     "days": "JOURS",

@@ -139,7 +139,8 @@ export function KeyPhrase({ text }: { text: string }) {
 export type SegmentOption<T extends string> = { value: T; label: ReactNode };
 
 /** Joined choices in a 2 px frame, the chosen one in ink (canvas G-Créer « TYPE »,
- *  G-Classement « LAURIERS / PRONOS GAGNÉS »). `tabs` draws them as underlined words. */
+ *  G-Classement « LAURIERS / PRONOS GAGNÉS »). `tabs` draws them as underlined words.
+ *  `disabled` greys them all; `describedBy` says why. */
 export function Segmented<T extends string>({
   label,
   options,
@@ -147,6 +148,8 @@ export function Segmented<T extends string>({
   onChange,
   variant = 'boxes',
   mode = 'pressed',
+  disabled = false,
+  describedBy,
 }: {
   label: string;
   options: SegmentOption<T>[];
@@ -154,12 +157,15 @@ export function Segmented<T extends string>({
   onChange: (value: T) => void;
   variant?: 'boxes' | 'tabs';
   mode?: 'pressed' | 'radio';
+  disabled?: boolean;
+  describedBy?: string;
 }) {
   return (
     <div
       className={variant === 'tabs' ? styles.tabs : styles.segmented}
       role={mode === 'radio' ? 'radiogroup' : 'group'}
       aria-label={label}
+      aria-describedby={describedBy}
       style={{ ['--segments' as string]: options.length }}
     >
       {options.map((option) => (
@@ -170,6 +176,7 @@ export function Segmented<T extends string>({
           aria-checked={mode === 'radio' ? value === option.value : undefined}
           aria-pressed={mode === 'pressed' ? value === option.value : undefined}
           className={variant === 'tabs' ? styles.tabsButton : styles.segment}
+          disabled={disabled}
           onClick={() => onChange(option.value)}
         >
           <span>{option.label}</span>
@@ -249,7 +256,7 @@ export function Field({
   hint,
   error,
   ...input
-}: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string; error?: string }) {
+}: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: ReactNode; error?: string }) {
   const id = useId();
   const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(' ');
   return (
@@ -321,6 +328,8 @@ export function Stepper({
   label,
   format = String,
   block = false,
+  disabled = false,
+  describedBy,
 }: {
   value: number;
   onChange: (value: number) => void;
@@ -331,19 +340,23 @@ export function Stepper({
   format?: (value: number) => string;
   /** Takes the whole width of its column. */
   block?: boolean;
+  /** Greys it: the value stays as it is; `describedBy` says why. */
+  disabled?: boolean;
+  describedBy?: string;
 }) {
   const { t } = useTranslation();
   return (
     <div
-      className={cx(styles.stepper, block && styles.stepperBlock)}
+      className={cx(styles.stepper, block && styles.stepperBlock, disabled && styles.stepperOff)}
       role="group"
       aria-label={label}
+      aria-describedby={describedBy}
     >
       <button
         type="button"
         className={styles.stepperButton}
         onClick={() => onChange(Math.max(min, value - step))}
-        disabled={value <= min}
+        disabled={disabled || value <= min}
         aria-label={t('stepper.less')}
       >
         <Icon name="minus" size={12} />
@@ -355,7 +368,7 @@ export function Stepper({
         type="button"
         className={styles.stepperButton}
         onClick={() => onChange(Math.min(max, value + step))}
-        disabled={value >= max}
+        disabled={disabled || value >= max}
         aria-label={t('stepper.more')}
       >
         <Icon name="plus" size={12} />
@@ -622,24 +635,31 @@ export function Switch({
   );
 }
 
-/** A whole line that switches, its words on the left (canvas G-Créer « Relancer si… »). */
+/** A whole line that switches, its words on the left (canvas G-Créer « Relancer si… »).
+ *  `disabled` greys it; `describedBy` says why. */
 export function SwitchRow({
   checked,
   onChange,
   label,
   hint,
+  disabled = false,
+  describedBy,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label: string;
-  hint?: string;
+  hint?: ReactNode;
+  disabled?: boolean;
+  describedBy?: string;
 }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-describedby={describedBy}
       className={styles.switchRow}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
     >
       <span className={styles.switchRowText}>

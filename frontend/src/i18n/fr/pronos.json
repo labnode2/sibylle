@@ -149,6 +149,48 @@
     "foot": "TU DÉSIGNERAS LE RÉSULTAT APRÈS L'ÉVÉNEMENT",
     "footPropose": "UN·E JOURNALISTE RELIRA TA PROPOSITION ET CHOISIRA LE GAIN"
   },
+  "edit": {
+    "title": "Modifier le prono",
+    "close": "Annuler et revenir au prono",
+    "submit": "Enregistrer les modifications",
+    "foot": "CHAQUE MODIFICATION EST NOTÉE DANS L'HISTORIQUE DU PRONO, VISIBLE PAR TOUTE LA RÉDACTION",
+    "afterBets_one": "Déjà {{count}} pari sur ce prono : pour garder le sens des paris, le type, les choix, l'unité et le gain fixe ne changent plus, et la clôture peut seulement être repoussée.",
+    "afterBets_other": "Déjà {{count}} paris sur ce prono : pour garder le sens des paris, le type, les choix, l'unité et le gain fixe ne changent plus, et la clôture peut seulement être repoussée.",
+    "afterBetsClosed_one": "Déjà {{count}} pari sur ce prono : pour garder le sens des paris, le type, les choix, l'unité et le gain fixe ne changent plus.",
+    "afterBetsClosed_other": "Déjà {{count}} paris sur ce prono : pour garder le sens des paris, le type, les choix, l'unité et le gain fixe ne changent plus.",
+    "closed": "Les pronos sont clos : la clôture ne bouge plus. Pour rouvrir les paris avec une nouvelle clôture, relance le prono depuis sa page.",
+    "locked": "VERROUILLÉ : DES PARIS ONT DÉJÀ ÉTÉ FAITS",
+    "lockedClosed": "VERROUILLÉ : LES PRONOS SONT CLOS, UNE RELANCE LES ROUVRE",
+    "laterOnly": "SEULEMENT PLUS TARD : DES PARIS ONT DÉJÀ ÉTÉ FAITS"
+  },
+  "history": {
+    "title": "Les modifications",
+    "by": "{{date}} · PAR {{pseudo}}",
+    "before": "Avant :",
+    "after": "Après :",
+    "none": "aucun",
+    "noneFeminine": "aucune",
+    "added": "ajoutée",
+    "changed": "changée",
+    "removed": "retirée",
+    "yes": "oui",
+    "no": "non",
+    "gain": "+{{gain}}",
+    "field": {
+      "question": "QUESTION",
+      "section": "RUBRIQUE",
+      "kind": "TYPE",
+      "options": "CHOIX",
+      "number_unit": "UNITÉ",
+      "base_gain": "GAIN FIXE",
+      "open_ended": "SANS DATE DE CLÔTURE",
+      "opens_at": "OUVERTURE",
+      "closes_at": "CLÔTURE",
+      "result_expected_at": "RÉSULTAT ATTENDU",
+      "link_url": "LIEN VERS L'ARTICLE",
+      "image": "IMAGE"
+    }
+  },
   "discussion": {
     "title": "La discussion",
     "older": "Messages précédents",
@@ -195,6 +237,7 @@
   "toast": {
     "published": "Prono publié : la rédaction peut parier.",
     "proposed": "Proposition envoyée à la rédaction en chef.",
+    "edited": "Prono modifié : son historique le note.",
     "bet": "Pari enregistré.",
     "betStake_one": "Pari enregistré : {{stake}} laurier misé.",
     "betStake_other": "Pari enregistré : {{stake}} lauriers misés.",

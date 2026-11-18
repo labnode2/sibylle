@@ -39,7 +39,11 @@ class InvalidTransition(Exception):
 
 
 _CANCELLABLE = {State.SCHEDULED, State.OPEN, State.CLOSED, State.RESOLVED}
+# Everything can change until the first bet…
 EDITABLE = {State.PROPOSED, State.SCHEDULED, State.OPEN}
+# …then only what keeps the meaning of the bets (betting.LOCKED_AFTER_BETS), until the result
+# or the cancellation.
+EDITABLE_AFTER_BETS = {State.OPEN, State.CLOSED}
 
 
 def transition(
@@ -76,5 +80,6 @@ def transition(
 
 
 def can_edit(state: State | str, bet_count: int) -> bool:
-    """A prono can be edited until someone bets on it."""
-    return bet_count == 0 and State(state) in EDITABLE
+    """A prono can be edited before anyone bets on it; after that, in part, until its result
+    or its cancellation."""
+    return State(state) in (EDITABLE_AFTER_BETS if bet_count > 0 else EDITABLE)

@@ -136,6 +136,21 @@
   background: var(--ink);
   color: var(--on-ink);
 }
+/* Greyed: what can no longer change (a prono's type once someone bet). */
+.segmented:has(.segment:disabled) {
+  border-color: var(--rule);
+}
+.segment:disabled {
+  color: var(--ink-2);
+  cursor: not-allowed;
+}
+.segment + .segment:disabled {
+  border-left-color: var(--rule);
+}
+.segment[aria-pressed='true']:disabled {
+  background: var(--grey);
+  color: var(--ink);
+}
 
 /* The same as underlined words: periods of the ranking. */
 .tabs {
@@ -286,6 +301,12 @@
 .fieldInput[aria-invalid='true'] {
   border-width: 2px;
 }
+.fieldInput:disabled {
+  border-color: var(--rule);
+  background: var(--grey);
+  color: var(--ink-2);
+  cursor: not-allowed;
+}
 .fieldHint,
 .fieldError {
   font: 500 11px/1.4 var(--font-mono);
@@ -361,6 +382,14 @@
 .stepperBlock {
   display: flex;
   width: 100%;
+}
+.stepperOff {
+  border-color: var(--rule);
+  background: var(--grey);
+  color: var(--ink-2);
+}
+.stepperOff .stepperValue {
+  border-color: var(--rule);
 }
 .stepperBlock .stepperValue {
   flex: 1;
@@ -515,6 +544,13 @@
 }
 .switchRow .switch::before {
   content: none;
+}
+.switchRow:disabled {
+  color: var(--ink-2);
+  cursor: not-allowed;
+}
+.switchRow:disabled .switch {
+  opacity: 0.35;
 }
 
 /* A whole line that switches. */

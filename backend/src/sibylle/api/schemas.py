@@ -397,9 +397,14 @@ class BetOut(BaseModel):
 
 
 class PronoEventOut(BaseModel):
+    """A step in the history of a prono. An edit's `data` lists what changed:
+    `{"changes": [{"field", "before", "after"}]}` (data-model.md, prono_events)."""
+
     kind: str
     at: datetime
     data: dict[str, Any]
+    # Who did it; None for what the worker does (opening, closing).
+    by: MemberPublic | None
 
 
 class WinnerOut(BaseModel):
@@ -426,13 +431,23 @@ class SpecialEditionOut(BaseModel):
     winners: list[WinnerOut]
 
 
+# What an edit can no longer change once someone bet (domain/betting.py, `locked_fields`).
+LockedField = Literal[
+    "kind", "options", "open_ended", "base_gain", "number_unit", "opens_at", "closes_at"
+]
+
+
 class PronoDetail(PronoSummary):
+    # The upload behind `image_url`, for the edit form.
+    image_id: uuid.UUID | None
     options: list[OptionOut]
     distribution: list[BucketOut]
     bets: list[BetOut]
     my_bet: BetOut | None
     can_rebet: bool
     can_edit: bool
+    # With `can_edit`, what the member's edit cannot change: empty until the first bet.
+    locked_fields: list[LockedField]
     reactions: dict[str, int]
     my_reactions: list[str]
     # Why a journalist turned the proposal down; its author sees it.

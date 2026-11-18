@@ -8,6 +8,10 @@ import { orgKey } from '../orgs/api';
 export type PronoSummary = components['schemas']['PronoSummary'];
 export type PronoDetail = components['schemas']['PronoDetail'];
 export type PronoIn = components['schemas']['PronoIn'];
+export type PronoPatch = components['schemas']['PronoPatch'];
+export type PronoEvent = components['schemas']['PronoEventOut'];
+/** What an edit can no longer change once someone bet (`locked_fields`). */
+export type LockedField = PronoDetail['locked_fields'][number];
 export type Bet = components['schemas']['BetOut'];
 export type BetIn = components['schemas']['BetIn'];
 export type Section = components['schemas']['SectionOut'];
@@ -86,6 +90,25 @@ export function useCreateProno(orgId: string) {
     mutationFn: (body: PronoIn) =>
       unwrap(api.POST('/api/orgs/{org_id}/pronos', { params: { path: { org_id: orgId } }, body })),
     onSuccess: () => client.invalidateQueries({ queryKey: pronoListKey(orgId) }),
+  });
+}
+
+/** Changes a prono: only what the form changed, which its history keeps. */
+export function useEditProno(orgId: string, pronoId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: PronoPatch) =>
+      unwrap(
+        api.PATCH('/api/orgs/{org_id}/pronos/{prono_id}', {
+          params: { path: { org_id: orgId, prono_id: pronoId } },
+          body,
+        }),
+      ),
+    onSuccess: (prono) => {
+      client.setQueryData(pronoKey(orgId, pronoId), prono);
+      void client.invalidateQueries({ queryKey: pronoListKey(orgId) });
+      void client.invalidateQueries({ queryKey: ['front-page', orgId] });
+    },
   });
 }
 

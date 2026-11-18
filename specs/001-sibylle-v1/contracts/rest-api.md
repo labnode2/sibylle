@@ -94,7 +94,7 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 | GET | `/orgs/{org}/pronos` | Membre | `?state=&section=&cursor=` → `[PronoSummary]` |
 | POST | `/orgs/{org}/pronos` | Membre | `PronoInput` → `201 PronoDetail` ; état `open`/`scheduled` pour un·e journaliste, `proposed` pour un·e lecteur·rice |
 | GET | `/orgs/{org}/pronos/{id}` | Membre | → `PronoDetail` |
-| PATCH | `/orgs/{org}/pronos/{id}` | créateur journaliste, Réd. chef | `PronoInput` partiel → `PronoDetail` ; `409 invalid_state` dès le premier pari |
+| PATCH | `/orgs/{org}/pronos/{id}` | créateur journaliste, Réd. chef | `PronoInput` partiel → `PronoDetail` ; tout avant le premier pari ; ensuite, tant que le prono est `open` ou `closed`, `422` avec `fields.<champ>: locked_after_bets` pour un changement de `kind`, `options`, `open_ended`, `base_gain`, `number_unit`, `opens_at` (et `closes_at` d'un prono clos), `fields.closes_at: not_later` pour une clôture avancée ; `409 invalid_state` pour un prono résolu, annulé, refusé, ou clos sans pari ; chaque changement est noté dans `events` (`edited`) |
 | POST | `/orgs/{org}/pronos/{id}/validate` | Journaliste | `{base_gain?}` → `PronoDetail` |
 | POST | `/orgs/{org}/pronos/{id}/reject` | Journaliste | `{reason?}` → `PronoDetail` |
 | POST | `/orgs/{org}/pronos/{id}/bets` | Membre | `{option_id \| number_value \| date_value, stake}` → `201 Bet` ; erreurs `invalid_state`, `already_bet`, `insufficient_balance` |
@@ -115,7 +115,9 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 
 `PronoInput` = `{kind, question, section_id, options?: [label], base_gain, link_url?, image_id?, opens_at?, closes_at?, open_ended?, result_expected_at?, number_unit?}`.
 
-`PronoDetail` = `PronoSummary` + `{options: [{id, label, is_correct, count, stake_total, share_pct}], bets: [{member: MemberPublic, answer, stake, rank, placed_at, outcome, payout}], my_bet, can_rebet, pot, reactions: {kind: count}, my_reactions, events: [PronoEvent], special_edition?: {winners: [{member, payout}], pot_lost: bool, settlement_seq, settled_by: MemberPublic}, rejected_reason?, my_reports: [Report]}` (`my_reports` : les signalements du membre sur ce prono, avec la note de traitement). Pour un prono de nombre ou de date, `options` est remplacé par `distribution` (valeurs regroupées en tranches pour l'affichage).
+`PronoDetail` = `PronoSummary` + `{image_id, options: [{id, label, is_correct, count, stake_total, share_pct}], bets: [{member: MemberPublic, answer, stake, rank, placed_at, outcome, payout}], my_bet, can_rebet, can_edit, locked_fields, pot, reactions: {kind: count}, my_reactions, events: [PronoEvent], special_edition?: {winners: [{member, payout}], pot_lost: bool, settlement_seq, settled_by: MemberPublic}, rejected_reason?, my_reports: [Report]}` (`my_reports` : les signalements du membre sur ce prono, avec la note de traitement ; `locked_fields` : avec `can_edit`, ce que sa modification ne peut plus changer, vide avant le premier pari). Pour un prono de nombre ou de date, `options` est remplacé par `distribution` (valeurs regroupées en tranches pour l'affichage).
+
+`PronoEvent` = `{kind, at, data, by: MemberPublic | null}` (`by` : qui l'a fait, `null` pour le `worker`) ; `data` d'un `edited` : `{changes: [{field, before, after}]}` (data-model.md).
 
 `PronoSummary` = `{id, number, kind, question, section, state, base_gain, opens_at, closes_at, open_ended, result_expected_at, bet_count, pot, relaunch_count, message_count, created_by: MemberPublic, image_url?}`.
 
