@@ -33,6 +33,7 @@ import { useOrg } from '../orgs/api';
 import { DesignatePanel } from '../results/DesignatePanel';
 import { MyReports } from '../results/MyReports';
 import { ReportForm } from '../results/ReportForm';
+import { cancelledResult, ResultCancelled } from '../results/ResultCancelled';
 import { SpecialEdition, SpecialEditionHead } from '../results/SpecialEdition';
 import { usePlaceBet, useProno, type Bet, type PronoDetail } from './api';
 import { DeleteProno } from './DeleteProno';
@@ -59,6 +60,9 @@ const longDate = (value: string) =>
 
 function StateNotice({ prono, newsroom }: { prono: PronoDetail; newsroom: boolean }) {
   const { t } = useTranslation('pronos');
+  // Its result taken back: waiting again for one, the stakes still in play.
+  const takenBack = cancelledResult(prono);
+  if (takenBack) return <ResultCancelled event={takenBack} className={styles.alert} />;
   switch (prono.state) {
     case 'proposed':
       return (

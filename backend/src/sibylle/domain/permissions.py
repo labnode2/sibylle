@@ -26,6 +26,7 @@ class Action(StrEnum):
     SET_LAURELS = "set_laurels"
     MANAGE_SECTIONS = "manage_sections"
     CORRECT_RESULT = "correct_result"
+    CANCEL_RESULT = "cancel_result"
     CANCEL_PRONO = "cancel_prono"
     DELETE_PRONO = "delete_prono"
     ADJUST_LAURELS = "adjust_laurels"
@@ -58,6 +59,8 @@ _ALLOWED: dict[Action, frozenset[Role]] = {
     Action.SET_LAURELS: _EDITOR,
     Action.MANAGE_SECTIONS: _EDITOR,
     Action.CORRECT_RESULT: _EDITOR,
+    # Taking a result back is a correction too: the same people.
+    Action.CANCEL_RESULT: _EDITOR,
     Action.CANCEL_PRONO: _EDITOR,
     # Whoever may cancel a prono may then delete it (lifecycle.can_delete).
     Action.DELETE_PRONO: _EDITOR,

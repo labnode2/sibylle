@@ -23,6 +23,7 @@ ALLOWED = [
     (S.CLOSED, E.RESOLVE, {"bet_count": 1}, S.RESOLVED),
     (S.CLOSED, E.RELAUNCH, {}, S.OPEN),
     (S.RESOLVED, E.CORRECT, {"bet_count": 1}, S.RESOLVED),
+    (S.RESOLVED, E.UNRESOLVE, {"bet_count": 1}, S.CLOSED),
     (S.SCHEDULED, E.CANCEL, {}, S.CANCELLED),
     (S.OPEN, E.CANCEL, {}, S.CANCELLED),
     (S.CLOSED, E.CANCEL, {}, S.CANCELLED),
@@ -52,6 +53,16 @@ def test_an_open_prono_only_resolves_directly_when_open_ended() -> None:
         transition(S.OPEN, E.RESOLVE, bet_count=3)
     with pytest.raises(InvalidTransition):
         transition(S.OPEN, E.CLOSE, open_ended=True)
+
+
+def test_a_cancelled_result_waits_again_for_one() -> None:
+    """Back to closed; an open-ended date opens again, as when it was resolved."""
+    assert transition(S.RESOLVED, E.UNRESOLVE, bet_count=2) == S.CLOSED
+    assert transition(S.RESOLVED, E.UNRESOLVE, open_ended=True, bet_count=2) == S.OPEN
+    assert transition(S.OPEN, E.RESOLVE, open_ended=True, bet_count=2) == S.RESOLVED
+    for state in (S.OPEN, S.CLOSED, S.CANCELLED):
+        with pytest.raises(InvalidTransition):
+            transition(state, E.UNRESOLVE, open_ended=True, bet_count=2)
 
 
 def test_a_prono_without_bets_is_not_resolved() -> None:

@@ -76,7 +76,7 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 | PATCH | `/orgs/{org}/members/{member}/role` | Réd. chef | `{role}` → `MemberPublic` ; `409 last_editor` si on retire la dernière |
 | DELETE | `/orgs/{org}/members/{member}` | Réd. chef | → `204` (retire un membre) |
 | POST | `/orgs/{org}/members/{member}/adjustments` | Réd. chef | `{amount (≠ 0), reason}` → `201 LedgerEntry` |
-| GET | `/orgs/{org}/members/me/ledger` | Membre | `?cursor=&limit=` → `{items: [LedgerEntry], next_cursor}` (relevé, du plus récent au plus ancien) |
+| GET | `/orgs/{org}/members/me/ledger` | Membre | `?cursor=&limit=` → `{items: [LedgerEntry], next_cursor}` (relevé, du plus récent au plus ancien ; `settlement_kind` : le type du règlement qui a écrit l'entrée, ou `null`) |
 | GET | `/orgs/{org}/sections` | Membre | → `[Section]` |
 | POST | `/orgs/{org}/sections` | Réd. chef | `{name}` → `201 Section` |
 | PATCH | `/orgs/{org}/sections/{id}` | Réd. chef | `{name?, position?}` → `Section` |
@@ -101,6 +101,7 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 | POST | `/orgs/{org}/pronos/{id}/resolve` | Journaliste | `{correct_option_ids}` ou `{result_number}` ou `{result_date}` → `PronoDetail` (avec `special_edition`) |
 | POST | `/orgs/{org}/pronos/{id}/relaunch` | Journaliste | `{closes_at, result_expected_at?, reason}` → `PronoDetail` |
 | POST | `/orgs/{org}/pronos/{id}/correct` | Réd. chef | même corps que `resolve` → `PronoDetail` |
+| POST | `/orgs/{org}/pronos/{id}/cancel-result` | Réd. chef | `{reason?}` → `PronoDetail` ; un prono `resolved` seulement (`409 invalid_state` sinon) : les gains sont repris, les mises restent en jeu et le prono redevient `closed` (`open` pour une date « sans fin ») |
 | POST | `/orgs/{org}/pronos/{id}/cancel` | Réd. chef | `{reason}` → `PronoDetail` |
 | DELETE | `/orgs/{org}/pronos/{id}` | Réd. chef | → `204` ; un prono annulé seulement (`409 invalid_state` sinon). Une marque (`deleted_at`) : le prono quitte les listes, la une et les bulles, sa page et tout ce qui en dépend (paris, discussion, réactions, signalements) répondent `404` ; ses écritures de lauriers restent, et les remboursements avec, dans l'historique des membres |
 | PUT | `/orgs/{org}/pronos/{id}/reactions/{kind}` | Membre | → `204` (ajoute) |

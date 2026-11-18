@@ -154,7 +154,7 @@ Contraintes : un seul pari actif par membre et par prono (index unique partiel `
 
 ### settlements (règlement)
 
-`id`, `prono_id`, `seq` (1, 2, … par prono), `kind` (`resolution`, `correction`, `cancellation`), `result` (jsonb : options correctes ou valeur réelle), `created_by`, `created_at`, `reversed_by_id` (→ settlements, posé quand une correction ou une annulation l'annule). Toutes les écritures du registre d'un règlement y sont rattachées.
+`id`, `prono_id`, `seq` (1, 2, … par prono), `kind` (`resolution`, `correction`, `cancellation`, `result_cancellation`), `result` (jsonb : options correctes ou valeur réelle), `created_by`, `created_at`, `reversed_by_id` (→ settlements, posé quand une correction, une annulation du résultat ou une annulation l'annule). Toutes les écritures du registre d'un règlement y sont rattachées. Un `result_cancellation` ne fait qu'annuler les gains du règlement en vigueur : il ne verse rien, rien ne l'annule ensuite, et le prono n'a plus de règlement en vigueur jusqu'à sa prochaine désignation ou son annulation.
 
 ### Transitions d'état d'un prono
 
@@ -164,6 +164,7 @@ proposed ──validation──▶ scheduled ──opens_at──▶ open ──
     └──refus──▶ rejected                              │                  └──relance──▶ open      └──correction──▶ resolved
                                                       └──désignation (date « sans fin »)──▶ resolved
 scheduled | open | closed | resolved ──annulation (rédaction en chef)──▶ cancelled
+resolved ──annulation du résultat (rédaction en chef)──▶ closed (open pour une date « sans fin »)
 ```
 
 | Transition | Qui | Conditions |
@@ -173,11 +174,14 @@ scheduled | open | closed | resolved ──annulation (rédaction en chef)──
 | désignation | journaliste, rédaction en chef | état `closed`, ou `open` pour une date « sans fin » ; au moins une bonne réponse |
 | relance | journaliste, rédaction en chef | état `closed` ; nouvelle `closes_at` future |
 | correction | rédaction en chef | état `resolved` ; résultat différent |
+| annulation du résultat | rédaction en chef | état `resolved` |
 | annulation | rédaction en chef | état `scheduled`, `open`, `closed` ou `resolved` |
 | suppression | rédaction en chef | état `cancelled` ; pose `deleted_at` sans changer l'état |
 | modification | créateur journaliste, rédaction en chef | tout : `bet_count = 0` et état `proposed`, `scheduled` ou `open` ; en partie (question, rubrique, lien, image, clôture repoussée, résultat attendu) : `bet_count > 0` et état `open` ou `closed` (la clôture d'un prono `closed` reste : la relance le rouvre) |
 
 Une relance remet `state = open`, change `closes_at` (et `result_expected_at`), incrémente `relaunch_count` et garde les paris et leur rang.
+
+Une annulation du résultat reprend les gains du règlement en vigueur (écritures `reversal` d'un règlement `result_cancellation`), remet les paris en attente (`outcome = pending`, `payout = 0`, `settled_at` vide) en gardant leurs mises, vide le résultat, `resolved_at` et `resolved_by`, et remet `state = closed` (`open` pour une date « sans fin ») ; l'historique note `result_cancelled` avec le résultat annulé et le motif. Le prono se désigne ou s'annule ensuite comme avant sa première désignation.
 
 ## Lauriers
 

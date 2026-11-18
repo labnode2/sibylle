@@ -53,7 +53,8 @@
       "corrected_won_one": "Résultat corrigé : {result}. Tu gagnes {payout} laurier.",
       "corrected_won_other": "Résultat corrigé : {result}. Tu gagnes {payout} lauriers.",
       "corrected_lost": "Résultat corrigé : {result}. Pas cette fois.",
-      "cancelled": "Prono annulé : ta mise t'est rendue."
+      "cancelled": "Prono annulé : ta mise t'est rendue.",
+      "result_cancelled": "Résultat annulé : ta mise reste en jeu jusqu'au nouveau résultat."
     },
     "designation_reminder": {
       "title": "{org_title} · Résultat à désigner",

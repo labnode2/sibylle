@@ -9,6 +9,12 @@ import styles from './profile.module.css';
 
 const signed = (value: number) => (value > 0 ? `+${formatNumber(value)}` : formatNumber(value));
 
+/** What the entry is: a reversal that took a result back says so, rather than « correction ». */
+const kindKey = (entry: LedgerEntry) =>
+  entry.kind === 'reversal' && entry.settlement_kind === 'result_cancellation'
+    ? 'ledger.resultCancelled'
+    : `ledger.kind.${entry.kind}`;
+
 function Detail({ orgId, entry }: { orgId: string; entry: LedgerEntry }) {
   const { t } = useTranslation('profile');
   const { pathname } = useLocation();
@@ -66,7 +72,7 @@ export function LedgerList({ orgId }: { orgId: string }) {
           <li key={entry.id} className={styles.ledgerRow}>
             <div className={styles.ledgerText}>
               <span className={styles.ledgerKind}>
-                {t(`ledger.kind.${entry.kind}`)} ·{' '}
+                {t(kindKey(entry))} ·{' '}
                 {formatDate(entry.created_at, { day: 'numeric', month: 'short' }).toUpperCase()}
               </span>
               <Detail orgId={orgId} entry={entry} />

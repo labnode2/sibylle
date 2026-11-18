@@ -8,7 +8,7 @@
 |---|---|---|---|
 | `new_prono` | un prono passe à l'état `open` | membres actifs de la rédaction, sauf son créateur et la personne qui l'a validé | `new_prono:{prono}:{account}` |
 | `closing_soon` | clôture moins 2 h (vérifié chaque minute) | membres actifs sans pari actif ; jamais pour un prono de date « sans fin » | `closing_soon:{prono}:{account}` |
-| `result` | règlement (`resolution`, `correction`, `cancellation`) | membres qui ont parié | `result:{prono}:{settlement_seq}:{account}` |
+| `result` | règlement (`resolution`, `correction`, `cancellation`, `result_cancellation`) | membres qui ont parié | `result:{prono}:{settlement_seq}:{account}` |
 | `designation_reminder` | date de résultat attendu (sinon lendemain de la clôture), puis J+1, J+3, J+7, puis chaque semaine ; une relance repart de zéro | créateur journaliste, ou journaliste qui a validé la proposition | `designation:{prono}:{relance}-{étape}` |
 | `report` | un membre signale un prono (résultat erroné ou contenu) | membres actifs qui traitent les signalements (`handle_reports` : rédaction en chef), sauf l'auteur du signalement et le créateur du prono signalé ; lien vers `/o/<org_id>/reglages/signalements` ; sans objet si le signalement est déjà traité | `report:{report}:{account}` |
 | `mention` | un message de la discussion d'un prono tague un membre (`@pseudo`, membres actifs de la rédaction) | le membre tagué, jamais l'auteur du message ; au plus une notification non lue par membre et par prono (`mention` ou `discussion`) ; sans objet si le message est supprimé | `mention:{message}:{account}` |

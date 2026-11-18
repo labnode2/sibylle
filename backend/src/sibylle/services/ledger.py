@@ -8,7 +8,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle import clock
 from sibylle.api.errors import AppError
-from sibylle.db.models import Bet, LedgerEntry, Membership, Prono, Season, SeasonClosure
+from sibylle.db.models import (
+    Bet,
+    LedgerEntry,
+    Membership,
+    Prono,
+    Season,
+    SeasonClosure,
+    Settlement,
+)
 from sibylle.domain.ledger import Effect, LedgerKind, reversal
 from sibylle.domain.seasons import SeasonKey, season_bounds, season_of
 from sibylle.realtime import bus
@@ -171,12 +179,14 @@ async def check_caches(session: AsyncSession, org_id: uuid.UUID) -> list[CacheMi
 
 async def statement(
     session: AsyncSession, membership_id: uuid.UUID, *, cursor: str | None, limit: int
-) -> tuple[list[tuple[LedgerEntry, Prono | None]], str | None]:
+) -> tuple[list[tuple[LedgerEntry, Prono | None, str | None]], str | None]:
     """A member's entries, newest first, each with its prono (a deleted one too: the refunds of
-    its cancellation stay in the history); then the next cursor."""
+    its cancellation stay in the history) and the kind of the settlement that wrote it, which
+    tells a correction's reversals from a cancelled result's; then the next cursor."""
     query = (
-        select(LedgerEntry, Prono)
+        select(LedgerEntry, Prono, Settlement.kind)
         .outerjoin(Prono, Prono.id == LedgerEntry.prono_id)
+        .outerjoin(Settlement, Settlement.id == LedgerEntry.settlement_id)
         .where(LedgerEntry.membership_id == membership_id)
     )
     if cursor:
@@ -184,5 +194,7 @@ async def statement(
             raise AppError("validation_error", {"cursor": "invalid"})
         query = query.where(LedgerEntry.id < int(cursor))
     rows = (await session.execute(query.order_by(LedgerEntry.id.desc()).limit(limit + 1))).all()
-    page: list[tuple[LedgerEntry, Prono | None]] = [(entry, prono) for entry, prono in rows[:limit]]
+    page: list[tuple[LedgerEntry, Prono | None, str | None]] = [
+        (entry, prono, settlement_kind) for entry, prono, settlement_kind in rows[:limit]
+    ]
     return page, str(page[-1][0].id) if len(rows) > limit else None

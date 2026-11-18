@@ -1,4 +1,4 @@
-"""Designating a prono's result, relaunching, correcting and cancelling it."""
+"""Designating a prono's result, relaunching, correcting and cancelling it, or only its result."""
 
 import uuid
 
@@ -32,6 +32,16 @@ async def correct(
     org_id: uuid.UUID, prono_id: uuid.UUID, body: ResultIn, member: CurrentMember, session: Db
 ) -> PronoDetail:
     prono = await results.correct(session, member, prono_id, _result(body))
+    return PronoDetail.model_validate(await pronos.detail(session, member, prono))
+
+
+@router.post("/cancel-result")
+async def cancel_result(
+    org_id: uuid.UUID, prono_id: uuid.UUID, body: CancelIn, member: CurrentMember, session: Db
+) -> PronoDetail:
+    """Takes the result back: the payouts are reversed, the stakes stay in play and the prono
+    waits for a new result."""
+    prono = await results.cancel_result(session, member, prono_id, body.reason)
     return PronoDetail.model_validate(await pronos.detail(session, member, prono))
 
 

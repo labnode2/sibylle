@@ -741,6 +741,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/orgs/{org_id}/pronos/{prono_id}/cancel-result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel Result
+         * @description Takes the result back: the payouts are reversed, the stakes stay in play and the prono
+         *     waits for a new result.
+         */
+        post: operations["cancel_result_api_orgs__org_id__pronos__prono_id__cancel_result_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/orgs/{org_id}/pronos/{prono_id}/relaunch": {
         parameters: {
             query?: never;
@@ -1723,6 +1744,8 @@ export interface components {
             /** Reason */
             reason: string | null;
             prono: components["schemas"]["PronoRef"] | null;
+            /** Settlement Kind */
+            settlement_kind: string | null;
             /**
              * Created At
              * Format: date-time
@@ -4890,6 +4913,42 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ResultIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PronoDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_result_api_orgs__org_id__pronos__prono_id__cancel_result_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                prono_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelIn"];
             };
         };
         responses: {

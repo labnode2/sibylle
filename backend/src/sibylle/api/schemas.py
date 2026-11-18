@@ -728,6 +728,9 @@ class LedgerEntryOut(BaseModel):
     score_delta: int
     reason: str | None
     prono: PronoRef | None
+    # The kind of the prono's settlement that wrote the entry (models.Settlement): its reversals
+    # undo a result corrected, cancelled with the prono, or cancelled alone (« Résultat annulé »).
+    settlement_kind: str | None
     created_at: datetime
 
 

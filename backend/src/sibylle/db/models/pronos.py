@@ -22,6 +22,7 @@ from sibylle.domain.content import REACTION_KINDS
 
 KINDS = "'choice', 'yes_no', 'number', 'date'"
 STATES = "'proposed', 'rejected', 'scheduled', 'open', 'closed', 'resolved', 'cancelled'"
+SETTLEMENT_KINDS = "'resolution', 'correction', 'cancellation', 'result_cancellation'"
 
 
 class Section(Base):
@@ -162,15 +163,18 @@ class Bet(Base):
 
 
 class Settlement(Base):
-    """One settlement of a prono: its resolution, a correction or its cancellation (J1).
+    """One settlement of a prono: its resolution, a correction, the cancellation of its result
+    or its own cancellation (J1).
 
     Every ledger entry it writes points to it. A correction or a cancellation reverses the
-    previous settlement's entries and marks it with `reversed_by_id`.
+    previous settlement's entries and marks it with `reversed_by_id`. A result cancellation
+    only reverses them: it pays nothing, so nothing ever reverses it, and the prono waits for a
+    new result (or its cancellation) with no settlement in force.
     """
 
     __tablename__ = "settlements"
     __table_args__ = (
-        CheckConstraint("kind IN ('resolution', 'correction', 'cancellation')", name="kind"),
+        CheckConstraint(f"kind IN ({SETTLEMENT_KINDS})", name="kind"),
         CheckConstraint("seq >= 1", name="seq"),
         UniqueConstraint("prono_id", "seq"),
     )

@@ -4,6 +4,7 @@ proposed → scheduled | open (validation), proposed → rejected
 scheduled → open (opens_at), open → closed (closes_at)
 closed → resolved (designation), open → resolved for an open-ended date
 closed → open (relaunch, bets kept), resolved → resolved (correction)
+resolved → closed, or open for an open-ended date (result cancelled, bets and stakes kept)
 scheduled | open | closed | resolved → cancelled
 A cancelled prono can then be deleted: a mark beside its state, which hides it.
 """
@@ -29,6 +30,7 @@ class Event(StrEnum):
     RESOLVE = "resolve"
     RELAUNCH = "relaunch"
     CORRECT = "correct"
+    UNRESOLVE = "unresolve"
     CANCEL = "cancel"
 
 
@@ -77,6 +79,9 @@ def transition(
             return State.OPEN
         case Event.CORRECT if state is State.RESOLVED:
             return State.RESOLVED
+        # The result is taken back: the prono waits for one again, as before its designation.
+        case Event.UNRESOLVE if state is State.RESOLVED:
+            return State.OPEN if open_ended else State.CLOSED
         case Event.CANCEL if state in _CANCELLABLE:
             return State.CANCELLED
     raise InvalidTransition(state, event)

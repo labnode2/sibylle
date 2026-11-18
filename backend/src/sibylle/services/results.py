@@ -1,8 +1,10 @@
-"""Results (research.md J1): designating, relaunching, correcting and cancelling a prono.
+"""Results (research.md J1): designating, relaunching, correcting and cancelling a prono, or only
+its result.
 
 Each settlement is a `settlements` row; every ledger entry it writes points to it. A correction
 reverses the payouts of the settlement in force before paying again, a cancellation reverses them
-and gives every stake back.
+and gives every stake back, a result cancellation reverses them and keeps the stakes in play until
+a new result.
 """
 
 import uuid
@@ -289,6 +291,41 @@ async def correct(
     prono.resolved_by = member.id
     await record_event(
         session, prono, "corrected", member, {"previous": previous.result, "result": stored}
+    )
+    await _announce(session, prono, settlement, bets, options)
+    return prono
+
+
+async def cancel_result(
+    session: AsyncSession, member: Membership, prono_id: uuid.UUID, reason: str | None
+) -> Prono:
+    """Takes the result back without cancelling the prono: the payouts are reversed, the bets
+    wait again with their stakes kept, and the prono is closed again (open, for an open-ended
+    date) until it is resolved or cancelled."""
+    prono = await _locked(session, member, prono_id, Action.CANCEL_RESULT)
+    state = _next_state(prono, Event.UNRESOLVE)
+    options = await _options(session, prono)
+    previous = await live_settlement(session, prono.id)
+    assert previous is not None, "a resolved prono has a settlement"
+    bets = await _bets(session, prono)
+    await _lock_members(session, {bet.membership_id for bet in bets})
+
+    _apply(prono, options, {})
+    settlement = await _new_settlement(session, prono, "result_cancellation", member, {})
+    await _reverse_payouts(session, previous, settlement, member)
+    for bet in bets:
+        bet.outcome = "pending"
+        bet.payout = 0
+        bet.settled_at = None
+    prono.resolved_at = None
+    prono.resolved_by = None
+    await set_state(
+        session,
+        prono,
+        state,
+        "result_cancelled",
+        member,
+        {"previous": previous.result, "reason": reason},
     )
     await _announce(session, prono, settlement, bets, options)
     return prono

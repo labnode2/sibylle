@@ -23,6 +23,9 @@
     "correct": "Corriger le résultat",
     "correctOpen": "Corriger le résultat",
     "correctConfirm": "Les gains déjà versés seront repris puis recalculés. Confirmer la correction ?",
+    "cancelResult": "Annuler le résultat",
+    "cancelResultConfirm": "Les gains versés seront repris et le prono attendra un nouveau résultat : les pronostics et leurs mises restent en jeu. Confirmer l'annulation du résultat ?",
+    "cancelResultSubmit": "Confirmer l'annulation du résultat",
     "confirm": "Confirmer",
     "back": "Retour",
     "noBets": "Personne n'a joué : tu peux seulement le relancer ou l'annuler.",
@@ -37,6 +40,10 @@
     "cancelConfirm": "Toutes les mises seront rendues et aucun gain versé. Confirmer l'annulation ?",
     "cancelReason": "MOTIF (FACULTATIF)",
     "cancelSubmit": "Confirmer l'annulation"
+  },
+  "resultCancelled": {
+    "notice": "Résultat annulé : les gains sont repris, les pronostics et leurs mises restent en jeu jusqu'au nouveau résultat.",
+    "reason": "Motif : « {{reason}} »"
   },
   "edition": {
     "title": "Édition spéciale",
@@ -90,6 +97,7 @@
   "toast": {
     "resolved": "Résultat publié : les gains sont versés.",
     "corrected": "Résultat corrigé : les lauriers sont recalculés.",
+    "resultCancelled": "Résultat annulé : les gains sont repris, les mises restent en jeu.",
     "relaunched": "Prono relancé.",
     "cancelled": "Prono annulé : les mises sont rendues."
   }

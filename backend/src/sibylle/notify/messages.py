@@ -32,6 +32,9 @@ def path(notification: Notification) -> str:
 def _result_key(payload: dict[str, Any]) -> str:
     if payload["kind"] == "cancellation":
         return "cancelled"
+    # The result is taken back: nothing won or lost yet, the stake waits for a new one.
+    if payload["kind"] == "result_cancellation":
+        return "result_cancelled"
     prefix = "corrected_" if payload["kind"] == "correction" else ""
     if payload["outcome"] != "won":
         return f"{prefix}lost"

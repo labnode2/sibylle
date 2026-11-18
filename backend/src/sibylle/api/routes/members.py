@@ -28,7 +28,9 @@ Gatekeeper = Annotated[Membership, Depends(require(Action.MANAGE_MEMBERS))]
 Treasurer = Annotated[Membership, Depends(require(Action.ADJUST_LAURELS))]
 
 
-def entry_out(entry: LedgerEntry, prono: Prono | None) -> LedgerEntryOut:
+def entry_out(
+    entry: LedgerEntry, prono: Prono | None, settlement_kind: str | None = None
+) -> LedgerEntryOut:
     return LedgerEntryOut(
         id=entry.id,
         kind=entry.kind,
@@ -38,6 +40,7 @@ def entry_out(entry: LedgerEntry, prono: Prono | None) -> LedgerEntryOut:
         prono=PronoRef(id=prono.id, question=prono.question, deleted=prono.deleted_at is not None)
         if prono
         else None,
+        settlement_kind=settlement_kind,
         created_at=entry.created_at,
     )
 
@@ -87,7 +90,7 @@ async def my_ledger(
 ) -> LedgerPage:
     """The member's own statement: every movement of their laurels, newest first."""
     page, next_cursor = await ledger.statement(session, member.id, cursor=cursor, limit=limit)
-    return LedgerPage(items=[entry_out(e, p) for e, p in page], next_cursor=next_cursor)
+    return LedgerPage(items=[entry_out(e, p, k) for e, p, k in page], next_cursor=next_cursor)
 
 
 @router.delete("/me", status_code=204)

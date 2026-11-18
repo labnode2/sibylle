@@ -1,6 +1,7 @@
 // Designating the result (canvas G-Designer): a journalist ticks the correct answers or types the
-// real value, or relaunches a postponed prono. The editor can also correct a published result and
-// cancel a prono, each after a confirmation.
+// real value, or relaunches a postponed prono. The editor can also correct a published result, take
+// it back (the prono waits for a new one, stakes kept) and cancel a prono, each after a
+// confirmation.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,7 +10,14 @@ import { Button, Card, Field, Icon } from '../../ui/components';
 import { useFormErrors } from '../forms';
 import type { PronoDetail } from '../pronos/api';
 import pronoStyles from '../pronos/pronos.module.css';
-import { useCancel, useCorrect, useRelaunch, useResolve, type ResultIn } from './api';
+import {
+  useCancel,
+  useCancelResult,
+  useCorrect,
+  useRelaunch,
+  useResolve,
+  type ResultIn,
+} from './api';
 import styles from './results.module.css';
 
 type Role = 'reader' | 'journalist' | 'editor';
@@ -253,6 +261,49 @@ function RelaunchForm({ orgId, prono }: { orgId: string; prono: PronoDetail }) {
   );
 }
 
+/** « Annuler le résultat »: the gains are taken back and the bets wait for a new result, their
+ *  stakes still in play; the prono stays, closed again (open again for an open-ended date). */
+function CancelResultForm({ orgId, prono }: { orgId: string; prono: PronoDetail }) {
+  const { t } = useTranslation('results');
+  const cancelResult = useCancelResult(orgId, prono.id);
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState('');
+
+  if (!open) {
+    return (
+      <Button variant="secondary" block onClick={() => setOpen(true)}>
+        {t('designate.cancelResult')}
+      </Button>
+    );
+  }
+  return (
+    <form
+      className={styles.confirm}
+      aria-label={t('designate.cancelResult')}
+      onSubmit={(event) => {
+        event.preventDefault();
+        cancelResult.mutate({ reason: reason.trim() || null });
+      }}
+    >
+      <p>{t('designate.cancelResultConfirm')}</p>
+      <Field
+        label={t('designate.cancelReason')}
+        value={reason}
+        maxLength={200}
+        onChange={(event) => setReason(event.target.value)}
+      />
+      <div className={styles.actions}>
+        <Button type="submit" disabled={cancelResult.isPending}>
+          {t('designate.cancelResultSubmit')}
+        </Button>
+        <Button variant="secondary" onClick={() => setOpen(false)}>
+          {t('designate.back')}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 function CancelForm({ orgId, prono }: { orgId: string; prono: PronoDetail }) {
   const { t } = useTranslation('results');
   const cancel = useCancel(orgId, prono.id);
@@ -324,9 +375,12 @@ export function DesignatePanel({
         (correcting ? (
           <ResultForm orgId={orgId} prono={prono} role={role} correcting />
         ) : (
-          <Button variant="secondary" block onClick={() => setCorrecting(true)}>
-            {t('designate.correctOpen')}
-          </Button>
+          <>
+            <Button variant="secondary" block onClick={() => setCorrecting(true)}>
+              {t('designate.correctOpen')}
+            </Button>
+            <CancelResultForm orgId={orgId} prono={prono} />
+          </>
         ))}
       {canRelaunch && <RelaunchForm orgId={orgId} prono={prono} />}
       {canCancel && <CancelForm orgId={orgId} prono={prono} />}

@@ -44,6 +44,17 @@ export function useCorrect(orgId: string, pronoId: string) {
   );
 }
 
+/** The result taken back: the gains are reversed, the stakes stay in play until a new one. */
+export function useCancelResult(orgId: string, pronoId: string) {
+  return useResultAction(
+    orgId,
+    pronoId,
+    'results:toast.resultCancelled',
+    (path, body: { reason?: string | null }) =>
+      unwrap(api.POST('/api/orgs/{org_id}/pronos/{prono_id}/cancel-result', { ...path, body })),
+  );
+}
+
 export function useRelaunch(orgId: string, pronoId: string) {
   return useResultAction(orgId, pronoId, 'results:toast.relaunched', (path, body: RelaunchIn) =>
     unwrap(api.POST('/api/orgs/{org_id}/pronos/{prono_id}/relaunch', { ...path, body })),

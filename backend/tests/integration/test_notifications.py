@@ -216,6 +216,37 @@ async def test_a_cancellation_tells_the_bettors_and_drops_the_pending_news(
     assert "Prono annulé : ta mise t'est rendue." in mail.text
 
 
+async def test_a_cancelled_result_tells_the_bettors_their_stake_waits(
+    make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
+) -> None:
+    org = await make_org()
+    ines = await person(org, "editor", "Inès")
+    cami = await person(org, "reader", "Cami")
+    leo = await person(org, "reader", "Léo")
+    prono = await publish(ines.client, str(org.id))
+    await place(cami.client, str(org.id), prono["id"], option_id=option(prono, "Nice"), stake=10)
+    await place(leo.client, str(org.id), prono["id"], option_id=option(prono, "Monaco"), stake=10)
+    await close(fake_clock)
+    await ines.client.post(
+        url(org.id, prono["id"], "resolve"), json={"correct_option_ids": [option(prono, "Nice")]}
+    )
+    await send()  # the news of the prono, then its result
+
+    response = await ines.client.post(url(org.id, prono["id"], "cancel-result"), json={})
+    assert response.status_code == 200, response.text
+    keys = {n.dedupe_key for n in await notifications("result")}
+    assert f"result:{prono['id']}:2:{cami.account.id}" in keys
+    assert len(keys) == 4
+    await subscribe(leo)
+    push = MemoryPushSender()
+    sender = await send(push)
+    [(_, message, _)] = push.sent
+    assert message["body"] == (
+        "Nice ou Monaco samedi ? Résultat annulé : ta mise reste en jeu jusqu'au nouveau résultat."
+    )
+    assert {mail.to for mail in sender.sent} == {cami.account.email, leo.account.email}
+
+
 async def test_designation_reminders_follow_their_schedule(
     make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
 ) -> None:

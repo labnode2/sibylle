@@ -445,6 +445,7 @@ async def test_outsiders_get_404(
     calls = {
         "resolve": {"correct_option_ids": [option(prono, "Nice")]},
         "correct": {"result_number": str(Decimal("1"))},
+        "cancel-result": {},
         "relaunch": {"closes_at": later},
         "cancel": {},
         "reports": {"kind": "content"},

@@ -633,10 +633,15 @@ async def summaries(session: AsyncSession, pronos: list[Prono]) -> list[dict[str
 
 
 async def live_settlement(session: AsyncSession, prono_id: uuid.UUID) -> Settlement | None:
-    """The settlement in force: the latest one, unless a later one reversed it."""
+    """The settlement in force: the latest one, unless a later one reversed it. None once the
+    result is cancelled: that settlement pays nothing, it only reversed the one in force."""
     return await session.scalar(
         select(Settlement)
-        .where(Settlement.prono_id == prono_id, Settlement.reversed_by_id.is_(None))
+        .where(
+            Settlement.prono_id == prono_id,
+            Settlement.reversed_by_id.is_(None),
+            Settlement.kind != "result_cancellation",
+        )
         .order_by(Settlement.seq.desc())
         .limit(1)
     )
