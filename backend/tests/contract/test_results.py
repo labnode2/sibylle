@@ -442,6 +442,7 @@ async def test_outsiders_get_404(
     await close(fake_clock)
     later = (clock.now() + timedelta(days=1)).isoformat()
     calls = {
+        "close": {},
         "resolve": {"correct_option_ids": [option(prono, "Nice")]},
         "correct": {"result_number": str(Decimal("1"))},
         "cancel-result": {},

@@ -61,6 +61,17 @@ const longDate = (value: string) =>
     minute: '2-digit',
   });
 
+/** The moment the newsroom closed the bets, when it did so before their planned time
+ *  (« Clore les paris maintenant »): that closing noted the one planned until then. */
+function closedEarlyAt(prono: PronoDetail): string | null {
+  const closing = prono.events.findLast((event) => event.kind === 'closed');
+  const planned = closing?.data.previous_closes_at;
+  const closesAt = prono.closes_at;
+  return typeof planned === 'string' && closesAt && Date.parse(closesAt) < Date.parse(planned)
+    ? closesAt
+    : null;
+}
+
 function StateNotice({ prono, newsroom }: { prono: PronoDetail; newsroom: boolean }) {
   const { t } = useTranslation('pronos');
   // Its result taken back: waiting again for one, the stakes still in play.
@@ -87,14 +98,26 @@ function StateNotice({ prono, newsroom }: { prono: PronoDetail; newsroom: boolea
       return (
         <p className={styles.alert}>{t('detail.opensAt', { date: longDate(prono.opens_at!) })}</p>
       );
-    case 'closed':
+    case 'closed': {
+      // Closed by hand before the countdown ran out: the members see when.
+      const early = closedEarlyAt(prono);
+      const when = prono.result_expected_at && longDate(prono.result_expected_at);
+      if (early) {
+        const date = longDate(early);
+        return (
+          <p className={styles.alert}>
+            {when
+              ? t('detail.closedEarly', { date, when })
+              : t('detail.closedEarlyNoDate', { date })}
+          </p>
+        );
+      }
       return (
         <p className={styles.alert}>
-          {prono.result_expected_at
-            ? t('detail.closed', { when: longDate(prono.result_expected_at) })
-            : t('detail.closedNoDate')}
+          {when ? t('detail.closed', { when }) : t('detail.closedNoDate')}
         </p>
       );
+    }
     case 'resolved':
       return <p className={styles.alert}>{t('detail.resolved')}</p>;
     case 'cancelled':

@@ -1,14 +1,16 @@
 """The life of a prono (data-model.md, « Transitions d'état d'un prono »).
 
 proposed → scheduled | open (validation), proposed → rejected
-scheduled → open (opens_at), open → closed (closes_at)
-closed → resolved (designation), open → resolved for an open-ended date
+scheduled → open (opens_at), open → closed (closes_at, or earlier by the newsroom)
+closed → resolved (designation, whenever the result is known), open → resolved for an
+open-ended date
 closed → open (relaunch, bets kept), resolved → resolved (correction)
 resolved → closed, or open for an open-ended date (result cancelled, bets and stakes kept)
 scheduled | open | closed | resolved → cancelled
 A cancelled prono can then be deleted: a mark beside its state, which hides it.
 """
 
+from datetime import datetime
 from enum import StrEnum
 
 
@@ -68,6 +70,7 @@ def transition(
             return State.REJECTED
         case Event.OPEN if state is State.SCHEDULED:
             return State.OPEN
+        # At its closing time, or earlier when the newsroom closes the bets by hand.
         case Event.CLOSE if state is State.OPEN and not open_ended:
             return State.CLOSED
         # A prono nobody bet on is relaunched or cancelled, never resolved.
@@ -85,6 +88,12 @@ def transition(
         case Event.CANCEL if state in _CANCELLABLE:
             return State.CANCELLED
     raise InvalidTransition(state, event)
+
+
+def closing_now(closes_at: datetime | None, now: datetime) -> datetime:
+    """The closing of a prono the newsroom closes before its time: now. A closing already
+    passed, which the worker has not reached yet, stays: the bets stopped then."""
+    return closes_at if closes_at is not None and closes_at <= now else now
 
 
 def can_edit(state: State | str, bet_count: int) -> bool:

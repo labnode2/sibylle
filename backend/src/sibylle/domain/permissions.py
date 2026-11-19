@@ -20,6 +20,7 @@ class Action(StrEnum):
     EDIT_PRONO = "edit_prono"
     DESIGNATE_RESULT = "designate_result"
     RELAUNCH_PRONO = "relaunch_prono"
+    CLOSE_PRONO = "close_prono"
     CREATE_PUZZLE = "create_puzzle"
     MANAGE_MEMBERS = "manage_members"
     CUSTOMIZE_CARD = "customize_card"
@@ -53,6 +54,8 @@ _ALLOWED: dict[Action, frozenset[Role]] = {
     Action.EDIT_PRONO: _NEWSROOM,
     Action.DESIGNATE_RESULT: _NEWSROOM,
     Action.RELAUNCH_PRONO: _NEWSROOM,
+    # Closing the bets before their time: whoever may relaunch them.
+    Action.CLOSE_PRONO: _NEWSROOM,
     Action.CREATE_PUZZLE: _NEWSROOM,
     Action.MANAGE_MEMBERS: _EDITOR,
     Action.CUSTOMIZE_CARD: _EDITOR,

@@ -131,7 +131,7 @@ Index : (`org_id`, `state`, `closes_at`) pour la une et le `worker` ; (`org_id`,
 
 ### prono_events (historique d'un prono)
 
-`id`, `prono_id`, `kind` (`created`, `proposed`, `validated`, `rejected`, `edited`, `opened`, `closed`, `relaunched`, `resolved`, `corrected`, `cancelled`, `deleted`), `actor_membership_id`, `data` (jsonb : anciennes et nouvelles dates, résultat…), `created_at`. Sert à l'édition spéciale, à l'audit et à l'historique des modifications sur la page du prono. Un `edited` garde ce qui a changé, dans l'ordre de la page : `{"changes": [{"field", "before", "after"}]}`, avec `field` ∈ `question`, `section` (par son nom), `kind`, `options` (les libellés), `number_unit`, `base_gain`, `open_ended`, `opens_at`, `closes_at`, `result_expected_at`, `link_url`, `image` (l'id de l'upload) ; les instants en ISO 8601. Une modification qui ne change rien n'en écrit pas.
+`id`, `prono_id`, `kind` (`created`, `proposed`, `validated`, `rejected`, `edited`, `opened`, `closed`, `relaunched`, `resolved`, `corrected`, `cancelled`, `deleted`), `actor_membership_id`, `data` (jsonb : anciennes et nouvelles dates, résultat…), `created_at`. Sert à l'édition spéciale, à l'audit et à l'historique des modifications sur la page du prono. Un `edited` garde ce qui a changé, dans l'ordre de la page : `{"changes": [{"field", "before", "after"}]}`, avec `field` ∈ `question`, `section` (par son nom), `kind`, `options` (les libellés), `number_unit`, `base_gain`, `open_ended`, `opens_at`, `closes_at`, `result_expected_at`, `link_url`, `image` (l'id de l'upload) ; les instants en ISO 8601. Une modification qui ne change rien n'en écrit pas. Un `closed` posé à la main (« Clore les paris maintenant ») garde son auteur et `{"previous_closes_at", "closes_at"}` (la clôture prévue jusque-là, puis l'heure de la clôture) ; celui du `worker` n'a ni auteur ni données.
 
 ### bets (pari)
 
@@ -165,13 +165,15 @@ proposed ──validation──▶ scheduled ──opens_at──▶ open ──
                                                       └──désignation (date « sans fin »)──▶ resolved
 scheduled | open | closed | resolved ──annulation (rédaction en chef)──▶ cancelled
 resolved ──annulation du résultat (rédaction en chef)──▶ closed (open pour une date « sans fin »)
+open ──clôture anticipée (journaliste, rédaction en chef)──▶ closed
 ```
 
 | Transition | Qui | Conditions |
 |---|---|---|
 | validation, refus | journaliste, rédaction en chef | état `proposed` |
 | ouverture, clôture | `worker` | heure atteinte |
-| désignation | journaliste, rédaction en chef | état `closed`, ou `open` pour une date « sans fin » ; au moins une bonne réponse |
+| clôture anticipée | journaliste, rédaction en chef | état `open`, pas une date « sans fin » |
+| désignation | journaliste, rédaction en chef | état `closed`, ou `open` pour une date « sans fin » ; au moins une bonne réponse ; à tout moment, même avant `result_expected_at` |
 | relance | journaliste, rédaction en chef | état `closed` ; nouvelle `closes_at` future |
 | correction | rédaction en chef | état `resolved` ; résultat différent |
 | annulation du résultat | rédaction en chef | état `resolved` |
@@ -180,6 +182,8 @@ resolved ──annulation du résultat (rédaction en chef)──▶ closed (ope
 | modification | créateur journaliste, rédaction en chef | tout : `bet_count = 0` et état `proposed`, `scheduled` ou `open` ; en partie (question, rubrique, lien, image, clôture repoussée, résultat attendu) : `bet_count > 0` et état `open` ou `closed` (la clôture d'un prono `closed` reste : la relance le rouvre) |
 
 Une relance remet `state = open`, change `closes_at` (et `result_expected_at`), incrémente `relaunch_count` et garde les paris et leur rang.
+
+Une clôture anticipée (« Clore les paris maintenant ») passe le prono à `closed` comme le `worker` à l'heure prévue : les paris s'arrêtent tout de suite, et ceux déjà faits restent. `closes_at` devient l'heure de la clôture (une clôture prévue déjà passée, que le `worker` n'a pas encore traitée, reste telle quelle) ; l'historique note `closed` avec l'ancienne et la nouvelle valeur. `result_expected_at` ne change pas : la validation la veut après la clôture prévue, donc après la nouvelle. Le résultat peut ensuite être désigné tout de suite ; les rappels de désignation, eux, attendent toujours `result_expected_at` (ou le lendemain de la clôture) et ne partent pas pour un prono déjà résolu.
 
 Une annulation du résultat reprend les gains du règlement en vigueur (écritures `reversal` d'un règlement `result_cancellation`), remet les paris en attente (`outcome = pending`, `payout = 0`, `settled_at` vide) en gardant leurs mises, vide le résultat, `resolved_at` et `resolved_by`, et remet `state = closed` (`open` pour une date « sans fin ») ; l'historique note `result_cancelled` avec le résultat annulé et le motif. Le prono se désigne ou s'annule ensuite comme avant sa première désignation.
 

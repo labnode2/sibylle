@@ -1,11 +1,12 @@
 // Designating the result (canvas G-Designer): a journalist ticks the correct answers or types the
-// real value, or relaunches a postponed prono. The editor can also correct a published result, take
-// it back (the prono waits for a new one, stakes kept) and cancel a prono, each after a
-// confirmation.
+// real value, or relaunches a postponed prono. When the event comes early, the journalist closes the
+// bets of an open prono before their planned time, and designates its result at once. The editor
+// can also correct a published result, take it back (the prono waits for a new one, stakes kept)
+// and cancel a prono. Each of these asks for a confirmation first.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { formatNumber, fromParisInput, parisDayAt, parseDecimal } from '../../i18n';
+import { formatDate, formatNumber, fromParisInput, parisDayAt, parseDecimal } from '../../i18n';
 import { Button, Card, Field, Icon } from '../../ui/components';
 import { useFormErrors } from '../forms';
 import type { PronoDetail } from '../pronos/api';
@@ -13,6 +14,7 @@ import pronoStyles from '../pronos/pronos.module.css';
 import {
   useCancel,
   useCancelResult,
+  useCloseNow,
   useCorrect,
   useRelaunch,
   useResolve,
@@ -201,6 +203,56 @@ function ResultForm({
   );
 }
 
+/** « Clore les paris maintenant »: the event came early, so the bets stop before their planned
+ *  closing, which becomes now; with bets in, the result can then be designated at once. */
+function CloseNowForm({ orgId, prono }: { orgId: string; prono: PronoDetail }) {
+  const { t } = useTranslation('results');
+  const closeNow = useCloseNow(orgId, prono.id);
+  const [open, setOpen] = useState(false);
+
+  if (!open) {
+    return (
+      <div className={styles.panel}>
+        <Button variant="secondary" block onClick={() => setOpen(true)}>
+          {t('designate.closeNow')}
+        </Button>
+        <p className={`${styles.small} ${styles.centered}`}>{t('designate.closeNowNote')}</p>
+      </div>
+    );
+  }
+  const planned = formatDate(prono.closes_at!, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  return (
+    <form
+      className={styles.confirm}
+      aria-label={t('designate.closeNow')}
+      onSubmit={(event) => {
+        event.preventDefault();
+        closeNow.mutate();
+      }}
+    >
+      <p>
+        {t(prono.bet_count > 0 ? 'designate.closeNowConfirm' : 'designate.closeNowConfirmNoBets', {
+          date: planned,
+        })}
+      </p>
+      <div className={styles.actions}>
+        <Button type="submit" disabled={closeNow.isPending}>
+          {t('designate.closeNowSubmit')}
+        </Button>
+        <Button variant="secondary" onClick={() => setOpen(false)}>
+          {t('designate.back')}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 function RelaunchForm({ orgId, prono }: { orgId: string; prono: PronoDetail }) {
   const { t } = useTranslation('results');
   const relaunch = useRelaunch(orgId, prono.id);
@@ -364,10 +416,12 @@ export function DesignatePanel({
   const newsroom = role !== 'reader';
   const designating =
     newsroom && (prono.state === 'closed' || (prono.state === 'open' && prono.open_ended));
+  // Before its planned closing; an open-ended date has none, its result closes it.
+  const canClose = newsroom && prono.state === 'open' && !prono.open_ended && !!prono.closes_at;
   const canCorrect = role === 'editor' && prono.state === 'resolved';
   const canRelaunch = newsroom && prono.state === 'closed';
   const canCancel = role === 'editor' && CANCELLABLE.includes(prono.state);
-  if (!designating && !canCorrect && !canRelaunch && !canCancel) return null;
+  if (!designating && !canClose && !canCorrect && !canRelaunch && !canCancel) return null;
 
   return (
     <section className={styles.panel} aria-label={t('designate.label')}>
@@ -388,6 +442,7 @@ export function DesignatePanel({
             <CancelResultForm orgId={orgId} prono={prono} />
           </>
         ))}
+      {canClose && <CloseNowForm orgId={orgId} prono={prono} />}
       {canRelaunch && <RelaunchForm orgId={orgId} prono={prono} />}
       {canCancel && <CancelForm orgId={orgId} prono={prono} />}
     </section>

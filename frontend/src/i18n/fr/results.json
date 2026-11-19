@@ -30,6 +30,11 @@
     "confirm": "Confirmer",
     "back": "Retour",
     "noBets": "Personne n'a joué : tu peux seulement le relancer ou l'annuler.",
+    "closeNow": "Clore les paris maintenant",
+    "closeNowNote": "LES PARIS S'ARRÊTENT AVANT LA CLÔTURE PRÉVUE, PRONOSTICS CONSERVÉS",
+    "closeNowConfirm": "Plus personne ne pourra parier : la clôture prévue {{date}} est avancée à maintenant. Tu pourras désigner le résultat tout de suite. Confirmer la clôture ?",
+    "closeNowConfirmNoBets": "Plus personne ne pourra parier : la clôture prévue {{date}} est avancée à maintenant. Personne n'a joué : tu pourras ensuite le relancer ou l'annuler. Confirmer la clôture ?",
+    "closeNowSubmit": "Confirmer la clôture",
     "relaunch": "L'événement n'a pas eu lieu : relancer",
     "relaunchNote": "NOUVELLE DATE DE CLÔTURE, PRONOSTICS CONSERVÉS",
     "relaunchClose": "NOUVELLE CLÔTURE",
@@ -96,6 +101,7 @@
     "dismissed": "rejeté"
   },
   "toast": {
+    "closed": "Paris clos : plus personne ne peut parier.",
     "resolved": "Résultat publié : les gains sont versés.",
     "corrected": "Résultat corrigé : les lauriers sont recalculés.",
     "resultCancelled": "Résultat annulé : les gains sont repris, les mises restent en jeu.",

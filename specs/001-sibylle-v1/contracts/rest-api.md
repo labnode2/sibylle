@@ -98,7 +98,8 @@ décrites dans `specs/002-keycloak-auth/contracts/auth.md`, qui remplace ici `PO
 | POST | `/orgs/{org}/pronos/{id}/validate` | Journaliste | `{base_gain?}` → `PronoDetail` |
 | POST | `/orgs/{org}/pronos/{id}/reject` | Journaliste | `{reason?}` → `PronoDetail` |
 | POST | `/orgs/{org}/pronos/{id}/bets` | Membre | `{option_id \| number_value \| date_value, stake}` → `201 Bet` ; `stake` entier d'au moins 1 (`422` avec `fields.stake: too_low` pour 0, `greater_than_equal` pour une mise négative) ; erreurs `invalid_state`, `already_bet`, `insufficient_balance` (mise au-dessus du solde) |
-| POST | `/orgs/{org}/pronos/{id}/resolve` | Journaliste | `{correct_option_ids}` ou `{result_number}` ou `{result_date}` → `PronoDetail` (avec `special_edition`) |
+| POST | `/orgs/{org}/pronos/{id}/close` | Journaliste | sans corps → `PronoDetail` ; un prono `open` qui n'est pas une date « sans fin » (`409 invalid_state` sinon) : les paris s'arrêtent, `closes_at` devient l'heure de la clôture (l'ancienne reste dans l'historique, `result_expected_at` ne change pas) |
+| POST | `/orgs/{org}/pronos/{id}/resolve` | Journaliste | `{correct_option_ids}` ou `{result_number}` ou `{result_date}` → `PronoDetail` (avec `special_edition`), même avant `result_expected_at` |
 | POST | `/orgs/{org}/pronos/{id}/relaunch` | Journaliste | `{closes_at, result_expected_at?, reason}` → `PronoDetail` |
 | POST | `/orgs/{org}/pronos/{id}/correct` | Réd. chef | même corps que `resolve` → `PronoDetail` |
 | POST | `/orgs/{org}/pronos/{id}/cancel-result` | Réd. chef | `{reason?}` → `PronoDetail` ; un prono `resolved` seulement (`409 invalid_state` sinon) : les gains sont repris, les mises restent en jeu et le prono redevient `closed` (`open` pour une date « sans fin ») |

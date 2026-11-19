@@ -707,6 +707,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/orgs/{org_id}/pronos/{prono_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close
+         * @description Closes the bets now, before the planned closing: an open prono, not an open-ended date
+         *     (`409 invalid_state` otherwise). Its closing becomes now, the planned one stays in its
+         *     history, and its result can be designated at once.
+         */
+        post: operations["close_api_orgs__org_id__pronos__prono_id__close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/orgs/{org_id}/pronos/{prono_id}/resolve": {
         parameters: {
             query?: never;
@@ -4865,6 +4887,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_api_orgs__org_id__pronos__prono_id__close_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+                prono_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PronoDetail"];
                 };
             };
             /** @description Validation Error */

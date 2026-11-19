@@ -143,6 +143,32 @@ async def test_closing_soon_once_and_only_without_a_bet(
     assert set(alerts) == {hugo.account.email, manon.account.email}
 
 
+async def test_bets_closed_early_drop_the_news_still_waiting(
+    make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
+) -> None:
+    """« Clore les paris maintenant » before the worker sends: neither « Plus que 2 h pour
+    jouer » nor the news of the prono goes out any more, and no alert comes later."""
+    org = await make_org()
+    hugo = await person(org, "journalist", "Hugo")
+    cami = await person(org, "reader", "Cami")
+    prono = await publish(
+        hugo.client, str(org.id), closes_at=(clock.now() + timedelta(hours=2)).isoformat()
+    )
+    assert await closing_soon_alerts() == 2
+
+    closed = await hugo.client.post(url(org.id, prono["id"], "close"))
+    assert closed.status_code == 200, closed.text
+    sender = await send()
+    assert sender.sent == []
+    assert await states("closing_soon") == {
+        hugo.account.id: "skipped",
+        cami.account.id: "skipped",
+    }
+    assert await states("new_prono") == {cami.account.id: "skipped"}
+    fake_clock.advance(timedelta(hours=1))
+    assert await closing_soon_alerts() == 0
+
+
 async def test_results_reach_the_bettors_at_each_settlement(
     make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
 ) -> None:

@@ -1,4 +1,5 @@
-"""Designating a prono's result, relaunching, correcting and cancelling it, or only its result."""
+"""Closing a prono's bets early, designating its result, relaunching, correcting and cancelling
+it, or only its result."""
 
 import uuid
 
@@ -17,6 +18,17 @@ def _result(body: ResultIn) -> results.Result:
         result_number=body.result_number,
         result_date=body.result_date,
     )
+
+
+@router.post("/close")
+async def close(
+    org_id: uuid.UUID, prono_id: uuid.UUID, member: CurrentMember, session: Db
+) -> PronoDetail:
+    """Closes the bets now, before the planned closing: an open prono, not an open-ended date
+    (`409 invalid_state` otherwise). Its closing becomes now, the planned one stays in its
+    history, and its result can be designated at once."""
+    prono = await results.close_now(session, member, prono_id)
+    return PronoDetail.model_validate(await pronos.detail(session, member, prono))
 
 
 @router.post("/resolve")

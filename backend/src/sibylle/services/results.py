@@ -1,5 +1,5 @@
-"""Results (research.md J1): designating, relaunching, correcting and cancelling a prono, or only
-its result.
+"""Results (research.md J1): closing the bets early, designating, relaunching, correcting and
+cancelling a prono, or only its result.
 
 Each settlement is a `settlements` row; every ledger entry it writes points to it. A correction
 reverses the payouts of the settlement in force before paying again, a cancellation reverses them
@@ -30,7 +30,7 @@ from sibylle.db.models import (
 from sibylle.domain.betting import Kind
 from sibylle.domain.closest import closest
 from sibylle.domain.ledger import LedgerKind
-from sibylle.domain.lifecycle import Event, InvalidTransition, State, transition
+from sibylle.domain.lifecycle import Event, InvalidTransition, State, closing_now, transition
 from sibylle.domain.permissions import Action, can
 from sibylle.domain.settlement import BetLine, Entry, Outcome, refunds, settle, winners_by_options
 from sibylle.realtime import bus
@@ -353,6 +353,28 @@ async def cancel(
     prono.cancelled_by = member.id
     await set_state(session, prono, state, "cancelled", member, {"reason": reason})
     await _announce(session, prono, settlement, bets, [])
+    return prono
+
+
+async def close_now(session: AsyncSession, member: Membership, prono_id: uuid.UUID) -> Prono:
+    """Closes the bets before their planned time, the event having come early: the prono is
+    closed as the worker closes it, its closing becomes now and the planned one stays in its
+    history. Its result can be designated at once, before the expected date, which stays."""
+    prono = await _locked(session, member, prono_id, Action.CLOSE_PRONO)
+    state = _next_state(prono, Event.CLOSE)
+    planned = prono.closes_at
+    prono.closes_at = closing_now(planned, clock.now())
+    await set_state(
+        session,
+        prono,
+        state,
+        "closed",
+        member,
+        {
+            "previous_closes_at": planned.isoformat() if planned else None,
+            "closes_at": prono.closes_at.isoformat(),
+        },
+    )
     return prono
 
 

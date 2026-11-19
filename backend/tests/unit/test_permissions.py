@@ -19,6 +19,8 @@ MATRIX: dict[Action, set[Role]] = {
     Action.EDIT_PRONO: {JOURNALIST, EDITOR},
     Action.DESIGNATE_RESULT: {JOURNALIST, EDITOR},
     Action.RELAUNCH_PRONO: {JOURNALIST, EDITOR},
+    # The same rights as relaunching: the bets stop before the planned closing.
+    Action.CLOSE_PRONO: {JOURNALIST, EDITOR},
     Action.CREATE_PUZZLE: {JOURNALIST, EDITOR},
     Action.MANAGE_MEMBERS: {EDITOR},
     Action.CUSTOMIZE_CARD: {EDITOR},

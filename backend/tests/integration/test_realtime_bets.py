@@ -1,7 +1,7 @@
 import asyncio
 import json
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 import httpx
@@ -104,3 +104,57 @@ async def test_another_newsroom_cannot_follow_the_prono(
     subscribed = await next_of(socket, "subscribed")
     assert subscribed["topics"] == []
     await socket.close()
+
+
+async def test_closing_the_bets_early_reaches_the_bettors_screens(
+    make_org: MakeOrg, person: MakePerson, live_server: str
+) -> None:
+    """« Clore les paris maintenant »: whoever has the prono or la une open sees it close, as at
+    the worker's closing."""
+    org = await make_org()
+    hugo = await person(org, "journalist")
+    cami = await person(org, "reader", "Cami")
+    sections = (await hugo.client.get(f"/api/orgs/{org.id}/sections")).json()
+    prono = (
+        await hugo.client.post(
+            f"/api/orgs/{org.id}/pronos",
+            json={
+                "kind": "yes_no",
+                "question": "Neige à Noël ?",
+                "section_id": sections[0]["id"],
+                "options": [],
+                "base_gain": 5,
+                "closes_at": (clock.now() + timedelta(days=2)).isoformat(),
+            },
+        )
+    ).json()
+    placed = await cami.client.post(
+        f"/api/orgs/{org.id}/pronos/{prono['id']}/bets",
+        json={"option_id": prono["options"][0]["id"], "stake": 10},
+    )
+    assert placed.status_code == 201, placed.text
+
+    watcher = await connect(live_server, cami)
+    topics = [f"prono:{prono['id']}", f"org:{org.id}"]
+    await watcher.send(json.dumps({"type": "subscribe", "topics": topics}))
+    assert (await next_of(watcher, "subscribed"))["topics"] == topics
+
+    async with httpx.AsyncClient(
+        base_url=f"http://{live_server}",
+        headers={"X-Sibylle": "1", "Origin": ORIGIN},
+        cookies={"sibylle_session": hugo.client.cookies.get("sibylle_session") or ""},
+    ) as live_hugo:
+        closed = await live_hugo.post(f"/api/orgs/{org.id}/pronos/{prono['id']}/close")
+        assert closed.status_code == 200, closed.text
+    seen: dict[str, dict[str, Any]] = {}
+    while len(seen) < 2:
+        event = await next_of(watcher, "event")
+        if event["event"] == "prono.state_changed":
+            seen[event["topic"]] = event["data"]
+    for data in seen.values():
+        assert (data["prono_id"], data["state"]) == (prono["id"], "closed")
+        assert data["closes_at"] is not None
+        assert datetime.fromisoformat(data["closes_at"]) == datetime.fromisoformat(
+            closed.json()["closes_at"]
+        )
+    await watcher.close()

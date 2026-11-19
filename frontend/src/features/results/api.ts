@@ -4,6 +4,7 @@ import { api, unwrap } from '../../api/client';
 import type { components } from '../../api/schema';
 import { orgKey } from '../orgs/api';
 import { pronoKey, pronoListKey, type PronoDetail } from '../pronos/api';
+import { frontPageKey } from '../une/api';
 
 export type ResultIn = components['schemas']['ResultIn'];
 export type RelaunchIn = components['schemas']['RelaunchIn'];
@@ -27,9 +28,19 @@ function useResultAction<Body>(
       client.setQueryData(pronoKey(orgId, pronoId), detail);
       void client.invalidateQueries({ queryKey: pronoListKey(orgId) });
       void client.invalidateQueries({ queryKey: orgKey(orgId) });
+      // La une, left for the prono's page, missed the newsroom's event: it moves the prono
+      // between its blocks (open, to designate, latest results) on the way back.
+      void client.invalidateQueries({ queryKey: frontPageKey(orgId) });
     },
     meta: { success },
   });
+}
+
+/** The bets closed now, before the planned closing: the result can be designated at once. */
+export function useCloseNow(orgId: string, pronoId: string) {
+  return useResultAction<void>(orgId, pronoId, 'results:toast.closed', (path) =>
+    unwrap(api.POST('/api/orgs/{org_id}/pronos/{prono_id}/close', path)),
+  );
 }
 
 export function useResolve(orgId: string, pronoId: string) {

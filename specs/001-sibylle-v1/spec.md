@@ -82,6 +82,7 @@ Après le match, un·e journaliste désigne la bonne réponse. Les gagnants reç
 8. **Given** un résultat erroné, **When** un membre appuie sur « Signaler une erreur », **Then** la rédaction en chef est prévenue et peut corriger le résultat ; les gains sont alors recalculés.
 9. **Given** un prono annulé par la rédaction en chef, **When** l'annulation est confirmée, **Then** toutes les mises sont rendues et aucun gain n'est versé.
 10. **Given** un prono clos sans résultat, **When** sa date de résultat attendu passe, **Then** son créateur reçoit des rappels pour le désigner.
+11. **Given** un prono ouvert dont l'événement arrive plus tôt que prévu, **When** un·e journaliste clôt les paris maintenant et le confirme, **Then** plus personne ne peut parier, la clôture prend l'heure de la clôture, chacun voit le prono clos sans recharger, et le résultat peut être désigné tout de suite, avant la date de résultat attendu.
 
 ---
 
@@ -380,6 +381,7 @@ Cami veut montrer sa carte de presse sur son blog. Sous sa carte, elle active «
 - **FR-055**: Un·e journaliste DOIT pouvoir relancer un prono clos (événement reporté ou annulé, ou aucun pari avant la clôture) avec une nouvelle date ; les paris sont conservés.
 - **FR-056**: Chaque membre DOIT pouvoir « Signaler une erreur » sur un résultat ; la rédaction en chef DOIT pouvoir corriger le résultat (les gains sont alors recalculés par écritures inverses) ou annuler le prono (les mises sont rendues).
 - **FR-057**: Le créateur d'un prono clos (ou le ou la journaliste qui l'a validé) DOIT recevoir des rappels pour désigner le résultat, à partir de la date de résultat attendu.
+- **FR-058**: Tout·e journaliste ou rédaction en chef DOIT pouvoir clore les paris d'un prono ouvert avant sa date de clôture (jamais un prono de date « sans fin »), après confirmation : la clôture prend l'heure de la clôture, l'ancienne reste dans l'historique et la date de résultat attendu ne change pas. Le résultat d'un prono clos PEUT être désigné à tout moment, même avant la date de résultat attendu.
 
 **Lauriers**
 

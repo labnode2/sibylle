@@ -46,6 +46,8 @@
     "opensAt": "Ce prono ouvre le {{date}}.",
     "closed": "Les pronos sont clos. Résultat attendu {{when}}.",
     "closedNoDate": "Les pronos sont clos. Le résultat arrive bientôt.",
+    "closedEarly": "Les pronos ont été clos plus tôt que prévu, {{date}}. Résultat attendu {{when}}.",
+    "closedEarlyNoDate": "Les pronos ont été clos plus tôt que prévu, {{date}}. Le résultat arrive bientôt.",
     "resolved": "Prono résolu.",
     "cancelled": "Prono annulé : les mises ont été rendues.",
     "yourPick": "TON PRONOSTIC",

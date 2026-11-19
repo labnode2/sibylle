@@ -1,3 +1,5 @@
+from datetime import UTC, datetime, timedelta
+
 import pytest
 
 from sibylle.domain.lifecycle import (
@@ -6,6 +8,7 @@ from sibylle.domain.lifecycle import (
     State,
     can_delete,
     can_edit,
+    closing_now,
     transition,
 )
 
@@ -63,6 +66,36 @@ def test_a_cancelled_result_waits_again_for_one() -> None:
     for state in (S.OPEN, S.CLOSED, S.CANCELLED):
         with pytest.raises(InvalidTransition):
             transition(state, E.UNRESOLVE, open_ended=True, bet_count=2)
+
+
+def test_the_newsroom_may_close_an_open_prono_early() -> None:
+    """« Clore les paris maintenant »: the same closing as the worker's, with or without bets;
+    never for an open-ended date, which has no closing, nor from any other state."""
+    for bet_count in (0, 3):
+        assert transition(S.OPEN, E.CLOSE, bet_count=bet_count) == S.CLOSED
+    with pytest.raises(InvalidTransition):
+        transition(S.OPEN, E.CLOSE, open_ended=True, bet_count=3)
+    for state in set(State) - {S.OPEN}:
+        with pytest.raises(InvalidTransition):
+            transition(state, E.CLOSE, bet_count=3)
+
+
+def test_closing_early_takes_the_moment_of_the_closure() -> None:
+    """The planned closing moves back to now; one already passed, which the worker has not
+    reached yet, stays: the bets stopped then."""
+    now = datetime(2026, 11, 19, 21, 0, tzinfo=UTC)
+    planned = now + timedelta(days=2)
+    assert closing_now(planned, now) == now
+    assert closing_now(now - timedelta(seconds=30), now) == now - timedelta(seconds=30)
+    assert closing_now(now, now) == now
+    assert closing_now(None, now) == now
+
+
+def test_a_prono_closed_early_is_resolved_at_once() -> None:
+    """Nothing waits for the expected result: a closed prono with bets is resolved whenever
+    the result is known."""
+    closed = transition(S.OPEN, E.CLOSE, bet_count=2)
+    assert transition(closed, E.RESOLVE, bet_count=2) == S.RESOLVED
 
 
 def test_a_prono_without_bets_is_not_resolved() -> None:

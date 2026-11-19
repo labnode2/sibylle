@@ -8,7 +8,7 @@ export type FrontPage = components['schemas']['FrontPage'];
 export type FrontProno = components['schemas']['FrontProno'];
 export type LatestResult = components['schemas']['LatestResult'];
 
-const frontPageKey = (orgId: string) => ['front-page', orgId] as const;
+export const frontPageKey = (orgId: string) => ['front-page', orgId] as const;
 
 // Everything la une shows moves with these events of the newsroom.
 const REFRESHING = ['bet.placed', 'leaderboard.changed', 'season.closed'];

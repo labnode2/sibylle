@@ -34,7 +34,7 @@ Enveloppe commune : `{"type": "event", "topic": "<sujet>", "event": "<nom>", "at
 | Événement | Sujets | data |
 |---|---|---|
 | `prono.created` | `org` | `{prono: PronoSummary}` (publié ou proposé ; un prono proposé n'est envoyé qu'aux journalistes et à son auteur·rice) |
-| `prono.state_changed` | `org`, `prono` | `{prono_id, state, closes_at, relaunch_count}` (ouverture, clôture, relance, refus, annulation) |
+| `prono.state_changed` | `org`, `prono` | `{prono_id, state, closes_at, relaunch_count}` (ouverture, clôture à l'heure prévue ou anticipée, relance, refus, annulation) |
 | `prono.edited` | `org`, `prono` | `{prono: PronoSummary}` |
 | `prono.deleted` | `org`, `prono` | `{prono_id}` : la rédaction en chef a supprimé le prono annulé ; le client recharge les listes et la une, et la page du prono, qui répond `404` |
 | `bet.placed` | `prono` | `{bet: Bet, pot, bet_count}` ; le client recharge le détail pour la répartition |
