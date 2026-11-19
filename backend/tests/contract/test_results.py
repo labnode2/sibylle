@@ -109,7 +109,7 @@ async def test_the_early_bird_bonus(
     prono = await publish(hugo.client, str(org.id), kind="yes_no", options=[])
     for player in players:
         await place(
-            player.client, str(org.id), prono["id"], option_id=option(prono, "Oui"), stake=0
+            player.client, str(org.id), prono["id"], option_id=option(prono, "Oui"), stake=1
         )
     await close(fake_clock)
 
@@ -120,8 +120,8 @@ async def test_the_early_bird_bonus(
     ).json()
     edition = detail["special_edition"]
     assert [w["early_bird"] for w in edition["winners"]] == [4, 4, 0]
-    assert [w["payout"] for w in edition["winners"]] == [24, 24, 20]
-    # Nobody staked: there was no pot to lose.
+    # Plus their laurel back from the pot of 3, which was not lost.
+    assert [w["payout"] for w in edition["winners"]] == [25, 25, 21]
     assert edition["pot_lost"] is False
 
 
@@ -177,7 +177,7 @@ async def test_an_open_ended_date_is_resolved_while_open(
         hugo.client, str(org.id), kind="date", options=[], open_ended=True, closes_at=None
     )
     day = (clock.now() + timedelta(days=5)).date().isoformat()
-    await place(cami.client, str(org.id), prono["id"], date_value=day, stake=0)
+    await place(cami.client, str(org.id), prono["id"], date_value=day, stake=1)
     detail = (
         await hugo.client.post(url(org.id, prono["id"], "resolve"), json={"result_date": day})
     ).json()
@@ -193,7 +193,7 @@ async def test_who_may_resolve_and_when(
     cami = await person(org)
     prono = await publish(hugo.client, str(org.id))
     nice = {"correct_option_ids": [option(prono, "Nice")]}
-    await place(cami.client, str(org.id), prono["id"], option_id=option(prono, "Nice"), stake=0)
+    await place(cami.client, str(org.id), prono["id"], option_id=option(prono, "Nice"), stake=1)
     empty = await publish(hugo.client, str(org.id))
 
     too_early = await hugo.client.post(url(org.id, prono["id"], "resolve"), json=nice)
@@ -340,7 +340,7 @@ async def test_cancelling_an_open_prono_gives_stakes_back(
     assert detail["state"] == "cancelled"
     assert await balance(cami.client, str(org.id)) == 100
     late = await place(
-        cami.client, str(org.id), prono["id"], option_id=option(prono, "Nul"), stake=0
+        cami.client, str(org.id), prono["id"], option_id=option(prono, "Nul"), stake=1
     )
     assert late.status_code == 409
 
@@ -369,15 +369,14 @@ async def test_a_correction_can_leave_a_negative_balance(
     )
     assert await balance(cami.client, str(org.id)) == -40
 
+    # Below one laurel, no bet is possible any more: every bet stakes at least one.
     third = await publish(ines.client, str(org.id))
-    refused = await place(
-        cami.client, str(org.id), third["id"], option_id=option(third, "Nice"), stake=10
-    )
-    assert refused.json()["error"]["code"] == "insufficient_balance"
-    free = await place(
-        cami.client, str(org.id), third["id"], option_id=option(third, "Nice"), stake=0
-    )
-    assert free.status_code == 201
+    nice = option(third, "Nice")
+    for stake in (10, 1):
+        refused = await place(cami.client, str(org.id), third["id"], option_id=nice, stake=stake)
+        assert refused.json()["error"]["code"] == "insufficient_balance"
+    free = await place(cami.client, str(org.id), third["id"], option_id=nice, stake=0)
+    assert free.status_code == 422 and free.json()["error"]["fields"] == {"stake": "too_low"}
 
 
 async def test_a_member_who_left_is_paid(
@@ -439,7 +438,7 @@ async def test_outsiders_get_404(
     cami = await person(org)
     stranger: Person = await person(other, "editor")
     prono = await publish(hugo.client, str(org.id))
-    await place(cami.client, str(org.id), prono["id"], option_id=option(prono, "Nice"), stake=0)
+    await place(cami.client, str(org.id), prono["id"], option_id=option(prono, "Nice"), stake=1)
     await close(fake_clock)
     later = (clock.now() + timedelta(days=1)).isoformat()
     calls = {

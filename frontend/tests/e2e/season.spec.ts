@@ -114,7 +114,8 @@ test('rankings, a live refresh and the end of the season', async ({ browser }, t
     question: 'Le pot aura-t-il lieu ?',
     closes_at: new Date(Date.now() + 7 * 86_400_000).toISOString(),
   });
-  await bet(leo, orgId, second.id, { option_id: option(second, 'Nice'), stake: 0 });
+  // Léo's laurel comes back with the pot: 90 − 1 + 20 base + 4 early bird + 1.
+  await bet(leo, orgId, second.id, { option_id: option(second, 'Nice'), stake: 1 });
   advanceClock('4d');
   await resolve(ines, orgId, second, option(second, 'Nice'));
   await expect.poll(() => board(leo)).toEqual(['1 Cami 134', '2 Léo (toi) 114', '3 Inès 100']);

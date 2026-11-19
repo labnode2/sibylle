@@ -100,5 +100,6 @@ test('export, the last editor, then deleting an account', async ({ browser }, te
   const people = ines.getByRole('region', { name: 'Les pronostiqueurs' });
   await expect(people).toContainText('Ancien membre');
   await expect(people).not.toContainText('Cami');
-  await expect(pot(ines, 10)).toBeVisible();
+  // Her 10 laurels, plus the one Inès would stake (the pot shown counts it).
+  await expect(pot(ines, 11)).toBeVisible();
 });

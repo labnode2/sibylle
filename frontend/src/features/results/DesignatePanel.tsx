@@ -129,9 +129,15 @@ function ResultForm({
                   <span className={pronoStyles.box} aria-hidden="true">
                     {on && <Icon name="check" size={12} />}
                   </span>
-                  <span className={pronoStyles.choiceLabel}>{option.label}</span>
-                  <span className={pronoStyles.pct}>
-                    {t('designate.stat', { count: option.count, pct: option.share_pct })}
+                  <span className={pronoStyles.choiceText}>
+                    <span className={pronoStyles.choiceLabel}>{option.label}</span>
+                    <span className={pronoStyles.share}>
+                      <span className={pronoStyles.pct}>
+                        {t('designate.share', { pct: option.share_pct })}
+                      </span>
+                      {' · '}
+                      {t('designate.people', { count: option.count })}
+                    </span>
                   </span>
                 </button>
               );

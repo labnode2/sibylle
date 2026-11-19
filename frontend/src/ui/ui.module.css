@@ -405,6 +405,15 @@
   border-right: 1px solid var(--ink);
   font: 700 18px/1 var(--font-mono);
 }
+/* A value typed in (the stake): the field keeps the look of the value, between its rules. */
+.stepperInput {
+  width: 88px;
+  border-top: 0;
+  border-bottom: 0;
+  border-radius: 0;
+  background: transparent;
+  text-align: center;
+}
 
 /* Tabs: ink underline on the active one. */
 .tabbar {

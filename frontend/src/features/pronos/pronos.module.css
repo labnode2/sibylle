@@ -106,8 +106,29 @@
   letter-spacing: -0.01em;
 }
 
+/* The answer, and under it its share of the laurels staked and its number of players. */
+.choiceText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px 0;
+}
+
+.choiceText > .choiceLabel {
+  flex: none;
+}
+
+.share {
+  font: 500 12px/1.3 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+}
+
 .pct {
-  font: 600 12px/1 var(--font-mono);
+  font-weight: 700;
+  color: var(--ink);
 }
 
 .gauge {
@@ -422,8 +443,8 @@
     letter-spacing: -0.015em;
   }
 
-  .pct {
-    font-size: 14px;
+  .share {
+    font-size: 13px;
   }
 
   .stake {

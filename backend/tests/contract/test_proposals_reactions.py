@@ -39,7 +39,7 @@ async def test_a_reader_proposes_and_a_journalist_validates(
     assert (await leo.client.get(url(org.id, proposal["id"]))).status_code == 404
     # Nobody bets on a proposal.
     early = await place(
-        cami.client, str(org.id), proposal["id"], option_id=option(proposal, "Nice"), stake=0
+        cami.client, str(org.id), proposal["id"], option_id=option(proposal, "Nice"), stake=1
     )
     assert early.status_code == 409 and early.json()["error"]["code"] == "invalid_state"
 

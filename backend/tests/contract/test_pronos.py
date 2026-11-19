@@ -126,27 +126,28 @@ async def test_betting_with_a_stake(make_org: MakeOrg, person: MakePerson) -> No
     )
     assert await balance(cami.client, str(org.id)) == 80
 
-    await place(hugo.client, str(org.id), prono["id"], option_id=monaco, stake=0)
+    await place(hugo.client, str(org.id), prono["id"], option_id=monaco, stake=5)
     detail = (await cami.client.get(f"/api/orgs/{org.id}/pronos/{prono['id']}")).json()
-    assert (detail["pot"], detail["bet_count"]) == (20, 2)
+    assert (detail["pot"], detail["bet_count"]) == (25, 2)
     by_label = {o["label"]: o for o in detail["options"]}
     assert (by_label["Nice"]["count"], by_label["Nice"]["stake_total"]) == (1, 20)
-    assert by_label["Nice"]["share_pct"] == 50 and by_label["Nul"]["share_pct"] == 0
+    # The shares are those of the laurels staked (test_stakes.py).
+    assert by_label["Nice"]["share_pct"] == 80 and by_label["Nul"]["share_pct"] == 0
     assert [(b["member"]["pseudo"], b["answer"], b["stake"]) for b in detail["bets"]] == [
         ("Cami", "Nice", 20),
-        ("Hugo", "Monaco", 0),
+        ("Hugo", "Monaco", 5),
     ]
     assert detail["my_bet"]["answer"] == "Nice"
     assert detail["can_edit"] is False
     assert_no_private_data(detail)
 
-    again = await place(cami.client, str(org.id), prono["id"], option_id=monaco, stake=0)
+    again = await place(cami.client, str(org.id), prono["id"], option_id=monaco, stake=1)
     assert again.status_code == 409 and again.json()["error"]["code"] == "already_bet"
 
     leo = await person(org, "reader")
     broke = await place(leo.client, str(org.id), prono["id"], option_id=nice, stake=101)
     assert broke.json()["error"]["code"] == "insufficient_balance"
-    unknown = await place(leo.client, str(org.id), prono["id"], option_id=prono["id"], stake=0)
+    unknown = await place(leo.client, str(org.id), prono["id"], option_id=prono["id"], stake=1)
     assert unknown.status_code == 422
 
 
@@ -161,7 +162,7 @@ async def test_closing_stops_the_bets(
     )
     fake_clock.advance(timedelta(hours=1))
     late = await place(
-        cami.client, str(org.id), prono["id"], option_id=prono["options"][0]["id"], stake=0
+        cami.client, str(org.id), prono["id"], option_id=prono["options"][0]["id"], stake=1
     )
     assert late.json()["error"]["code"] == "invalid_state"
     assert await advance_pronos() == 1
@@ -191,13 +192,13 @@ async def test_number_and_date_bets(make_org: MakeOrg, person: MakePerson) -> No
     goals = await publish(hugo.client, str(org.id), kind="number", options=[], number_unit="buts")
     ok = await place(cami.client, str(org.id), goals["id"], number_value="3", stake=5)
     assert ok.status_code == 201 and ok.json()["answer"] == "3 buts"
-    wrong = await place(hugo.client, str(org.id), goals["id"], option_id=goals["id"], stake=0)
+    wrong = await place(hugo.client, str(org.id), goals["id"], option_id=goals["id"], stake=1)
     assert wrong.status_code == 422
 
     day = await publish(hugo.client, str(org.id), kind="date", options=[])
     target = (clock.now() + timedelta(days=10)).date().isoformat()
     assert (
-        await place(cami.client, str(org.id), day["id"], date_value=target, stake=0)
+        await place(cami.client, str(org.id), day["id"], date_value=target, stake=1)
     ).status_code == 201
     detail = (await cami.client.get(f"/api/orgs/{org.id}/pronos/{day['id']}")).json()
     assert detail["distribution"][0]["count"] == 1
@@ -215,7 +216,7 @@ async def test_an_open_ended_date_can_be_bet_again(
     assert prono["closes_at"] is None and prono["open_ended"] is True
     tomorrow = (clock.now() + timedelta(days=1)).date().isoformat()
     await place(cami.client, str(org.id), prono["id"], date_value=tomorrow, stake=10)
-    early = await place(cami.client, str(org.id), prono["id"], date_value=tomorrow, stake=0)
+    early = await place(cami.client, str(org.id), prono["id"], date_value=tomorrow, stake=1)
     assert early.json()["error"]["code"] == "already_bet"
 
     fake_clock.advance(timedelta(days=2))
@@ -301,7 +302,7 @@ async def test_outsiders_get_404(make_org: MakeOrg, person: MakePerson) -> None:
         await outsider.client.get(f"{base}/sections"),
         await outsider.client.post(f"{base}/pronos", json={}),
         await place(
-            outsider.client, str(org.id), prono["id"], option_id=prono["options"][0]["id"], stake=0
+            outsider.client, str(org.id), prono["id"], option_id=prono["options"][0]["id"], stake=1
         ),
         await outsider.client.post(
             f"{base}/uploads", files={"file": ("a.png", png((4, 4)), "image/png")}

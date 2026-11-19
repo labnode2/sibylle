@@ -52,7 +52,7 @@ async def play(
     without a result when it is None)."""
     prono = await publish(journalist, org_id)
     for who, answer in answers:
-        bet = await place(who.client, org_id, prono["id"], option_id=option(prono, answer), stake=0)
+        bet = await place(who.client, org_id, prono["id"], option_id=option(prono, answer), stake=1)
         assert bet.status_code == 201, bet.text
     if result is not None:
         await settle(journalist, org_id, prono, result)
@@ -134,11 +134,11 @@ async def test_only_the_bet_in_force_counts(
         hugo.client, org_id, kind="date", options=[], open_ended=True, closes_at=None
     )
     tomorrow = (clock.now() + timedelta(days=1)).date().isoformat()
-    first = await place(cami.client, org_id, prono["id"], date_value=tomorrow, stake=0)
+    first = await place(cami.client, org_id, prono["id"], date_value=tomorrow, stake=1)
     assert first.status_code == 201, first.text
     fake_clock.advance(timedelta(days=2))
     later = (clock.now() + timedelta(days=3)).date().isoformat()
-    again = await place(cami.client, org_id, prono["id"], date_value=later, stake=0)
+    again = await place(cami.client, org_id, prono["id"], date_value=later, stake=1)
     assert again.status_code == 201, again.text
     resolved = await hugo.client.post(
         url(org_id, prono["id"], "resolve"), json={"result_date": later}

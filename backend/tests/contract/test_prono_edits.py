@@ -177,7 +177,7 @@ async def test_after_bets_what_was_bet_on_is_refused(
     hugo = await person(org, "journalist")
     cami = await person(org, "reader")
     prono = await published(hugo.client, str(org.id))
-    await place(cami.client, str(org.id), prono["id"], option_id=prono["options"][0]["id"], stake=0)
+    await place(cami.client, str(org.id), prono["id"], option_id=prono["options"][0]["id"], stake=1)
 
     refused = await edit(hugo.client, prono, question="Nice ou Monaco dimanche ?", **body)
     assert refused.status_code == 422
@@ -199,7 +199,7 @@ async def test_after_bets_an_open_ended_date_stays_open_ended(
         hugo.client, str(org.id), kind="date", options=[], open_ended=True, closes_at=None
     )
     tomorrow = (clock.now() + timedelta(days=1)).date().isoformat()
-    await place(cami.client, str(org.id), prono["id"], date_value=tomorrow, stake=0)
+    await place(cami.client, str(org.id), prono["id"], date_value=tomorrow, stake=1)
     refused = await edit(hugo.client, prono, open_ended=False, closes_at=at(3))
     assert refused.json()["error"]["fields"]["open_ended"] == "locked_after_bets"
     assert (await edit(hugo.client, prono, question="Quand pleuvra-t-il ?")).status_code == 200
@@ -212,7 +212,7 @@ async def test_after_bets_the_closing_is_only_postponed(
     hugo = await person(org, "journalist")
     cami = await person(org, "reader")
     prono = await published(hugo.client, str(org.id), closes_at=at(3))
-    await place(cami.client, str(org.id), prono["id"], option_id=prono["options"][0]["id"], stake=0)
+    await place(cami.client, str(org.id), prono["id"], option_id=prono["options"][0]["id"], stake=1)
     for closing in (at(2), at(-1)):
         refused = await edit(hugo.client, prono, closes_at=closing)
         assert refused.status_code == 422
@@ -279,7 +279,7 @@ async def test_an_edit_that_changes_nothing_leaves_no_trace(
     hugo = await person(org, "journalist")
     cami = await person(org, "reader")
     prono = await published(hugo.client, str(org.id))
-    await place(cami.client, str(org.id), prono["id"], option_id=prono["options"][0]["id"], stake=0)
+    await place(cami.client, str(org.id), prono["id"], option_id=prono["options"][0]["id"], stake=1)
     # The whole prono sent back as it is, locked fields included.
     same = await edit(
         hugo.client,

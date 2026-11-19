@@ -75,6 +75,7 @@
     "string_pattern_mismatch": "Format invalide.",
     "missing": "Champ obligatoire.",
     "out_of_range": "Valeur hors limites.",
+    "too_low": "Mise trop basse : il faut miser au moins 1 laurier vert.",
     "unknown": "Valeur inconnue.",
     "unknown_word": "Ce mot n'est pas dans le dictionnaire.",
     "empty": "Écris quelque chose d'abord.",

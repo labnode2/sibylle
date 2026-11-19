@@ -8,6 +8,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
+from sibylle.domain.betting import MIN_STAKE
 from sibylle.domain.ledger import LedgerKind, reversal
 from sibylle.domain.settlement import BetLine, Entry, Outcome, settle
 
@@ -17,15 +18,16 @@ Case = tuple[list[BetLine], frozenset[uuid.UUID], dict[str, int]]
 
 
 @st.composite
-def pronos(draw: st.DrawFn) -> Case:
-    """Bets with gapless ranks, some replaced, a set of winners among the active ones."""
+def pronos(draw: st.DrawFn, min_stake: int = 0) -> Case:
+    """Bets with gapless ranks, some replaced, a set of winners among the active ones. Stakes
+    start at 0 for the bets placed before the minimum stake (MIN_STAKE)."""
     count = draw(st.integers(min_value=1, max_value=12))
     ranks = draw(st.permutations(range(1, count + 1)))
     bets = [
         BetLine(
             id=uuid.UUID(int=i + 1),
             member_id=uuid.UUID(int=1000 + draw(st.integers(0, 5))),
-            stake=draw(st.integers(min_value=0, max_value=500)),
+            stake=draw(st.integers(min_value=min_stake, max_value=500)),
             rank=rank,
             active=draw(st.booleans()) if i else True,
         )
@@ -61,6 +63,18 @@ def test_the_pot_is_shared_exactly_or_lost(case: Case) -> None:
     assert outcome.pot == sum(b.stake for b in bets)
     assert pot_shares(outcome) == (0 if outcome.pot_lost else outcome.pot)
     assert sum(p.pot_share for p in outcome.payouts) == pot_shares(outcome)
+
+
+@given(pronos(min_stake=MIN_STAKE))
+def test_with_every_stake_at_least_one_the_pot_goes_to_the_winners(case: Case) -> None:
+    """Since every bet stakes at least one laurel, the pot is lost only when nobody won; else
+    it is shared exactly, and each winner gets at least their stake back."""
+    bets, winners, rules = case
+    outcome = settle(bets, winners, **rules)
+    assert outcome.pot >= len(bets)
+    assert outcome.pot_lost == (not winners)
+    assert pot_shares(outcome) == (outcome.pot if winners else 0)
+    assert all(p.pot_share >= p.stake >= MIN_STAKE for p in outcome.payouts)
 
 
 @given(pronos())

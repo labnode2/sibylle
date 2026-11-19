@@ -88,10 +88,8 @@ async def place_bet(
         active.superseded_by_id = bet.id
     prono.bet_count += 1
     prono.pot += stake
-    if stake:
-        await ledger.append(
-            session, member.id, stake_effect(stake), prono_id=prono.id, bet_id=bet.id
-        )
+    # Every new bet stakes at least one laurel (MIN_STAKE), taken from the balance now.
+    await ledger.append(session, member.id, stake_effect(stake), prono_id=prono.id, bet_id=bet.id)
     await session.flush()
 
     view = bet_view(bet, prono, member, labels)

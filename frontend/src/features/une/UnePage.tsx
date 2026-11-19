@@ -73,7 +73,8 @@ function PronoLine({ prono, gain = false }: { prono: PronoSummary; gain?: boolea
   );
 }
 
-/** The gauge of la une: the favourite in ink, the others in indigo and mist (canvas G-Style). */
+/** The gauge of la une: each answer's share of the laurels staked, the favourite in ink, the
+ *  others in indigo and mist (canvas G-Style). */
 function Poll({ prono }: { prono: FrontProno }) {
   const { t } = useTranslation('une');
   const rows = shares(prono);
@@ -96,6 +97,9 @@ function Poll({ prono }: { prono: FrontProno }) {
           </div>
         );
       })}
+      <span className={styles.pollNote} aria-hidden="true">
+        {t('pollNote')}
+      </span>
     </div>
   );
 }
@@ -146,7 +150,8 @@ function Headline({ orgId, front }: { orgId: string; front: FrontPage }) {
   );
 }
 
-/** "NON 72 % · JEU. 9:00": the favourite answer, then the closing. */
+/** "NON 72 % DES LAURIERS · JEU. 9:00": the favourite answer once laurels are staked (bets placed
+ *  without a stake before the minimum stake weigh nothing), then the closing. */
 function briefTag(t: TFunction<'une'>, prono: FrontProno): string {
   const rows = shares(prono);
   const favourite = rows.reduce<{ label: string; pct: number } | null>(
@@ -154,7 +159,9 @@ function briefTag(t: TFunction<'une'>, prono: FrontProno): string {
     null,
   );
   return [
-    prono.bet_count > 0 && favourite ? `${favourite.label.toUpperCase()} ${favourite.pct} %` : null,
+    favourite && favourite.pct > 0
+      ? t('favourite', { answer: favourite.label.toUpperCase(), pct: favourite.pct })
+      : null,
     prono.closes_at ? t('closes', { date: closing(prono.closes_at) }) : t('openEnded'),
   ]
     .filter(Boolean)

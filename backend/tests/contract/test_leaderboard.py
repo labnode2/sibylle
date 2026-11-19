@@ -80,14 +80,14 @@ async def test_the_rankings_across_months_and_seasons(
             update(Membership).where(Membership.id == zoe.member.id).values(status="anonymized")
         )
 
-    # December: Léo wins, Manon loses 10, Cami's free bet is lost.
+    # December: Léo wins the pot of 21, Manon loses 10, Cami the 1 laurel she staked.
     fake_clock.set(datetime(2026, 12, 2, 10, tzinfo=PARIS))
     december = await publish(hugo.client, org_id)
     await place(leo.client, org_id, december["id"], option_id=option(december, "Nice"), stake=10)
     await place(
         manon.client, org_id, december["id"], option_id=option(december, "Monaco"), stake=10
     )
-    await place(cami.client, org_id, december["id"], option_id=option(december, "Nul"), stake=0)
+    await place(cami.client, org_id, december["id"], option_id=option(december, "Nul"), stake=1)
     await settle(hugo.client, org_id, december, "Nice")
 
     # The editor's adjustment counts too.
@@ -97,7 +97,7 @@ async def test_the_rankings_across_months_and_seasons(
     # The gold laurels: the balance, plus the stakes in play.
     gold_now = await board(cami.client, org.id, "laurels", "all_time")
     assert gold_now == sorted(gold_now, key=lambda r: r[0])
-    assert {r[1]: r[2] for r in gold_now} == {"Cami": 100, "Hugo": 100, "Léo": 125, "Manon": 90}
+    assert {r[1]: r[2] for r in gold_now} == {"Cami": 99, "Hugo": 100, "Léo": 126, "Manon": 90}
     assert await board(cami.client, org.id, "wins", "month") == [
         (1, "Léo", 1, False),
         (2, "Cami", 0, True),

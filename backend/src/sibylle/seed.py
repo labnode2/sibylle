@@ -110,7 +110,7 @@ class _Demo:
         )
         await self.bet("Cami", foosball, 20, "Tech")
         await self.bet("Léo", foosball, 10, "Produit")
-        await self.bet("Manon", foosball, 0, "Tech")
+        await self.bet("Manon", foosball, 5, "Tech")
 
         coffees = await self.publish(
             "Hugo",
@@ -120,7 +120,7 @@ class _Demo:
             number_unit="cafés",
         )
         await self.bet("Cami", coffees, 10, Decimal("4"))
-        await self.bet("Inès", coffees, 0, Decimal("6"))
+        await self.bet("Inès", coffees, 5, Decimal("6"))
 
         machine = await self.publish(
             "Inès",
@@ -137,7 +137,7 @@ class _Demo:
         )
         await self.bet("Cami", deadline, 10, "Oui")
         await self.bet("Léo", deadline, 20, "Non")
-        await self.bet("Manon", deadline, 0, "Oui")
+        await self.bet("Manon", deadline, 5, "Oui")
         await self.close(deadline)
 
         derby = await self.publish(

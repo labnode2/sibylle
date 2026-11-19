@@ -721,20 +721,22 @@ def _pct(part: int, total: int) -> int:
 def _shares(
     options: Sequence[PronoOption], active: Sequence[Bet]
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Each answer with its share of the bets in force, and the split of the numbers or dates."""
+    """Each answer with its people and its share of the laurels staked on the bets in force
+    (FR-042), and the same for the split of the numbers or dates. 0 % everywhere while nothing
+    is staked: an old bet without stake counts as a person, not as laurels."""
     counts: dict[uuid.UUID, list[int]] = defaultdict(lambda: [0, 0])
     for bet in active:
         if bet.option_id is not None:
             counts[bet.option_id][0] += 1
             counts[bet.option_id][1] += bet.stake
-    total = len(active)
+    staked = sum(bet.stake for bet in active)
     values = [
         (bet.number_value if bet.number_value is not None else bet.date_value, bet.stake)
         for bet in active
         if bet.number_value is not None or bet.date_value is not None
     ]
     buckets = [
-        {**asdict(b), "share_pct": _pct(b.count, total)}
+        {**asdict(b), "share_pct": _pct(b.stake_total, staked)}
         for b in distribution(values)  # type: ignore[arg-type]
     ]
     option_rows = [
@@ -744,7 +746,7 @@ def _shares(
             "is_correct": o.is_correct,
             "count": counts[o.id][0],
             "stake_total": counts[o.id][1],
-            "share_pct": _pct(counts[o.id][0], total),
+            "share_pct": _pct(counts[o.id][1], staked),
         }
         for o in options
     ]

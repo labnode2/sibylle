@@ -366,6 +366,10 @@ class PronoSummary(BaseModel):
 
 
 class OptionOut(BaseModel):
+    """An answer of a choice or yes/no prono: `count` bets in force chose it, staking
+    `stake_total` laurels, which are `share_pct` % of the laurels staked on those bets (rounded;
+    0 while nothing is staked)."""
+
     id: uuid.UUID
     label: str
     is_correct: bool | None
@@ -375,6 +379,9 @@ class OptionOut(BaseModel):
 
 
 class BucketOut(BaseModel):
+    """A value, or a range of values, of a number or date prono: `count` bets in force, their
+    `stake_total` laurels and its `share_pct` % of the laurels staked, as for an answer."""
+
     label: str
     count: int
     stake_total: int
@@ -538,9 +545,15 @@ class PronoPatch(BaseModel):
 
 
 class BetIn(BaseModel):
+    """The answer the prono's kind asks for, and the stake: at least 1 laurel (`422
+    validation_error`, `fields.stake: too_low`) and at most the balance (`409
+    insufficient_balance`)."""
+
     option_id: uuid.UUID | None = None
     number_value: Annotated[Decimal, Field(max_digits=14, decimal_places=2)] | None = None
     date_value: date | None = None
+    # A negative stake is refused here (`greater_than_equal`), a stake of 0 by the rules of the
+    # game (`too_low`, domain/betting.py).
     stake: int = Field(ge=0)
 
 

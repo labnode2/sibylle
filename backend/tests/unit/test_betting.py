@@ -7,6 +7,7 @@ import pytest
 from sibylle.api.schemas import LockedField
 from sibylle.domain.betting import (
     LOCKED_AFTER_BETS,
+    MIN_STAKE,
     Answer,
     BetRefused,
     Kind,
@@ -216,15 +217,42 @@ def bet(**changes: object) -> None:
 
 
 def refusal(**changes: object) -> str:
+    return refused_with(**changes).code
+
+
+def refused_with(**changes: object) -> BetRefused:
     with pytest.raises(BetRefused) as refused:
         bet(**changes)
-    return refused.value.code
+    return refused.value
 
 
 def test_a_normal_bet_passes() -> None:
     bet()
-    bet(stake=0)
+    bet(stake=1)
     bet(stake=100)
+
+
+def test_a_bet_stakes_at_least_one_laurel() -> None:
+    assert MIN_STAKE == 1
+    zero = refused_with(stake=0)
+    assert (zero.code, zero.fields) == ("validation_error", {"stake": "too_low"})
+    # A negative stake keeps its own error.
+    negative = refused_with(stake=-1)
+    assert (negative.code, negative.fields) == ("validation_error", {"stake": "negative"})
+    bet(stake=1, balance=1)
+
+
+def test_an_open_ended_date_bet_again_stakes_at_least_one_laurel() -> None:
+    again = {
+        "kind": Kind.DATE,
+        "open_ended": True,
+        "closes_at": None,
+        "answer": Answer(date_value=TODAY + timedelta(days=5)),
+        "has_active_bet": True,
+        "active_bet_date": TODAY - timedelta(days=1),
+    }
+    assert refused_with(**again, stake=0).fields == {"stake": "too_low"}
+    bet(**again, stake=1)
 
 
 @pytest.mark.parametrize("state", [s for s in State if s is not State.OPEN])
@@ -239,8 +267,10 @@ def test_no_bet_from_the_closing_instant() -> None:
 def test_stakes_are_bounded_by_the_balance() -> None:
     assert refusal(stake=101) == "insufficient_balance"
     assert refusal(stake=-1) == "validation_error"
+    # Below one laurel (nothing left, or negative after a correction), no bet any more.
+    assert refusal(balance=0, stake=1) == "insufficient_balance"
     assert refusal(balance=-10, stake=5) == "insufficient_balance"
-    bet(balance=-10, stake=0)
+    assert refusal(balance=-10, stake=0) == "validation_error"
 
 
 def test_one_active_bet_per_prono() -> None:

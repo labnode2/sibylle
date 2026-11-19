@@ -18,6 +18,9 @@ class Kind(StrEnum):
 
 YES_NO_OPTIONS = ["Oui", "Non"]
 MAX_NUMBER = Decimal("1e12")
+# Every new bet stakes at least this many laurels (FR-041). Bets placed before the rule with a
+# stake of 0 stay as they are.
+MIN_STAKE = 1
 # What the bets were placed on (FR-035): once someone bet, the kind, the answers, the closing
 # rule, the fixed gain, the unit and the opening stay as they are. The question can still be
 # reworded, the section, the link and the image changed, the closing postponed and the result
@@ -186,8 +189,10 @@ def check_bet(
         raise BetRefused("invalid_state")
     if stake < 0:
         raise BetRefused("validation_error", {"stake": "negative"})
-    if stake > 0 and stake > balance:
-        # With a negative balance (after a correction) only a bet without stake is possible.
+    if stake < MIN_STAKE:
+        raise BetRefused("validation_error", {"stake": "too_low"})
+    if stake > balance:
+        # Below one laurel (nothing left, or negative after a correction), no bet is possible.
         raise BetRefused("insufficient_balance")
     if has_active_bet:
         passed = open_ended and active_bet_date is not None and active_bet_date < today

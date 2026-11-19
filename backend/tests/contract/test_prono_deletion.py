@@ -79,7 +79,7 @@ async def test_a_cancelled_prono_is_deleted(
         await cami.client.post(url(org.id, prono["id"], "messages"), json={"body": "Encore ?"}),
         await cami.client.put(url(org.id, prono["id"], "reactions/yes")),
         await cami.client.post(url(org.id, prono["id"], "reports"), json={"kind": "content"}),
-        await place(cami.client, str(org.id), prono["id"], option_id=option(prono, "Nul"), stake=0),
+        await place(cami.client, str(org.id), prono["id"], option_id=option(prono, "Nul"), stake=1),
         await ines.client.post(url(org.id, prono["id"], "cancel"), json={}),
         await delete(ines.client, org.id, prono["id"]),
     ]
@@ -154,7 +154,7 @@ async def test_only_a_cancelled_prono_is_deleted(
     resolved = await publish(ines.client, str(org.id))
     closed = await publish(ines.client, str(org.id), question="Il neigera à Noël ?")
     await place(
-        cami.client, str(org.id), resolved["id"], option_id=option(resolved, "Nice"), stake=0
+        cami.client, str(org.id), resolved["id"], option_id=option(resolved, "Nice"), stake=1
     )
     await close(fake_clock)
     designated = await ines.client.post(

@@ -77,7 +77,7 @@ async def test_the_end_of_the_season(
     prono = await publish(hugo.client, str(org.id))
     org_id = str(org.id)
     await place(cami.client, org_id, prono["id"], option_id=option(prono, "Nice"), stake=10)
-    await place(leo.client, org_id, prono["id"], option_id=option(prono, "Monaco"), stake=0)
+    await place(leo.client, org_id, prono["id"], option_id=option(prono, "Monaco"), stake=1)
     await place(manon.client, org_id, prono["id"], option_id=option(prono, "Monaco"), stake=10)
     await place(paul.client, org_id, prono["id"], option_id=option(prono, "Monaco"), stake=20)
     fake_clock.advance(timedelta(days=4))
@@ -91,8 +91,8 @@ async def test_the_end_of_the_season(
 
     assert await counters(org.id) == {
         "Hugo": (100, 0),
-        "Cami": (150, 50),  # 100 − 10 + 20 base + the pot of 40
-        "Léo": (100, 0),
+        "Cami": (151, 51),  # 100 − 10 + 20 base + the pot of 41
+        "Léo": (99, -1),
         "Manon": (90, -10),
         "Paul": (80, -20),
         "Zoé": (100, 0),
@@ -106,8 +106,8 @@ async def test_the_end_of_the_season(
     assert await close_finished_seasons() == 1
     # The gold laurels, the starting balance included.
     assert await trophies((2026, "autumn")) == {
-        "Cami": (150, 1, True),
-        "Léo": (100, 2, True),
+        "Cami": (151, 1, True),
+        "Léo": (99, 2, True),
         "Manon": (90, 3, True),
         "Paul": (80, 4, False),
     }
@@ -123,7 +123,7 @@ async def test_the_end_of_the_season(
                 .order_by(LedgerEntry.amount)
             )
         ).all()
-    assert list(resets) == [-50, 10, 20]  # Cami, Manon, Paul; the others were already at 100
+    assert list(resets) == [-51, 1, 10, 20]  # Cami, Léo, Manon, Paul; Hugo and Zoé had 100
 
     # The newsroom was created in November: earlier seasons are not closed for it.
     async with transaction() as session:

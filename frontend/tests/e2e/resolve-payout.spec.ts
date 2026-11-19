@@ -144,7 +144,7 @@ test('relaunch a prono nobody bet on, and bet again on an open-ended date', asyn
   // Cami's date has passed: she bets a new one; the first stake stays in the pot.
   await cami.goto(`/o/${orgId}/pronos/${someday.id}`);
   await cami.getByLabel('TA DATE').fill(dayFromNow(7));
-  await cami.getByRole('button', { name: 'Plus' }).click();
+  await cami.getByRole('textbox', { name: 'Ta mise' }).fill('10');
   const rebetButton = cami.getByRole('button', { name: /Rejouer une date/ });
   await rebetButton.click();
   // "TON PRONO" already shows the passed bet; the form goes away once the new one is saved.

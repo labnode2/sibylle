@@ -48,7 +48,7 @@ async def test_the_front_page_in_order(
     cafes = await publish(
         hugo.client, org_id, question="Combien de cafés jeudi ?", closes_at=in_hours(26)
     )
-    await place(leo.client, org_id, cafes["id"], option_id=option(cafes, "Monaco"), stake=0)
+    await place(leo.client, org_id, cafes["id"], option_id=option(cafes, "Monaco"), stake=10)
     await publish(
         hugo.client,
         org_id,
@@ -68,7 +68,7 @@ async def test_the_front_page_in_order(
     soon = await publish(
         hugo.client, org_id, question="Le bouclage avant 20 h ?", closes_at=in_hours(2)
     )
-    await place(cami.client, org_id, soon["id"], option_id=option(soon, "Nice"), stake=0)
+    await place(cami.client, org_id, soon["id"], option_id=option(soon, "Nice"), stake=1)
     await publish(hugo.client, org_id, question="Le pot aura-t-il lieu ?", closes_at=in_hours(1))
     done = await publish(hugo.client, org_id, question="Nice ou Monaco ?", closes_at=in_hours(1))
     await place(cami.client, org_id, done["id"], option_id=option(done, "Nice"), stake=10)
@@ -168,8 +168,8 @@ async def test_the_top_ends_with_my_own_line(
     ]
     done = await publish(hugo.client, org_id, closes_at=in_hours(1))
     for player in players[:5]:
-        await place(player.client, org_id, done["id"], option_id=option(done, "Nice"), stake=0)
-    await place(players[5].client, org_id, done["id"], option_id=option(done, "Monaco"), stake=0)
+        await place(player.client, org_id, done["id"], option_id=option(done, "Nice"), stake=1)
+    await place(players[5].client, org_id, done["id"], option_id=option(done, "Monaco"), stake=1)
     fake_clock.advance(timedelta(hours=2))
     await advance_pronos()
     resolved = await hugo.client.post(

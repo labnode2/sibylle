@@ -1,6 +1,6 @@
 // Quickstart V2: two browsers on the same prono. A bet shows up at the other's in less than 2 s
-// without reloading, a second bet and a stake above the balance are refused, and the prono
-// closes once the simulated clock passes its closing time. Also measures SC-001: from opening the
+// without reloading, a second bet and a stake below one laurel or above the balance are refused,
+// and the prono closes once the simulated clock passes its closing time. Also measures SC-001: from opening the
 // invitation link to the first bet in less than 2 minutes.
 import { expect, test, type Page } from '@playwright/test';
 
@@ -58,16 +58,27 @@ test('a bet shows up live, then the prono closes', async ({ browser }, testInfo)
   const pronoId = pronoPath.split('/').at(-1)!;
   await expect(ines.getByText("Personne n'a encore joué")).toBeVisible();
 
-  // The stake cannot go above the balance in the interface, nor through the API.
-  const plus = ines.getByRole('button', { name: 'Plus' });
-  for (let i = 0; i < 10; i += 1) await plus.click();
-  await expect(ines.getByRole('group', { name: 'Ta mise' })).toContainText('100');
-  await expect(plus).toBeDisabled();
+  // The stake starts at one laurel and goes neither below it nor above the balance, in the
+  // interface or through the API.
+  const stake = ines.getByRole('textbox', { name: 'Ta mise' });
+  await expect(stake).toHaveValue('1');
+  await expect(ines.getByRole('button', { name: 'Moins' })).toBeDisabled();
+  await stake.fill('250');
+  await stake.press('Tab');
+  await expect(stake).toHaveValue('100');
+  await expect(ines.getByRole('button', { name: 'Plus' })).toBeDisabled();
+  // The pot shown counts the stake she would add: back to one laurel.
+  await stake.fill('1');
+  await expect(stake).toHaveValue('1');
   const [om] = await optionIds(ines, orgId, pronoId);
   const tooMuch = await postBet(ines, orgId, pronoId, { option_id: om, stake: 1000 });
   expect(tooMuch.status).toBe(409);
   expect(tooMuch.body).toMatchObject({ error: { code: 'insufficient_balance' } });
-  for (let i = 0; i < 10; i += 1) await ines.getByRole('button', { name: 'Moins' }).click();
+  const nothing = await postBet(ines, orgId, pronoId, { option_id: om, stake: 0 });
+  expect(nothing.status).toBe(422);
+  expect(nothing.body).toMatchObject({
+    error: { code: 'validation_error', fields: { stake: 'too_low' } },
+  });
 
   // Cami opens the invitation, joins and bets: SC-001 starts when the link opens.
   const started = Date.now();
@@ -78,8 +89,8 @@ test('a bet shows up live, then the prono closes', async ({ browser }, testInfo)
   await cami.getByRole('link', { name: /^(LES )?PRONOS(,|$)/ }).click();
   await cami.getByRole('link', { name: /Qui gagnera le derby/ }).click();
   await cami.getByRole('button', { name: /OGC Nice/ }).click();
-  await cami.getByRole('button', { name: 'Plus' }).click();
-  await cami.getByRole('button', { name: 'Plus' }).click();
+  // The stake typed in: the pot shown follows it.
+  await cami.getByRole('textbox', { name: 'Ta mise' }).fill('20');
   await expect(pot(cami, 20)).toBeVisible();
   await cami.getByRole('button', { name: /Valider mon prono/ }).click();
   await expect(cami.getByText('TON PRONO', { exact: true })).toBeVisible();
@@ -92,11 +103,12 @@ test('a bet shows up live, then the prono closes', async ({ browser }, testInfo)
   await expect(people.getByText('Cami')).toBeVisible({ timeout: 2_000 });
   // Answers in mono capitals, as on the canvas.
   await expect(people).toContainText('OGC NICE');
-  await expect(pot(ines, 20)).toBeVisible();
+  // Cami's 20 laurels, plus the one Inès would stake.
+  await expect(pot(ines, 21)).toBeVisible();
 
   // Cami's choice is final, and her balance went down.
   await expect(cami.getByRole('button', { name: /Valider mon prono/ })).toHaveCount(0);
-  const again = await postBet(cami, orgId, pronoId, { option_id: om, stake: 0 });
+  const again = await postBet(cami, orgId, pronoId, { option_id: om, stake: 1 });
   expect(again.status).toBe(409);
   expect(again.body).toMatchObject({ error: { code: 'already_bet' } });
 

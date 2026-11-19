@@ -44,7 +44,10 @@ import { ReactionBar } from './ReactionBar';
 import { Voters, votersFor } from './WhoVoted';
 import styles from './pronos.module.css';
 
-const STAKE_STEP = 10;
+// Every bet stakes at least one laurel and at most the balance (FR-041): typed to the laurel,
+// or moved by 5 with − and +.
+const MIN_STAKE = 1;
+const STAKE_STEP = 5;
 const SHOWN_AVATARS = 3;
 // « Les pronostiqueurs »: the first six, then « Et 25 autres ».
 const SHOWN_PEOPLE = 6;
@@ -101,6 +104,22 @@ function StateNotice({ prono, newsroom }: { prono: PronoDetail; newsroom: boolea
   }
 }
 
+/** An answer, and under it its share of the laurels staked on the prono and how many played it
+ *  (FR-042): « 75 % DES LAURIERS · 3 PERSONNES ». */
+function Answer({ label, pct, count }: { label: string; pct: number; count: number }) {
+  const { t } = useTranslation('pronos');
+  return (
+    <span className={styles.choiceText}>
+      <span className={styles.choiceLabel}>{label}</span>
+      <span className={styles.share}>
+        <span className={styles.pct}>{t('detail.share', { pct })}</span>
+        {' · '}
+        {t('detail.shareCount', { count })}
+      </span>
+    </span>
+  );
+}
+
 function Ballot({
   prono,
   selected,
@@ -112,7 +131,6 @@ function Ballot({
   onSelect: (optionId: string) => void;
   disabled: boolean;
 }) {
-  const { t } = useTranslation('pronos');
   const active = prono.bets.filter((bet) => !bet.superseded);
   return (
     <div className={styles.ballot}>
@@ -131,13 +149,12 @@ function Ballot({
               <span className={styles.box} aria-hidden="true">
                 {(selected === option.id || isMine) && <Icon name="check" size={12} />}
               </span>
-              <span className={styles.choiceLabel}>{option.label}</span>
+              <Answer label={option.label} pct={option.share_pct} count={option.count} />
               <AvatarStack
                 avatars={bettors.slice(0, SHOWN_AVATARS).map((bet) => bet.member.avatar)}
                 more={bettors.length - SHOWN_AVATARS}
                 size={20}
               />
-              <span className={styles.pct}>{t('detail.share', { pct: option.share_pct })}</span>
             </button>
           </div>
         );
@@ -156,11 +173,10 @@ function Distribution({ orgId, prono }: { orgId: string; prono: PronoDetail }) {
         {prono.distribution.map((bucket, index) => (
           <div key={bucket.label}>
             <div className={`${styles.choice} ${styles.distributionLine}`}>
-              <span className={styles.choiceLabel}>{bucket.label}</span>
+              <Answer label={bucket.label} pct={bucket.share_pct} count={bucket.count} />
               {prono.state !== 'proposed' && prono.state !== 'rejected' && (
                 <Voters orgId={orgId} bets={votersFor(prono, index)} />
               )}
-              <span className={styles.pct}>{t('detail.share', { pct: bucket.share_pct })}</span>
             </div>
             <div className={styles.gauge} aria-hidden="true">
               <span style={{ width: `${bucket.share_pct}%` }} />
@@ -277,7 +293,7 @@ export function PronoPage() {
   const [optionId, setOptionId] = useState<string | null>(null);
   const [number, setNumber] = useState('');
   const [day, setDay] = useState('');
-  const [stake, setStake] = useState(0);
+  const [stake, setStake] = useState(MIN_STAKE);
   // Once a bet is in, the result is worth hearing about: the app offers push notifications.
   const [justBet, setJustBet] = useState(false);
 
@@ -291,6 +307,10 @@ export function PronoPage() {
   const prono = query.data;
   const me = org.data.my_membership;
   const canBet = prono.state === 'open' && (!prono.my_bet || prono.can_rebet);
+  // Below one laurel nothing can be staked: the page says why instead of offering a dead button.
+  const broke = me.balance < MIN_STAKE;
+  // What would be staked: the stake set, within one laurel and the balance (which may have moved).
+  const staked = Math.max(MIN_STAKE, Math.min(stake, me.balance));
   const choosing = prono.kind === 'choice' || prono.kind === 'yes_no';
   // The designation panel and the special edition show the answers in their own way.
   const hideBallot =
@@ -312,15 +332,11 @@ export function PronoPage() {
       return;
     }
     placeBet.mutate(
-      { ...answer, stake },
+      { ...answer, stake: staked },
       {
         onSuccess: () => {
-          toast.success(
-            stake > 0
-              ? t('toast.betStake', { count: stake, stake: formatNumber(stake) })
-              : t('toast.bet'),
-          );
-          setStake(0);
+          toast.success(t('toast.betStake', { count: staked, stake: formatNumber(staked) }));
+          setStake(MIN_STAKE);
           setDay('');
           setJustBet(true);
         },
@@ -424,13 +440,13 @@ export function PronoPage() {
                 prono={prono}
                 selected={optionId}
                 onSelect={(id) => setOptionId(id)}
-                disabled={!canBet}
+                disabled={!canBet || broke}
               />
             </section>
           )}
           {!choosing && <Distribution orgId={orgId} prono={prono} />}
 
-          {canBet && prono.kind === 'number' && (
+          {canBet && !broke && prono.kind === 'number' && (
             <label className={styles.fieldset}>
               <span className={styles.label}>
                 {t('detail.pickNumber')}
@@ -444,7 +460,7 @@ export function PronoPage() {
               />
             </label>
           )}
-          {canBet && prono.kind === 'date' && (
+          {canBet && !broke && prono.kind === 'date' && (
             <label className={styles.fieldset}>
               <span className={styles.label}>{t('detail.pickDate')}</span>
               <input
@@ -457,7 +473,12 @@ export function PronoPage() {
             </label>
           )}
 
-          {canBet && (
+          {canBet && broke && (
+            <p className={styles.alert}>
+              {t('detail.broke', { balance: formatNumber(me.balance) })}
+            </p>
+          )}
+          {canBet && !broke && (
             <>
               <div className={styles.stake}>
                 <div className={styles.stakeText}>
@@ -477,25 +498,26 @@ export function PronoPage() {
                   </span>
                   <span className={`only-mobile ${styles.pot}`}>
                     {t('detail.pot', {
-                      count: prono.pot + stake,
-                      pot: formatNumber(prono.pot + stake),
+                      count: prono.pot + staked,
+                      pot: formatNumber(prono.pot + staked),
                     })}
                   </span>
                 </div>
                 <Stepper
                   label={t('detail.stakeLabel')}
-                  value={stake}
+                  value={staked}
                   onChange={setStake}
-                  min={0}
-                  max={Math.max(0, me.balance)}
+                  min={MIN_STAKE}
+                  max={me.balance}
                   step={STAKE_STEP}
                   format={formatNumber}
+                  typed
                 />
                 <div className={`only-desktop ${styles.potLarge}`}>
                   <span className={styles.potValue}>
                     {t('detail.potValue', {
-                      count: prono.pot + stake,
-                      pot: formatNumber(prono.pot + stake),
+                      count: prono.pot + staked,
+                      pot: formatNumber(prono.pot + staked),
                     })}
                   </span>
                   <span className={styles.label}>{t('detail.potShared')}</span>
@@ -510,9 +532,7 @@ export function PronoPage() {
                 <Button className={styles.submit} onClick={submit} disabled={placeBet.isPending}>
                   <span>{prono.my_bet ? t('detail.rebet') : t('detail.submit')}</span>
                   <span className={styles.submitTag}>
-                    {stake > 0
-                      ? t('detail.submitStake', { stake: formatNumber(stake) })
-                      : t('detail.submitFree')}
+                    {t('detail.submitStake', { stake: formatNumber(staked) })}
                   </span>
                 </Button>
                 <p className={styles.note}>

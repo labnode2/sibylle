@@ -1325,7 +1325,12 @@ export interface components {
             /** Reason */
             reason: string;
         };
-        /** BetIn */
+        /**
+         * BetIn
+         * @description The answer the prono's kind asks for, and the stake: at least 1 laurel (`422
+         *     validation_error`, `fields.stake: too_low`) and at most the balance (`409
+         *     insufficient_balance`).
+         */
         BetIn: {
             /** Option Id */
             option_id?: string | null;
@@ -1381,7 +1386,11 @@ export interface components {
             /** File */
             file: string;
         };
-        /** BucketOut */
+        /**
+         * BucketOut
+         * @description A value, or a range of values, of a number or date prono: `count` bets in force, their
+         *     `stake_total` laurels and its `share_pct` % of the laurels staked, as for an answer.
+         */
         BucketOut: {
             /** Label */
             label: string;
@@ -2071,7 +2080,12 @@ export interface components {
             /** Prono Id */
             prono_id?: string | null;
         };
-        /** OptionOut */
+        /**
+         * OptionOut
+         * @description An answer of a choice or yes/no prono: `count` bets in force chose it, staking
+         *     `stake_total` laurels, which are `share_pct` % of the laurels staked on those bets (rounded;
+         *     0 while nothing is staked).
+         */
         OptionOut: {
             /**
              * Id

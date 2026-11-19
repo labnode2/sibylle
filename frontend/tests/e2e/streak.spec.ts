@@ -32,7 +32,7 @@ async function round(editor: Page, orgId: string, result: number, ...bets: [Page
   for (const [page, days] of bets) {
     const bet = await call(page, 'POST', `/orgs/${orgId}/pronos/${prono.id}/bets`, {
       date_value: day(days),
-      stake: 0,
+      stake: 1,
     });
     expect(bet.status, JSON.stringify(bet.body)).toBe(201);
   }

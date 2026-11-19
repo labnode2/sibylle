@@ -319,6 +319,8 @@ export function Chip({
   );
 }
 
+/** A number set with « − » and « + », which move it to the step's multiple below or above (a stake
+ *  of 1 goes to 5, then 10), never past `min` and `max`. */
 export function Stepper({
   value,
   onChange,
@@ -330,6 +332,7 @@ export function Stepper({
   block = false,
   disabled = false,
   describedBy,
+  typed = false,
 }: {
   value: number;
   onChange: (value: number) => void;
@@ -343,8 +346,23 @@ export function Stepper({
   /** Greys it: the value stays as it is; `describedBy` says why. */
   disabled?: boolean;
   describedBy?: string;
+  /** The value in the middle is a field, named by `label`, where the exact whole number is
+   *  typed (digits only): `onChange` hears each number typed, kept between `min` and `max`, and
+   *  the field shows that number once left (or on Enter). An empty field keeps the value. */
+  typed?: boolean;
 }) {
   const { t } = useTranslation();
+  // The digits being typed; null shows the value.
+  const [draft, setDraft] = useState<string | null>(null);
+  // What the buttons changed, for screen readers; what is typed is heard as it is typed.
+  const [said, setSaid] = useState('');
+  const less = Math.max(min, (Math.ceil(value / step) - 1) * step);
+  const more = Math.min(max, (Math.floor(value / step) + 1) * step);
+  const press = (next: number) => {
+    setDraft(null);
+    if (typed) setSaid(format(next));
+    onChange(next);
+  };
   return (
     <div
       className={cx(styles.stepper, block && styles.stepperBlock, disabled && styles.stepperOff)}
@@ -355,19 +373,48 @@ export function Stepper({
       <button
         type="button"
         className={styles.stepperButton}
-        onClick={() => onChange(Math.max(min, value - step))}
+        onClick={() => press(less)}
         disabled={disabled || value <= min}
         aria-label={t('stepper.less')}
       >
         <Icon name="minus" size={12} />
       </button>
-      <output className={styles.stepperValue} aria-live="polite">
-        {format(value)}
-      </output>
+      {typed ? (
+        <>
+          <input
+            className={cx(styles.stepperValue, styles.stepperInput)}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="off"
+            aria-label={label}
+            aria-describedby={describedBy}
+            disabled={disabled}
+            value={draft ?? String(value)}
+            onChange={(event) => {
+              const digits = event.target.value.replace(/\D/g, '');
+              setDraft(digits);
+              setSaid('');
+              if (digits) onChange(Math.min(max, Math.max(min, Number(digits))));
+            }}
+            onBlur={() => setDraft(null)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') setDraft(null);
+            }}
+          />
+          <span className="visually-hidden" aria-live="polite">
+            {said}
+          </span>
+        </>
+      ) : (
+        <output className={styles.stepperValue} aria-live="polite">
+          {format(value)}
+        </output>
+      )}
       <button
         type="button"
         className={styles.stepperButton}
-        onClick={() => onChange(Math.min(max, value + step))}
+        onClick={() => press(more)}
         disabled={disabled || value >= max}
         aria-label={t('stepper.more')}
       >

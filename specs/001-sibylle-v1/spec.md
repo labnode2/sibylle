@@ -54,7 +54,7 @@ Hugo, journaliste, publie « Nice ou Monaco samedi ? » avec trois choix, une cl
 1. **Given** un·e journaliste, **When** il ou elle crée un prono de type choix, oui/non, nombre ou date avec une question, une rubrique, une date de clôture et un gain de base sous le plafond, **Then** le prono est publié et ouvert (ou programmé si une date d'ouverture est fixée).
 2. **Given** un prono ouvert et un solde de 342 lauriers, **When** Cami choisit une réponse et mise 20, **Then** son pari est enregistré, son solde passe à 322 et la cagnotte augmente de 20.
 3. **Given** un pari déjà fait, **When** Cami essaie de changer de réponse ou de mise, **Then** l'appli refuse : le choix est définitif.
-4. **Given** une mise supérieure au solde, **When** Cami valide, **Then** le pari est refusé ; une mise de 0 (« sans mise ») est toujours possible.
+4. **Given** une mise supérieure au solde, ou de moins de 1 laurier, **When** Cami valide, **Then** le pari est refusé ; avec un solde de moins de 1 laurier, l'appli dit pourquoi Cami ne peut pas parier. Les paris faits avant cette règle avec une mise de 0 (« sans mise ») restent tels quels.
 5. **Given** deux membres qui regardent le même prono, **When** l'un parie, **Then** l'autre voit dans les 2 secondes la nouvelle répartition, le nouveau pari et la nouvelle cagnotte.
 6. **Given** la date de clôture passée, **When** quelqu'un essaie de parier, **Then** le pari est refusé et le prono apparaît « clos, en attente du résultat ».
 7. **Given** un prono sur lequel personne n'a encore parié, **When** son ou sa journaliste le modifie, **Then** la modification est acceptée ; dès le premier pari, il ou elle peut encore reformuler la question, changer la rubrique, le lien, l'image et le résultat attendu, et repousser la clôture, mais plus le type, les choix, l'unité, le gain fixe ni la date « sans fin » ; chaque modification est notée dans l'historique du prono, que toute la rédaction lit.
@@ -365,8 +365,8 @@ Cami veut montrer sa carte de presse sur son blog. Sous sa carte, elle active «
 **Paris et mises**
 
 - **FR-040**: Chaque membre DOIT pouvoir parier une seule fois par prono, de façon définitive ; le créateur peut parier comme les autres.
-- **FR-041**: Une mise DOIT être un nombre entier de lauriers entre 0 et le solde du membre, sans autre plafond ; elle est retirée du solde au moment du pari.
-- **FR-042**: La répartition des votes, le choix et la mise de chaque membre, et la cagnotte DOIVENT être visibles par toute la rédaction dès le pari, et mis à jour en direct.
+- **FR-041**: Une mise DOIT être un nombre entier de lauriers entre 1 et le solde du membre, sans autre plafond ; elle est retirée du solde au moment du pari. Elle se tape au laurier près ou se règle de 5 en 5 avec « − » et « + ». Les paris faits avant cette règle avec une mise de 0 restent valides.
+- **FR-042**: La répartition des votes, le choix et la mise de chaque membre, et la cagnotte DOIVENT être visibles par toute la rédaction dès le pari, et mis à jour en direct. Le pourcentage de chaque réponse (ou tranche de valeurs) est celui des lauriers misés sur elle parmi les lauriers misés sur le prono (0 % tant que rien n'est misé), avec à côté le nombre de personnes qui l'ont choisie.
 - **FR-043**: Pour un prono de date « sans fin », un membre dont la date est passée sans l'événement DOIT pouvoir parier une nouvelle date (strictement future) ; sa mise précédente reste dans la cagnotte.
 - **FR-044**: Aucun pari NE DOIT être accepté hors de l'état « ouvert ».
 

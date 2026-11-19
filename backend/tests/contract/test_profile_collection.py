@@ -74,9 +74,9 @@ async def test_the_press_card(
     )
     await place(cami.client, org_id, won["id"], option_id=option(won, "Nice"), stake=10)
     await place(leo.client, org_id, won["id"], option_id=option(won, "Monaco"), stake=10)
-    await place(cami.client, org_id, lost["id"], option_id=option(lost, "Nul"), stake=0)
+    await place(cami.client, org_id, lost["id"], option_id=option(lost, "Nul"), stake=1)
     day = (clock.now() + timedelta(days=90)).date().isoformat()
-    await place(cami.client, org_id, pending["id"], date_value=day, stake=0)
+    await place(cami.client, org_id, pending["id"], date_value=day, stake=1)
     fake_clock.advance(timedelta(days=4))
     await advance_pronos()
     for prono, answer in ((won, "Nice"), (lost, "Monaco")):
@@ -113,8 +113,9 @@ async def test_the_press_card(
         "best_streak": 1,
     }
     assert [(t["season"], t["score"], t["rank"], t["podium"]) for t in card["trophies"]] == [
-        # The gold laurels at the end of the season.
-        ({"year": 2026, "name": "autumn"}, 130, 1, True)
+        # The gold laurels at the end of the season: 100 − 10 + 40 won − 1 lost, and the
+        # laurel still in play on the open-ended prono.
+        ({"year": 2026, "name": "autumn"}, 129, 1, True)
     ]
     assert [(c["item"]["key"], c["source"]) for c in card["collection"]] == [
         ("color-33", "purchase")

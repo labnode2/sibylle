@@ -150,6 +150,14 @@
   text-align: right;
 }
 
+/* What the gauge counts, under its percentages. */
+.pollNote {
+  font: 500 11px/1.4 var(--font-mono);
+  letter-spacing: 0.03em;
+  color: var(--ink-2);
+  text-align: right;
+}
+
 .meta {
   font: 500 11px/1.4 var(--font-mono);
   letter-spacing: 0.03em;

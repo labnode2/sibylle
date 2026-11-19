@@ -142,7 +142,7 @@ Index : (`org_id`, `state`, `closes_at`) pour la une et le `worker` ; (`org_id`,
 | option_id | uuid | pour `choice` et `yes_no` ; option du même prono |
 | number_value | numeric(14,2) | pour `number` |
 | date_value | date | pour `date` ; strictement après le jour du pari si `open_ended` |
-| stake | integer | 0 ≤ `stake` ≤ solde au moment du pari |
+| stake | integer | 1 ≤ `stake` ≤ solde au moment du pari (0 pour les paris « sans mise » faits avant cette règle, gardés tels quels) |
 | rank | integer | rang d'arrivée, ≥ 1, unique par prono |
 | placed_at | timestamptz | heure du serveur |
 | superseded_at, superseded_by_id | | pari remplacé (prono de date « sans fin ») |
