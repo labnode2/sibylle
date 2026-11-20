@@ -66,10 +66,10 @@
   min-width: 0;
 }
 
-/* The book is drawn with room around it: beside the newsroom's card, it takes the card's height,
-   and its right edge ends the line. */
+/* The book's 44 pixels to tap are as tall as the newsroom's card beside it, and reach past the
+   line's end so that the drawing's right edge ends it. */
 .tuto {
-  margin: -8px -2px -8px 0;
+  margin-right: -7px;
 }
 
 .columns,

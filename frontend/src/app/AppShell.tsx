@@ -116,7 +116,7 @@ export function AppShell({ account, newsroom, tuto, issue, reports = 0, unread =
           <>
             <Masthead size="large" />
             <div className={styles.navBar}>
-              <span className={styles.slot}>{tuto}</span>
+              <span className={`${styles.slot} ${styles.tuto}`}>{tuto}</span>
               {nav}
               <span className={styles.slot}>{newsroom}</span>
             </div>

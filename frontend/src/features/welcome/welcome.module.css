@@ -92,21 +92,31 @@
   flex: 1;
 }
 
-/* « Tuto » on la une, « Charte » on « La rédaction »: a pixel-art image, without a word under
-   it. */
+/* « Tuto » on la une, « Charte » on « La rédaction »: a small pixel-art icon, without a word
+   under it, in the middle of 44 pixels to tap. */
 .pictureButton {
   display: inline-flex;
   flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
   padding: 0;
   border: 0;
   background: none;
   cursor: pointer;
 }
 
-/* A drawing of art.ts, 32 pixels square, each pixel shown 2 pixels wide. */
+/* A drawing of art.ts, 32 pixels square, shown as drawn: one pixel of the screen for each of its
+   pixels, sharp on every screen. At the top of the charter's window, twice as large. */
 .picture {
   display: block;
   flex: none;
+  width: 32px;
+  height: 32px;
+}
+
+.art > .picture {
   width: 64px;
   height: 64px;
 }

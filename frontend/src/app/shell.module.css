@@ -115,6 +115,12 @@
   min-height: var(--tap);
 }
 
+/* « Tuto », left of la une's navigation: the book's 44 pixels to tap reach past the page's edge,
+   so that the drawing starts on it. */
+.tuto {
+  margin-left: -6px;
+}
+
 /* The avatar and the pseudo of the date bar: they open my account's menu below them. */
 .account {
   position: relative;

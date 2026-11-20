@@ -1,10 +1,10 @@
 // « Tuto » and « Charte »: the game's bases (the welcome's steps) and the newsroom's charter, to
 // read again at any time. « Tuto » is on la une, at the left of the navigation on a computer and
 // right of the newsroom's card on a phone; « Charte » on « La rédaction », in the newsroom's card,
-// only when the newsroom has a charter. Each is a still pixel-art image (art.ts), the book and the
-// parchment, without a word under it: screen readers say what it opens, and so does the hint of a
-// mouse. The charter opens like the welcome, a card in the middle of a computer's screen, a sheet
-// rising from the bottom of a phone's, its line breaks kept.
+// only when the newsroom has a charter. Each is a small, still pixel-art icon (art.ts), the book
+// and the parchment, without a word under it: screen readers say what it opens, and so does the
+// hint of a mouse. The charter opens like the welcome, a card in the middle of a computer's
+// screen, a sheet rising from the bottom of a phone's, its line breaks kept.
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,12 +14,14 @@ import { ART } from './art';
 import { WelcomeDialog } from './WelcomeDialog';
 import styles from './welcome.module.css';
 
-/** A drawing of art.ts, 64 pixels square; it says nothing to screen readers. */
+/** A drawing of art.ts, 32 pixels square as drawn, 64 at the top of the charter's window; it
+ *  says nothing to screen readers. */
 function Picture({ src }: { src: string }) {
   return <img className={styles.picture} src={src} alt="" />;
 }
 
-/** A drawing that opens something, named by what it opens; `className` places it. */
+/** A drawing that opens something, named by what it opens, in 44 pixels to tap; `className`
+ *  places it. */
 function PictureButton({
   src,
   name,
