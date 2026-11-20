@@ -1,6 +1,7 @@
 // The notification settings: this device's push subscription, then each kind × two channels
-// (push, e-mail); the e-mail ones wait for a confirmed address, since no notification e-mail
-// leaves before. Notification e-mails link here (`#notifications`).
+// (push, e-mail). Only the e-mail ones wait for a confirmed address, since no notification e-mail
+// leaves before; push works without it, from the first day. Notification e-mails link here
+// (`#notifications`).
 import { useEffect, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
@@ -11,14 +12,17 @@ import { CHANNELS, KINDS, useNotificationPrefs, useSetNotificationPref } from '.
 import styles from './notifications.module.css';
 import { usePush } from './usePush';
 
-function PushDevice() {
+/** This device's push, whatever the address: an unconfirmed one changes only what is said of
+ *  the e-mails when this device cannot take push (`device.*_unverified`), since none leaves
+ *  before the confirmation. */
+function PushDevice({ emailVerified }: { emailVerified: boolean }) {
   const { t } = useTranslation('notifications');
   const push = usePush();
   return (
     <div className={styles.device}>
       <span className={styles.label}>{t('device.label')}</span>
       <p className={styles.text} role="status">
-        {t(`device.${push.status}`)}
+        {t(`device.${push.status}`, { context: emailVerified ? undefined : 'unverified' })}
       </p>
       {push.status === 'off' && (
         <Button onClick={() => void push.enable()} disabled={push.busy}>
@@ -34,8 +38,9 @@ function PushDevice() {
   );
 }
 
-/** An unconfirmed address: no notification e-mail before it is confirmed, and the address check
- *  that Keycloak sends again on demand (FR-008). */
+/** An unconfirmed address: no notification e-mail before it is confirmed, push already works,
+ *  and the address check that Keycloak sends again on demand (FR-008). It leaves the device's
+ *  push above as it is. */
 function Unconfirmed() {
   const { t } = useTranslation('notifications');
   const resend = useResendVerification();
@@ -72,7 +77,7 @@ export function NotificationPrefs({ emailVerified }: { emailVerified: boolean })
         {t('title')}
       </h2>
       <p className={styles.text}>{t('intro')}</p>
-      <PushDevice />
+      <PushDevice emailVerified={emailVerified} />
       {!emailVerified && <Unconfirmed />}
       {prefs.data && (
         <table className={styles.table}>

@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 from sqlalchemy import select, update
-from tests.conftest import MakeAccount, MakeMember, MakeOrg, MakePerson, Person
+from tests.conftest import ClientFor, MakeAccount, MakeMember, MakeOrg, MakePerson, Person
 from tests.contract.helpers import notifications
 from tests.contract.test_discussion import write
 from tests.contract.test_pronos import place, publish
@@ -399,6 +399,54 @@ async def test_no_notification_email_without_a_verified_address(
     sender = await send(MemoryPushSender())
     assert emailed(sender) == [cami.account.email]
     assert (await states("new_prono"))[account.id] == "skipped"
+
+
+async def test_an_unverified_address_gets_its_push_but_no_email(
+    make_org: MakeOrg,
+    person: MakePerson,
+    make_account: MakeAccount,
+    make_member: MakeMember,
+    client_for: ClientFor,
+) -> None:
+    """Only the e-mails wait for the address to be confirmed (card #28): a device subscribed by
+    an unconfirmed account, with push switched on for the type, gets the notification at once,
+    and the e-mail follows once the address is confirmed."""
+    org = await make_org()
+    hugo = await person(org, "journalist", "Hugo")
+    account = await make_account("zoe@exemple.fr", verified=False)
+    member = await make_member(org, "reader", account=account, pseudo="Zoé")
+    zoe = Person(account, member, await client_for(account))
+    assert (await zoe.client.get("/api/me")).json()["email_verified"] is False
+    await subscribe(zoe, "telephone-de-zoe")
+    response = await zoe.client.put(
+        "/api/me/notification-prefs",
+        json=[
+            {"type": "new_prono", "channel": "push", "enabled": True},
+            {"type": "new_prono", "channel": "email", "enabled": True},
+        ],
+    )
+    assert response.status_code == 200, response.text
+
+    await publish(hugo.client, str(org.id))
+    push = MemoryPushSender()
+    sender = await send(push)
+    assert emailed(sender) == []
+    [(endpoint, message, _)] = push.sent
+    assert endpoint == FCM + "telephone-de-zoe"
+    assert message["title"] == "Sophia Office · Nouveau prono"
+    [sent] = await notifications("new_prono")
+    assert (sent.account_id, sent.state, sent.done_channels) == (account.id, "sent", ["push"])
+
+    # Confirmed: the e-mails come too, beside the push.
+    async with transaction() as session:
+        await session.execute(
+            update(Account).where(Account.id == account.id).values(email_verified_at=clock.now())
+        )
+    await publish(hugo.client, str(org.id), question="Nice ou Lyon dimanche ?")
+    push = MemoryPushSender()
+    sender = await send(push)
+    assert emailed(sender) == ["zoe@exemple.fr"]
+    assert [endpoint for endpoint, _, _ in push.sent] == [FCM + "telephone-de-zoe"]
 
 
 async def test_a_subscription_the_push_service_forgot_is_removed(

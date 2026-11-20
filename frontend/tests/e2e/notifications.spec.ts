@@ -162,7 +162,12 @@ test('push offered after a bet, then set kind by kind in the settings', async ({
   });
   await expect(settings).toContainText('Les notifications push arrivent sur cet appareil.');
 
-  // Her address is not confirmed yet: the e-mail switches wait, the push ones work at once.
+  // Her address is not confirmed yet: the e-mail switches wait, the push ones work at once, and
+  // the settings say so (card #28).
+  expect((await call(cami, 'GET', '/me')).body.email_verified).toBe(false);
+  await expect(settings).toContainText(
+    'Seuls les e-mails de notification attendent sa confirmation : les notifications push marchent déjà.',
+  );
   await expect(settings.getByRole('switch', { name: 'Nouveau prono par e-mail' })).toBeDisabled();
   const newsByPush = settings.getByRole('switch', { name: 'Nouveau prono par push' });
   await expect(newsByPush).toHaveAttribute('aria-checked', 'true');

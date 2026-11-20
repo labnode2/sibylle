@@ -37,7 +37,7 @@
     "email": "E-mail"
   },
   "switch": "{{kind}} par {{channel}}",
-  "unverified": "Ton adresse n'est pas encore confirmée : aucun e-mail de notification ne part avant.",
+  "unverified": "Ton adresse n'est pas encore confirmée. Seuls les e-mails de notification attendent sa confirmation : les notifications push marchent déjà.",
   "resend": "Renvoyer l'e-mail de confirmation",
   "resent": "L'e-mail de confirmation vient de partir. Son lien est valable 24 heures.",
   "saved": "Préférence de notification enregistrée.",
@@ -50,7 +50,9 @@
     "disable": "Couper sur cet appareil",
     "denied": "Tu as refusé les notifications pour Sibylle : tu peux changer ça dans les réglages de ton navigateur.",
     "unsupported": "Ce navigateur ne reçoit pas les notifications push. Les e-mails arrivent quand même.",
+    "unsupported_unverified": "Ce navigateur ne reçoit pas les notifications push. Les e-mails arriveront une fois ton adresse confirmée.",
     "unavailable": "Les notifications push ne sont pas encore en place sur ce serveur. Les e-mails arrivent quand même.",
+    "unavailable_unverified": "Les notifications push ne sont pas encore en place sur ce serveur. Les e-mails arriveront une fois ton adresse confirmée.",
     "ios-install": "Sur iPhone et iPad (iOS 16.4 ou plus), ajoute d'abord Sibylle à l'écran d'accueil : bouton Partager, puis « Sur l'écran d'accueil ». Ouvre ensuite l'appli depuis son icône pour activer les notifications.",
     "failed": "L'activation n'a pas marché. Réessaie dans un instant.",
     "disableFailed": "Les notifications n'ont pas pu être coupées. Réessaie dans un instant.",
