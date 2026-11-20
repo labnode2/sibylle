@@ -4,7 +4,16 @@
   "previous": "Précédent",
   "next": "Suivant",
   "done": "C'est parti !",
-  "replay": "Revoir les bases du jeu",
+  "readAgain": {
+    "tuto": "Tuto",
+    "tutoName": "Tuto : revoir les bases du jeu",
+    "charter": "Charte",
+    "charterName": "Charte : relire la charte de la rédaction"
+  },
+  "charter": {
+    "title": "La charte de la rédaction",
+    "close": "Fermer"
+  },
   "intro": {
     "title": "Bienvenue dans {{org}} !",
     "text": "Sibylle, c'est la gazette des pronostics entre collègues et ami·es : on parie sur ce qui va arriver (un match, une date, un chiffre) et on voit qui avait vu juste. Voici l'essentiel en quelques étapes."

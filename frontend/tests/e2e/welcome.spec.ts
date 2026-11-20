@@ -1,5 +1,6 @@
 // The welcome pop-up of the first newsroom (on a phone, a sheet from the bottom; on a computer, a
-// card in the middle): the game in six steps, closed for good, opened again from « La rédaction ».
+// card in the middle): the game in six steps, closed for good, opened again by « Tuto » on la une
+// and on « La rédaction », beside « Charte », the newsroom's charter (card #27).
 import { expect, test } from '@playwright/test';
 
 import { call, newPerson } from './helpers';
@@ -30,9 +31,27 @@ test('the first newsroom explains the game once, then on demand', async ({ brows
   await expect(ines.getByRole('heading', { name: 'La une de Sophia Office' })).toBeVisible();
   await expect(welcome).toBeHidden();
 
-  // ...unless asked for, from « La rédaction ».
+  // ...unless asked for: « Tuto » on la une, beside « Charte », the newsroom's charter with its
+  // lines as written...
+  const tuto = ines.getByRole('button', { name: 'Tuto : revoir les bases du jeu' });
+  await tuto.click();
+  await expect(welcome).toHaveAccessibleName('Bienvenue dans Sophia Office\u00a0!');
+  await welcome.getByRole('button', { name: 'Passer' }).click();
+  await expect(welcome).toBeHidden();
+  await ines.getByRole('button', { name: 'Charte : relire la charte de la rédaction' }).click();
+  await expect(welcome).toHaveAccessibleName('La charte de la rédaction');
+  const charter = welcome.getByText(/^Sibylle se joue entre collègues/);
+  await expect(charter).toContainText("En rejoignant la rédaction, je m'engage à :");
+  await expect(charter).toHaveCSS('white-space', 'pre-line');
+  await welcome.getByRole('button', { name: 'Fermer' }).click();
+  await expect(welcome).toBeHidden();
+
+  // ...and the same on « La rédaction ».
   await ines.getByRole('link', { name: /^(LA )?RÉDACTION(,|$)/ }).click();
-  await ines.getByRole('button', { name: 'Revoir les bases du jeu' }).click();
+  await expect(
+    ines.getByRole('button', { name: 'Charte : relire la charte de la rédaction' }),
+  ).toBeVisible();
+  await tuto.click();
   await expect(welcome).toHaveAccessibleName('Bienvenue dans Sophia Office\u00a0!');
   await welcome.getByRole('button', { name: 'Passer' }).click();
   await expect(welcome).toBeHidden();

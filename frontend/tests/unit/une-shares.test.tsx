@@ -22,6 +22,8 @@ vi.mock('../../src/features/orgs/api', async (importOriginal) => ({
       id: 'org',
       title: 'La Gazette',
       edition_number: 305,
+      // Read by « Charte » under the editor's note (card #27).
+      charter: '',
       my_membership: { id: 'me', role: 'reader', balance: 100, gold: 100, coins: 0 },
     },
   }),

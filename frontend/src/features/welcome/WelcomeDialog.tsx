@@ -1,8 +1,8 @@
 // The welcome pop-up, shown in the person's first newsroom: the game in a few steps (pronos,
 // laurels, coins, the leaderboard), then what their role lets them do. Closed whichever way, it
-// does not come back (`welcomed`, on every device); « Revoir les bases du jeu » on « La
-// rédaction » opens it again. A card in the middle of a computer's screen, a sheet rising from the
-// bottom of a phone's.
+// does not come back (`welcomed`, on every device); « Tuto », on la une and on « La rédaction »
+// (ReadAgain.tsx), opens it again. A card in the middle of a computer's screen, a sheet rising
+// from the bottom of a phone's.
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 

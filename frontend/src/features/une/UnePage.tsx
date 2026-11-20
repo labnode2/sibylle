@@ -4,7 +4,8 @@
 // other briefs. On a computer the title and the navigation come from the frame; the prono runs
 // large beside the ranking and the games, and « En bref » closes the page. The blocks keep the
 // spec's order (FR-080): pronos, what waits for a result (journalists), results, ranking, games,
-// the editor's note. A week without a game (US12) has no games block at all. In a browser's tab,
+// the editor's note, then « Tuto » and « Charte » to read the game's bases and the newsroom's
+// charter again. A week without a game (US12) has no games block at all. In a browser's tab,
 // « Installer l'appli » sits beside the newsroom's card.
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +33,7 @@ import { NewsroomSwitcher } from '../orgs/NewsroomPage';
 import { useOrg } from '../orgs/api';
 import type { PronoSummary } from '../pronos/api';
 import { ProposalsPanel } from '../pronos/ProposalsPanel';
+import { ReadAgain } from '../welcome/ReadAgain';
 import { useFrontPage, type FrontPage, type FrontProno, type LatestResult } from './api';
 import styles from './une.module.css';
 
@@ -374,6 +376,8 @@ export function UnePage() {
                   <blockquote className={styles.note}>{front.editor_note}</blockquote>
                 </section>
               )}
+              {/* Under the editor's note, or in its place: the tuto and the charter. */}
+              <ReadAgain org={org.data} />
             </aside>
           </div>
 

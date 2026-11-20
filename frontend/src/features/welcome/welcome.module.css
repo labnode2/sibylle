@@ -51,6 +51,17 @@
   font-style: italic;
 }
 
+/* The charter as the editor wrote it: its line breaks kept, read from the left. */
+.charter {
+  align-self: stretch;
+  max-width: 440px;
+  margin: 4px auto 0;
+  font: 400 15px/1.5 var(--font-text);
+  text-align: left;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
 .dots {
   display: flex;
   justify-content: center;
@@ -79,6 +90,33 @@
 
 .actions > * {
   flex: 1;
+}
+
+/* « Tuto » and « Charte », under the editor's note on la une and on « La rédaction »: two small
+   outlined buttons, a pixel icon and a short word. */
+.readAgain {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.readAgainButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 0 14px 0 10px;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.readAgainButton:hover {
+  background: var(--grey);
 }
 
 @media (min-width: 1024px) {

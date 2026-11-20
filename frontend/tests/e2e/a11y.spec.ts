@@ -1,8 +1,9 @@
-// T147, principle VI: the main pages of the app, la une, a prono, the leaderboard, the press card,
-// the newsroom's settings and the account's preferences, have no WCAG 2.2 A or AA violation that
-// axe-core can find, in the light and the dark theme, on a phone (390 px) and on a computer
-// (1 280 px), and reflow without scrolling sideways (1.4.10), which axe-core does not check. So
-// does the choice an invitation link offers without a session (card #26).
+// T147, principle VI: the main pages of the app, la une, a prono, the leaderboard, « La
+// rédaction », the press card, the newsroom's settings and the account's preferences, have no
+// WCAG 2.2 A or AA violation that axe-core can find, in the light and the dark theme, on a phone
+// (390 px) and on a computer (1 280 px), and reflow without scrolling sideways (1.4.10), which
+// axe-core does not check. So do the newsroom's charter, open from la une (card #27), and the
+// choice an invitation link offers without a session (card #26).
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
@@ -85,6 +86,7 @@ test('the main pages meet WCAG 2.2 AA in both themes', async ({ browser }, testI
     `/o/${orgId}`,
     `/o/${orgId}/pronos/${prono.id}`,
     `/o/${orgId}/classement`,
+    `/o/${orgId}/redaction`,
     `/o/${orgId}/profil`,
     `/o/${orgId}/reglages`,
     `/o/${orgId}/reglages/membres`,
@@ -101,6 +103,15 @@ test('the main pages meet WCAG 2.2 AA in both themes', async ({ browser }, testI
       const broken = [...(await violations(ines)), ...(await overflow(ines))];
       if (broken.length > 0) found[`${theme} ${viewport.width}px ${path}`] = broken;
     }
+    // The newsroom's charter, open from la une: the window itself is checked.
+    await visit(ines, `/o/${orgId}`);
+    await ines.getByRole('button', { name: 'Charte : relire la charte de la rédaction' }).click();
+    const charter = ines.getByRole('dialog', { name: 'La charte de la rédaction' });
+    await expect(charter).toBeVisible();
+    const inCharter = await violations(ines, 'dialog[open]');
+    if (inCharter.length > 0) found[`${theme} ${viewport.width}px charter`] = inCharter;
+    await charter.getByRole('button', { name: 'Fermer' }).click();
+    await expect(charter).toBeHidden();
     // On a computer, my account's menu, open under my avatar on la une. Open, it covers the
     // newsroom's card below (a click there closes it first): the menu itself is checked.
     if (testInfo.project.name === 'desktop') {

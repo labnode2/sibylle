@@ -1,21 +1,21 @@
 // « La rédaction », a tab of the newsroom (FR-097): the newsroom's card with its members and
 // editors, and for the editor the invitations, the access code and the settings; then every
 // member with their role and their chain of wins, the editors first, each line opening their
-// press card. The newsroom's small card, in the navigation on a computer and on la une on a
-// phone, opens a menu where it is: the account's newsrooms, then « Rejoindre ou créer une
-// rédaction ».
+// press card; then « Tuto » and « Charte », as on la une. The newsroom's small card, in the
+// navigation on a computer and on la une on a phone, opens a menu where it is: the account's
+// newsrooms, then « Rejoindre ou créer une rédaction ».
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
 import type { Org } from '../../api/types';
-import { Button, Chip, CountBadge, countedName, Icon } from '../../ui/components';
+import { Chip, CountBadge, countedName, Icon } from '../../ui/components';
 import { Streak } from '../../ui/Flame';
 import { FramedAvatar } from '../../ui/FramedAvatar';
 import { PixelImage } from '../../ui/PixelImage';
 import { useMembers, useReports, type Role } from '../admin/api';
 import { useMe } from '../auth/api';
-import { WelcomeDialog } from '../welcome/WelcomeDialog';
+import { ReadAgain } from '../welcome/ReadAgain';
 import { useOrg } from './api';
 import styles from './newsroom.module.css';
 
@@ -187,7 +187,6 @@ export function NewsroomPage() {
   const { orgId = '' } = useParams();
   const org = useOrg(orgId);
   const members = useMembers(orgId);
-  const [replay, setReplay] = useState(false);
   if (!org.data || !members.data) return <p role="status">{t('common:shell.loading')}</p>;
   const me = org.data.my_membership.id;
   const sorted = [...members.data].sort(
@@ -232,16 +231,7 @@ export function NewsroomPage() {
         </ul>
       </section>
 
-      <Button variant="link" onClick={() => setReplay(true)}>
-        {t('welcome:replay')}
-      </Button>
-      {replay && (
-        <WelcomeDialog
-          org={org.data.title}
-          role={org.data.my_membership.role}
-          onClose={() => setReplay(false)}
-        />
-      )}
+      <ReadAgain org={org.data} />
     </div>
   );
 }
