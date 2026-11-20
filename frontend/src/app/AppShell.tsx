@@ -1,7 +1,8 @@
 // The frame of a newsroom's pages (canvas pages « Mobile » and « Ordinateur »). On a phone: the
 // page itself, then four tabs at the bottom; only la une shows the newspaper's title, the other
 // pages a top line of their own. On a computer: the date bar, then the large title and the
-// navigation on la une, or the title in one line with the navigation on the other pages.
+// navigation on la une, « Tuto » at its left, or the title in one line with the navigation on the
+// other pages.
 import { useSyncExternalStore, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useMatch, useMatches, useParams } from 'react-router';
@@ -43,6 +44,8 @@ export type ShellSlots = {
   account?: ReactNode;
   /** Right side of the desktop navigation (the newsroom's small card, to change newsroom). */
   newsroom?: ReactNode;
+  /** Left side of la une's desktop navigation (« Tuto », to read the game's bases again). */
+  tuto?: ReactNode;
   /** « N° 305 »: the day of the newsroom's life, before the date. */
   issue?: number;
   /** For the editor, the open reports, counted beside « La rédaction ». */
@@ -55,7 +58,7 @@ export type ShellSlots = {
 /** A route's `handle`: `bare` pages (an editor, a form with its own header) have no tabs. */
 export type RouteHandle = { bare?: boolean };
 
-export function AppShell({ account, newsroom, issue, reports = 0, unread = 0 }: ShellSlots) {
+export function AppShell({ account, newsroom, tuto, issue, reports = 0, unread = 0 }: ShellSlots) {
   const { t } = useTranslation();
   const { orgId = '' } = useParams();
   const base = `/o/${orgId}`;
@@ -113,7 +116,7 @@ export function AppShell({ account, newsroom, issue, reports = 0, unread = 0 }: 
           <>
             <Masthead size="large" />
             <div className={styles.navBar}>
-              <span />
+              <span className={styles.slot}>{tuto}</span>
               {nav}
               <span className={styles.slot}>{newsroom}</span>
             </div>

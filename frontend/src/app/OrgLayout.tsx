@@ -1,8 +1,8 @@
 // A newsroom's frame: loads it, then fills the shell's desktop slots (« Installer l'appli » in a
 // browser's tab, laurels and coins, my avatar and pseudo, which open my account's menu, the
-// newsroom's small card), and shows the good news of Monday's coins, then the installed app's
-// offer of notifications. When the editor deletes the newsroom, everyone on its pages goes back
-// home.
+// newsroom's small card, « Tuto » on la une), and shows the good news of Monday's coins, then the
+// installed app's offer of notifications. When the editor deletes the newsroom, everyone on its
+// pages goes back home.
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate, useParams } from 'react-router';
@@ -16,6 +16,7 @@ import { WeeklyCoinsDialog } from '../features/coins/WeeklyCoinsDialog';
 import { InstallButton } from '../features/install/InstallButton';
 import { unreadKey, useBubbleEvents, useUnread } from '../features/notifications/api';
 import { InstalledPushDialog } from '../features/notifications/InstalledPushDialog';
+import { TutoButton } from '../features/welcome/ReadAgain';
 import { WelcomeDialog } from '../features/welcome/WelcomeDialog';
 import { orgKey, useOrg } from '../features/orgs/api';
 import { pronoKey } from '../features/pronos/api';
@@ -111,6 +112,7 @@ export function OrgLayout() {
         }
         issue={org.data.edition_number}
         newsroom={<NewsroomSwitcher org={org.data} />}
+        tuto={<TutoButton org={org.data} />}
         unread={unread.data?.total ?? 0}
         reports={me.role === 'editor' ? (reports.data?.length ?? 0) : 0}
       />

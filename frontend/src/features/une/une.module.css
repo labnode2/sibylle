@@ -45,15 +45,31 @@
   outline-offset: -2px;
 }
 
-/* The newsroom's small card under the title, on a phone: it opens the menu of the newsrooms. */
+/* The newsroom's small card under the title, on a phone: it opens the menu of the newsrooms. In
+   a browser's tab, « Installer l'appli » beside it, or below it when there is no room. « Tuto »
+   ends the card's line. */
 .editionBar {
   display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 4px 0 14px;
+  border-bottom: 1px solid var(--ink);
+}
+
+.editionCards {
+  display: flex;
+  flex: 1;
   flex-wrap: wrap;
   align-items: stretch;
   justify-content: space-between;
   gap: 10px;
-  padding: 4px 0 14px;
-  border-bottom: 1px solid var(--ink);
+  min-width: 0;
+}
+
+/* The book is drawn with room around it: beside the newsroom's card, it takes the card's height,
+   and its right edge ends the line. */
+.tuto {
+  margin: -8px -2px -8px 0;
 }
 
 .columns,

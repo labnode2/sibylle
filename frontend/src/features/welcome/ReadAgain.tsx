@@ -1,9 +1,10 @@
 // « Tuto » and « Charte »: the game's bases (the welcome's steps) and the newsroom's charter, to
-// read again at any time, under the editor's note on la une and on « La rédaction ». Two still
-// pixel-art images (art.ts), the book and the parchment, side by side in the middle, without a
-// word under them: screen readers say what each one opens. « Charte » only when the newsroom has
-// a charter. The charter opens like the welcome, a card in the middle of a computer's screen, a
-// sheet rising from the bottom of a phone's, its line breaks kept.
+// read again at any time. « Tuto » is on la une, at the left of the navigation on a computer and
+// right of the newsroom's card on a phone; « Charte » on « La rédaction », in the newsroom's card,
+// only when the newsroom has a charter. Each is a still pixel-art image (art.ts), the book and the
+// parchment, without a word under it: screen readers say what it opens, and so does the hint of a
+// mouse. The charter opens like the welcome, a card in the middle of a computer's screen, a sheet
+// rising from the bottom of a phone's, its line breaks kept.
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -16,6 +17,31 @@ import styles from './welcome.module.css';
 /** A drawing of art.ts, 64 pixels square; it says nothing to screen readers. */
 function Picture({ src }: { src: string }) {
   return <img className={styles.picture} src={src} alt="" />;
+}
+
+/** A drawing that opens something, named by what it opens; `className` places it. */
+function PictureButton({
+  src,
+  name,
+  className = '',
+  onClick,
+}: {
+  src: string;
+  name: string;
+  className?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`${styles.pictureButton} ${className}`}
+      aria-label={name}
+      title={name}
+      onClick={onClick}
+    >
+      <Picture src={src} />
+    </button>
+  );
 }
 
 function CharterDialog({
@@ -54,38 +80,44 @@ function CharterDialog({
   );
 }
 
-export function ReadAgain({ org }: { org: Org }) {
+/** « Tuto », the open book: the welcome again, with the newsroom and the member's role. */
+export function TutoButton({ org, className }: { org: Org; className?: string }) {
   const { t } = useTranslation('welcome');
-  const [open, setOpen] = useState<'tuto' | 'charter' | null>(null);
-  const charter = org.charter.trim();
-  const close = () => setOpen(null);
-
+  const [open, setOpen] = useState(false);
   return (
-    <div className={styles.readAgain}>
-      <button
-        type="button"
-        className={styles.readAgainButton}
-        aria-label={t('readAgain.tutoName')}
-        onClick={() => setOpen('tuto')}
-      >
-        <Picture src={ART.tuto} />
-      </button>
-      {charter && (
-        <button
-          type="button"
-          className={styles.readAgainButton}
-          aria-label={t('readAgain.charterName')}
-          onClick={() => setOpen('charter')}
-        >
-          <Picture src={ART.charter} />
-        </button>
+    <>
+      <PictureButton
+        src={ART.tuto}
+        name={t('readAgain.tutoName')}
+        className={className}
+        onClick={() => setOpen(true)}
+      />
+      {open && (
+        <WelcomeDialog
+          org={org.title}
+          role={org.my_membership.role}
+          onClose={() => setOpen(false)}
+        />
       )}
-      {open === 'tuto' && (
-        <WelcomeDialog org={org.title} role={org.my_membership.role} onClose={close} />
-      )}
-      {open === 'charter' && charter && (
-        <CharterDialog org={org.title} charter={charter} onClose={close} />
-      )}
-    </div>
+    </>
+  );
+}
+
+/** « Charte », the parchment: the newsroom's charter as written. Nothing without a charter. */
+export function CharterButton({ org, className }: { org: Org; className?: string }) {
+  const { t } = useTranslation('welcome');
+  const [open, setOpen] = useState(false);
+  const charter = org.charter.trim();
+  if (!charter) return null;
+  return (
+    <>
+      <PictureButton
+        src={ART.charter}
+        name={t('readAgain.charterName')}
+        className={className}
+        onClick={() => setOpen(true)}
+      />
+      {open && <CharterDialog org={org.title} charter={charter} onClose={() => setOpen(false)} />}
+    </>
   );
 }

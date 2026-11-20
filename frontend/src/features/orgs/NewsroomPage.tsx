@@ -1,9 +1,9 @@
 // « La rédaction », a tab of the newsroom (FR-097): the newsroom's card with its members and
-// editors, and for the editor the invitations, the access code and the settings; then every
-// member with their role and their chain of wins, the editors first, each line opening their
-// press card; then « Tuto » and « Charte », as on la une. The newsroom's small card, in the
-// navigation on a computer and on la une on a phone, opens a menu where it is: the account's
-// newsrooms, then « Rejoindre ou créer une rédaction ».
+// editors, « Charte » at their right to read the newsroom's charter again, and for the editor the
+// invitations, the access code and the settings; then every member with their role and their
+// chain of wins, the editors first, each line opening their press card. The newsroom's small
+// card, in the navigation on a computer and on la une on a phone, opens a menu where it is: the
+// account's newsrooms, then « Rejoindre ou créer une rédaction ».
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
@@ -15,7 +15,7 @@ import { FramedAvatar } from '../../ui/FramedAvatar';
 import { PixelImage } from '../../ui/PixelImage';
 import { useMembers, useReports, type Role } from '../admin/api';
 import { useMe } from '../auth/api';
-import { ReadAgain } from '../welcome/ReadAgain';
+import { CharterButton } from '../welcome/ReadAgain';
 import { useOrg } from './api';
 import styles from './newsroom.module.css';
 
@@ -131,7 +131,8 @@ export function NewsroomSwitcher({ org, align = 'end' }: { org: Org; align?: 'st
   );
 }
 
-/** The newsroom's card, then for the editor the ways in and the settings. */
+/** The newsroom's card, with « Charte » right of its name, then for the editor the ways in and
+ *  the settings. */
 function OrgCard({ org, editors }: { org: Org; editors: string[] }) {
   const { t } = useTranslation('orgs');
   const base = `/o/${org.id}`;
@@ -145,12 +146,15 @@ function OrgCard({ org, editors }: { org: Org; editors: string[] }) {
         </span>
       </div>
       <div className={styles.body}>
-        <p className={styles.name}>{org.title}</p>
-        <p className={styles.label}>
-          {t('newsroom.count', { count: org.member_count })}
-          {editors.length > 0 &&
-            ` · ${t('newsroom.editors', { names: editors.join(', ').toUpperCase() })}`}
-        </p>
+        <div className={styles.bodyText}>
+          <p className={styles.name}>{org.title}</p>
+          <p className={styles.label}>
+            {t('newsroom.count', { count: org.member_count })}
+            {editors.length > 0 &&
+              ` · ${t('newsroom.editors', { names: editors.join(', ').toUpperCase() })}`}
+          </p>
+        </div>
+        <CharterButton org={org} className={styles.charter} />
       </div>
       {editor && (
         <>
@@ -230,8 +234,6 @@ export function NewsroomPage() {
           ))}
         </ul>
       </section>
-
-      <ReadAgain org={org.data} />
     </div>
   );
 }

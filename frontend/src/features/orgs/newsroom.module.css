@@ -62,9 +62,23 @@
 
 .body {
   display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 44px 20px 14px;
+}
+
+.bodyText {
+  display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 6px;
-  padding: 44px 20px 14px;
+  min-width: 0;
+}
+
+/* « Charte », the parchment, at the right of the name. It is drawn with room around it: the card
+   keeps the height of its text, and the parchment's right edge lines up with « Inviter ». */
+.charter {
+  margin: -8px -6px -8px 0;
 }
 
 .name {

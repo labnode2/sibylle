@@ -92,18 +92,12 @@
   flex: 1;
 }
 
-/* « Tuto » and « Charte », under the editor's note on la une and on « La rédaction »: two
-   pixel-art images side by side in the middle, without a word under them. */
-.readAgain {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px 32px;
-}
-
-.readAgainButton {
+/* « Tuto » on la une, « Charte » on « La rédaction »: a pixel-art image, without a word under
+   it. */
+.pictureButton {
   display: inline-flex;
-  padding: 4px;
+  flex: none;
+  padding: 0;
   border: 0;
   background: none;
   cursor: pointer;
