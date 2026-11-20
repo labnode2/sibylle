@@ -1,7 +1,8 @@
 // « Tuto » and « Charte » (card #27): the game's bases and the newsroom's charter, to read again
 // at any time, under the editor's note on la une (or in its place) and on « La rédaction », where
-// they replace « Revoir les bases du jeu ». « Tuto » opens the welcome with the newsroom and the
-// member's role; « Charte » the charter, its line breaks kept; no « Charte » without a charter.
+// they replace « Revoir les bases du jeu ». Each is a pixel-art image playing in a loop (art.ts)
+// above its short word. « Tuto » opens the welcome with the newsroom and the member's role;
+// « Charte » the charter, its line breaks kept; no « Charte » without a charter.
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -10,6 +11,7 @@ import '../../src/i18n';
 import { NewsroomPage } from '../../src/features/orgs/NewsroomPage';
 import type { FrontPage } from '../../src/features/une/api';
 import { UnePage } from '../../src/features/une/UnePage';
+import { ART } from '../../src/features/welcome/art';
 
 const CHARTER =
   'On joue pour le plaisir.\nEn rejoignant la rédaction, je m’engage à :\n- respecter les autres ;\n- signaler un résultat erroné.\n\nLa rédaction en chef modère.';
@@ -130,13 +132,28 @@ describe.each([
     expect(charter()).toHaveTextContent('Charte');
   });
 
+  it('draws each as pixel art, the book and the scroll, unseen by screen readers', () => {
+    show(path);
+    for (const [button, art] of [
+      [tuto(), ART.tuto],
+      [charter()!, ART.charter],
+    ] as const) {
+      const image = button.querySelector('img');
+      expect(image).toHaveAttribute('src', art.src);
+      expect(image).toHaveAttribute('alt', '');
+      expect(image?.parentElement).toHaveAttribute('aria-hidden', 'true');
+      expect(image?.style.getPropertyValue('--steps')).toBe(String(art.steps));
+      expect(image?.style.getPropertyValue('--duration')).toBe(`${art.duration}ms`);
+    }
+  });
+
   it('opens the welcome with the newsroom and my role', () => {
     state.role = 'journalist';
     show(path);
     fireEvent.click(tuto());
     const welcome = screen.getByRole('dialog', { name: 'Bienvenue dans La Gazette !' });
-    expect(within(welcome).getByText('ÉTAPE 1 SUR 6')).toBeVisible();
-    for (let step = 1; step < 6; step += 1) {
+    expect(within(welcome).getByText('ÉTAPE 1 SUR 5')).toBeVisible();
+    for (let step = 1; step < 5; step += 1) {
       fireEvent.click(within(welcome).getByRole('button', { name: 'Suivant' }));
     }
     expect(within(welcome).getByRole('heading', { name: 'Tu tiens la plume' })).toBeVisible();
@@ -149,6 +166,8 @@ describe.each([
     fireEvent.click(charter()!);
     const dialog = screen.getByRole('dialog', { name: 'La charte de la rédaction' });
     expect(within(dialog).getByText('LA GAZETTE')).toBeVisible();
+    // The scroll on top, as on the button.
+    expect(dialog.querySelector('img')).toHaveAttribute('src', ART.charter.src);
     // The text as written, each line kept (white-space: pre-line).
     expect(
       within(dialog).getByText(

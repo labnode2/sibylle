@@ -92,31 +92,61 @@
   flex: 1;
 }
 
-/* « Tuto » and « Charte », under the editor's note on la une and on « La rédaction »: two small
-   outlined buttons, a pixel icon and a short word. */
+/* « Tuto » and « Charte », under the editor's note on la une and on « La rédaction »: two
+   pixel-art images side by side in the middle, each above its short word. */
 .readAgain {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 12px;
+  justify-content: center;
+  gap: 8px 32px;
 }
 
 .readAgainButton {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  min-height: var(--tap);
-  padding: 0 14px 0 10px;
-  border: 2px solid var(--ink);
-  background: var(--surface);
+  gap: 6px;
+  padding: 4px 8px;
+  border: 0;
+  background: none;
   color: var(--ink);
-  font: 700 12px/1 var(--font-mono);
+  font: 700 11px/1 var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
 }
 
-.readAgainButton:hover {
-  background: var(--grey);
+@media (hover: hover) {
+  .readAgainButton:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+/* A drawing of art.ts: its strip slides by one step at a time behind a window of one step, in a
+   loop (.playing), like a GIF. Without animations (.reduce-motion, prefers-reduced-motion), the
+   first step, its still image, stays. */
+.gif {
+  display: block;
+  flex: none;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+}
+
+.gif img {
+  display: block;
+  height: 100%;
+}
+
+.playing img {
+  animation: play var(--duration) steps(var(--steps)) infinite;
+}
+
+@keyframes play {
+  to {
+    transform: translateX(-100%);
+  }
 }
 
 @media (min-width: 1024px) {

@@ -1,6 +1,7 @@
 // The quick reactions as 16 × 16 pixel art, drawn from the five GIFs Emile chose (research.md
 // J17). A drawing is 16 rows of 16 letters, one per pixel ('.' is transparent); `sequence` gives
 // the drawing of each step, all of them `step` ms long, and its first step is the still emoji.
+import type { Drawing } from '../pixelStrip';
 
 /** The colours of the drawings, one letter each. */
 export const COLORS = {
@@ -20,13 +21,7 @@ export const COLORS = {
   B: '#6ec3ff', // sweat
 } as const;
 
-export type Color = keyof typeof COLORS;
-
-export type Emoji = {
-  frames: readonly (readonly string[])[];
-  sequence: readonly number[];
-  step: number;
-};
+export type Emoji = Drawing;
 
 /** In display order. */
 export const EMOJIS = {

@@ -1,5 +1,6 @@
-// The welcome pop-up of the first newsroom: the game in steps, the last one about the person's
-// role, closed by « Passer » as by « C'est parti ! ».
+// The welcome pop-up of the first newsroom: the game in five steps, the last one about the
+// person's role, closed by « Passer » as by « C'est parti ! ». The leaderboard has no step of its
+// own (card #27).
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -32,7 +33,7 @@ describe('WelcomeDialog', () => {
     expect(
       screen.getByRole('dialog', { name: 'Bienvenue dans Sophia Office\u00a0!' }),
     ).toBeVisible();
-    expect(screen.getByText('ÉTAPE 1 SUR 6')).toBeVisible();
+    expect(screen.getByText('ÉTAPE 1 SUR 5')).toBeVisible();
 
     next();
     expect(screen.getByRole('heading', { name: 'Un prono, une réponse' })).toBeVisible();
@@ -41,9 +42,19 @@ describe('WelcomeDialog', () => {
       screen.getByRole('heading', { name: 'Bienvenue dans Sophia Office\u00a0!' }),
     ).toBeVisible();
 
-    for (let step = 1; step < 6; step += 1) next();
-    expect(screen.getByText('ÉTAPE 6 SUR 6')).toBeVisible();
-    expect(screen.getByRole('heading', { name: 'À toi de lancer la rédaction' })).toBeVisible();
+    const titles = [screen.getByRole('heading').textContent];
+    for (let step = 1; step < 5; step += 1) {
+      next();
+      titles.push(screen.getByRole('heading').textContent);
+    }
+    expect(titles).toEqual([
+      'Bienvenue dans Sophia Office\u00a0!',
+      'Un prono, une réponse',
+      'Des lauriers verts à miser',
+      'Des pièces pour ta carte de presse',
+      'À toi de lancer la rédaction',
+    ]);
+    expect(screen.getByText('ÉTAPE 5 SUR 5')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Suivant' })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: "C'est parti\u00a0!" }));
@@ -52,7 +63,7 @@ describe('WelcomeDialog', () => {
 
   it('ends on proposing a prono for a reader', () => {
     render(<WelcomeDialog org="Sophia Office" role="reader" onClose={vi.fn()} />);
-    for (let step = 1; step < 6; step += 1) next();
+    for (let step = 1; step < 5; step += 1) next();
     expect(screen.getByRole('heading', { name: 'Une idée de prono\u00a0?' })).toBeVisible();
   });
 

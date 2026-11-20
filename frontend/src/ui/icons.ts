@@ -34,11 +34,6 @@ export const ICONS = {
   // A slideshow's play and pause.
   play: 'M2 1h2v1h-2zM2 2h4v1h-4zM2 3h6v1h-6zM2 4h8v1h-8zM2 5h9v2h-9zM2 7h8v1h-8zM2 8h6v1h-6zM2 9h4v1h-4zM2 10h2v1h-2z',
   pause: 'M2 1h3v10h-3zM7 1h3v10h-3z',
-  // « Tuto », the game's bases read again: an open book, two lines on each page.
-  book: 'M1 1h2v1h-2zM9 1h2v1h-2zM0 2h1v1h-1zM3 2h2v1h-2zM7 2h2v1h-2zM11 2h1v1h-1zM0 3h1v1h-1zM5 3h2v1h-2zM11 3h1v1h-1zM0 4h1v1h-1zM2 4h2v1h-2zM5 4h2v1h-2zM8 4h2v1h-2zM11 4h1v1h-1zM0 5h1v1h-1zM5 5h2v1h-2zM11 5h1v1h-1zM0 6h1v1h-1zM2 6h2v1h-2zM5 6h2v1h-2zM8 6h2v1h-2zM11 6h1v1h-1zM0 7h1v1h-1zM5 7h2v1h-2zM11 7h1v1h-1zM0 8h1v1h-1zM5 8h2v1h-2zM11 8h1v1h-1zM0 9h3v1h-3zM5 9h2v1h-2zM9 9h3v1h-3zM3 10h6v1h-6z',
-  // « Charte », the newsroom's charter: a parchment between its two rollers.
-  scroll:
-    'M1 0h10v1h-10zM0 1h1v1h-1zM2 1h1v1h-1zM9 1h1v1h-1zM11 1h1v1h-1zM1 2h10v1h-10zM2 3h1v1h-1zM9 3h1v1h-1zM2 4h1v1h-1zM4 4h4v1h-4zM9 4h1v1h-1zM2 5h1v1h-1zM9 5h1v1h-1zM2 6h1v1h-1zM4 6h4v1h-4zM9 6h1v1h-1zM2 7h1v1h-1zM9 7h1v1h-1zM2 8h1v1h-1zM9 8h1v1h-1zM1 9h10v1h-10zM0 10h1v1h-1zM2 10h1v1h-1zM9 10h1v1h-1zM11 10h1v1h-1zM1 11h10v1h-10z',
 } as const;
 
 export type IconName = keyof typeof ICONS;

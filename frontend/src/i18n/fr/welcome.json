@@ -32,10 +32,6 @@
     "title": "Des pièces pour ta carte de presse",
     "text": "Avec tes pièces, tu achètes dans la collection des cadres, des animations et des couleurs pour ton avatar. Un achat ne touche ni à tes lauriers ni à ton classement."
   },
-  "leaderboard": {
-    "title": "Le classement et les saisons",
-    "text": "Le classement compare tes lauriers verts, sur la saison ou depuis toujours, et les pronos gagnés, sur le mois, la saison ou depuis toujours. Une fois tous les paris de la saison réglés, chaque joueur reçoit une boule de cristal gravée de ses lauriers en or, le podium un cadre doré, et tout le monde repart au solde de départ."
-  },
   "role": {
     "editor": {
       "title": "À toi de lancer la rédaction",

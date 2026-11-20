@@ -250,6 +250,14 @@ Choix du 7 novembre 2026, à la demande d'Emile (spec FR-102). Quand l'appli ins
 
 Écartés : demander l'autorisation du navigateur dès l'ouverture, sans clic (Safari et Firefox ne la demandent qu'après un geste, et un refus du navigateur est définitif : seuls ses réglages le changent) ; reposer la question à chaque ouverture tant que les notifications sont coupées (une fenêtre de plus à chaque lancement) ; la proposer aussi dans un onglet (les notifications push passent par l'appli installée, FR-100).
 
+### J19. « Tuto » et « Charte » en pixel art animé
+
+Choix du 20 novembre 2026, à la demande d'Emile (carte #27) : « remplacer les boutons par des gif en pixel art pour la charte et les règles », et les centrer. Sous le mot de la rédaction en chef de la une (ou à sa place) et en bas de « La rédaction », « Tuto » et « Charte » ne sont plus deux boutons encadrés avec une icône de 12 × 12 : ce sont deux dessins de 16 × 16, montrés à 64 pixels au-dessus de leur mot, côte à côte au milieu de leur colonne. Le livre ouvert tourne une page, puis une autre qui le ramène à ses premières pages ; la charte, un parchemin entre deux rouleaux aux bouts dorés, se roule jusqu'en son milieu, se rouvre sans son sceau, puis le sceau rouge s'y pose. Les deux boucles durent 4,8 s et se répondent : le livre ne bouge jamais en même temps que le parchemin. Comme un GIF, elles tournent sans fin, et comme la flamme (J8), « couper les animations » les arrête : chacun reste alors sur sa première image, le livre ouvert et la charte scellée. Dans la fenêtre de la charte, le parchemin reste immobile, pour lire en paix.
+
+Les dessins sont du texte dans `frontend/src/features/welcome/art.ts`, une lettre par pixel comme les réactions (J17), et passent par la même bande SVG, désormais partagée (`frontend/src/ui/pixelStrip.ts`) : rien à télécharger (principe I), net à toutes les tailles. À la même demande, la fenêtre de bienvenue perd son étape sur le classement et les saisons : le jeu y tient en cinq étapes, la dernière sur le rôle.
+
+Écartés : de vrais fichiers GIF (rien ne les arrête sous « couper les animations », comme en J17) ; ne les animer qu'au survol, comme les réactions (sur un téléphone, rien ne bougerait jamais) ; les jouer quelques secondes à l'ouverture de la page puis les arrêter (sur un téléphone, en bas de la une, l'animation serait finie avant qu'on y arrive).
+
 ## Contenus à produire pendant l'implémentation
 
 Ils ne bloquent pas la conception : la charte par défaut, les textes des e-mails, le jeu de réactions rapides (cinq emoji, J17), le catalogue de la collection et ses prix (couleurs, cadres ; les boules se gagnent), les codes secrets, les modèles d'avatars et les fonds de carte d'organisation.
