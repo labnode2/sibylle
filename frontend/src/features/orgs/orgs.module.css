@@ -155,6 +155,23 @@
   font-weight: 600;
 }
 
+/* An invitation link without a session: the sentence, then the two ways in, centered; one under
+   the other on a phone, side by side and as wide on a computer. */
+.invited {
+  text-align: center;
+}
+
+.ways {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 1024px) {
+  .ways {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 /* The welcome page's newsrooms, under « Créer une rédaction »: one line each, to go back. */
 .switcher {
   display: flex;

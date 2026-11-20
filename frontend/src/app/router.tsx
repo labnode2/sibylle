@@ -1,5 +1,5 @@
-// Routes: public pages (the ways to Keycloak's pages), pages behind a session, and a
-// newsroom's pages under /o/:orgId. Each user story adds its screens here.
+// Routes: public pages (the ways to Keycloak's pages), invitation links, pages behind a session,
+// and a newsroom's pages under /o/:orgId. Each user story adds its screens here.
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -10,6 +10,7 @@ import {
   Outlet,
   useLocation,
   useRouteError,
+  type RouteObject,
 } from 'react-router';
 
 import {
@@ -22,7 +23,13 @@ import {
 } from '../features/auth/AuthPages';
 import { RequireAuth } from '../features/auth/RequireAuth';
 import { NewsroomPage } from '../features/orgs/NewsroomPage';
-import { CreateOrgPage, HomeRedirect, JoinPage, StartPage } from '../features/orgs/OrgPages';
+import {
+  CreateOrgPage,
+  HomeRedirect,
+  InvitedPage,
+  JoinPage,
+  StartPage,
+} from '../features/orgs/OrgPages';
 import { AdminLayout } from '../features/admin/AdminLayout';
 import { GameSchedulePage } from '../features/admin/GameSchedulePage';
 import { MembersPage } from '../features/admin/MembersPage';
@@ -106,7 +113,7 @@ function RouteError() {
   );
 }
 
-export const router = createBrowserRouter([
+export const routes: RouteObject[] = [
   {
     element: <PublicPage />,
     errorElement: <RouteError />,
@@ -126,6 +133,30 @@ export const router = createBrowserRouter([
   // A press card its member made public (US15): without an account and without the app's
   // frame, so that another site can show it in an iframe.
   { path: '/carte/:token', element: <PublicCardPage />, errorElement: <RouteError /> },
+  // An invitation link, with its token or its code: signed in, the newsroom and the profile to
+  // fill in; without a session, first the choice between creating an account and signing in,
+  // rather than Keycloak's sign-in page at once. Both come back to the link.
+  {
+    element: (
+      <RequireAuth
+        signedOut={
+          <PublicPage>
+            <InvitedPage />
+          </PublicPage>
+        }
+      />
+    ),
+    errorElement: <RouteError />,
+    children: [
+      {
+        element: <PublicPage signedIn />,
+        children: [
+          { path: '/rejoindre', element: <JoinPage /> },
+          { path: '/rejoindre/:token', element: <JoinPage /> },
+        ],
+      },
+    ],
+  },
   {
     element: <RequireAuth />,
     errorElement: <RouteError />,
@@ -136,8 +167,6 @@ export const router = createBrowserRouter([
         children: [
           { path: '/bienvenue', element: <StartPage /> },
           { path: '/creer', element: <CreateOrgPage /> },
-          { path: '/rejoindre', element: <JoinPage /> },
-          { path: '/rejoindre/:token', element: <JoinPage /> },
           // The former list of newsrooms: they are on the welcome page now.
           { path: '/redactions', element: <Navigate to="/bienvenue" replace /> },
           { path: '/compte', element: <SettingsPage /> },
@@ -185,4 +214,6 @@ export const router = createBrowserRouter([
       </PublicPage>
     ),
   },
-]);
+];
+
+export const router = createBrowserRouter(routes);

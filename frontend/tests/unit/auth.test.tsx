@@ -76,6 +76,34 @@ describe('RequireAuth', () => {
     expect(screen.getByText('Les pronos')).toBeInTheDocument();
     expect(go).not.toHaveBeenCalled();
   });
+
+  describe('given a page for those signed out (an invitation link)', () => {
+    const invitation = (
+      <Route element={<RequireAuth signedOut={<p>Créer un compte ou se connecter</p>} />}>
+        <Route path="/rejoindre/:token" element={<p>Le profil à remplir</p>} />
+      </Route>
+    );
+
+    it('shows it to a visitor without a session, instead of leaving for Keycloak', () => {
+      me.current = { isPending: false, error: new ApiError(401, undefined), data: undefined };
+      open('/rejoindre/abc', invitation);
+      expect(screen.getByText('Créer un compte ou se connecter')).toBeVisible();
+      expect(screen.queryByText('Le profil à remplir')).toBeNull();
+      expect(go).not.toHaveBeenCalled();
+    });
+
+    it('shows the page itself to a signed-in account', () => {
+      me.current = {
+        isPending: false,
+        error: null,
+        data: { theme: 'light', reduce_motion: false },
+      };
+      open('/rejoindre/abc', invitation);
+      expect(screen.getByText('Le profil à remplir')).toBeVisible();
+      expect(screen.queryByText('Créer un compte ou se connecter')).toBeNull();
+      expect(go).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe('the sign-in pages', () => {

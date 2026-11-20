@@ -86,7 +86,8 @@ export async function backOnSibylle(page: Page, testInfo: TestInfo): Promise<voi
 
 /** A fresh browser context (its own cookies), signed up as a new account on the sign-up page of
  *  the local Keycloak (`make keycloak`), and back on `startAt`, signed in. A page behind a
- *  session sends the visitor to Keycloak's sign-in page, which leads to the sign-up. */
+ *  session sends the visitor to Keycloak's sign-in page, which leads to the sign-up; an
+ *  invitation link offers « Créer un compte » itself. */
 export async function newPerson(
   browser: Browser,
   testInfo: TestInfo,

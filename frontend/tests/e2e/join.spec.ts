@@ -1,16 +1,21 @@
 // Quickstart V1 (points 1, 2, 4 and 5): sign up, create a newsroom, invite with a 2-place link,
-// join, and never see another member's private data.
+// join, and never see another member's private data. Without a session, an invitation link first
+// offers to create an account or to sign in, then comes back to itself (card #26).
 import { expect, test, type Page } from '@playwright/test';
 
 import {
+  backOnSibylle,
   call,
   createNewsroom,
+  emailOf,
+  invitationPath,
   joinWith,
   KEYCLOAK,
   newPerson,
   notes,
   openSettings,
   orgIdOf,
+  PASSWORD,
 } from './helpers';
 
 const PRIVATE_KEYS = ['first_name', 'last_name', 'email', 'keycloak_id'];
@@ -104,6 +109,46 @@ test('a link or an e-mail lets people in with the role the editor chose', async 
   await expect(hugo.getByRole('heading', { name: /^La une de / })).toBeVisible();
   const detail = await call(hugo, 'GET', `/orgs/${orgId}`);
   expect(detail.body.my_membership.role).toBe('journalist');
+});
+
+test('without a session, an invitation link offers to create an account or to sign in, and comes back to itself', async ({
+  browser,
+}, testInfo) => {
+  const ines = await newPerson(browser, testInfo, 'Inès');
+  await createNewsroom(ines, 'Sophia Office', 'Inès');
+  const orgId = orgIdOf(ines);
+  const path = await invitationPath(ines);
+  const code: string = (await call(ines, 'GET', `/orgs/${orgId}`)).body.access_code;
+
+  // Léo has an account, but no session in this browser: the link waits for him to choose, rather
+  // than leaving for Keycloak's sign-in page at once.
+  const leo = await newPerson(browser, testInfo, 'Léo');
+  const elsewhere = await (await browser.newContext({ ...testInfo.project.use })).newPage();
+  await elsewhere.goto(path);
+  await expect(
+    elsewhere.getByRole('heading', { name: 'Tu es invité·e à rejoindre une rédaction de Sibylle' }),
+  ).toBeVisible();
+  await expect(elsewhere.getByRole('link', { name: 'Créer un compte' })).toBeVisible();
+  await expect(elsewhere).toHaveURL(new RegExp(`${path}$`));
+  // « Se connecter »: Keycloak's sign-in page, then back on the link, where he fills in his
+  // profile in the newsroom.
+  await elsewhere.getByRole('link', { name: 'Se connecter' }).click();
+  await expect(elsewhere.getByRole('heading', { name: 'Connexion' })).toBeVisible();
+  await elsewhere.getByLabel('E-mail').fill(emailOf(leo));
+  await elsewhere.getByLabel('Mot de passe', { exact: true }).fill(PASSWORD);
+  await elsewhere.getByRole('button', { name: 'Se connecter' }).click();
+  await backOnSibylle(elsewhere, testInfo);
+  await expect(elsewhere).toHaveURL(new RegExp(`${path}$`));
+  await expect(elsewhere.getByText("INVITATION D'INÈS")).toBeVisible();
+  await joinWith(elsewhere, 'Léo');
+  await expect(elsewhere.getByRole('heading', { name: 'La une de Sophia Office' })).toBeVisible();
+
+  // Hugo is new and has the access code: « Créer un compte » comes back to the code too.
+  const hugo = await newPerson(browser, testInfo, 'Hugo', `/rejoindre?code=${code}`);
+  await expect(hugo).toHaveURL(new RegExp(`/rejoindre\\?code=${code}$`));
+  await expect(hugo.getByLabel("CODE D'ACCÈS")).toHaveValue(code);
+  await joinWith(hugo, 'Hugo');
+  await expect(hugo.getByRole('heading', { name: 'La une de Sophia Office' })).toBeVisible();
 });
 
 test('the newsroom card opens a menu to change newsroom or join another, and the welcome page lists them', async ({

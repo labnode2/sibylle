@@ -2,7 +2,7 @@
 // a newsroom, or go back to one of the account's newsrooms.
 import { useId, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
+import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 
 import type { OrgCard, PixelImage } from '../../api/types';
 import {
@@ -18,6 +18,7 @@ import {
 import { PixelImage as Pixels } from '../../ui/PixelImage';
 import { toast } from '../../ui/Toaster';
 import { useMe } from '../auth/api';
+import { signInUrl } from '../auth/signIn';
 import { useFormErrors } from '../forms';
 import { useBubbleEvents } from '../notifications/api';
 import { useContent, useCreateOrg, useJoin, useJoinPreview, type JoinSource } from './api';
@@ -261,6 +262,33 @@ export function CreateOrgPage() {
         </Button>
         <p className={styles.hint}>{t('create.editor')}</p>
       </form>
+    </section>
+  );
+}
+
+/** An invitation link opened without a session (`/rejoindre/:token`, `/rejoindre?code=…`): create
+ *  an account or sign in first, on Keycloak's pages, which both come back to the whole link, where
+ *  `JoinPage` shows the newsroom and the profile to fill in. The server is asked nothing here: it
+ *  only reads the invitation for an account. */
+export function InvitedPage() {
+  const { t } = useTranslation('orgs');
+  const { token } = useParams();
+  const { pathname, search } = useLocation();
+  if (!token && !new URLSearchParams(search).get('code')) {
+    return <Navigate to="/bienvenue" replace />;
+  }
+  const link = pathname + search;
+  return (
+    <section className={styles.page}>
+      <h1 className={`${styles.title} ${styles.invited}`}>{t('invited.title')}</h1>
+      <div className={styles.ways}>
+        <ButtonLink to={signInUrl('signup', link)} reloadDocument>
+          {t('invited.signup')}
+        </ButtonLink>
+        <ButtonLink to={signInUrl('login', link)} reloadDocument variant="secondary">
+          {t('invited.login')}
+        </ButtonLink>
+      </div>
     </section>
   );
 }

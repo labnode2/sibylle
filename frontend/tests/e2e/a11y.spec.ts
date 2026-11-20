@@ -1,7 +1,8 @@
 // T147, principle VI: the main pages of the app, la une, a prono, the leaderboard, the press card,
 // the newsroom's settings and the account's preferences, have no WCAG 2.2 A or AA violation that
 // axe-core can find, in the light and the dark theme, on a phone (390 px) and on a computer
-// (1 280 px), and reflow without scrolling sideways (1.4.10), which axe-core does not check.
+// (1 280 px), and reflow without scrolling sideways (1.4.10), which axe-core does not check. So
+// does the choice an invitation link offers without a session (card #26).
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
@@ -109,6 +110,33 @@ test('the main pages meet WCAG 2.2 AA in both themes', async ({ browser }, testI
       const broken = await violations(ines, 'ul[aria-label="Mon compte"]');
       if (broken.length > 0) found[`${theme} ${viewport.width}px account menu`] = broken;
     }
+  }
+  expect(found).toEqual({});
+});
+
+test("an invitation link's choice, without a session, meets WCAG 2.2 AA in both themes", async ({
+  page,
+}, testInfo) => {
+  const viewport = WIDTHS[testInfo.project.name]!;
+  await page.setViewportSize(viewport);
+  // The choice reads nothing of the invitation: any token shows it.
+  const path = '/rejoindre/une-invitation';
+  const found: Record<string, string[]> = {};
+  for (const theme of ['light', 'dark'] as const) {
+    // Without an account, the theme is the one last chosen on this device (light by default).
+    if (theme === 'dark') {
+      await page.evaluate(() =>
+        localStorage.setItem(
+          'sibylle.preferences.v2',
+          JSON.stringify({ theme: 'dark', reduceMotion: false }),
+        ),
+      );
+    }
+    await visit(page, path);
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+    await expect(page.getByRole('link', { name: 'Se connecter' })).toBeVisible();
+    const broken = [...(await violations(page)), ...(await overflow(page))];
+    if (broken.length > 0) found[`${theme} ${viewport.width}px ${path}`] = broken;
   }
   expect(found).toEqual({});
 });

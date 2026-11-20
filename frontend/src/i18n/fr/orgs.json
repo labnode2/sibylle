@@ -42,6 +42,11 @@
     "drawTitle": "Ton avatar",
     "drawDone": "Prendre"
   },
+  "invited": {
+    "title": "Tu es invité·e à rejoindre une rédaction de Sibylle",
+    "signup": "Créer un compte",
+    "login": "Se connecter"
+  },
   "backgrounds": {
     "mer": "Mer",
     "aube": "Aube",

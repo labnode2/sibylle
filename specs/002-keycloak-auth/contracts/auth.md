@@ -75,3 +75,4 @@ not_authenticated`, ou fermeture 4401) ; Keycloak injoignable, la requête conti
 | `/connexion-indisponible` | **nouvelle** : Keycloak ne répond pas, réessayer |
 | `/compte` | gagne « Changer mon mot de passe » → `/api/auth/login?action=password&suite=/compte` |
 | `/au-revoir` | **nouvelle** : après la suppression du compte, « Ton compte est supprimé » et « Créer un nouveau compte » (`/inscription`) |
+| `/rejoindre/:token`, `/rejoindre?code=…` | sans session, au lieu d'aller à la connexion de Keycloak : « Tu es invité·e à rejoindre une rédaction de Sibylle », « Créer un compte » (`/api/auth/login?action=signup&suite=<le lien>`) et « Se connecter » (`/api/auth/login?suite=<le lien>`), sans lire l'invitation (seul part `GET /api/me`, qui répond 401) ; connecté, la page pour rejoindre (carte #26) |
