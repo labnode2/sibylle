@@ -1,7 +1,7 @@
 // The welcome pop-up of the first newsroom (on a phone, a sheet from the bottom; on a computer, a
 // card in the middle): the game in five steps, closed for good, opened again by « Tuto » on la une
 // and on « La rédaction », beside « Charte », the newsroom's charter (card #27): two pixel-art
-// images playing in a loop, in the middle of their column.
+// images in the middle of their column.
 import { expect, test, type Locator } from '@playwright/test';
 
 import { call, newPerson } from './helpers';
@@ -53,26 +53,17 @@ test('the first newsroom explains the game once, then on demand', async ({ brows
   await expect(welcome).toBeHidden();
 
   // ...unless asked for: « Tuto » on la une, beside « Charte », the newsroom's charter with its
-  // lines as written. Both play in a loop, like GIFs, side by side in the middle of the column;
-  // with less motion, they keep still...
+  // lines as written, side by side in the middle of the column...
   const tuto = ines.getByRole('button', { name: 'Tuto : revoir les bases du jeu' });
   const charte = ines.getByRole('button', { name: 'Charte : relire la charte de la rédaction' });
-  for (const button of [tuto, charte]) {
-    await expect(button.locator('img')).toHaveCSS('animation-iteration-count', 'infinite');
-  }
+  await expect(charte).toBeVisible();
   expect(await offCentre(tuto)).toBeLessThan(1);
-  await ines.emulateMedia({ reducedMotion: 'reduce' });
-  await expect(tuto.locator('img')).toHaveCSS('animation-name', 'none');
-  await expect(charte.locator('img')).toHaveCSS('animation-name', 'none');
-  await ines.emulateMedia({ reducedMotion: null });
   await tuto.click();
   await expect(welcome).toHaveAccessibleName('Bienvenue dans Sophia Office\u00a0!');
   await welcome.getByRole('button', { name: 'Passer' }).click();
   await expect(welcome).toBeHidden();
   await charte.click();
   await expect(welcome).toHaveAccessibleName('La charte de la rédaction');
-  // The scroll on top of the charter keeps still while it is read.
-  await expect(welcome.locator('img')).toHaveCSS('animation-name', 'none');
   const charter = welcome.getByText(/^Sibylle se joue entre collègues/);
   await expect(charter).toContainText("En rejoignant la rédaction, je m'engage à :");
   await expect(charter).toHaveCSS('white-space', 'pre-line');

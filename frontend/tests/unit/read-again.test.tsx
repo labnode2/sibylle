@@ -1,8 +1,8 @@
 // « Tuto » and « Charte » (card #27): the game's bases and the newsroom's charter, to read again
 // at any time, under the editor's note on la une (or in its place) and on « La rédaction », where
-// they replace « Revoir les bases du jeu ». Each is a pixel-art image playing in a loop (art.ts)
-// above its short word. « Tuto » opens the welcome with the newsroom and the member's role;
-// « Charte » the charter, its line breaks kept; no « Charte » without a charter.
+// they replace « Revoir les bases du jeu ». Each is a still pixel-art image (art.ts), without a
+// word under it. « Tuto » opens the welcome with the newsroom and the member's role; « Charte »
+// the charter, its line breaks kept; no « Charte » without a charter.
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -126,24 +126,21 @@ describe.each([
   ['la une', '/o/org'],
   ['« La rédaction »', '/o/org/redaction'],
 ])('on %s', (_page, path) => {
-  it('shows « Tuto » and « Charte », each named in full', () => {
+  it('shows « Tuto » and « Charte », each named in full, without a word on screen', () => {
     show(path);
-    expect(tuto()).toHaveTextContent('Tuto');
-    expect(charter()).toHaveTextContent('Charte');
+    expect(tuto()).toHaveTextContent(/^$/);
+    expect(charter()).toHaveTextContent(/^$/);
   });
 
   it('draws each as pixel art, the book and the scroll, unseen by screen readers', () => {
     show(path);
-    for (const [button, art] of [
+    for (const [button, src] of [
       [tuto(), ART.tuto],
       [charter()!, ART.charter],
     ] as const) {
       const image = button.querySelector('img');
-      expect(image).toHaveAttribute('src', art.src);
+      expect(image).toHaveAttribute('src', src);
       expect(image).toHaveAttribute('alt', '');
-      expect(image?.parentElement).toHaveAttribute('aria-hidden', 'true');
-      expect(image?.style.getPropertyValue('--steps')).toBe(String(art.steps));
-      expect(image?.style.getPropertyValue('--duration')).toBe(`${art.duration}ms`);
     }
   });
 
@@ -167,7 +164,7 @@ describe.each([
     const dialog = screen.getByRole('dialog', { name: 'La charte de la rédaction' });
     expect(within(dialog).getByText('LA GAZETTE')).toBeVisible();
     // The scroll on top, as on the button.
-    expect(dialog.querySelector('img')).toHaveAttribute('src', ART.charter.src);
+    expect(dialog.querySelector('img')).toHaveAttribute('src', ART.charter);
     // The text as written, each line kept (white-space: pre-line).
     expect(
       within(dialog).getByText(

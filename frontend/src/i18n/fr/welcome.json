@@ -5,9 +5,7 @@
   "next": "Suivant",
   "done": "C'est parti !",
   "readAgain": {
-    "tuto": "Tuto",
     "tutoName": "Tuto : revoir les bases du jeu",
-    "charter": "Charte",
     "charterName": "Charte : relire la charte de la rédaction"
   },
   "charter": {

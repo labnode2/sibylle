@@ -1,9 +1,10 @@
-// Pixel art that moves in steps: the quick reactions (ui/reactions) and the « Tuto » and
-// « Charte » images (features/welcome/art.ts). A drawing is 16 rows of 16 letters, one per pixel
-// ('.' is transparent), each letter a colour; `sequence` gives the drawing of each step, all of
-// them `step` ms long, and its first step is the still image. Each one becomes a strip of its
-// steps, an SVG image made once (`data:`), that CSS slides by one step at a time behind a window
-// of one step: nothing to download, and sharp at every size.
+// Pixel art as SVG images made once (`data:`): nothing to download, and sharp at every size. A
+// drawing is rows of letters, one per pixel ('.' is transparent), each letter a colour.
+// The quick reactions (ui/reactions) move in steps: 16 rows of 16 letters per drawing, `sequence`
+// gives the drawing of each step, all of them `step` ms long, and its first step is the still
+// image. Each one becomes a strip of its steps, that CSS slides by one step at a time behind a
+// window of one step. The « Tuto » and « Charte » images (features/welcome/art.ts) are still: one
+// drawing each, of any size.
 
 export type Drawing = {
   frames: readonly (readonly string[])[];
@@ -48,4 +49,14 @@ export function strip({ frames, sequence, step }: Drawing, colors: Colors): Stri
     steps: sequence.length,
     duration: step * sequence.length,
   };
+}
+
+/** A still drawing, as large as its rows: the source of its image. */
+export function picture(rows: readonly string[], colors: Colors): string {
+  const width = rows[0]?.length ?? 0;
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${rows.length}" ` +
+    `viewBox="0 0 ${width} ${rows.length}" shape-rendering="crispEdges">` +
+    `${paths(rows, colors)}</svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }

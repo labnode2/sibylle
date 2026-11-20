@@ -1,31 +1,21 @@
 // « Tuto » and « Charte »: the game's bases (the welcome's steps) and the newsroom's charter, to
-// read again at any time, under the editor's note on la une and on « La rédaction ». Two pixel-art
-// images that play in a loop, like GIFs (art.ts), each above its short word, side by side in the
-// middle; « Charte » only when the newsroom has a charter. The charter opens like the welcome, a
-// card in the middle of a computer's screen, a sheet rising from the bottom of a phone's, its line
-// breaks kept.
-import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
+// read again at any time, under the editor's note on la une and on « La rédaction ». Two still
+// pixel-art images (art.ts), the book and the parchment, side by side in the middle, without a
+// word under them: screen readers say what each one opens. « Charte » only when the newsroom has
+// a charter. The charter opens like the welcome, a card in the middle of a computer's screen, a
+// sheet rising from the bottom of a phone's, its line breaks kept.
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Org } from '../../api/types';
 import { Button, Kicker } from '../../ui/components';
-import type { Strip } from '../../ui/pixelStrip';
 import { ART } from './art';
 import { WelcomeDialog } from './WelcomeDialog';
 import styles from './welcome.module.css';
 
-/** A drawing of art.ts, 64 pixels square, playing in a loop or `still` on its first step, its
- *  still image, as under « couper les animations »; it says nothing to screen readers. */
-function Gif({ art, still = false }: { art: Strip; still?: boolean }) {
-  return (
-    <span className={still ? styles.gif : `${styles.gif} ${styles.playing}`} aria-hidden="true">
-      <img
-        src={art.src}
-        alt=""
-        style={{ '--steps': art.steps, '--duration': `${art.duration}ms` } as CSSProperties}
-      />
-    </span>
-  );
+/** A drawing of art.ts, 64 pixels square; it says nothing to screen readers. */
+function Picture({ src }: { src: string }) {
+  return <img className={styles.picture} src={src} alt="" />;
 }
 
 function CharterDialog({
@@ -49,7 +39,7 @@ function CharterDialog({
     <dialog ref={dialog} className={styles.dialog} aria-labelledby={titleId} onClose={onClose}>
       <div className={styles.body}>
         <div className={styles.art}>
-          <Gif art={ART.charter} still />
+          <Picture src={ART.charter} />
         </div>
         <Kicker tone="indigo">{org.toUpperCase()}</Kicker>
         <h2 id={titleId} className={styles.title}>
@@ -78,8 +68,7 @@ export function ReadAgain({ org }: { org: Org }) {
         aria-label={t('readAgain.tutoName')}
         onClick={() => setOpen('tuto')}
       >
-        <Gif art={ART.tuto} />
-        {t('readAgain.tuto')}
+        <Picture src={ART.tuto} />
       </button>
       {charter && (
         <button
@@ -88,8 +77,7 @@ export function ReadAgain({ org }: { org: Org }) {
           aria-label={t('readAgain.charterName')}
           onClick={() => setOpen('charter')}
         >
-          <Gif art={ART.charter} />
-          {t('readAgain.charter')}
+          <Picture src={ART.charter} />
         </button>
       )}
       {open === 'tuto' && (
