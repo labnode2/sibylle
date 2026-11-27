@@ -150,6 +150,7 @@ const ABSENT = ['absent', 'absent', 'absent', 'absent', 'absent'] as const;
 const playing: WordleStatus = {
   day: '2026-11-16',
   state: 'playing',
+  level: null,
   tries: [{ word: 'livre', marks: ['absent', 'correct', 'absent', 'absent', 'present'] }],
   tries_left: 5,
   laurels: null,
@@ -158,6 +159,7 @@ const playing: WordleStatus = {
 const won: WordleStatus = {
   ...playing,
   state: 'won',
+  level: null,
   tries: [...playing.tries, { word: 'bille', marks: [...CORRECT] }],
   tries_left: 4,
   laurels: 5,
@@ -213,6 +215,7 @@ describe('WordlePage', () => {
     const lost: WordleStatus = {
       ...lastTry,
       state: 'lost',
+      level: null,
       tries: [...lastTry.tries, { word: 'ville', marks: [...ABSENT] }],
       tries_left: 0,
       solution: 'bille',

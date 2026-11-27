@@ -160,7 +160,23 @@
       "yes": "Retirer",
       "no": "Garder"
     },
-    "saved": "Programme enregistré."
+    "saved": "Programme enregistré.",
+    "wordle": {
+      "title": "Wordle",
+      "hint": "Chaque nuit à minuit, la rédaction reçoit son mot du jour, tiré au hasard parmi ceux de son niveau. Un changement vaut à partir du mot de demain : celui d'aujourd'hui est déjà tiré.",
+      "legend": "NIVEAU DES MOTS",
+      "levels": {
+        "1": "Facile",
+        "2": "Normal",
+        "3": "Difficile"
+      },
+      "words": {
+        "1": "Les mots les plus courants.",
+        "2": "Des mots courants, et d'autres moins.",
+        "3": "Tous les mots, jusqu'aux plus rares."
+      },
+      "saved": "Niveau du Wordle enregistré : il vaut à partir du mot de demain."
+    }
   },
   "parameters": {
     "delete": {

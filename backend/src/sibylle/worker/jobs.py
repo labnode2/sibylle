@@ -139,6 +139,22 @@ async def reveal_pixel_puzzles(org_id: uuid.UUID | None = None) -> int:
         return await minigames.reveal_pixel_puzzles(session, org_id=org_id)
 
 
+@job("prepare_wordle_day", minute="*")
+async def prepare_wordle_day() -> int:
+    """Wordle's day, from midnight (Paris) on: first the day's sync of the word file, if it is
+    still to do, then the word of the day of each newsroom that has none yet; returns how many
+    words it drew (services/wordle_lists.py, services/minigames.py).
+
+    Checked every minute, like the others, so that a worker restarted later still does both, and
+    a sync that failed is tried again, every quarter of an hour at most, until one works.
+    """
+    from sibylle.services import minigames, wordle_lists
+
+    await wordle_lists.sync()
+    async with transaction() as session:
+        return await minigames.prepare_wordle_day(session)
+
+
 @job("purge_sign_in_attempts", hour=4, minute=10)
 async def purge_sign_in_attempts() -> int:
     """Deletes, once a day, the sign-ins through Keycloak started and never finished, past their

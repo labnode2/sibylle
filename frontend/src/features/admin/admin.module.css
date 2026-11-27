@@ -318,6 +318,41 @@
   border-collapse: collapse;
 }
 
+/* Wordle's three levels, one under the other, each with the words it gives under its name. */
+.levels {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.levelChoices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.level {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The radio button without its margins, so that the name and its words both start 23 px in;
+   the words close under the name, in the tap height of its line. */
+.level input {
+  margin: 0;
+}
+
+.level .hint {
+  margin-top: -8px;
+  padding-left: 23px;
+}
+
 .weeks th,
 .weeks td {
   padding: 10px 0;

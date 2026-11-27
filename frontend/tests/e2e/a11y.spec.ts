@@ -1,9 +1,10 @@
 // T147, principle VI: the main pages of the app, la une, a prono, the leaderboard, « La
-// rédaction », the press card, the newsroom's settings and the account's preferences, have no
-// WCAG 2.2 A or AA violation that axe-core can find, in the light and the dark theme, on a phone
-// (390 px) and on a computer (1 280 px), and reflow without scrolling sideways (1.4.10), which
-// axe-core does not check. So do the newsroom's charter, open from « La rédaction » (card #27),
-// and the choice an invitation link offers without a session (card #26).
+// rédaction », the press card, the newsroom's settings (their games and Wordle's level among
+// them, card #89), Wordle and the account's preferences, have no WCAG 2.2 A or AA violation that
+// axe-core can find, in the light and the dark theme, on a phone (390 px) and on a computer
+// (1 280 px), and reflow without scrolling sideways (1.4.10), which axe-core does not check. So
+// do the newsroom's charter, open from « La rédaction » (card #27), and the choice an invitation
+// link offers without a session (card #26).
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
@@ -91,6 +92,8 @@ test('the main pages meet WCAG 2.2 AA in both themes', async ({ browser }, testI
     `/o/${orgId}/reglages`,
     `/o/${orgId}/reglages/membres`,
     `/o/${orgId}/reglages/parametres`,
+    `/o/${orgId}/reglages/jeux`,
+    `/o/${orgId}/jeux/wordle`,
     '/compte',
   ];
 

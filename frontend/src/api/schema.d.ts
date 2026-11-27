@@ -1194,6 +1194,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/orgs/{org_id}/games/wordle/level": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Wordle Level */
+        put: operations["put_wordle_level_api_orgs__org_id__games_wordle_level_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/public/cards/{token}": {
         parameters: {
             query?: never;
@@ -1573,13 +1590,19 @@ export interface components {
         /**
          * GameSchedule
          * @description `default`: the games of an ordinary week, from next week on. `weeks`: the current week and
-         *     the three after it; `planned` when a week has games of its own.
+         *     the three after it; `planned` when a week has games of its own. `wordle_level`: the level of
+         *     the newsroom's words of the day, a change counting from tomorrow's word.
          */
         GameSchedule: {
             /** Default */
             default: ("runner" | "pixel")[];
             /** Weeks */
             weeks: components["schemas"]["GameWeekOut"][];
+            /**
+             * Wordle Level
+             * @enum {integer}
+             */
+            wordle_level: 1 | 2 | 3;
         };
         /** GameWeekOut */
         GameWeekOut: {
@@ -3165,9 +3188,19 @@ export interface components {
             /** Word */
             word: string;
         };
+        /** WordleLevelIn */
+        WordleLevelIn: {
+            /**
+             * Level
+             * @enum {integer}
+             */
+            level: 1 | 2 | 3;
+        };
         /**
          * WordleStatus
          * @description The member's Wordle of the day (Paris). `solution` and `laurels` only once it is over.
+         *     `level`: the word's difficulty, the rank of its tier in the word file, from 1 (the most
+         *     common words) to 6; null for a word of the lists written by hand.
          */
         WordleStatus: {
             /**
@@ -3180,6 +3213,8 @@ export interface components {
              * @enum {string}
              */
             state: "playing" | "won" | "lost";
+            /** Level */
+            level: number | null;
             /** Tries */
             tries: components["schemas"]["WordleTry"][];
             /** Tries Left */
@@ -5888,6 +5923,41 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameSchedule"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_wordle_level_api_orgs__org_id__games_wordle_level_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WordleLevelIn"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

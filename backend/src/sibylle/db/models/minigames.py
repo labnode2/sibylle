@@ -2,12 +2,22 @@ import uuid
 from datetime import date, datetime
 from typing import Any
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index, LargeBinary, Text, UniqueConstraint, text
+from sqlalchemy import (
+    CheckConstraint,
+    ForeignKey,
+    Identity,
+    Index,
+    LargeBinary,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from sibylle import clock
 from sibylle.db.base import Base, new_id
+from sibylle.domain.wordle_words import MAX_TIERS
 
 
 class RunnerRun(Base):
@@ -146,8 +156,8 @@ class PixelFind(Base):
 
 
 class WordleGame(Base):
-    """A member's Wordle of a day (Paris): the words tried so far, and how it ended. The word of
-    the day is not stored; it comes from the date."""
+    """A member's Wordle of a day (Paris): the words tried so far, and how it ended. The word is
+    the newsroom's word of that day (`WordleDay`)."""
 
     __tablename__ = "wordle_games"
     __table_args__ = (
@@ -163,4 +173,38 @@ class WordleGame(Base):
     guesses: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
     state: Mapped[str] = mapped_column(Text, default="playing", server_default="playing")
     laurels: Mapped[int | None]
+    created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
+
+
+class WordleList(Base):
+    """A version of Wordle's word file (domain/wordle_words.py), kept once it passed its checks:
+    the worker adds a row only when the file changed. The game uses the latest row."""
+
+    __tablename__ = "wordle_lists"
+
+    # In the order the versions came: the latest has the greatest.
+    id: Mapped[int] = mapped_column(Identity(), primary_key=True)
+    # Of the file as downloaded, which the next download is compared with.
+    sha256: Mapped[str] = mapped_column(Text)
+    content: Mapped[dict[str, Any]]
+    # When this version was first downloaded, and when it was last found unchanged.
+    fetched_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
+    checked_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
+
+
+class WordleDay(Base):
+    """A newsroom's word of a day (Paris), drawn once and kept: neither the word nor its level
+    change after, whatever the word file or the newsroom's level become. `level` is the rank of
+    the word's tier in the file it came from, 1 to 6; null for the lists written by hand."""
+
+    __tablename__ = "wordle_days"
+    __table_args__ = (
+        CheckConstraint("word ~ '^[a-z]{5}$'", name="word"),
+        CheckConstraint(f"level BETWEEN 1 AND {MAX_TIERS}", name="level"),
+    )
+
+    org_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organisations.id"), primary_key=True)
+    day: Mapped[date] = mapped_column(primary_key=True)
+    word: Mapped[str] = mapped_column(Text)
+    level: Mapped[int | None]
     created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())

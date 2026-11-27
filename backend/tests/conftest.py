@@ -36,10 +36,11 @@ from sibylle.db.models import (
 from sibylle.db.session import dispose_engine, transaction
 from sibylle.domain.content import AVATAR_TEMPLATES
 from sibylle.domain.ledger import starting_balance
-from sibylle.services import deals, keycloak, ledger
+from sibylle.services import deals, keycloak, ledger, wordle_lists
 from sibylle.services.security import new_token, token_hash
 from tests import keycloak_fake
 from tests.keycloak_fake import FakeKeycloak
+from tests.wordle_sample import FakeWordleFile
 
 PARIS = ZoneInfo("Europe/Paris")
 DEFAULT_NOW = datetime(2026, 11, 2, 10, 0, tzinfo=PARIS)
@@ -67,6 +68,16 @@ def fake_keycloak() -> Iterator[FakeKeycloak]:
     keycloak.use_transport(fake.transport)
     yield fake
     keycloak.use_transport(None)
+
+
+@pytest.fixture(autouse=True)
+def wordle_file() -> Iterator[FakeWordleFile]:
+    """Wordle's word file, for every test: no download reaches the network, and nothing the
+    game kept in memory goes from one test to the next (tests/wordle_sample.py)."""
+    fake = FakeWordleFile()
+    wordle_lists.use_download(fake.download)
+    yield fake
+    wordle_lists.use_download(None)
 
 
 @pytest.fixture(autouse=True)

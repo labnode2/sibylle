@@ -47,6 +47,37 @@
   color: var(--surface);
 }
 
+/* The word's difficulty: six squares, as many filled as the rank of its tier in the word file. */
+.difficulty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font: 600 12px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.squares {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.square {
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--ink);
+}
+
+.squareOn {
+  background: var(--ink);
+}
+
+/* Where the words come from, under the game. */
+.credit {
+  margin-top: 8px;
+}
+
 .keyboard {
   display: flex;
   flex-direction: column;

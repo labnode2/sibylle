@@ -1,4 +1,5 @@
-"""The games of the week: the ball's race (US9), Pixel mystère (US10) and their planning (US12)."""
+"""The games of the week: the ball's race (US9), Pixel mystère (US10) and their planning (US12);
+Wordle, and its level, set with the planning."""
 
 import uuid
 from datetime import date
@@ -23,6 +24,7 @@ from sibylle.api.schemas import (
     RunFinishIn,
     RunStarted,
     WordleGuessIn,
+    WordleLevelIn,
     WordleStatus,
 )
 from sibylle.db.models import Membership
@@ -139,4 +141,12 @@ async def delete_week(
     org_id: uuid.UUID, week_start: date, editor: Planner, session: Db
 ) -> GameSchedule:
     await game_schedule.unplan_week(session, editor.org_id, week_start)
+    return await _schedule(session, editor)
+
+
+@router.put("/wordle/level")
+async def put_wordle_level(
+    org_id: uuid.UUID, body: WordleLevelIn, editor: Planner, session: Db
+) -> GameSchedule:
+    await minigames.set_wordle_level(session, editor.org_id, body.level)
     return await _schedule(session, editor)

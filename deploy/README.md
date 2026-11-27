@@ -14,10 +14,10 @@ published.
 The VM's own rules apply (its `CLAUDE.md` and Docker network guide, in the labnode2/docker
 repository): read-only containers without privileges and with limits, a UID per application,
 nothing on `proxy` but what NPM must reach. The `api` and the `worker` reach the Internet
-(Brevo's SMTP, push notifications) through a network of their own; the `db` reaches nothing. The
-`api` also joins Keycloak, which runs sign-up, sign-in and passwords at `auth.sibylle.cc`, on the
-VM's `keycloak` network (section 9). The VM cannot reach the local network, and Sibylle needs
-nothing there.
+(Brevo's SMTP, push notifications, and for the worker Wordle's word file, fetched each night from
+GitHub) through a network of their own; the `db` reaches nothing. The `api` also joins Keycloak,
+which runs sign-up, sign-in and passwords at `auth.sibylle.cc`, on the VM's `keycloak` network
+(section 9). The VM cannot reach the local network, and Sibylle needs nothing there.
 
 ## How an update arrives
 

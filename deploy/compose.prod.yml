@@ -2,12 +2,12 @@
 # answers for sibylle.cc and forwards it to http://sibylle:8443 over the VM's shared `proxy`
 # network: no port is published here. Only the `sibylle` service (nginx) is on `proxy`; the others
 # talk among themselves on `internal`, and the api and the worker also reach the Internet through
-# `egress` (Brevo's SMTP, push notifications). The api alone also joins Keycloak on the VM's
-# shared `keycloak` network (specs/002-keycloak-auth, research.md K4). The VM's rules apply:
-# read-only containers without privileges, limits, data under /mnt/data/sibylle
-# (SIBYLLE_DATA_DIR). deploy/update.sh runs it from /opt/sibylle, with the production settings of
-# deploy/.env (deploy/README.md). Its own project name keeps a trial on the development PC away
-# from the development project (`sibylle`).
+# `egress` (Brevo's SMTP, push notifications, and for the worker Wordle's word file on GitHub).
+# The api alone also joins Keycloak on the VM's shared `keycloak` network (specs/002-keycloak-auth,
+# research.md K4). The VM's rules apply: read-only containers without privileges, limits, data
+# under /mnt/data/sibylle (SIBYLLE_DATA_DIR). deploy/update.sh runs it from /opt/sibylle, with the
+# production settings of deploy/.env (deploy/README.md). Its own project name keeps a trial on the
+# development PC away from the development project (`sibylle`).
 name: sibylle-prod
 
 x-logging: &logging

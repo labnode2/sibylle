@@ -32,6 +32,7 @@ const t = i18n.getFixedT('fr', 'games');
 const won: WordleStatus = {
   day: '2026-11-16',
   state: 'won',
+  level: null,
   tries: [
     { word: 'livre', marks: ['absent', 'correct', 'absent', 'absent', 'present'] },
     { word: 'ville', marks: ['present', 'correct', 'absent', 'correct', 'correct'] },
@@ -46,6 +47,7 @@ const won: WordleStatus = {
 const lost: WordleStatus = {
   day: '2026-11-17',
   state: 'lost',
+  level: null,
   tries: Array.from({ length: 6 }, () => ({
     word: 'livre',
     marks: ['absent', 'absent', 'absent', 'absent', 'absent'],

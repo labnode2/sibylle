@@ -3,7 +3,8 @@ three after it; a week without a planning of its own takes the games of an ordin
 setting dated by the Monday from which it holds.
 
 This module keeps the planning only: `minigames` reads it, and `minigames.follow_schedule` makes
-Pixel mystère follow a change of the current week.
+Pixel mystère follow a change of the current week. The editor sees Wordle's level with it, which
+`minigames.set_wordle_level` sets.
 """
 
 import uuid
@@ -17,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from sibylle import clock
 from sibylle.api.errors import AppError
-from sibylle.db.models import GameDefault, GameWeek
+from sibylle.db.models import GameDefault, GameWeek, Organisation
 from sibylle.domain.game_schedule import (
     Game,
     horizon,
@@ -48,7 +49,8 @@ async def games_of(session: AsyncSession, org_id: uuid.UUID, week: date) -> tupl
 
 async def schedule(session: AsyncSession, org_id: uuid.UUID) -> dict[str, Any]:
     """What the editor sees: an ordinary week from next week on, then the current week and the
-    three after it, each with its games and whether it has a planning of its own."""
+    three after it, each with its games and whether it has a planning of its own; and Wordle's
+    level."""
     weeks = horizon(clock.now())
     planned = dict(
         (
@@ -76,6 +78,9 @@ async def schedule(session: AsyncSession, org_id: uuid.UUID) -> dict[str, Any]:
             }
             for week in weeks
         ],
+        "wordle_level": await session.scalar(
+            select(Organisation.wordle_level).where(Organisation.id == org_id)
+        ),
     }
 
 

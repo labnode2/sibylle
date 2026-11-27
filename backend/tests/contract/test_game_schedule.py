@@ -119,6 +119,7 @@ async def test_only_the_editor_sees_and_plans_the_games(
             week("2026-11-16", ["runner", "pixel"]),
             week("2026-11-23", ["runner", "pixel"]),
         ],
+        "wordle_level": 2,
     }
     for someone in (hugo, cami):
         refused(await someone.client.get(url(org.id)), 403, "forbidden")
@@ -149,6 +150,7 @@ async def test_an_ordinary_week_changes_from_the_next_week_on(
             week("2026-11-16", ["pixel"]),
             week("2026-11-23", ["pixel"]),
         ],
+        "wordle_level": 2,
     }
     # This week keeps its games.
     assert (await games(cami, org.id))["scheduled"] == ["runner", "pixel"]

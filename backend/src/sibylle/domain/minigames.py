@@ -1,18 +1,20 @@
-"""Rules of the mini-games: the ball's race (research.md J3 and R19) and Pixel mystère (J4)."""
+"""Rules of the mini-games: the ball's race (research.md J3 and R19), Pixel mystère (J4) and
+Wordle."""
 
 import hashlib
 import random
 import re
+import secrets
 import unicodedata
 import uuid
 from collections import Counter
-from collections.abc import Iterable
+from collections.abc import Callable, Container, Iterable, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Literal
 
 from sibylle.domain.seasons import PARIS, week_bounds, week_start
-from sibylle.domain.wordle_words import ACCEPTED, ANSWERS
+from sibylle.domain.wordle_words import ANSWERS, WordLists
 
 RUNNER_ATTEMPTS = 5
 # A run open longer than this can no longer be finished.
@@ -166,24 +168,76 @@ def next_start(finished_at: datetime) -> datetime:
     return _morning(finished_at.astimezone(PARIS).date() + timedelta(days=1))
 
 
-# Wordle
+# Wordle: each newsroom has its word of the day, drawn from the word file's answers
+# (domain/wordle_words.py) as its level allows, and kept.
 
 WORDLE_LETTERS = 5
 WORDLE_TRIES = 6
 Mark = Literal["correct", "present", "absent"]
+# A newsroom's level, 1 Facile, 2 Normal or 3 Difficile: how many tiers of the word file, from
+# the most common, its words come from (None: all of them). Normal until the editor chooses.
+WORDLE_LEVEL_TIERS: dict[int, int | None] = {1: 2, 2: 4, 3: None}
+WORDLE_DEFAULT_LEVEL = 2
+# Once a newsroom had every word its level allows, a word comes back only if it was not out in
+# this many days before.
+WORDLE_REPEAT_DAYS = 100
 
 
 def wordle_answer(day: date) -> str:
-    """The word of a day (Paris): the same for all, picked from the answers by a hash of the date,
-    so that nothing about tomorrow's word shows in today's."""
+    """The word every newsroom shared on a day (Paris) before each drew its own: picked from the
+    answers written by hand by a hash of the date. It stays the word of a newsroom whose members
+    had begun that day's game before its own word was drawn, the day the draw came in."""
     digest = hashlib.sha256(f"sibylle-wordle:{day.isoformat()}".encode()).digest()
     return ANSWERS[int.from_bytes(digest[:8], "big") % len(ANSWERS)]
 
 
-def wordle_word(text: str) -> str | None:
-    """The word tried, normalized, if it is one that is accepted; else None."""
+def wordle_level(lists: WordLists, word: str) -> int | None:
+    """A word's level: the rank of its tier in the file, from 1 for the first (the most common
+    words), whatever the tiers are called; None for the lists written by hand, or a word in no
+    tier."""
+    if not lists.levelled:
+        return None
+    return next((rank for rank, tier in enumerate(lists.tiers, start=1) if word in tier), None)
+
+
+def wordle_allowed(lists: WordLists, newsroom_level: int) -> tuple[str, ...]:
+    """The words a newsroom's level allows, those of its first tiers; with the lists written by
+    hand, every answer."""
+    count = WORDLE_LEVEL_TIERS[newsroom_level] if lists.levelled else None
+    return tuple(word for tier in lists.tiers[:count] for word in tier)
+
+
+def wordle_pick(
+    allowed: Sequence[str],
+    history: Iterable[tuple[date, str]],
+    day: date,
+    choose: Callable[[Sequence[str]], str] = secrets.choice,
+) -> str:
+    """A newsroom's word of `day`, drawn at random among the allowed words it never had (its
+    `history`: the day and word of each of its days); once it had them all, among those not out
+    in the 100 days before; and when none is left, the one out the longest ago. `allowed` is
+    never empty."""
+    last: dict[str, date] = {}
+    for when, word in history:
+        if word not in last or when > last[word]:
+            last[word] = when
+    never = [word for word in allowed if word not in last]
+    if never:
+        return choose(never)
+    since = day - timedelta(days=WORDLE_REPEAT_DAYS)
+    rested = [word for word in allowed if last[word] < since]
+    if rested:
+        return choose(rested)
+    return min(allowed, key=lambda word: last[word])
+
+
+def wordle_word(text: str, guesses: Container[str], answer: str) -> str | None:
+    """The word tried, normalized, if it may be tried: one of the `guesses`, or the word of the
+    day itself, which may be missing from them; else None."""
     word = normalize_word(text)
-    return word if len(word) == WORDLE_LETTERS and word in ACCEPTED else None
+    if len(word) != WORDLE_LETTERS:
+        return None
+    return word if word == answer or word in guesses else None
 
 
 def wordle_marks(guess: str, answer: str) -> list[Mark]:

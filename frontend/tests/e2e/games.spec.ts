@@ -1,7 +1,8 @@
 // Quickstart V9: five runs of the ball's race from la une, a sixth refused, then Monday pays the
 // week to the balance only (US9); a Pixel mystère drawn in the editor, guessed in order, and
 // ended both ways: everyone found, or every pixel shown (US10), then both in the museum; the
-// editor planning the games week by week, members seeing and playing only those (US12).
+// editor planning the games week by week, members seeing and playing only those (US12), and
+// choosing Wordle's level (card #89).
 import { expect, test, type Page } from '@playwright/test';
 
 import {
@@ -267,6 +268,17 @@ test('the editor plans the games, members see and play only those', async ({
   await expect(
     weeks.getByRole('checkbox', { name: 'Course de la boule, cette semaine' }),
   ).not.toBeChecked();
+
+  // Wordle's level, Normal until the editor chooses, from tomorrow's word on.
+  const wordle = ines.getByRole('region', { name: 'Wordle' });
+  await expect(wordle.getByRole('radio', { name: 'Normal' })).toBeChecked();
+  await wordle.getByRole('radio', { name: 'Difficile' }).click();
+  await expect(notes(ines)).toContainText('Niveau du Wordle enregistré');
+  await expect(wordle.getByRole('radio', { name: 'Difficile' })).toBeChecked();
+  await expect(wordle.getByRole('radio', { name: 'Normal' })).not.toBeChecked();
+  expect((await call(ines, 'GET', `/orgs/${orgId}/games/schedule`)).body.wordle_level).toBe(3);
+  const level = await call(cami, 'PUT', `/orgs/${orgId}/games/wordle/level`, { level: 1 });
+  expect([level.status, level.body.error.code]).toEqual([403, 'forbidden']);
   sibylle('clock', 'advance', '7d');
   await cami.goto(`/o/${orgId}`);
   await expect(box).toContainText('PAS ENCORE DE RECORD · 5 ESSAIS SUR 5');

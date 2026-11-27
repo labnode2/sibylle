@@ -10,6 +10,8 @@ import { orgKey } from '../orgs/api';
 export type Games = components['schemas']['Games'];
 export type Game = Games['scheduled'][number];
 export type GameSchedule = components['schemas']['GameSchedule'];
+/** Wordle's level of a newsroom: 1 Facile, 2 Normal, 3 Difficile. */
+export type WordleLevel = GameSchedule['wordle_level'];
 export type RunnerStatus = components['schemas']['RunnerStatus'];
 export type PixelStatus = components['schemas']['PixelStatus'];
 export type WordleStatus = components['schemas']['WordleStatus'];
@@ -18,6 +20,8 @@ export type PixelMuseumItem = components['schemas']['PixelMuseumItem'];
 
 /** Every game, in the order the server lists them. */
 export const GAMES: readonly Game[] = ['runner', 'pixel'];
+/** Wordle's levels, from the easiest. */
+export const WORDLE_LEVELS: readonly WordleLevel[] = [1, 2, 3];
 
 export const gamesKey = (orgId: string) => ['games', orgId] as const;
 // Under the games' key, so that whatever refreshes the games refreshes it too.
@@ -178,7 +182,11 @@ export function useGameSchedule(orgId: string) {
 }
 
 /** A change of the planning answers with the whole planning; this week's games may change too. */
-function useScheduleChange<T>(orgId: string, change: (input: T) => Promise<GameSchedule>) {
+function useScheduleChange<T>(
+  orgId: string,
+  change: (input: T) => Promise<GameSchedule>,
+  success = 'admin:games.saved',
+) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: change,
@@ -186,7 +194,7 @@ function useScheduleChange<T>(orgId: string, change: (input: T) => Promise<GameS
       client.setQueryData(scheduleKey(orgId), schedule);
       void client.invalidateQueries({ queryKey: gamesKey(orgId) });
     },
-    meta: { success: 'admin:games.saved' },
+    meta: { success },
   });
 }
 
@@ -211,6 +219,21 @@ export function usePlanWeek(orgId: string) {
         body: { games },
       }),
     ),
+  );
+}
+
+/** Wordle's level, from tomorrow's word on. */
+export function useSetWordleLevel(orgId: string) {
+  return useScheduleChange(
+    orgId,
+    (level: WordleLevel) =>
+      unwrap(
+        api.PUT('/api/orgs/{org_id}/games/wordle/level', {
+          params: { path: { org_id: orgId } },
+          body: { level },
+        }),
+      ),
+    'admin:games.wordle.saved',
   );
 }
 

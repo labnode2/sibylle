@@ -1,7 +1,8 @@
 // « Jeux » in the editor's settings (US12, research.md J7): the games of an ordinary week, then
 // this week and the three after it, a box per game. Taking a game out of the week in play asks
-// first, since it cancels that game's week.
-import { Fragment, useState } from 'react';
+// first, since it cancels that game's week. Last, Wordle's level, which counts from tomorrow's
+// word.
+import { Fragment, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 
@@ -12,7 +13,9 @@ import {
   useGameSchedule,
   usePlanWeek,
   useSetOrdinaryWeek,
+  useSetWordleLevel,
   useUnplanWeek,
+  WORDLE_LEVELS,
   type Game,
   type GameSchedule,
 } from '../games/api';
@@ -39,17 +42,20 @@ export function GameSchedulePage() {
   const ordinary = useSetOrdinaryWeek(orgId);
   const plan = usePlanWeek(orgId);
   const unplan = useUnplanWeek(orgId);
+  const level = useSetWordleLevel(orgId);
+  const ids = useId();
   // The game the editor is taking out of the week in play, until they confirm.
   const [removing, setRemoving] = useState<Game | null>(null);
   if (!schedule.data) return <p role="status">{t('common:shell.loading')}</p>;
 
-  const { default: usual, weeks } = schedule.data;
-  const busy = ordinary.isPending || plan.isPending || unplan.isPending;
+  const { default: usual, weeks, wordle_level: wordleLevel } = schedule.data;
+  const busy = ordinary.isPending || plan.isPending || unplan.isPending || level.isPending;
   // A new change forgets what an earlier one failed on.
   const fresh = () => {
     ordinary.reset();
     plan.reset();
     unplan.reset();
+    level.reset();
   };
   const monday = (week: Week) =>
     formatDate(day(week.week_start), { day: 'numeric', month: 'long' });
@@ -192,6 +198,37 @@ export function GameSchedulePage() {
             ))}
           </tbody>
         </table>
+      </section>
+
+      <section className={styles.panel} aria-label={t('games.wordle.title')}>
+        <h2 className={styles.heading}>{t('games.wordle.title')}</h2>
+        <p className={styles.hint}>{t('games.wordle.hint')}</p>
+        <fieldset className={styles.levels}>
+          <legend className={styles.label}>{t('games.wordle.legend')}</legend>
+          <ul className={styles.levelChoices}>
+            {WORDLE_LEVELS.map((each) => (
+              <li key={each} className={styles.level}>
+                <label className={styles.check}>
+                  <input
+                    type="radio"
+                    name={`${ids}-wordle-level`}
+                    checked={wordleLevel === each}
+                    disabled={busy}
+                    aria-describedby={`${ids}-wordle-${each}`}
+                    onChange={() => {
+                      fresh();
+                      level.mutate(each);
+                    }}
+                  />
+                  {t(`games.wordle.levels.${each}`)}
+                </label>
+                <span id={`${ids}-wordle-${each}`} className={styles.hint}>
+                  {t(`games.wordle.words.${each}`)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </fieldset>
       </section>
     </>
   );

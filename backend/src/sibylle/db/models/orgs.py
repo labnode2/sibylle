@@ -10,6 +10,7 @@ from sibylle import clock
 from sibylle.db.base import Base, new_id
 from sibylle.db.models.collection import CatalogItem
 from sibylle.domain.content import DEFAULT_LOGO
+from sibylle.domain.minigames import WORDLE_DEFAULT_LEVEL
 
 
 class Organisation(Base):
@@ -24,6 +25,7 @@ class Organisation(Base):
         CheckConstraint("max_base_gain >= 0", name="max_base_gain"),
         CheckConstraint("early_bird_pct BETWEEN 0 AND 100", name="early_bird_pct"),
         CheckConstraint("early_bird_count >= 0", name="early_bird_count"),
+        CheckConstraint("wordle_level BETWEEN 1 AND 3", name="wordle_level"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
@@ -41,6 +43,11 @@ class Organisation(Base):
     charter: Mapped[str] = mapped_column(Text)
     # The number of the newsroom's last prono; the next one takes the following number.
     last_prono_number: Mapped[int] = mapped_column(default=0, server_default="0")
+    # Wordle's level, 1 Facile, 2 Normal or 3 Difficile: the tiers of the word file its words of
+    # the day come from (domain/minigames.py, WORDLE_LEVEL_TIERS).
+    wordle_level: Mapped[int] = mapped_column(
+        default=WORDLE_DEFAULT_LEVEL, server_default=str(WORDLE_DEFAULT_LEVEL)
+    )
     created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
     deleted_at: Mapped[datetime | None]
 

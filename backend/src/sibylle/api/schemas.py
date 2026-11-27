@@ -1044,10 +1044,13 @@ class WordleTry(BaseModel):
 
 
 class WordleStatus(BaseModel):
-    """The member's Wordle of the day (Paris). `solution` and `laurels` only once it is over."""
+    """The member's Wordle of the day (Paris). `solution` and `laurels` only once it is over.
+    `level`: the word's difficulty, the rank of its tier in the word file, from 1 (the most
+    common words) to 6; null for a word of the lists written by hand."""
 
     day: date
     state: Literal["playing", "won", "lost"]
+    level: Annotated[int, Field(ge=1, le=6)] | None
     tries: list[WordleTry]
     tries_left: int
     laurels: int | None
@@ -1080,12 +1083,22 @@ class GameWeekOut(BaseModel):
     planned: bool
 
 
+# Wordle's level of a newsroom: 1 Facile, 2 Normal, 3 Difficile (domain/minigames.py).
+WordleLevel = Literal[1, 2, 3]
+
+
 class GameSchedule(BaseModel):
     """`default`: the games of an ordinary week, from next week on. `weeks`: the current week and
-    the three after it; `planned` when a week has games of its own."""
+    the three after it; `planned` when a week has games of its own. `wordle_level`: the level of
+    the newsroom's words of the day, a change counting from tomorrow's word."""
 
     default: list[Game]
     weeks: list[GameWeekOut]
+    wordle_level: WordleLevel
+
+
+class WordleLevelIn(BaseModel):
+    level: WordleLevel
 
 
 class PixelPuzzleIn(BaseModel):

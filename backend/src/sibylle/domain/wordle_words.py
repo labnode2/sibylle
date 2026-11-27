@@ -1,9 +1,22 @@
-"""Words of Wordle: five letters, no accent, lower case.
+"""Words of Wordle: five letters from a to z, lower case, no accent.
 
-`ANSWERS` are the words of the day; `EXTRA` are further words accepted as a try (conjugated
-forms, plurals, rarer words) that never come up as an answer. Order of `ANSWERS` is kept: the
-word of a day is picked by an index into it, so only append to it.
+They come from a file of the words of Lexique 3.83 in tiers of frequency, `wordle-fr.json`,
+which the worker fetches each night (services/wordle_lists.py); `lists_from` checks a version
+before the game may use it. Its `answers` are the words of the day, in tiers from the most common
+to the rarest, each tier `{id, min, max, count, words}` and each word `{word, spelling, freq,
+kind}`; its `guesses` are every word a try may be, the answers among them.
+
+`ANSWERS` and `ACCEPTED`, written by hand before that file, stay for a server that has never
+fetched it, and for the word every newsroom shared before each had its own (`wordle_answer`):
+`EXTRA` are further words accepted as a try (conjugated forms, plurals, rarer words) that never
+come up as an answer. Order of `ANSWERS` is kept: that word is picked by an index into it, so
+only append to it.
 """
+
+import json
+import re
+from dataclasses import dataclass
+from typing import Any, TypeGuard
 
 _ANSWERS = """
 abris acier adieu agent aigle ailes aimer album algue allee amour ananas angle animal annee
@@ -120,3 +133,123 @@ def _five(words: list[str]) -> list[str]:
 ANSWERS: tuple[str, ...] = tuple(_five(_ANSWERS))
 # Whatever may be tried: the answers and the other words.
 ACCEPTED: frozenset[str] = frozenset(ANSWERS) | frozenset(_five(_EXTRA))
+
+
+# The word file
+
+# What a version holds at least, and the most tiers it may have: a word's level is the rank of
+# its tier, from 1 to 6, and the game shows a square per level.
+MIN_ANSWERS = 100
+MIN_GUESSES = 1_000
+MAX_TIERS = 6
+_WORD = re.compile(r"[a-z]{5}")
+_TIER_KEYS = frozenset({"id", "min", "max", "count", "words"})
+_WORD_KEYS = frozenset({"word", "spelling", "freq", "kind"})
+
+
+class InvalidLists(ValueError):
+    """A file the game cannot use; the message says what is wrong."""
+
+
+@dataclass(frozen=True)
+class WordLists:
+    """A version of the words: the answers in tiers, from the most common to the rarest, and
+    every word a try may be. `levelled` is false for the lists written by hand, one tier of their
+    own: their words have no level."""
+
+    tiers: tuple[tuple[str, ...], ...]
+    guesses: frozenset[str]
+    levelled: bool = True
+
+
+# The lists written by hand, for a server that has not fetched the file yet.
+OLD_LISTS = WordLists((ANSWERS,), ACCEPTED, levelled=False)
+
+
+def decode(raw: bytes | str) -> dict[str, Any]:
+    """The file's JSON object; InvalidLists when it is not one."""
+    try:
+        data = json.loads(raw)
+    except (ValueError, RecursionError) as error:
+        raise InvalidLists(f"not JSON: {error}") from error
+    if not isinstance(data, dict):
+        raise InvalidLists("not a JSON object")
+    return data
+
+
+def parse_lists(raw: bytes | str) -> WordLists:
+    """The version a file holds, once checked (`lists_from`)."""
+    return lists_from(decode(raw))
+
+
+def lists_from(data: object) -> WordLists:
+    """The version a decoded file holds, once checked: the format above, every word five
+    letters from a to z, each answer once and among the guesses, at least 100 answers and 1 000
+    guesses, 6 tiers at most. Raises InvalidLists, which says what is wrong."""
+    if not isinstance(data, dict):
+        raise InvalidLists("not a JSON object")
+    answers, guesses = data.get("answers"), data.get("guesses")
+    if not isinstance(answers, list) or not answers:
+        raise InvalidLists("answers: not a list of tiers")
+    if len(answers) > MAX_TIERS:
+        raise InvalidLists(f"answers: {len(answers)} tiers, {MAX_TIERS} at most")
+    if not isinstance(guesses, list):
+        raise InvalidLists("guesses: not a list")
+    for index, word in enumerate(guesses):
+        if not _is_word(word):
+            raise InvalidLists(f"guesses[{index}]: {word!r} is not five letters from a to z")
+    accepted = frozenset(guesses)
+    tiers = tuple(_tier(index, tier) for index, tier in enumerate(answers))
+    seen: set[str] = set()
+    for tier in tiers:
+        for word in tier:
+            if word in seen:
+                raise InvalidLists(f"answers: {word!r} twice")
+            if word not in accepted:
+                raise InvalidLists(f"answers: {word!r} is not among the guesses")
+            seen.add(word)
+    if len(seen) < MIN_ANSWERS:
+        raise InvalidLists(f"answers: {len(seen)} words, {MIN_ANSWERS} at least")
+    if len(accepted) < MIN_GUESSES:
+        raise InvalidLists(f"guesses: {len(accepted)} words, {MIN_GUESSES} at least")
+    return WordLists(tiers, accepted)
+
+
+def _tier(index: int, tier: object) -> tuple[str, ...]:
+    """The words of a tier, checked."""
+    where = f"answers[{index}]"
+    if not isinstance(tier, dict) or not _TIER_KEYS <= tier.keys():
+        raise InvalidLists(f"{where}: not a tier {{id, min, max, count, words}}")
+    words = tier["words"]
+    if not isinstance(tier["id"], str):
+        raise InvalidLists(f"{where}: its id is not a string")
+    if not _number(tier["min"]) or not (tier["max"] is None or _number(tier["max"])):
+        raise InvalidLists(f"{where}: its min or max is not a number")
+    if not isinstance(words, list) or not words:
+        raise InvalidLists(f"{where}: no words")
+    count = tier["count"]
+    if not isinstance(count, int) or isinstance(count, bool) or count != len(words):
+        raise InvalidLists(f"{where}: count {count!r} for {len(words)} words")
+    for position, entry in enumerate(words):
+        at = f"{where}.words[{position}]"
+        if not isinstance(entry, dict) or not _WORD_KEYS <= entry.keys():
+            raise InvalidLists(f"{at}: not a word {{word, spelling, freq, kind}}")
+        if not _is_word(entry["word"]):
+            raise InvalidLists(f"{at}: {entry['word']!r} is not five letters from a to z")
+        kind = entry["kind"]
+        if (
+            not isinstance(entry["spelling"], str)
+            or not _number(entry["freq"])
+            or not isinstance(kind, list)
+            or not all(isinstance(each, str) for each in kind)
+        ):
+            raise InvalidLists(f"{at}: its spelling, freq or kind is not of the format")
+    return tuple(entry["word"] for entry in words)
+
+
+def _is_word(value: object) -> TypeGuard[str]:
+    return isinstance(value, str) and _WORD.fullmatch(value) is not None
+
+
+def _number(value: object) -> bool:
+    return isinstance(value, int | float) and not isinstance(value, bool)

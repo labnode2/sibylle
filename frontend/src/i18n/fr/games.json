@@ -134,6 +134,9 @@
     "won_other": "Trouvé en {{count}} essais : +{{laurels}} lauriers.",
     "lost": "Perdu. Le mot était « {{word}} ».",
     "tomorrow": "Un nouveau mot demain.",
+    "level": "Difficulté : {{level}}/{{levels}}",
+    "levelLabel": "Difficulté du mot : {{level}} sur {{levels}}",
+    "credit": "Mots : <site>Lexique 3.83</site> (New, Pallier et al.), licence CC BY-SA 4.0",
     "share": {
       "title": "PARTAGE TON RÉSULTAT",
       "head": "Wordle Sibylle #{{number}} {{score}}/6",

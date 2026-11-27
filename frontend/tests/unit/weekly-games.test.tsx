@@ -32,6 +32,7 @@ function pixel(overrides: Partial<NonNullable<Games['pixel']>>): Games {
     wordle: {
       day: '2026-11-16',
       state: 'playing',
+      level: null,
       tries: [],
       tries_left: 6,
       laurels: null,

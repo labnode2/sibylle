@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     oidc_client_id: str = "sibylle"
     oidc_client_secret: str = ""
 
+    # Wordle's words: the words of Lexique 3.83 in tiers of frequency, a file of a public
+    # repository that the worker fetches each night (services/wordle_lists.py).
+    wordle_lists_url: str = (
+        "https://raw.githubusercontent.com/labnode2/sibylle-wordle/main/wordle-fr.json"
+    )
+
     sibylle_clock: Literal["system", "fake"] = "system"
     sibylle_fake_clock_file: Path = Path("./.fake-clock")
 

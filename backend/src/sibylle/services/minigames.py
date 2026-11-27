@@ -19,11 +19,11 @@ the drawing in play ends with its word given.
 import base64
 import secrets
 import uuid
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import func, select, true
+from sqlalchemy import exists, func, select, true, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,6 +38,7 @@ from sibylle.db.models import (
     PixelGuess,
     PixelPuzzle,
     RunnerRun,
+    WordleDay,
     WordleGame,
 )
 from sibylle.domain.game_schedule import Game
@@ -64,16 +65,19 @@ from sibylle.domain.minigames import (
     runner_gains,
     valid_word,
     week_to_pay,
+    wordle_allowed,
     wordle_answer,
     wordle_gain,
+    wordle_level,
     wordle_marks,
+    wordle_pick,
     wordle_word,
 )
 from sibylle.domain.permissions import Action, can
 from sibylle.domain.pixels import decode
 from sibylle.domain.seasons import PARIS, week_start
 from sibylle.realtime import bus
-from sibylle.services import ledger, seasons
+from sibylle.services import ledger, seasons, wordle_lists
 from sibylle.services.game_schedule import games_of
 from sibylle.services.orgs import checked_drawing, public_member, unlocked_colors
 
@@ -716,47 +720,124 @@ async def follow_schedule(session: AsyncSession, org_id: uuid.UUID) -> None:
         await _finish(session, playing)
 
 
-# Wordle: a word a day, the same for the whole newsroom, six tries; always on, whatever the week's
-# games. The word stays on the server until the member's game is over.
+# Wordle: a word a day for each newsroom, six tries for each member; always on, whatever the
+# week's games. The worker draws the word at midnight (`prepare_wordle_day`), or the first look at
+# the game does if it has not yet; then it is kept. It stays on the server until the member's
+# game is over.
+
+# The draw among the words left; the tests put a known one in its place.
+wordle_choice: Callable[[Sequence[str]], str] = secrets.choice
 
 
-async def _wordle_game(session: AsyncSession, member: Membership, *, lock: bool = False) -> Any:
-    query = select(WordleGame).where(
-        WordleGame.membership_id == member.id, WordleGame.day == _today()
+async def _draw(session: AsyncSession, org_id: uuid.UUID, day: date) -> tuple[str, int | None]:
+    """A word for the newsroom's `day`, and its level. The day the draw came in, a newsroom
+    whose members had begun the game keeps the word every newsroom then shared, without a level,
+    so that the tries already made keep their colours."""
+    begun = await session.scalar(
+        select(exists().where(WordleGame.org_id == org_id, WordleGame.day == day))
     )
+    if begun:
+        return wordle_answer(day), None
+    lists = await wordle_lists.current(session)
+    newsroom_level = await session.scalar(
+        select(Organisation.wordle_level).where(Organisation.id == org_id)
+    )
+    assert newsroom_level is not None
+    history = await session.execute(
+        select(WordleDay.day, WordleDay.word).where(WordleDay.org_id == org_id)
+    )
+    word = wordle_pick(wordle_allowed(lists, newsroom_level), history.all(), day, wordle_choice)
+    return word, wordle_level(lists, word)
+
+
+async def _word_of_day(session: AsyncSession, org_id: uuid.UUID, day: date) -> WordleDay:
+    """The newsroom's word of `day`, drawn now if it has none yet; several first looks at once
+    still make a single draw. Once kept, neither the word nor its level change."""
+    query = select(WordleDay).where(WordleDay.org_id == org_id, WordleDay.day == day)
+    kept: WordleDay | None = await session.scalar(query)
+    if kept is not None:
+        return kept
+    word, level = await _draw(session, org_id, day)
+    await session.execute(
+        insert(WordleDay)
+        .values(org_id=org_id, day=day, word=word, level=level, created_at=clock.now())
+        .on_conflict_do_nothing()
+    )
+    drawn: WordleDay | None = await session.scalar(query.execution_options(populate_existing=True))
+    assert drawn is not None
+    return drawn
+
+
+async def prepare_wordle_day(session: AsyncSession) -> int:
+    """Draws today's word (Paris) of each newsroom that has none yet; returns how many."""
+    day = _today()
+    missing = (
+        await session.scalars(
+            select(Organisation.id)
+            .where(
+                Organisation.deleted_at.is_(None),
+                ~exists().where(WordleDay.org_id == Organisation.id, WordleDay.day == day),
+            )
+            .order_by(Organisation.id)
+        )
+    ).all()
+    for org_id in missing:
+        await _word_of_day(session, org_id, day)
+    return len(missing)
+
+
+async def set_wordle_level(session: AsyncSession, org_id: uuid.UUID, level: int) -> None:
+    """Sets the newsroom's Wordle level, which counts from tomorrow's word: today's is drawn
+    first, on the level it had, if nobody has looked at the game yet today."""
+    await _word_of_day(session, org_id, _today())
+    await session.execute(
+        update(Organisation).where(Organisation.id == org_id).values(wordle_level=level)
+    )
+
+
+async def _wordle_game(
+    session: AsyncSession, member: Membership, day: date, *, lock: bool = False
+) -> WordleGame | None:
+    query = select(WordleGame).where(WordleGame.membership_id == member.id, WordleGame.day == day)
     if lock:
         query = query.with_for_update()
-    return await session.scalar(query)
+    game: WordleGame | None = await session.scalar(query)
+    return game
 
 
-def _wordle_view(game: WordleGame | None, day: date) -> dict[str, Any]:
-    answer = wordle_answer(day)
+def _wordle_view(game: WordleGame | None, today: WordleDay) -> dict[str, Any]:
     guesses = list(game.guesses) if game else []
     state = game.state if game else "playing"
     return {
-        "day": day,
+        "day": today.day,
         "state": state,
-        "tries": [{"word": word, "marks": wordle_marks(word, answer)} for word in guesses],
+        "level": today.level,
+        "tries": [{"word": word, "marks": wordle_marks(word, today.word)} for word in guesses],
         "tries_left": WORDLE_TRIES - len(guesses),
         "laurels": game.laurels if game else None,
-        "solution": answer if state != "playing" else None,
+        "solution": today.word if state != "playing" else None,
     }
 
 
 async def wordle_status(session: AsyncSession, member: Membership) -> dict[str, Any]:
-    return _wordle_view(await _wordle_game(session, member), _today())
+    day = _today()
+    today = await _word_of_day(session, member.org_id, day)
+    return _wordle_view(await _wordle_game(session, member, day), today)
 
 
 async def wordle_guess(session: AsyncSession, member: Membership, text: str) -> dict[str, Any]:
-    """One try at the word of the day: validated, marked, kept. The game of the day is created
-    by the first try; the win is paid at once, once, as no try is taken after the game is over."""
+    """One try at the newsroom's word of the day: validated, marked, kept. A try is one of the
+    word file's guesses, or the word of the day itself. The game of the day is created by the
+    first try; the win is paid at once, once, as no try is taken after the game is over."""
     # One try at a time per member, so two taps cannot take a seventh try or pay twice.
     await session.execute(select(Membership.id).where(Membership.id == member.id).with_for_update())
     day = _today()
-    word = wordle_word(text)
+    today = await _word_of_day(session, member.org_id, day)
+    lists = await wordle_lists.current(session)
+    word = wordle_word(text, lists.guesses, today.word)
     if word is None:
         raise AppError("validation_error", {"word": "unknown_word"})
-    game = await _wordle_game(session, member, lock=True)
+    game = await _wordle_game(session, member, day, lock=True)
     if game is None:
         game = WordleGame(
             org_id=member.org_id, membership_id=member.id, day=day, guesses=[], state="playing"
@@ -764,9 +845,8 @@ async def wordle_guess(session: AsyncSession, member: Membership, text: str) -> 
         session.add(game)
     if game.state != "playing":
         raise AppError("wordle_over")
-    answer = wordle_answer(day)
     game.guesses = [*game.guesses, word]
-    if word == answer:
+    if word == today.word:
         game.state = "won"
         game.laurels = wordle_gain(len(game.guesses))
         await ledger.append(
@@ -775,4 +855,4 @@ async def wordle_guess(session: AsyncSession, member: Membership, text: str) -> 
     elif len(game.guesses) >= WORDLE_TRIES:
         game.state = "lost"
     await session.flush()
-    return _wordle_view(game, day)
+    return _wordle_view(game, today)
