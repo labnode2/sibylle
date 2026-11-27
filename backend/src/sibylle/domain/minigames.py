@@ -1,5 +1,5 @@
 """Rules of the mini-games: the ball's race (research.md J3 and R19), Pixel mystère (J4) and
-Wordle."""
+Wordle, with its chain of wins and its ranking of the day."""
 
 import hashlib
 import random
@@ -8,12 +8,13 @@ import secrets
 import unicodedata
 import uuid
 from collections import Counter
-from collections.abc import Callable, Container, Iterable, Sequence
+from collections.abc import Callable, Container, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Literal
 
 from sibylle.domain.seasons import PARIS, week_bounds, week_start
+from sibylle.domain.streaks import SHOWN_FROM
 from sibylle.domain.wordle_words import ANSWERS, WordLists
 
 RUNNER_ATTEMPTS = 5
@@ -173,6 +174,8 @@ def next_start(finished_at: datetime) -> datetime:
 
 WORDLE_LETTERS = 5
 WORDLE_TRIES = 6
+# What a word found pays, by the try that found it: the first, the second… the sixth.
+WORDLE_GAINS = (32, 8, 6, 4, 2, 1)
 # A word of this level or more, among the rarer ones, gives whoever missed it six times a last
 # chance: its letters in alphabetical order, and a seventh try, which pays nothing.
 WORDLE_LAST_CHANCE_LEVEL = 4
@@ -273,6 +276,95 @@ def wordle_hint(word: str) -> str:
 
 
 def wordle_gain(tries: int) -> int:
-    """6 laurels for a word found at the first try, then 5, 4, 3, 2 and 1 for the sixth; nothing
-    at the last chance, the seventh."""
-    return max(WORDLE_TRIES + 1 - tries, 0)
+    """What finding the word at that try pays: 32 laurels at the first, then 8, 6, 4, 2 and 1 at
+    the sixth (`WORDLE_GAINS`); nothing at the last chance, the seventh."""
+    return WORDLE_GAINS[tries - 1] if 1 <= tries <= len(WORDLE_GAINS) else 0
+
+
+# Wordle's chain of wins (« chaîne de victoires », as for the pronos: domain/streaks.py): the
+# days a member won in a row, from their first game on. Its stages (« paliers ») are the powers
+# of 3, without end: from 3 to 8, from 9 to 26, from 27 to 80, and so on. Each stage has a joker,
+# which keeps the chain once on a day missed and comes back each time the chain reaches a new
+# power of 3; below 3, no joker. Every win in six tries or fewer pays the rank of the chain's
+# stage on top.
+WORDLE_STAGE_BASE = 3
+
+
+def wordle_stage(chain: int) -> int:
+    """The rank of the chain's stage: 0 below 3, 1 from 3 to 8, 2 from 9 to 26, 3 from 27 to 80,
+    and so on. In integers, multiplying by 3: a logarithm gives 4.999… for 243."""
+    rank, power = 0, WORDLE_STAGE_BASE
+    while power <= chain:
+        rank, power = rank + 1, power * WORDLE_STAGE_BASE
+    return rank
+
+
+@dataclass(frozen=True)
+class WordleStreak:
+    """A member's chain of Wordle wins: `current` days won in a row, and `joker`, whether the
+    joker of its stage is still there to keep it on a day missed (never below 3)."""
+
+    current: int
+    joker: bool
+
+    @property
+    def shown(self) -> bool:
+        """The flame shows from two wins in a row, as for the pronos, though the bonus and the
+        joker only come at 3."""
+        return self.current >= SHOWN_FROM
+
+    @property
+    def bonus(self) -> int:
+        """What a win in six tries or fewer pays on top, the day's win counted in the chain: the
+        rank of its stage, nothing below 3."""
+        return wordle_stage(self.current)
+
+
+def wordle_streak(days: Mapping[date, str], today: date) -> WordleStreak:
+    """The member's chain on `today` (Paris), from how their game of each day they played stands
+    (`won`, `lost` or `playing`). Every day counts from the first game's on: won when its game
+    was, in six tries or at the last chance; missed otherwise, a day without a game too. A day
+    missed takes the joker of the chain's stage if it is still there, and the chain stays; else
+    the chain goes back to 0. Today counts only once its game is over: before that, the chain is
+    the one of the evening before."""
+    current, joker = 0, False
+    if not days:
+        return WordleStreak(current, joker)
+    day = min(days)
+    while day <= today:
+        state = days.get(day)
+        if day == today and state not in ("won", "lost"):
+            break
+        if state == "won":
+            current += 1
+            # A new power of 3 reached: the next stage, and its joker.
+            if wordle_stage(current) > wordle_stage(current - 1):
+                joker = True
+        elif joker:
+            joker = False
+        else:
+            current = 0
+        day += timedelta(days=1)
+    return WordleStreak(current, joker)
+
+
+@dataclass(frozen=True)
+class WordleResult:
+    """A member's game of the day, once over: found or lost, in how many tries, and when."""
+
+    member_id: uuid.UUID
+    won: bool
+    tries: int
+    finished_at: datetime
+
+
+def rank_wordle(results: Iterable[WordleResult]) -> list[tuple[int | None, WordleResult]]:
+    """The ranking of the day: those who found the word first, from the fewest tries to the most
+    (the last chance's seventh after the sixth) and, on a tie, the first to find; then those who
+    lost, in the order their games ended. Each with their rank from 1, none for those who lost."""
+    games = list(results)
+    found = sorted((r for r in games if r.won), key=lambda r: (r.tries, r.finished_at))
+    lost = sorted((r for r in games if not r.won), key=lambda r: r.finished_at)
+    ranked: list[tuple[int | None, WordleResult]] = list(enumerate(found, start=1))
+    ranked.extend((None, result) for result in lost)
+    return ranked

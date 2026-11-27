@@ -46,6 +46,15 @@ function Detail({ orgId, entry }: { orgId: string; entry: LedgerEntry }) {
     const day = formatDate(`${week[1]}T12:00:00Z`, { day: 'numeric', month: 'long' });
     return <span className={styles.ledgerDetail}>{t('ledger.runner', { day })}</span>;
   }
+  // « wordle:2026-11-16 », « wordle-streak:2026-11-16 »: the Wordle won that day, and the bonus
+  // its chain of wins paid on top.
+  const wordle =
+    entry.kind === 'minigame' && /^wordle(-streak)?:(\d{4}-\d{2}-\d{2})$/.exec(entry.reason ?? '');
+  if (wordle) {
+    const day = formatDate(`${wordle[2]}T12:00:00Z`, { day: 'numeric', month: 'long' });
+    const key = wordle[1] ? 'ledger.wordleStreak' : 'ledger.wordle';
+    return <span className={styles.ledgerDetail}>{t(key, { day })}</span>;
+  }
   // « pixel:Café »: the word found at Pixel mystère.
   const pixel = entry.kind === 'minigame' && /^pixel:(.+)$/.exec(entry.reason ?? '');
   if (pixel)

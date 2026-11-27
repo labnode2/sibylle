@@ -155,7 +155,10 @@ const playing: WordleStatus = {
   tries_left: 5,
   hint: null,
   laurels: null,
+  streak_bonus: null,
   solution: null,
+  streak: { current: 0, joker: false },
+  ranking: [],
 };
 const won: WordleStatus = {
   ...playing,
@@ -163,8 +166,10 @@ const won: WordleStatus = {
   level: null,
   tries: [...playing.tries, { word: 'bille', marks: [...CORRECT] }],
   tries_left: 4,
-  laurels: 5,
+  laurels: 8,
+  streak_bonus: 0,
   solution: 'bille',
+  streak: { current: 1, joker: false },
 };
 
 function openWordle(game: WordleStatus, reply: WordleStatus = game) {
@@ -192,7 +197,7 @@ describe('WordlePage', () => {
     openWordle(playing, won);
     expect(burst()).toBeNull();
     tryWord('bille');
-    expect(screen.getByText('Trouvé en 2 essais : +5 lauriers.')).toBeVisible();
+    expect(screen.getByText('Trouvé en 2 essais : +8 lauriers.')).toBeVisible();
     expect(burst()).not.toBeNull();
   });
 
@@ -242,6 +247,7 @@ describe('WordlePage', () => {
       tries_left: 0,
       hint: null,
       laurels: 0,
+      streak_bonus: 0,
       solution: 'bille',
     };
     openWordle(lastChance, found);
@@ -255,7 +261,7 @@ describe('WordlePage', () => {
 
   it('plays nothing when the page opens on a game already won', () => {
     openWordle(won);
-    expect(screen.getByText('Trouvé en 2 essais : +5 lauriers.')).toBeVisible();
+    expect(screen.getByText('Trouvé en 2 essais : +8 lauriers.')).toBeVisible();
     expect(burst()).toBeNull();
   });
 });

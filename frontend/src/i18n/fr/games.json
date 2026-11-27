@@ -119,7 +119,7 @@
   "wordle": {
     "back": "Retour à la une",
     "title": "Wordle",
-    "intro": "Trouve le mot de 5 lettres du jour en 6 essais, le même pour toute la rédaction. Vert : bien placée. Jaune : présente ailleurs. Gris : absente. Trouvé du premier coup, il rapporte 6 lauriers, puis 5, 4, 3, 2 et 1.",
+    "intro": "Trouve le mot de 5 lettres du jour en 6 essais, le même pour toute la rédaction. Vert : bien placée. Jaune : présente ailleurs. Gris : absente. Trouvé du premier coup, il rapporte 32 lauriers, puis 8, 6, 4, 2 et 1, plus le bonus de ta chaîne de victoires dès 3 jours gagnés d'affilée.",
     "grid": "Grille du Wordle",
     "mark": {
       "correct": "bien placée",
@@ -130,12 +130,32 @@
     "left_other": "{{count}} essais restants.",
     "enter": "Entrée",
     "erase": "Effacer",
-    "won_one": "Trouvé en {{count}} essai : +{{laurels}} lauriers.",
-    "won_other": "Trouvé en {{count}} essais : +{{laurels}} lauriers.",
+    "gain_one": "+{{count}} laurier",
+    "gain_other": "+{{count}} lauriers",
+    "won_one": "Trouvé en {{count}} essai : {{gain}}.",
+    "won_other": "Trouvé en {{count}} essais : {{gain}}.",
+    "wonBonus_one": "Trouvé en {{count}} essai : {{gain}}, +{{bonus}} pour ta chaîne de {{days}} victoires.",
+    "wonBonus_other": "Trouvé en {{count}} essais : {{gain}}, +{{bonus}} pour ta chaîne de {{days}} victoires.",
     "wonLastChance": "Trouvé à la dernière chance : pas de lauriers cette fois.",
     "lost": "Perdu. Le mot était « {{word}} ».",
     "lastChance": "Dernière chance : les lettres du mot sont <letters>{{letters}}</letters>",
     "tomorrow": "Un nouveau mot demain.",
+    "chain": {
+      "start": "Chaîne de {{days}} victoires : bonus et joker dès la 3ᵉ",
+      "joker": "Chaîne de {{days}} victoires, joker disponible",
+      "used": "Chaîne de {{days}} victoires, joker utilisé",
+      "rules": "Chaque jour gagné allonge ta chaîne de victoires, même à la dernière chance. Dès 3, chaque victoire en 6 essais au plus rapporte en plus +1 laurier, +2 dès 9, +3 dès 27, et ainsi de suite. Un jour perdu ou sans partie remet la chaîne à 0, sauf une fois par palier (3, 9, 27…) : le joker la garde."
+    },
+    "streak": "Chaîne de {{days}} victoires",
+    "ranking": {
+      "title": "CLASSEMENT DU JOUR",
+      "nobody": "Personne n'a encore fini la partie du jour.",
+      "score": "{{score}}/6",
+      "found_one": "trouvé en {{count}} essai",
+      "found_other": "trouvé en {{count}} essais",
+      "lastChance": "trouvé à la dernière chance",
+      "lost": "perdu"
+    },
     "level": "Difficulté : {{level}}/{{levels}}",
     "levelLabel": "Difficulté du mot : {{level}} sur {{levels}}",
     "credit": "Mots : <site>Lexique 3.83</site> (New, Pallier et al.), licence CC BY-SA 4.0",

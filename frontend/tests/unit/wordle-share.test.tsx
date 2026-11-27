@@ -42,8 +42,11 @@ const won: WordleStatus = {
   ],
   tries_left: 2,
   hint: null,
-  laurels: 3,
+  laurels: 4,
+  streak_bonus: 0,
   solution: 'bille',
+  streak: { current: 1, joker: false },
+  ranking: [],
 };
 
 const lost: WordleStatus = {
@@ -57,7 +60,10 @@ const lost: WordleStatus = {
   tries_left: 0,
   hint: null,
   laurels: null,
+  streak_bonus: null,
   solution: 'bille',
+  streak: { current: 0, joker: false },
+  ranking: [],
 };
 
 function show(state: WordleStatus) {
@@ -107,6 +113,7 @@ describe('shareText', () => {
         { word: 'bille', marks: ['correct', 'correct', 'correct', 'correct', 'correct'] },
       ],
       laurels: 0,
+      streak_bonus: 0,
     };
     expect(shareText(t, found)).toBe(
       ['Wordle Sibylle #3 6+1/6', '', ...Array<string>(6).fill('⬛⬛⬛⬛⬛'), '🟩🟩🟩🟩🟩'].join(
@@ -146,7 +153,14 @@ describe('WordlePage', () => {
   });
 
   it('has nothing to share while the game goes on', () => {
-    show({ ...won, state: 'playing', tries: won.tries.slice(0, 2), laurels: null, solution: null });
+    show({
+      ...won,
+      state: 'playing',
+      tries: won.tries.slice(0, 2),
+      laurels: null,
+      streak_bonus: null,
+      solution: null,
+    });
     expect(screen.queryByRole('region', { name: 'PARTAGE TON RÉSULTAT' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Copier le résultat' })).toBeNull();
   });

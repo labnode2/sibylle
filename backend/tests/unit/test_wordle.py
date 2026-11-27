@@ -1,9 +1,11 @@
 """Wordle: the colours of a try, the word file and its checks, the levels, the draw of a
-newsroom's word, the words a try may be, the gain, the last chance of a rarer word."""
+newsroom's word, the words a try may be, the gain, the last chance of a rarer word, the chain of
+wins with its joker and its bonus, the ranking of the day."""
 
 import json
+import uuid
 from collections.abc import Sequence
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 
 import pytest
@@ -11,6 +13,9 @@ from tests.wordle_sample import PER_TIER, TIERS, encoded, sample, tier_words, wo
 
 from sibylle.domain.minigames import (
     WORDLE_LETTERS,
+    WordleResult,
+    WordleStreak,
+    rank_wordle,
     wordle_allowed,
     wordle_answer,
     wordle_gain,
@@ -18,9 +23,12 @@ from sibylle.domain.minigames import (
     wordle_level,
     wordle_marks,
     wordle_pick,
+    wordle_stage,
+    wordle_streak,
     wordle_tries,
     wordle_word,
 )
+from sibylle.domain.seasons import PARIS
 from sibylle.domain.wordle_words import (
     ACCEPTED,
     ANSWERS,
@@ -94,8 +102,149 @@ def test_the_word_of_the_day_may_be_tried_even_when_it_is_not_among_the_guesses(
     assert wordle_word("table", lists.guesses, "arbre") is None
 
 
-def test_the_gain_falls_from_six_to_one_laurel_and_the_last_chance_pays_nothing() -> None:
-    assert [wordle_gain(tries) for tries in range(1, 8)] == [6, 5, 4, 3, 2, 1, 0]
+def test_the_gain_falls_from_32_laurels_to_1_and_the_last_chance_pays_nothing() -> None:
+    assert [wordle_gain(tries) for tries in range(1, 8)] == [32, 8, 6, 4, 2, 1, 0]
+
+
+# The chain of wins
+
+STATES = {"W": "won", "L": "lost", "P": "playing"}
+
+
+def played(pattern: str, start: date = DAY) -> dict[date, str]:
+    """A member's games, a letter a day from `start`: W won, L lost, P begun and never finished,
+    and a dot for a day without a game."""
+    return {start + timedelta(days=i): STATES[c] for i, c in enumerate(pattern) if c != "."}
+
+
+def chain(pattern: str) -> WordleStreak:
+    """The chain on the day after those days, before its game: each of them is over."""
+    return wordle_streak(played(pattern), DAY + timedelta(days=len(pattern)))
+
+
+def test_each_day_won_adds_one_to_the_chain() -> None:
+    assert chain("") == WordleStreak(0, joker=False)
+    assert [chain("W" * days).current for days in range(1, 8)] == [1, 2, 3, 4, 5, 6, 7]
+    # Whatever the days before the first game: the chain counts from it.
+    assert wordle_streak(played("WW", DAY + timedelta(days=30)), DAY + timedelta(days=32)) == (
+        WordleStreak(2, joker=False)
+    )
+
+
+def test_a_day_missed_from_3_takes_the_joker_then_the_next_one_sends_the_chain_back_to_0() -> None:
+    assert chain("WWW") == WordleStreak(3, joker=True)
+    assert chain("WWWL") == WordleStreak(3, joker=False)
+    assert chain("WWWLW") == WordleStreak(4, joker=False)
+    # The second miss of the same stage, from 3 to 8: no joker left.
+    assert chain("WWWLL") == WordleStreak(0, joker=False)
+    assert chain("WWWWWLWWL") == WordleStreak(0, joker=False)
+    assert chain("WWWWWLWWLW") == WordleStreak(1, joker=False)
+
+
+def test_below_3_a_day_missed_sends_the_chain_back_to_0() -> None:
+    assert chain("WW") == WordleStreak(2, joker=False)
+    assert chain("WWL") == WordleStreak(0, joker=False)
+    assert chain("WL") == WordleStreak(0, joker=False)
+    assert chain("L") == WordleStreak(0, joker=False)
+
+
+def test_a_day_without_a_game_or_with_a_game_not_finished_is_a_day_missed() -> None:
+    assert chain("WW.W") == WordleStreak(1, joker=False)
+    assert chain("WWW.W") == WordleStreak(4, joker=False)
+    assert chain("WWW..W") == WordleStreak(1, joker=False)
+    assert chain("WWWPW") == WordleStreak(4, joker=False)
+    assert chain("WWWPP") == WordleStreak(0, joker=False)
+
+
+def test_the_joker_comes_back_at_each_new_power_of_3() -> None:
+    # Used from 3 to 8, back at 9.
+    used = "WWWL"
+    assert chain(used + "W" * 5) == WordleStreak(8, joker=False)
+    assert chain(used + "W" * 6) == WordleStreak(9, joker=True)
+    assert chain(used + "W" * 6 + "L") == WordleStreak(9, joker=False)
+    assert chain(used + "W" * 6 + "LL") == WordleStreak(0, joker=False)
+    # Used at 9, back at 27.
+    used = "W" * 9 + "L"
+    assert chain(used + "W" * 17) == WordleStreak(26, joker=False)
+    assert chain(used + "W" * 18) == WordleStreak(27, joker=True)
+    # And so on without end: used at 81, back at 243.
+    used = "W" * 81 + "L"
+    assert chain(used + "W" * 161) == WordleStreak(242, joker=False)
+    assert chain(used + "W" * 162) == WordleStreak(243, joker=True)
+    assert chain(used + "W" * 162 + "L") == WordleStreak(243, joker=False)
+
+
+def test_a_joker_not_used_does_not_add_up_with_the_next_one() -> None:
+    assert chain("W" * 9) == WordleStreak(9, joker=True)
+    assert chain("W" * 9 + "L") == WordleStreak(9, joker=False)
+    assert chain("W" * 9 + "LL") == WordleStreak(0, joker=False)
+
+
+def test_today_counts_only_once_its_game_is_over() -> None:
+    days = played("WWW")
+    today = DAY + timedelta(days=3)
+    # Not played yet, or begun: the chain of last evening.
+    assert wordle_streak(days, today) == WordleStreak(3, joker=True)
+    assert wordle_streak(days | {today: "playing"}, today) == WordleStreak(3, joker=True)
+    assert wordle_streak(days | {today: "won"}, today) == WordleStreak(4, joker=True)
+    assert wordle_streak(days | {today: "lost"}, today) == WordleStreak(3, joker=False)
+    # The next day, a game left unfinished was a day missed.
+    tomorrow = today + timedelta(days=1)
+    assert wordle_streak(days | {today: "playing"}, tomorrow) == WordleStreak(3, joker=False)
+    # Two days missed in a row: the joker took the first.
+    assert wordle_streak(days, tomorrow + timedelta(days=1)) == WordleStreak(0, joker=False)
+
+
+def test_the_flame_shows_from_two_wins_though_the_bonus_and_the_joker_wait_for_3() -> None:
+    assert not chain("W").shown
+    assert (chain("WW").shown, chain("WW").joker, chain("WW").bonus) == (True, False, 0)
+    assert (chain("WWW").shown, chain("WWW").joker, chain("WWW").bonus) == (True, True, 1)
+
+
+def test_the_bonus_is_the_rank_of_the_chains_stage_without_end() -> None:
+    bonus = {chain: WordleStreak(chain, joker=False).bonus for chain in range(0, 800)}
+    assert [bonus[chain] for chain in (0, 1, 2)] == [0, 0, 0]
+    assert {bonus[chain] for chain in range(3, 9)} == {1}
+    assert [bonus[9], bonus[26], bonus[27], bonus[80], bonus[81]] == [2, 2, 3, 3, 4]
+    assert [bonus[100], bonus[242], bonus[243], bonus[300], bonus[728], bonus[729]] == [
+        4,
+        4,
+        5,
+        5,
+        5,
+        6,
+    ]
+    # In integers: right at each power of 3, however far.
+    assert [wordle_stage(3**rank) for rank in range(1, 40)] == list(range(1, 40))
+    assert [wordle_stage(3**rank - 1) for rank in range(1, 40)] == list(range(0, 39))
+
+
+# The ranking of the day
+
+
+def test_the_ranking_puts_the_fewest_tries_first_then_the_first_to_find_then_who_lost() -> None:
+    def at(minutes: int) -> datetime:
+        return datetime(2026, 11, 28, 8, 0, tzinfo=PARIS) + timedelta(minutes=minutes)
+
+    two = WordleResult(uuid.uuid4(), won=True, tries=2, finished_at=at(30))
+    four_late = WordleResult(uuid.uuid4(), won=True, tries=4, finished_at=at(20))
+    four_early = WordleResult(uuid.uuid4(), won=True, tries=4, finished_at=at(10))
+    six = WordleResult(uuid.uuid4(), won=True, tries=6, finished_at=at(50))
+    # Found at the last chance, the seventh try: after the sixth, however early.
+    seventh = WordleResult(uuid.uuid4(), won=True, tries=7, finished_at=at(0))
+    lost_late = WordleResult(uuid.uuid4(), won=False, tries=6, finished_at=at(40))
+    lost_early = WordleResult(uuid.uuid4(), won=False, tries=7, finished_at=at(5))
+    ranked = rank_wordle([lost_late, six, four_late, seventh, lost_early, two, four_early])
+    assert ranked == [
+        (1, two),
+        (2, four_early),
+        (3, four_late),
+        (4, six),
+        (5, seventh),
+        (None, lost_early),
+        (None, lost_late),
+    ]
+    assert rank_wordle([]) == []
 
 
 # The last chance

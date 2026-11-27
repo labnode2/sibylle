@@ -1,7 +1,7 @@
 """Wordle over HTTP and in the worker: one game a day per member on the newsroom's own word, kept
-secret until the game is over, the gain paid once, a last chance for the rarer words; the word
-file synced each night, each newsroom's word drawn at midnight and kept, its level set by whoever
-plans the games."""
+secret until the game is over, the gain and the chain's bonus paid once, a last chance for the
+rarer words, the chain of wins and the ranking of the day; the word file synced each night, each
+newsroom's word drawn at midnight and kept, its level set by whoever plans the games."""
 
 import hashlib
 import logging
@@ -11,7 +11,7 @@ from typing import Any
 
 import httpx
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, update
 from tests.conftest import MakeOrg, MakePerson, Person
 from tests.wordle_sample import FakeWordleFile, encoded, sample, tier_words, word, words_of
 
@@ -139,6 +139,8 @@ async def test_a_new_day_gives_six_tries_and_hides_the_solution(
     assert state["day"] == "2026-11-16"
     assert (state["state"], state["tries"], state["tries_left"]) == ("playing", [], 6)
     assert state["solution"] is None and state["laurels"] is None and state["hint"] is None
+    assert state["streak_bonus"] is None
+    assert (state["streak"], state["ranking"]) == ({"current": 0, "joker": False}, [])
     assert (await cami.client.get(f"/api/orgs/{org.id}/games")).json()["wordle"] == state
 
     answer = await the_word(cami, org.id)
@@ -162,17 +164,19 @@ async def test_a_word_found_pays_once_and_gives_the_solution(
     answer = await the_word(cami, org.id)
     await guess(cami, org.id, wrong_words(1, answer)[0])
     won = (await guess(cami, org.id, answer.upper())).json()
-    assert (won["state"], won["laurels"], won["solution"]) == ("won", 5, answer)
+    assert (won["state"], won["laurels"], won["solution"]) == ("won", 8, answer)
     assert won["tries"][-1]["marks"] == ["correct"] * 5
-    assert await balance(cami) == before + 5
+    # A first win: a chain of 1, no bonus yet.
+    assert (won["streak"], won["streak_bonus"]) == ({"current": 1, "joker": False}, 0)
+    assert await balance(cami) == before + 8
 
     # One game a day: nothing more to try, nothing more paid.
     again = await guess(cami, org.id, answer)
     assert again.status_code == 409
-    assert await balance(cami) == before + 5
+    assert await balance(cami) == before + 8
     # The others have their own game, and the newsroom's word.
     assert (await status(leo, org.id))["state"] == "playing"
-    assert (await guess(leo, org.id, answer)).json()["laurels"] == 6
+    assert (await guess(leo, org.id, answer)).json()["laurels"] == 32
 
     # The next day, a new game.
     fake_clock.set(datetime(2026, 11, 17, 0, 5, tzinfo=PARIS))
@@ -231,15 +235,15 @@ async def drawn(org: Organisation, answer: str, level: int | None) -> None:
         session.add(WordleDay(org_id=org.id, day=DAY, word=answer, level=level))
 
 
-async def ledger_of(person: Person) -> list[tuple[str, str | None]]:
-    """The member's lines in the ledger, in order: their kind and reason."""
+async def ledger_of(person: Person) -> list[tuple[str, str | None, int]]:
+    """The member's lines in the ledger, in order: their kind, reason and amount."""
     async with transaction() as session:
         rows = await session.execute(
-            select(LedgerEntry.kind, LedgerEntry.reason)
+            select(LedgerEntry.kind, LedgerEntry.reason, LedgerEntry.amount)
             .where(LedgerEntry.membership_id == person.member.id)
             .order_by(LedgerEntry.id)
         )
-        return [(kind, reason) for kind, reason in rows]
+        return [(kind, reason, amount) for kind, reason, amount in rows]
 
 
 @pytest.mark.parametrize("level", [4, 5, 6])
@@ -317,6 +321,7 @@ async def test_the_word_found_at_the_last_chance_is_a_win_without_laurels(
 
     won = (await guess(cami, org.id, answer.upper())).json()
     assert (won["state"], won["laurels"], won["solution"]) == ("won", 0, answer)
+    assert (won["streak_bonus"], won["streak"]) == (0, {"current": 1, "joker": False})
     assert (won["tries_left"], won["hint"]) == (0, None)
     assert len(won["tries"]) == 7 and won["tries"][-1]["marks"] == ["correct"] * 5
     # Nothing paid, not a line in the ledger; but a win, kept as one.
@@ -330,6 +335,193 @@ async def test_the_word_found_at_the_last_chance_is_a_win_without_laurels(
     # Never an eighth try.
     refused(await guess(cami, org.id, answer), 409, "wordle_over")
     assert (await balance(cami), await ledger_of(cami)) == before
+
+
+# The chain of wins and the ranking of the day
+
+STATES = {"W": "won", "L": "lost", "P": "playing"}
+
+
+async def played(person: Person, pattern: str, until: date = DAY) -> None:
+    """The member's games of the days before `until`, a letter a day, the last on its eve: W won,
+    L lost, P begun and never finished, a dot for a day without a game."""
+    start = until - timedelta(days=len(pattern))
+    async with transaction() as session:
+        for i, letter in enumerate(pattern):
+            if letter == ".":
+                continue
+            day = start + timedelta(days=i)
+            noon = datetime(day.year, day.month, day.day, 12, 0, tzinfo=PARIS)
+            session.add(
+                WordleGame(
+                    org_id=person.member.org_id,
+                    membership_id=person.member.id,
+                    day=day,
+                    guesses=["arbre"] if letter == "W" else ["boule"] * (6 if letter == "L" else 2),
+                    state=STATES[letter],
+                    laurels=32 if letter == "W" else None,
+                    streak_bonus=0 if letter == "W" else None,
+                    created_at=noon - timedelta(minutes=5),
+                    finished_at=None if letter == "P" else noon,
+                )
+            )
+
+
+async def finish(person: Person, org: Organisation, misses: Sequence[str], answer: str) -> Any:
+    """The member's game of the day: those words missed, then the word found, if given."""
+    state: Any = None
+    for each in misses:
+        state = (await guess(person, org.id, each)).json()
+    if answer:
+        state = (await guess(person, org.id, answer)).json()
+    return state
+
+
+@pytest.mark.parametrize(
+    ("before", "tries", "gain", "chain", "bonus"),
+    [
+        ("", 1, 32, 1, 0),
+        ("W", 2, 8, 2, 0),
+        ("WW", 3, 6, 3, 1),
+        # The joker kept the chain on the day missed: 3, 3 again, then 7 and today's 8.
+        ("WWWLWWWW", 4, 4, 8, 1),
+        ("W" * 8, 5, 2, 9, 2),
+        ("W" * 26, 6, 1, 27, 3),
+    ],
+)
+async def test_a_win_pays_its_gain_then_the_chains_bonus_once_in_two_lines(
+    before: str,
+    tries: int,
+    gain: int,
+    chain: int,
+    bonus: int,
+    make_org: MakeOrg,
+    person: MakePerson,
+    fake_clock: clock.FakeClock,
+) -> None:
+    fake_clock.set(MORNING)
+    org = await make_org()
+    cami = await person(org, "reader", "Cami")
+    await played(cami, before)
+    await drawn(org, "matin", 2)
+    balance_before, lines_before = await balance(cami), await ledger_of(cami)
+    won = await finish(cami, org, wrong_words(tries - 1, "matin"), "matin")
+    assert (won["state"], len(won["tries"])) == ("won", tries)
+    assert (won["laurels"], won["streak_bonus"], won["streak"]["current"]) == (gain, bonus, chain)
+    assert await balance(cami) == balance_before + gain + bonus
+    day = DAY.isoformat()
+    expected = [("minigame", f"wordle:{day}", gain)]
+    if bonus:
+        expected.append(("minigame", f"wordle-streak:{day}", bonus))
+    assert await ledger_of(cami) == [*lines_before, *expected]
+
+    # Once a day: nothing more to try, nothing more paid; a reload shows the same.
+    refused(await guess(cami, org.id, "matin"), 409, "wordle_over")
+    assert await ledger_of(cami) == [*lines_before, *expected]
+    assert await status(cami, org.id) == won
+
+
+async def test_a_win_at_the_last_chance_lengthens_the_chain_but_pays_no_bonus(
+    make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
+) -> None:
+    fake_clock.set(MORNING)
+    org = await make_org()
+    cami = await person(org, "reader", "Cami")
+    await played(cami, "WWWWW")
+    await drawn(org, "matin", 4)
+    before = (await balance(cami), await ledger_of(cami))
+    won = await finish(cami, org, wrong_words(6, "matin"), "matin")
+    assert (won["state"], len(won["tries"]), won["laurels"]) == ("won", 7, 0)
+    assert (won["streak_bonus"], won["streak"]) == (0, {"current": 6, "joker": True})
+    # Neither a gain nor a bonus: not a line in the ledger.
+    assert (await balance(cami), await ledger_of(cami)) == before
+    [row] = won["ranking"]
+    assert (row["rank"], row["state"], row["tries"], row["streak"]) == (1, "won", 7, 6)
+
+
+async def test_the_chain_is_the_one_of_the_evening_before_until_the_game_of_the_day_is_over(
+    make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
+) -> None:
+    fake_clock.set(MORNING)
+    org = await make_org()
+    cami = await person(org, "reader", "Cami")
+    await played(cami, "WWWW")
+    await drawn(org, "matin", 2)
+    misses = wrong_words(6, "matin")
+    assert (await status(cami, org.id))["streak"] == {"current": 4, "joker": True}
+    # A game under way is not a day missed yet.
+    await guess(cami, org.id, misses[0])
+    assert (await status(cami, org.id))["streak"] == {"current": 4, "joker": True}
+    # Lost: the joker keeps the chain.
+    lost = await finish(cami, org, misses[1:], "")
+    assert (lost["state"], lost["laurels"], lost["streak_bonus"]) == ("lost", None, None)
+    assert lost["streak"] == {"current": 4, "joker": False}
+
+    # The next morning, before playing: the same, then a day without a game sends it to 0.
+    fake_clock.set(datetime(2026, 11, 17, 8, 0, tzinfo=PARIS))
+    assert (await status(cami, org.id))["streak"] == {"current": 4, "joker": False}
+    fake_clock.set(datetime(2026, 11, 18, 8, 0, tzinfo=PARIS))
+    assert (await status(cami, org.id))["streak"] == {"current": 0, "joker": False}
+
+
+async def test_the_ranking_of_the_day_goes_by_tries_then_time_and_ends_with_who_lost(
+    make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
+) -> None:
+    fake_clock.set(datetime(2026, 11, 16, 6, 0, tzinfo=PARIS))
+    org = await make_org()
+    names = ("Cami", "Léo", "Inès", "Hugo", "Zoé", "Paul", "Lou", "Nina", "Max", "Ada")
+    people = {name: await person(org, "reader", name) for name in names}
+    await played(people["Cami"], "W")
+    # Level 4: a last chance after six misses, so a game lost takes seven tries.
+    await drawn(org, "matin", 4)
+    misses = wrong_words(7, "matin")
+
+    async def at(hour: int, minute: int, name: str, missed: int, found: bool) -> None:
+        fake_clock.set(datetime(2026, 11, 16, hour, minute, tzinfo=PARIS))
+        await finish(people[name], org, misses[:missed], "matin" if found else "")
+
+    # Cami begins first, at 6:00, but finds after Inès: the time a game ends is what counts.
+    await at(6, 0, "Cami", 1, found=False)
+    await at(7, 0, "Paul", 6, found=True)
+    await at(8, 0, "Hugo", 7, found=False)
+    await at(8, 30, "Inès", 2, found=True)
+    await at(9, 0, "Cami", 1, found=True)
+    await at(9, 30, "Léo", 1, found=True)
+    await at(10, 0, "Lou", 5, found=True)
+    await at(10, 30, "Zoé", 7, found=False)
+    # Max is still at it; Ada found at once, then left the newsroom.
+    await at(11, 0, "Max", 3, found=False)
+    await at(11, 30, "Ada", 0, found=True)
+    async with transaction() as session:
+        await session.execute(
+            update(Membership)
+            .where(Membership.id == people["Ada"].member.id)
+            .values(status="left", left_at=clock.now())
+        )
+
+    # Seen by Nina, who has not played: the ranking shows before one's own game.
+    nina = await status(people["Nina"], org.id)
+    assert nina["state"] == "playing" and nina["tries"] == []
+    ranking = nina["ranking"]
+    assert [(r["member"]["pseudo"], r["rank"], r["state"], r["tries"]) for r in ranking] == [
+        ("Léo", 1, "won", 2),
+        ("Inès", 2, "won", 3),
+        ("Cami", 3, "won", 3),
+        ("Lou", 4, "won", 6),
+        ("Paul", 5, "won", 7),
+        ("Hugo", None, "lost", 7),
+        ("Zoé", None, "lost", 7),
+    ]
+    # Each one's chain, the day's game counted: Cami won yesterday too.
+    assert [r["streak"] for r in ranking] == [1, 1, 2, 1, 1, 0, 0]
+    assert not any(r["is_me"] for r in ranking)
+    # Never a letter of anyone's tries, nor the word.
+    assert all(set(r) == {"member", "rank", "state", "tries", "streak", "is_me"} for r in ranking)
+    assert "matin" not in str(ranking) and not any(w in str(ranking) for w in misses)
+    # Cami's own line is marked as hers; Max, still playing, sees the same ranking.
+    cami = (await status(people["Cami"], org.id))["ranking"]
+    assert [r["member"]["pseudo"] for r in cami if r["is_me"]] == ["Cami"]
+    assert (await status(people["Max"], org.id))["ranking"] == ranking
 
 
 # The word file
@@ -617,7 +809,7 @@ async def test_the_day_the_draw_came_in_games_begun_keep_the_shared_word(
     # The shared word is not among the file's guesses, yet Cami may try it, and wins.
     assert shared not in sample()["guesses"]
     won = (await guess(cami, begun.id, shared)).json()
-    assert (won["state"], won["solution"], won["laurels"]) == ("won", shared, 5)
+    assert (won["state"], won["solution"], won["laurels"]) == ("won", shared, 8)
     # The guesses are the file's now: the old lists no longer make a try.
     refused(await guess(leo, fresh.id, tried), 422, "validation_error")
 

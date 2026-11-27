@@ -36,7 +36,10 @@ const sixthTry: WordleStatus = {
   tries_left: 1,
   hint: null,
   laurels: null,
+  streak_bonus: null,
   solution: null,
+  streak: { current: 0, joker: false },
+  ranking: [],
 };
 // The sixth missed too: the game goes on, with the hint.
 const lastChance: WordleStatus = { ...sixthTry, tries: missed(6), hint: 'A I M N T' };
@@ -128,6 +131,7 @@ describe('WordlePage', () => {
       tries_left: 0,
       hint: null,
       laurels: 0,
+      streak_bonus: 0,
       solution: 'matin',
     });
     expect(rows()).toHaveLength(7);

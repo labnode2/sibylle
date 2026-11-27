@@ -1043,14 +1043,46 @@ class WordleTry(BaseModel):
     marks: list[Literal["correct", "present", "absent"]]
 
 
+class WordleStreakOut(BaseModel):
+    """A member's chain of Wordle wins (« chaîne de victoires »), day after day (Paris) from their
+    first game: `current` days won in a row, today only once its game is over. A day missed
+    (lost, unfinished, not played) sends it back to 0 unless the joker of its stage keeps it:
+    `joker` says whether that joker is still there, never below 3. The stages are the powers of
+    3 (from 3 to 8, from 9 to 26…); each new one brings a joker back."""
+
+    current: int
+    joker: bool
+
+
+class WordleRankingRow(BaseModel):
+    """A member whose game of the day is over: `rank` among those who found the word, null for
+    those who lost; `tries`, 7 for a word found at the last chance; `streak`, their chain of
+    wins, the day's game counted. Never a letter of their tries."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    member: MemberPublic
+    rank: int | None
+    state: Literal["won", "lost"]
+    tries: int
+    streak: int
+    is_me: bool
+
+
 class WordleStatus(BaseModel):
-    """The member's Wordle of the day (Paris). `solution` and `laurels` only once it is over.
+    """The member's Wordle of the day (Paris). `solution` only once it is over; `laurels` and
+    `streak_bonus` only once won: what the tries paid (32, 8, 6, 4, 2 and 1 laurels from the
+    first try to the sixth), and what the chain of wins paid on top, the rank of its stage, the
+    day's win counted (1 from 3 to 8, 2 from 9 to 26…; 0 below 3).
     `level`: the word's difficulty, the rank of its tier in the word file, from 1 (the most
     common words) to 6; null for a word of the lists written by hand. A word of level 4 or more
     gives a last chance once six tries missed: the game goes on with `tries_left` 1 and `hint`,
     the word's letters in capitals and alphabetical order, between spaces (« A I M N T » for
     « matin », « B E E L L » for « belle »); `hint` is null the rest of the time. Found at the
-    seventh try, the word is a win with `laurels` 0."""
+    seventh try, the word is a win for the chain with `laurels` and `streak_bonus` 0.
+    `streak`: the member's chain of wins. `ranking`: the newsroom's active members whose game
+    of the day is over, those who found the word first, from the fewest tries and, on a tie,
+    the first to find; then those who lost, in the order they ended."""
 
     day: date
     state: Literal["playing", "won", "lost"]
@@ -1059,7 +1091,10 @@ class WordleStatus(BaseModel):
     tries_left: int
     hint: str | None
     laurels: int | None
+    streak_bonus: int | None
     solution: str | None
+    streak: WordleStreakOut
+    ranking: list[WordleRankingRow]
 
 
 class WordleGuessIn(BaseModel):

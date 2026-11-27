@@ -19,7 +19,7 @@ the drawing in play ends with its word given.
 import base64
 import secrets
 import uuid
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from datetime import date, datetime, timedelta
 from typing import Any
 
@@ -52,6 +52,8 @@ from sibylle.domain.minigames import (
     WORDLE_TRIES,
     WORDS_MAX,
     RunResult,
+    WordleResult,
+    WordleStreak,
     letter_count,
     masked,
     next_start,
@@ -59,6 +61,7 @@ from sibylle.domain.minigames import (
     pixel_gain,
     plausible,
     rank_runner,
+    rank_wordle,
     reveal_end,
     reveal_order,
     revealed_count,
@@ -72,6 +75,7 @@ from sibylle.domain.minigames import (
     wordle_level,
     wordle_marks,
     wordle_pick,
+    wordle_streak,
     wordle_tries,
     wordle_word,
 )
@@ -726,7 +730,9 @@ async def follow_schedule(session: AsyncSession, org_id: uuid.UUID) -> None:
 # week's games. The worker draws the word at midnight (`prepare_wordle_day`), or the first look at
 # the game does if it has not yet; then it is kept. It stays on the server until the member's
 # game is over. A word of level 4 or more gives whoever missed it six times a last chance: its
-# letters in alphabetical order, and a seventh try, a win without laurels.
+# letters in alphabetical order, and a seventh try, a win without laurels. Each member's chain of
+# wins is counted from all their games (`wordle_streak`), and the ranking of the day from the
+# games over; neither shows a letter of anyone's tries.
 
 # The draw among the words left; the tests put a known one in its place.
 wordle_choice: Callable[[Sequence[str]], str] = secrets.choice
@@ -808,12 +814,55 @@ async def _wordle_game(
     return game
 
 
-def _wordle_view(game: WordleGame | None, today: WordleDay) -> dict[str, Any]:
+async def _wordle_streaks(
+    session: AsyncSession, member_ids: Iterable[uuid.UUID], day: date
+) -> dict[uuid.UUID, WordleStreak]:
+    """Each member's chain of wins on `day`, from all their games up to it."""
+    days: dict[uuid.UUID, dict[date, str]] = {member_id: {} for member_id in member_ids}
+    rows = await session.execute(
+        select(WordleGame.membership_id, WordleGame.day, WordleGame.state).where(
+            WordleGame.membership_id.in_(list(days)), WordleGame.day <= day
+        )
+    )
+    for member_id, played, state in rows:
+        days[member_id][played] = state
+    return {member_id: wordle_streak(played, day) for member_id, played in days.items()}
+
+
+async def _wordle_view(
+    session: AsyncSession, member: Membership, game: WordleGame | None, today: WordleDay
+) -> dict[str, Any]:
+    """The member's game of the day, their chain of wins, and the ranking of the day: the
+    newsroom's active members whose game is over, with how many tries it took them."""
     guesses = list(game.guesses) if game else []
     state = game.state if game else "playing"
     # Six tries missed and the game still on: the last chance, which only a word of level 4 or
     # more gives.
     last_chance = state == "playing" and len(guesses) == WORDLE_TRIES
+    over = (
+        await session.execute(
+            select(WordleGame, Membership)
+            .join(Membership, Membership.id == WordleGame.membership_id)
+            .where(
+                WordleGame.org_id == member.org_id,
+                WordleGame.day == today.day,
+                WordleGame.state != "playing",
+                Membership.status == "active",
+            )
+        )
+    ).all()
+    players = {someone.id: someone for _, someone in over}
+    ranked = rank_wordle(
+        WordleResult(
+            done.membership_id,
+            done.state == "won",
+            len(done.guesses),
+            done.finished_at or done.created_at,
+        )
+        for done, _ in over
+    )
+    streaks = await _wordle_streaks(session, {member.id, *players}, today.day)
+    mine = streaks[member.id]
     return {
         "day": today.day,
         "state": state,
@@ -822,14 +871,45 @@ def _wordle_view(game: WordleGame | None, today: WordleDay) -> dict[str, Any]:
         "tries_left": 1 if last_chance else max(WORDLE_TRIES - len(guesses), 0),
         "hint": wordle_hint(today.word) if last_chance else None,
         "laurels": game.laurels if game else None,
+        "streak_bonus": game.streak_bonus if game else None,
         "solution": today.word if state != "playing" else None,
+        "streak": {"current": mine.current, "joker": mine.joker},
+        "ranking": [
+            {
+                "member": players[result.member_id],
+                "rank": rank,
+                "state": "won" if result.won else "lost",
+                "tries": result.tries,
+                "streak": streaks[result.member_id].current,
+                "is_me": result.member_id == member.id,
+            }
+            for rank, result in ranked
+        ],
     }
 
 
 async def wordle_status(session: AsyncSession, member: Membership) -> dict[str, Any]:
     day = _today()
     today = await _word_of_day(session, member.org_id, day)
-    return _wordle_view(await _wordle_game(session, member, day), today)
+    return await _wordle_view(session, member, await _wordle_game(session, member, day), today)
+
+
+async def _pay_wordle(session: AsyncSession, member: Membership, game: WordleGame) -> None:
+    """Pays a game just won, in two lines of the ledger: what its tries are worth, then the
+    chain's bonus, the day's win counted in the chain. Found at the last chance: a win for the
+    chain all the same, but neither a gain nor a bonus, and nothing for the ledger, which takes
+    no gain of 0."""
+    tries = len(game.guesses)
+    chain = (await _wordle_streaks(session, [member.id], game.day))[member.id]
+    game.laurels = wordle_gain(tries)
+    game.streak_bonus = chain.bonus if tries <= WORDLE_TRIES else 0
+    day = game.day.isoformat()
+    if game.laurels > 0:
+        await ledger.append(session, member.id, minigame(game.laurels), reason=f"wordle:{day}")
+    if game.streak_bonus > 0:
+        await ledger.append(
+            session, member.id, minigame(game.streak_bonus), reason=f"wordle-streak:{day}"
+        )
 
 
 async def wordle_guess(session: AsyncSession, member: Membership, text: str) -> dict[str, Any]:
@@ -837,7 +917,8 @@ async def wordle_guess(session: AsyncSession, member: Membership, text: str) -> 
     word file's guesses, or the word of the day itself. The game of the day is created by the
     first try; the win is paid at once, once, as no try is taken after the game is over. The
     sixth try missed ends it, unless the word gives a last chance (`wordle_tries`): then the
-    seventh does, and finding the word there is a win that pays nothing."""
+    seventh does, and finding the word there is a win that pays nothing. The time a game ends
+    is kept for the ranking of the day."""
     # One try at a time per member, so two taps cannot take a try too many or pay twice.
     await session.execute(select(Membership.id).where(Membership.id == member.id).with_for_update())
     day = _today()
@@ -857,14 +938,13 @@ async def wordle_guess(session: AsyncSession, member: Membership, text: str) -> 
     game.guesses = [*game.guesses, word]
     if word == today.word:
         game.state = "won"
-        game.laurels = wordle_gain(len(game.guesses))
-        # Found at the last chance: a win all the same, but nothing for the ledger, which takes
-        # no gain of 0.
-        if game.laurels > 0:
-            await ledger.append(
-                session, member.id, minigame(game.laurels), reason=f"wordle:{day.isoformat()}"
-            )
     elif len(game.guesses) >= wordle_tries(today.level):
         game.state = "lost"
+    if game.state != "playing":
+        game.finished_at = clock.now()
+    # Written before the chain is counted, which takes the day's win.
     await session.flush()
-    return _wordle_view(game, today)
+    if game.state == "won":
+        await _pay_wordle(session, member, game)
+        await session.flush()
+    return await _wordle_view(session, member, game, today)

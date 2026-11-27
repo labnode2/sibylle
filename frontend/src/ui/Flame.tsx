@@ -100,19 +100,22 @@ export function Flame({ size = 16 }: { size?: number }) {
   );
 }
 
-/** « 🔥 3 »: the member's chain of wins, from two in a row; nothing below. */
+/** « 🔥 3 »: the member's chain of wins, from two in a row; nothing below. Its words say what was
+ *  won in a row, pronos unless `label` says otherwise (Wordle's days). */
 export function Streak({
   value,
   size = 12,
   className,
+  label: words,
 }: {
   value: number;
   size?: number;
   className?: string;
+  label?: string;
 }) {
   const { t } = useTranslation();
   if (value < STREAK_SHOWN_FROM) return null;
-  const label = t('streak', { count: value });
+  const label = words ?? t('streak', { count: value });
   return (
     <span className={className ? `${styles.streak} ${className}` : styles.streak} title={label}>
       <Flame size={size} />

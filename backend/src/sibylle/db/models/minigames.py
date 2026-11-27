@@ -157,12 +157,15 @@ class PixelFind(Base):
 
 class WordleGame(Base):
     """A member's Wordle of a day (Paris): the words tried so far, and how it ended. The word is
-    the newsroom's word of that day (`WordleDay`)."""
+    the newsroom's word of that day (`WordleDay`). Once won, `laurels` is what the tries paid and
+    `streak_bonus` what the chain of wins paid on top (0 below 3, at the last chance, and for
+    the games won before the chain came)."""
 
     __tablename__ = "wordle_games"
     __table_args__ = (
         UniqueConstraint("membership_id", "day"),
         CheckConstraint("state IN ('playing', 'won', 'lost')", name="state"),
+        CheckConstraint("(state = 'playing') = (finished_at IS NULL)", name="finished"),
         Index("ix_wordle_games_org_id_day", "org_id", "day"),
     )
 
@@ -173,7 +176,10 @@ class WordleGame(Base):
     guesses: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
     state: Mapped[str] = mapped_column(Text, default="playing", server_default="playing")
     laurels: Mapped[int | None]
+    streak_bonus: Mapped[int | None]
+    # The first try's time; and when the game was won or lost, which the ranking of the day uses.
     created_at: Mapped[datetime] = mapped_column(default=lambda: clock.now())
+    finished_at: Mapped[datetime | None]
 
 
 class WordleList(Base):

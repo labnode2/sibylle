@@ -18,10 +18,15 @@ export function wordleNumber(day: string): number {
   return Math.round((Date.parse(day) - FIRST_DAY) / DAY_MS) + 1;
 }
 
-/** The score of a finished game: the tries it took, the last chance's seventh as « 6+1 ». */
+/** The tries a word was found in, the last chance's seventh as « 6+1 »: « 6+1/6 » once followed
+ *  by the tries a game gives, as here and in the ranking of the day. */
+export function triesTaken(count: number): number | string {
+  return count > MAX_TRIES ? `${MAX_TRIES}+1` : count;
+}
+
+/** The score of a finished game: the tries it took, or « X » when lost. */
 function score({ state, tries }: WordleStatus): number | string {
-  if (state !== 'won') return 'X';
-  return tries.length > MAX_TRIES ? `${MAX_TRIES}+1` : tries.length;
+  return state === 'won' ? triesTaken(tries.length) : 'X';
 }
 
 /** The text that sharing a finished game copies. */

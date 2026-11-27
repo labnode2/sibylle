@@ -37,7 +37,10 @@ function pixel(overrides: Partial<NonNullable<Games['pixel']>>): Games {
       tries_left: 6,
       hint: null,
       laurels: null,
+      streak_bonus: null,
       solution: null,
+      streak: { current: 0, joker: false },
+      ranking: [],
     },
     pixel: {
       puzzle_id: '00000000-0000-0000-0000-000000000001',

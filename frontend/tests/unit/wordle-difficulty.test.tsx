@@ -25,7 +25,10 @@ const playing: WordleStatus = {
   tries_left: 5,
   hint: null,
   laurels: null,
+  streak_bonus: null,
   solution: null,
+  streak: { current: 0, joker: false },
+  ranking: [],
 };
 
 function show(state: WordleStatus) {
@@ -57,7 +60,7 @@ describe('WordlePage', () => {
   });
 
   it('still shows it once the game is over', () => {
-    show({ ...playing, state: 'won', level: 6, laurels: 5, solution: 'ville' });
+    show({ ...playing, state: 'won', level: 6, laurels: 8, streak_bonus: 0, solution: 'ville' });
     expect(squares(screen.getByRole('img', { name: 'Difficulté du mot : 6 sur 6' }))).toEqual([
       6, 6,
     ]);
