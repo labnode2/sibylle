@@ -1,6 +1,8 @@
 // The grid of the Wordle: six rows of five squares. The tries sent back by the server show their
 // colours (green in place, yellow elsewhere, grey absent), the row being typed shows its letters,
-// the rest is empty. The colours come with a word for screen readers, not by colour alone.
+// the rest is empty. The colours come with a word for screen readers, not by colour alone. A
+// seventh row comes only with the last chance, a word of level 4 or more missed six times: the
+// server then keeps the game on after six tries, and the row stays once its try is played.
 import { useTranslation } from 'react-i18next';
 
 import type { WordleStatus } from '../api';
@@ -17,9 +19,11 @@ export function WordleGrid({
   over: boolean;
 }) {
   const { t } = useTranslation('games');
+  // A row for each try played and, while the game is on, the one being typed.
+  const rows = Math.max(MAX_TRIES, tries.length + (over ? 0 : 1));
   return (
     <div className={styles.grid} role="grid" aria-label={t('wordle.grid')}>
-      {Array.from({ length: MAX_TRIES }, (_, row) => {
+      {Array.from({ length: rows }, (_, row) => {
         const tried = tries[row];
         const current = !tried && !over && row === tries.length;
         return (

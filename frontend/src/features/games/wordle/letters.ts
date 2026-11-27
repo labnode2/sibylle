@@ -3,6 +3,7 @@ import type { WordleStatus } from '../api';
 export type Mark = WordleStatus['tries'][number]['marks'][number];
 
 export const WORD_LENGTH = 5;
+// The tries of a game; a seventh, the last chance, only when the server gives it.
 export const MAX_TRIES = 6;
 
 /** The keys of the on-screen keyboard, as on a French keyboard. */

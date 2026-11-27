@@ -3200,7 +3200,11 @@ export interface components {
          * WordleStatus
          * @description The member's Wordle of the day (Paris). `solution` and `laurels` only once it is over.
          *     `level`: the word's difficulty, the rank of its tier in the word file, from 1 (the most
-         *     common words) to 6; null for a word of the lists written by hand.
+         *     common words) to 6; null for a word of the lists written by hand. A word of level 4 or more
+         *     gives a last chance once six tries missed: the game goes on with `tries_left` 1 and `hint`,
+         *     the word's letters in capitals and alphabetical order, between spaces (« A I M N T » for
+         *     « matin », « B E E L L » for « belle »); `hint` is null the rest of the time. Found at the
+         *     seventh try, the word is a win with `laurels` 0.
          */
         WordleStatus: {
             /**
@@ -3219,6 +3223,8 @@ export interface components {
             tries: components["schemas"]["WordleTry"][];
             /** Tries Left */
             tries_left: number;
+            /** Hint */
+            hint: string | null;
             /** Laurels */
             laurels: number | null;
             /** Solution */

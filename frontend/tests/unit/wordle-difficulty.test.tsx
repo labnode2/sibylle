@@ -23,6 +23,7 @@ const playing: WordleStatus = {
   level: 4,
   tries: [{ word: 'livre', marks: ['absent', 'correct', 'absent', 'absent', 'present'] }],
   tries_left: 5,
+  hint: null,
   laurels: null,
   solution: null,
 };

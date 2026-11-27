@@ -153,6 +153,7 @@ const playing: WordleStatus = {
   level: null,
   tries: [{ word: 'livre', marks: ['absent', 'correct', 'absent', 'absent', 'present'] }],
   tries_left: 5,
+  hint: null,
   laurels: null,
   solution: null,
 };
@@ -224,6 +225,32 @@ describe('WordlePage', () => {
     tryWord('ville');
     expect(screen.getByText('Perdu. Le mot était « BILLE ».')).toBeVisible();
     expect(burst()).toBeNull();
+  });
+
+  it('plays the burst too when the last chance finds the word, though it pays nothing', () => {
+    const lastChance: WordleStatus = {
+      ...playing,
+      level: 4,
+      tries: Array.from({ length: 6 }, () => playing.tries[0]!),
+      tries_left: 1,
+      hint: 'B E I L L',
+    };
+    const found: WordleStatus = {
+      ...lastChance,
+      state: 'won',
+      tries: [...lastChance.tries, { word: 'bille', marks: [...CORRECT] }],
+      tries_left: 0,
+      hint: null,
+      laurels: 0,
+      solution: 'bille',
+    };
+    openWordle(lastChance, found);
+    expect(burst()).toBeNull();
+    tryWord('bille');
+    expect(
+      screen.getByText('Trouvé à la dernière chance : pas de lauriers cette fois.'),
+    ).toBeVisible();
+    expect(burst()).not.toBeNull();
   });
 
   it('plays nothing when the page opens on a game already won', () => {

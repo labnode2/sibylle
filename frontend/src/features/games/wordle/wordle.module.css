@@ -73,6 +73,12 @@
   background: var(--ink);
 }
 
+/* The last chance's letters, above the keyboard: on one line, so a phone never splits them. */
+.hint {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 /* Where the words come from, under the game. */
 .credit {
   margin-top: 8px;

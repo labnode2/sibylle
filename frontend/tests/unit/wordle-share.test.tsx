@@ -1,5 +1,6 @@
-// Sharing a finished Wordle by copy and paste: the word's number, the tries it took (« X » when
-// lost) and a row of coloured squares per try, without a letter; only once the game is over.
+// Sharing a finished Wordle by copy and paste: the word's number, the tries it took (« 6+1 » when
+// found at the last chance, « X » when lost) and a row of coloured squares per try, without a
+// letter; only once the game is over.
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -40,6 +41,7 @@ const won: WordleStatus = {
     { word: 'bille', marks: ['correct', 'correct', 'correct', 'correct', 'correct'] },
   ],
   tries_left: 2,
+  hint: null,
   laurels: 3,
   solution: 'bille',
 };
@@ -53,6 +55,7 @@ const lost: WordleStatus = {
     marks: ['absent', 'absent', 'absent', 'absent', 'absent'],
   })),
   tries_left: 0,
+  hint: null,
   laurels: null,
   solution: 'bille',
 };
@@ -92,6 +95,36 @@ describe('shareText', () => {
     const text = shareText(t, lost);
     expect(text.split('\n')[0]).toBe('Wordle Sibylle #3 X/6');
     expect(text.split('\n').slice(2)).toEqual(Array<string>(6).fill('⬛⬛⬛⬛⬛'));
+  });
+
+  it('scores a word found at the last chance « 6+1 », its seventh row with the others', () => {
+    const found: WordleStatus = {
+      ...lost,
+      state: 'won',
+      level: 5,
+      tries: [
+        ...lost.tries,
+        { word: 'bille', marks: ['correct', 'correct', 'correct', 'correct', 'correct'] },
+      ],
+      laurels: 0,
+    };
+    expect(shareText(t, found)).toBe(
+      ['Wordle Sibylle #3 6+1/6', '', ...Array<string>(6).fill('⬛⬛⬛⬛⬛'), '🟩🟩🟩🟩🟩'].join(
+        '\n',
+      ),
+    );
+    // Missed there too, it is lost.
+    const missed: WordleStatus = {
+      ...lost,
+      level: 5,
+      tries: [
+        ...lost.tries,
+        { word: 'balle', marks: ['correct', 'absent', 'correct', 'correct', 'correct'] },
+      ],
+    };
+    const lines = shareText(t, missed).split('\n');
+    expect(lines[0]).toBe('Wordle Sibylle #3 X/6');
+    expect(lines.slice(2)).toEqual([...Array<string>(6).fill('⬛⬛⬛⬛⬛'), '🟩⬛🟩🟩🟩']);
   });
 });
 

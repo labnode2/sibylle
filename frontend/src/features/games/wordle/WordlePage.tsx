@@ -4,7 +4,9 @@
 // state is kept by the server, so a reload shows the same grid. Once over, the result can be
 // copied to be pasted elsewhere, in colours only. The try that finds the word plays the burst of a
 // win; a reload of a game already won does not. Before and after the game, the word's difficulty
-// shows as squares; at the bottom, the credit of Lexique, where the words come from.
+// shows as squares; at the bottom, the credit of Lexique, where the words come from. A word of
+// level 4 or more missed six times gives a last chance: a seventh row, and the word's letters in
+// alphabetical order above the keyboard; found there, it is a win without laurels.
 import { useCallback, useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
@@ -14,7 +16,7 @@ import { ExternalLink, Icon } from '../../../ui/components';
 import { useFormErrors } from '../../forms';
 import { useWordle, useWordleGuess } from '../api';
 import styles from '../games.module.css';
-import { KEY_ROWS, keyMarks, plainLetter, WORD_LENGTH } from './letters';
+import { KEY_ROWS, keyMarks, MAX_TRIES, plainLetter, WORD_LENGTH } from './letters';
 import { WordleGrid } from './WordleGrid';
 import wordle from './wordle.module.css';
 import { WordleShare } from './WordleShare';
@@ -40,6 +42,19 @@ function Difficulty({ level }: { level: number }) {
         ))}
       </span>
     </p>
+  );
+}
+
+/** The last chance's hint: the word's letters in alphabetical order, kept on one line. */
+function LastChance({ letters }: { letters: string }) {
+  const { t } = useTranslation('games');
+  return (
+    <Trans
+      t={t}
+      i18nKey="wordle.lastChance"
+      values={{ letters }}
+      components={{ letters: <span className={wordle.hint} /> }}
+    />
   );
 }
 
@@ -96,7 +111,7 @@ export function WordlePage() {
   }, [over, type, erase, submit]);
 
   if (!status.data) return <p role="status">{t('common:shell.loading')}</p>;
-  const { tries, state, solution, laurels, tries_left: left, level } = status.data;
+  const { tries, state, solution, laurels, tries_left: left, level, hint } = status.data;
   const marks = keyMarks(tries);
   const problem = errors.field('word') ?? errors.message;
 
@@ -111,9 +126,14 @@ export function WordlePage() {
       {level !== null && <Difficulty level={level} />}
       <WordleGrid tries={tries} typing={typing} over={over} />
       <p className={styles.text} role="status">
-        {state === 'won' && t('wordle.won', { count: tries.length, laurels })}
+        {state === 'won' &&
+          (tries.length > MAX_TRIES
+            ? t('wordle.wonLastChance')
+            : t('wordle.won', { count: tries.length, laurels }))}
         {state === 'lost' && t('wordle.lost', { word: solution?.toUpperCase() })}
-        {state === 'playing' && (problem ?? t('wordle.left', { count: left }))}
+        {state === 'playing' &&
+          (problem ??
+            (hint !== null ? <LastChance letters={hint} /> : t('wordle.left', { count: left })))}
       </p>
       {over ? (
         <>

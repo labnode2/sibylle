@@ -1046,13 +1046,18 @@ class WordleTry(BaseModel):
 class WordleStatus(BaseModel):
     """The member's Wordle of the day (Paris). `solution` and `laurels` only once it is over.
     `level`: the word's difficulty, the rank of its tier in the word file, from 1 (the most
-    common words) to 6; null for a word of the lists written by hand."""
+    common words) to 6; null for a word of the lists written by hand. A word of level 4 or more
+    gives a last chance once six tries missed: the game goes on with `tries_left` 1 and `hint`,
+    the word's letters in capitals and alphabetical order, between spaces (« A I M N T » for
+    « matin », « B E E L L » for « belle »); `hint` is null the rest of the time. Found at the
+    seventh try, the word is a win with `laurels` 0."""
 
     day: date
     state: Literal["playing", "won", "lost"]
     level: Annotated[int, Field(ge=1, le=6)] | None
     tries: list[WordleTry]
     tries_left: int
+    hint: str | None
     laurels: int | None
     solution: str | None
 

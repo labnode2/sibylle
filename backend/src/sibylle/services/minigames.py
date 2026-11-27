@@ -68,9 +68,11 @@ from sibylle.domain.minigames import (
     wordle_allowed,
     wordle_answer,
     wordle_gain,
+    wordle_hint,
     wordle_level,
     wordle_marks,
     wordle_pick,
+    wordle_tries,
     wordle_word,
 )
 from sibylle.domain.permissions import Action, can
@@ -723,7 +725,8 @@ async def follow_schedule(session: AsyncSession, org_id: uuid.UUID) -> None:
 # Wordle: a word a day for each newsroom, six tries for each member; always on, whatever the
 # week's games. The worker draws the word at midnight (`prepare_wordle_day`), or the first look at
 # the game does if it has not yet; then it is kept. It stays on the server until the member's
-# game is over.
+# game is over. A word of level 4 or more gives whoever missed it six times a last chance: its
+# letters in alphabetical order, and a seventh try, a win without laurels.
 
 # The draw among the words left; the tests put a known one in its place.
 wordle_choice: Callable[[Sequence[str]], str] = secrets.choice
@@ -808,12 +811,16 @@ async def _wordle_game(
 def _wordle_view(game: WordleGame | None, today: WordleDay) -> dict[str, Any]:
     guesses = list(game.guesses) if game else []
     state = game.state if game else "playing"
+    # Six tries missed and the game still on: the last chance, which only a word of level 4 or
+    # more gives.
+    last_chance = state == "playing" and len(guesses) == WORDLE_TRIES
     return {
         "day": today.day,
         "state": state,
         "level": today.level,
         "tries": [{"word": word, "marks": wordle_marks(word, today.word)} for word in guesses],
-        "tries_left": WORDLE_TRIES - len(guesses),
+        "tries_left": 1 if last_chance else max(WORDLE_TRIES - len(guesses), 0),
+        "hint": wordle_hint(today.word) if last_chance else None,
         "laurels": game.laurels if game else None,
         "solution": today.word if state != "playing" else None,
     }
@@ -828,8 +835,10 @@ async def wordle_status(session: AsyncSession, member: Membership) -> dict[str, 
 async def wordle_guess(session: AsyncSession, member: Membership, text: str) -> dict[str, Any]:
     """One try at the newsroom's word of the day: validated, marked, kept. A try is one of the
     word file's guesses, or the word of the day itself. The game of the day is created by the
-    first try; the win is paid at once, once, as no try is taken after the game is over."""
-    # One try at a time per member, so two taps cannot take a seventh try or pay twice.
+    first try; the win is paid at once, once, as no try is taken after the game is over. The
+    sixth try missed ends it, unless the word gives a last chance (`wordle_tries`): then the
+    seventh does, and finding the word there is a win that pays nothing."""
+    # One try at a time per member, so two taps cannot take a try too many or pay twice.
     await session.execute(select(Membership.id).where(Membership.id == member.id).with_for_update())
     day = _today()
     today = await _word_of_day(session, member.org_id, day)
@@ -849,10 +858,13 @@ async def wordle_guess(session: AsyncSession, member: Membership, text: str) -> 
     if word == today.word:
         game.state = "won"
         game.laurels = wordle_gain(len(game.guesses))
-        await ledger.append(
-            session, member.id, minigame(game.laurels), reason=f"wordle:{day.isoformat()}"
-        )
-    elif len(game.guesses) >= WORDLE_TRIES:
+        # Found at the last chance: a win all the same, but nothing for the ledger, which takes
+        # no gain of 0.
+        if game.laurels > 0:
+            await ledger.append(
+                session, member.id, minigame(game.laurels), reason=f"wordle:{day.isoformat()}"
+            )
+    elif len(game.guesses) >= wordle_tries(today.level):
         game.state = "lost"
     await session.flush()
     return _wordle_view(game, today)

@@ -1,6 +1,7 @@
 """Wordle over HTTP and in the worker: one game a day per member on the newsroom's own word, kept
-secret until the game is over, the gain paid once; the word file synced each night, each
-newsroom's word drawn at midnight and kept, its level set by whoever plans the games."""
+secret until the game is over, the gain paid once, a last chance for the rarer words; the word
+file synced each night, each newsroom's word drawn at midnight and kept, its level set by whoever
+plans the games."""
 
 import hashlib
 import logging
@@ -15,7 +16,14 @@ from tests.conftest import MakeOrg, MakePerson, Person
 from tests.wordle_sample import FakeWordleFile, encoded, sample, tier_words, word, words_of
 
 from sibylle import clock
-from sibylle.db.models import Membership, Organisation, WordleDay, WordleGame, WordleList
+from sibylle.db.models import (
+    LedgerEntry,
+    Membership,
+    Organisation,
+    WordleDay,
+    WordleGame,
+    WordleList,
+)
 from sibylle.db.session import transaction
 from sibylle.domain.minigames import wordle_answer, wordle_marks
 from sibylle.domain.seasons import PARIS
@@ -130,7 +138,7 @@ async def test_a_new_day_gives_six_tries_and_hides_the_solution(
     state = await status(cami, org.id)
     assert state["day"] == "2026-11-16"
     assert (state["state"], state["tries"], state["tries_left"]) == ("playing", [], 6)
-    assert state["solution"] is None and state["laurels"] is None
+    assert state["solution"] is None and state["laurels"] is None and state["hint"] is None
     assert (await cami.client.get(f"/api/orgs/{org.id}/games")).json()["wordle"] == state
 
     answer = await the_word(cami, org.id)
@@ -212,6 +220,116 @@ async def test_accents_are_normalized(
     cami = await person(org, "reader", "Cami")
     state = (await guess(cami, org.id, "École")).json()
     assert state["tries"][0]["word"] == "ecole"
+
+
+# The last chance
+
+
+async def drawn(org: Organisation, answer: str, level: int | None) -> None:
+    """The newsroom's word of today, as the draw kept it, with its level."""
+    async with transaction() as session:
+        session.add(WordleDay(org_id=org.id, day=DAY, word=answer, level=level))
+
+
+async def ledger_of(person: Person) -> list[tuple[str, str | None]]:
+    """The member's lines in the ledger, in order: their kind and reason."""
+    async with transaction() as session:
+        rows = await session.execute(
+            select(LedgerEntry.kind, LedgerEntry.reason)
+            .where(LedgerEntry.membership_id == person.member.id)
+            .order_by(LedgerEntry.id)
+        )
+        return [(kind, reason) for kind, reason in rows]
+
+
+@pytest.mark.parametrize("level", [4, 5, 6])
+async def test_a_word_of_level_4_to_6_gives_a_last_chance_after_the_sixth_miss(
+    level: int, make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
+) -> None:
+    fake_clock.set(MORNING)
+    org = await make_org()
+    cami = await person(org, "reader", "Cami")
+    await drawn(org, "matin", level)
+    misses = wrong_words(7, "matin")
+    for count, each in enumerate(misses[:5], start=1):
+        state = (await guess(cami, org.id, each)).json()
+        assert (state["state"], state["tries_left"], state["hint"]) == ("playing", 6 - count, None)
+
+    # The sixth missed: the game goes on, with the word's letters in alphabetical order.
+    last = (await guess(cami, org.id, misses[5])).json()
+    assert (last["state"], last["tries_left"], last["hint"]) == ("playing", 1, "A I M N T")
+    assert (last["level"], last["laurels"], last["solution"]) == (level, None, None)
+    assert await status(cami, org.id) == last
+    assert (await cami.client.get(f"/api/orgs/{org.id}/games")).json()["wordle"] == last
+
+    # The seventh try is one like the others: a word unknown is refused and costs nothing, a
+    # word known shows its colours. Missed, it ends the game.
+    refused(await guess(cami, org.id, "zzzzz"), 422, "validation_error")
+    assert await status(cami, org.id) == last
+    lost = (await guess(cami, org.id, misses[6])).json()
+    assert (lost["state"], lost["tries_left"], lost["hint"]) == ("lost", 0, None)
+    assert (lost["laurels"], lost["solution"]) == (None, "matin")
+    assert len(lost["tries"]) == 7
+    assert lost["tries"][-1] == {"word": misses[6], "marks": wordle_marks(misses[6], "matin")}
+    # Never an eighth try.
+    refused(await guess(cami, org.id, "matin"), 409, "wordle_over")
+    assert await status(cami, org.id) == lost
+
+
+@pytest.mark.parametrize("level", [1, 2, 3, None])
+async def test_a_word_of_level_1_to_3_or_without_a_level_ends_at_the_sixth_miss(
+    level: int | None, make_org: MakeOrg, person: MakePerson, fake_clock: clock.FakeClock
+) -> None:
+    fake_clock.set(MORNING)
+    org = await make_org()
+    cami = await person(org, "reader", "Cami")
+    await drawn(org, "matin", level)
+    misses = wrong_words(6, "matin")
+    for each in misses[:5]:
+        assert (await guess(cami, org.id, each)).json()["hint"] is None
+    lost = (await guess(cami, org.id, misses[5])).json()
+    assert (lost["state"], lost["tries_left"], lost["hint"]) == ("lost", 0, None)
+    assert (lost["level"], lost["solution"]) == (level, "matin")
+    refused(await guess(cami, org.id, "matin"), 409, "wordle_over")
+
+
+async def test_the_word_found_at_the_last_chance_is_a_win_without_laurels(
+    make_org: MakeOrg,
+    person: MakePerson,
+    fake_clock: clock.FakeClock,
+    wordle_file: FakeWordleFile,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Drawn from the file at Normal: the last word of the fourth tier, so level 4.
+    monkeypatch.setattr(minigames, "wordle_choice", draw_last)
+    fake_clock.set(MORNING)
+    await synced(wordle_file, sample())
+    org = await make_org()
+    cami = await person(org, "reader", "Cami")
+    answer = await the_word(cami, org.id)
+    assert (answer, (await status(cami, org.id))["level"]) == (word(4, 19), 4)
+    before = (await balance(cami), await ledger_of(cami))
+    misses = tier_words(1)[:6]
+    for each in misses[:5]:
+        await guess(cami, org.id, each)
+    last = (await guess(cami, org.id, misses[5])).json()
+    assert (last["state"], last["hint"]) == ("playing", "A A A D T")
+
+    won = (await guess(cami, org.id, answer.upper())).json()
+    assert (won["state"], won["laurels"], won["solution"]) == ("won", 0, answer)
+    assert (won["tries_left"], won["hint"]) == (0, None)
+    assert len(won["tries"]) == 7 and won["tries"][-1]["marks"] == ["correct"] * 5
+    # Nothing paid, not a line in the ledger; but a win, kept as one.
+    assert (await balance(cami), await ledger_of(cami)) == before
+    async with transaction() as session:
+        game = await session.scalar(
+            select(WordleGame).where(WordleGame.membership_id == cami.member.id)
+        )
+        assert game is not None
+        assert (game.state, game.laurels, len(game.guesses)) == ("won", 0, 7)
+    # Never an eighth try.
+    refused(await guess(cami, org.id, answer), 409, "wordle_over")
+    assert (await balance(cami), await ledger_of(cami)) == before
 
 
 # The word file

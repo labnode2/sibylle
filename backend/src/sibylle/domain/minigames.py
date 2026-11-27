@@ -173,6 +173,9 @@ def next_start(finished_at: datetime) -> datetime:
 
 WORDLE_LETTERS = 5
 WORDLE_TRIES = 6
+# A word of this level or more, among the rarer ones, gives whoever missed it six times a last
+# chance: its letters in alphabetical order, and a seventh try, which pays nothing.
+WORDLE_LAST_CHANCE_LEVEL = 4
 Mark = Literal["correct", "present", "absent"]
 # A newsroom's level, 1 Facile, 2 Normal or 3 Difficile: how many tiers of the word file, from
 # the most common, its words come from (None: all of them). Normal until the editor chooses.
@@ -255,6 +258,21 @@ def wordle_marks(guess: str, answer: str) -> list[Mark]:
     return marks
 
 
+def wordle_tries(level: int | None) -> int:
+    """How many tries a word gives: six, and the last chance's seventh from level 4 on; never
+    for a word without a level."""
+    if level is not None and level >= WORDLE_LAST_CHANCE_LEVEL:
+        return WORDLE_TRIES + 1
+    return WORDLE_TRIES
+
+
+def wordle_hint(word: str) -> str:
+    """The last chance's hint: the word's letters in capitals and in alphabetical order, between
+    spaces, a double letter twice. « matin » gives « A I M N T », « belle » « B E E L L »."""
+    return " ".join(sorted(word.upper()))
+
+
 def wordle_gain(tries: int) -> int:
-    """6 laurels for a word found at the first try, then 5, 4, 3, 2 and 1 for the sixth."""
-    return WORDLE_TRIES + 1 - tries
+    """6 laurels for a word found at the first try, then 5, 4, 3, 2 and 1 for the sixth; nothing
+    at the last chance, the seventh."""
+    return max(WORDLE_TRIES + 1 - tries, 0)

@@ -1,10 +1,11 @@
 // A finished Wordle as it is pasted elsewhere, a chat of the newsroom for one: the word's number
-// and the tries it took (« X » when lost), then a row of squares per try in the grid's colours.
-// Not a letter: it gives nothing of the word away to whoever has not played yet.
+// and the tries it took (« 6+1 » when found at the last chance, « X » when lost), then a row of
+// squares per try in the grid's colours. Not a letter: it gives nothing of the word away to
+// whoever has not played yet.
 import type { TFunction } from 'i18next';
 
 import type { WordleStatus } from '../api';
-import type { Mark } from './letters';
+import { MAX_TRIES, type Mark } from './letters';
 
 // Number 1: the first word of Sibylle's Wordle, on 15 November 2026 (Paris).
 const FIRST_DAY = Date.UTC(2026, 10, 15);
@@ -17,12 +18,15 @@ export function wordleNumber(day: string): number {
   return Math.round((Date.parse(day) - FIRST_DAY) / DAY_MS) + 1;
 }
 
+/** The score of a finished game: the tries it took, the last chance's seventh as « 6+1 ». */
+function score({ state, tries }: WordleStatus): number | string {
+  if (state !== 'won') return 'X';
+  return tries.length > MAX_TRIES ? `${MAX_TRIES}+1` : tries.length;
+}
+
 /** The text that sharing a finished game copies. */
 export function shareText(t: TFunction<'games'>, game: WordleStatus): string {
-  const head = t('wordle.share.head', {
-    number: wordleNumber(game.day),
-    score: game.state === 'won' ? game.tries.length : 'X',
-  });
+  const head = t('wordle.share.head', { number: wordleNumber(game.day), score: score(game) });
   const rows = game.tries.map(({ marks }) => marks.map((mark) => SQUARES[mark]).join(''));
   return [head, '', ...rows].join('\n');
 }

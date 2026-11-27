@@ -1,5 +1,5 @@
 """Wordle: the colours of a try, the word file and its checks, the levels, the draw of a
-newsroom's word, the words a try may be, the gain."""
+newsroom's word, the words a try may be, the gain, the last chance of a rarer word."""
 
 import json
 from collections.abc import Sequence
@@ -14,9 +14,11 @@ from sibylle.domain.minigames import (
     wordle_allowed,
     wordle_answer,
     wordle_gain,
+    wordle_hint,
     wordle_level,
     wordle_marks,
     wordle_pick,
+    wordle_tries,
     wordle_word,
 )
 from sibylle.domain.wordle_words import (
@@ -92,8 +94,28 @@ def test_the_word_of_the_day_may_be_tried_even_when_it_is_not_among_the_guesses(
     assert wordle_word("table", lists.guesses, "arbre") is None
 
 
-def test_the_gain_falls_from_six_to_one_laurel() -> None:
-    assert [wordle_gain(tries) for tries in range(1, 7)] == [6, 5, 4, 3, 2, 1]
+def test_the_gain_falls_from_six_to_one_laurel_and_the_last_chance_pays_nothing() -> None:
+    assert [wordle_gain(tries) for tries in range(1, 8)] == [6, 5, 4, 3, 2, 1, 0]
+
+
+# The last chance
+
+
+def test_a_word_of_level_4_or_more_gives_a_seventh_try() -> None:
+    assert [wordle_tries(level) for level in (1, 2, 3, 4, 5, 6)] == [6, 6, 6, 7, 7, 7]
+    # A word of the lists written by hand has no level, and no last chance.
+    assert wordle_tries(None) == 6
+
+
+def test_the_hint_gives_the_letters_in_alphabetical_order() -> None:
+    assert wordle_hint("matin") == "A I M N T"
+    assert wordle_hint("arbre") == "A B E R R"
+
+
+def test_the_hint_gives_a_double_letter_twice() -> None:
+    assert wordle_hint("belle") == "B E E L L"
+    assert wordle_hint("ebene") == "B E E E N"
+    assert wordle_hint("aaaaa") == "A A A A A"
 
 
 # The word file

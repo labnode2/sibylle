@@ -1,4 +1,5 @@
-// The Wordle's grid: the colours of each try, the row being typed, and the keyboard's best marks.
+// The Wordle's grid: the colours of each try, the row being typed, the last chance's seventh row,
+// and the keyboard's best marks.
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -48,6 +49,29 @@ describe('WordleGrid', () => {
   it('shows no typing once the game is over', () => {
     render(<WordleGrid tries={tries} typing="ar" over />);
     expect(screen.queryByText('A')).toBeNull();
+  });
+
+  it('has a seventh row only for the last chance, typed in then played', () => {
+    const six = [...tries, ...tries, ...tries];
+    // Over at the sixth try: six rows.
+    render(<WordleGrid tries={six} typing="ma" over />);
+    expect(screen.getAllByRole('row')).toHaveLength(6);
+    cleanup();
+    // Still on after six: the last chance's row, the one typed in.
+    render(<WordleGrid tries={six} typing="ma" over={false} />);
+    const rows = screen.getAllByRole('row');
+    expect(rows).toHaveLength(7);
+    expect(
+      within(rows[6]!)
+        .getAllByRole('gridcell')
+        .map((c) => c.textContent),
+    ).toEqual(['M', 'A', '', '', '']);
+    cleanup();
+    // Played: the row stays, with its colours.
+    render(<WordleGrid tries={[...six, tries[0]!]} typing="" over />);
+    const played = screen.getAllByRole('row');
+    expect(played).toHaveLength(7);
+    expect(within(played[6]!).getAllByRole('gridcell')[4]).toHaveAccessibleName('E, bien placée');
   });
 });
 
