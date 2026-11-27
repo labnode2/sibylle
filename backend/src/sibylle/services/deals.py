@@ -1,6 +1,6 @@
-"""The deal of the week (research.md J10): in each newsroom, one colour or frame on sale at a
-share off, drawn at random on the week's first look at the collection (or first purchase), then
-kept until Sunday night, whatever happens to the catalog meanwhile."""
+"""The deal of the week (research.md J10): in each newsroom, one colour on sale at a share off,
+drawn at random on the week's first look at the collection (or first purchase), then kept until
+Sunday night, whatever happens to the catalog meanwhile."""
 
 import random
 import uuid
@@ -28,7 +28,8 @@ pick: Callable[[Sequence[CatalogItem]], tuple[CatalogItem, int]] = _draw
 
 
 async def candidates(session: AsyncSession) -> list[CatalogItem]:
-    """What may go on sale: the colours and frames that have a price (balls are never sold)."""
+    """What may go on sale: the colours that have a price. Frames and animations always keep
+    their usual price, and balls are never sold."""
     return list(
         (
             await session.scalars(
@@ -36,7 +37,7 @@ async def candidates(session: AsyncSession) -> list[CatalogItem]:
                 .where(
                     CatalogItem.active,
                     CatalogItem.price.is_not(None),
-                    CatalogItem.kind.in_(("color", "frame")),
+                    CatalogItem.kind == "color",
                 )
                 .order_by(CatalogItem.key)
             )

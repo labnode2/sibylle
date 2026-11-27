@@ -262,7 +262,7 @@ Comme le registre des lauriers : aucune mise à jour ni suppression, et `members
 
 ### weekly_deals (promotion de la semaine)
 
-PK (`org_id`, `week_start`) ; `week_start` (date du lundi, Paris), `item_id` (un objet à vendre du catalogue : couleur ou cadre), `discount_pct` (20, 30, 40 ou 50), `created_at`. Tirée au hasard à la première lecture de la collection ou au premier achat de la semaine, puis figée (research.md J10). Le prix payé, réduit, est celui de l'écriture de pièces de l'achat.
+PK (`org_id`, `week_start`) ; `week_start` (date du lundi, Paris), `item_id` (un objet à vendre du catalogue : une couleur), `discount_pct` (20, 30, 40 ou 50), `created_at`. Tirée au hasard à la première lecture de la collection ou au premier achat de la semaine, puis figée (research.md J10). Le prix payé, réduit, est celui de l'écriture de pièces de l'achat.
 
 ### secret_codes, secret_code_redemptions
 

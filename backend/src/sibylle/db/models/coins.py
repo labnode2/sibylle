@@ -47,8 +47,8 @@ class CoinEntry(Base):
 
 
 class WeeklyDeal(Base):
-    """A newsroom's deal of the week (research.md J10): one colour or frame of the catalog at a
-    share off, drawn at random on the week's first look at the collection, then kept."""
+    """A newsroom's deal of the week (research.md J10): one colour of the catalog at a share off,
+    drawn at random on the week's first look at the collection, then kept."""
 
     __tablename__ = "weekly_deals"
     __table_args__ = (

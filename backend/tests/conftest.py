@@ -80,13 +80,13 @@ def fake_clock(tmp_path: Path) -> Iterator[clock.FakeClock]:
 
 @pytest.fixture(autouse=True)
 def _known_deal(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The deal of the week falls on the indigo frame at 20 %, which the other tests never buy:
+    """The deal of the week falls on the peach colour at 20 %, which the other tests never buy:
     their purchases keep the usual prices (research.md J10)."""
 
-    def indigo_frame(items: Sequence[CatalogItem]) -> tuple[CatalogItem, int]:
-        return next(item for item in items if item.key == "frame-indigo"), 20
+    def peach(items: Sequence[CatalogItem]) -> tuple[CatalogItem, int]:
+        return next(item for item in items if item.key == "color-48"), 20
 
-    monkeypatch.setattr(deals, "pick", indigo_frame)
+    monkeypatch.setattr(deals, "pick", peach)
 
 
 @pytest.fixture(scope="session")

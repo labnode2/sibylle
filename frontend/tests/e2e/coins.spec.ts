@@ -72,14 +72,15 @@ test('Monday turns gold laurels into coins, and says so once', async ({ browser 
     ines.getByRole('button', { name: /^Acheter Couleur Rouge vif pour \d+ pièces/ }),
   ).toBeDisabled();
 
-  // The deal of the week: one object drawn at random, its share off, the usual price struck.
+  // The deal of the week: one colour drawn at random, its share off, the usual price struck.
   const catalog = await call(ines, 'GET', `/orgs/${orgId}/catalog`);
   const deals = catalog.body.filter((entry: Json) => entry.discount_pct !== null);
   expect(deals).toHaveLength(1);
   const [deal] = deals;
+  expect(deal.item.kind).toBe('color');
   const box = ines.getByRole('region', { name: 'La promo de la semaine' });
   await expect(box).toContainText(`−${deal.discount_pct} %`);
-  // The struck price is written the French way: « 2 500 » when the draw falls on a dear frame.
+  // The struck price is written the French way (formatNumber): « 1 200 », not « 1200 ».
   const struck = new Intl.NumberFormat('fr-FR').format(deal.regular_price);
   await expect(box).toContainText(`au lieu de ${struck}`);
   await expect(box).toContainText(`${deal.price}`);

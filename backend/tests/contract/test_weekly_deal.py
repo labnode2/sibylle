@@ -45,7 +45,7 @@ async def test_one_deal_a_week_the_same_for_the_whole_newsroom(
     )
     deal = on_sale(first)
     assert on_sale(seen_by_leo)["item"]["id"] == deal["item"]["id"]
-    assert deal["item"]["kind"] in ("color", "frame")
+    assert deal["item"]["kind"] == "color"
     assert deal["discount_pct"] in DISCOUNTS
     assert deal["regular_price"] == deal["item"]["price"]
     assert deal["price"] == deal_price(deal["regular_price"], deal["discount_pct"])
@@ -70,11 +70,11 @@ async def test_one_deal_a_week_the_same_for_the_whole_newsroom(
     assert weeks == 2
 
 
-async def test_only_colours_and_frames_go_on_sale(make_org: MakeOrg) -> None:
+async def test_only_colours_go_on_sale(make_org: MakeOrg) -> None:
     async with transaction() as session:
         candidates = await deals.candidates(session)
     assert candidates
-    assert {item.kind for item in candidates} <= {"color", "frame"}
+    assert {item.kind for item in candidates} == {"color"}
     assert all(item.price for item in candidates)
     # The draw itself picks one of them, and one of the shares off.
     for _ in range(20):

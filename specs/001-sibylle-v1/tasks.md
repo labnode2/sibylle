@@ -384,7 +384,7 @@ Le scénario 10 de spec.md (rappels de désignation) est livré avec US8.
 
 ## Phase 9g: Évolution de US7 - Promotion de la semaine
 
-**Goal**: chaque semaine, un objet à vendre de la collection, tiré au hasard pour chaque rédaction, est en promotion d'un pourcentage tiré au hasard, du lundi au dimanche (spec FR-095, research.md J10).
+**Goal**: chaque semaine, une couleur à vendre de la collection, tirée au hasard pour chaque rédaction, est en promotion d'un pourcentage tiré au hasard, du lundi au dimanche (spec FR-095, research.md J10).
 
 **Independent Test**: ouvrir la collection, trouver la promotion (ancien prix barré, nouveau prix, fin dimanche soir), l'acheter et vérifier les pièces débitées au prix réduit ; passer au lundi suivant et vérifier qu'une nouvelle promotion la remplace.
 

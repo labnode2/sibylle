@@ -53,7 +53,7 @@
       "title": "La promo de la semaine",
       "off": "−{{pct}} %",
       "was": "au lieu de",
-      "until": "JUSQU'AU {{day}} AU SOIR · UN OBJET TIRÉ AU HASARD CHAQUE LUNDI"
+      "until": "JUSQU'AU {{day}} AU SOIR · UNE COULEUR TIRÉE AU HASARD CHAQUE LUNDI"
     },
     "confirm": "Acheter pour {{price}} pièces ?",
     "bought": "{{name}} est à toi !",
